@@ -10,5 +10,7 @@ npm-debug.log*
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+/huda-right-guidance-mp3
+
 huda-right-guidance-mp3/
 *.py
