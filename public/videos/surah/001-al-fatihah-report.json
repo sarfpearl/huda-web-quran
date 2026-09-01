@@ -1,0 +1,129 @@
+{
+  "model": "models/veo-3.1-fast-generate-preview",
+  "clips": [
+    {
+      "scene": "01-praise-mercy",
+      "operationId": "models/veo-3.1-fast-generate-preview/operations/eoyzipdn6fzo",
+      "downloadUri": "https://generativelanguage.googleapis.com/v1beta/files/r6vfg8upo6wx:download?alt=media",
+      "fileSize": 8317054,
+      "path": "/Users/pearl-9744/Claude/Projects/Huda Bayan/public/videos/surah/001-al-fatihah/01-praise-mercy.mp4",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "r_frame_rate": "24/1"
+          },
+          {
+            "codec_name": "aac",
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "6.000000",
+          "size": "8317054"
+        }
+      }
+    },
+    {
+      "scene": "02-divine-judgment",
+      "operationId": "models/veo-3.1-fast-generate-preview/operations/mnuz9ovvgbhq",
+      "downloadUri": "https://generativelanguage.googleapis.com/v1beta/files/ira6v937i9ul:download?alt=media",
+      "fileSize": 2021730,
+      "path": "/Users/pearl-9744/Claude/Projects/Huda Bayan/public/videos/surah/001-al-fatihah/02-divine-judgment.mp4",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "r_frame_rate": "24/1"
+          },
+          {
+            "codec_name": "aac",
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "6.000000",
+          "size": "2021730"
+        }
+      }
+    },
+    {
+      "scene": "03-worship-and-help",
+      "operationId": "models/veo-3.1-fast-generate-preview/operations/limk42fr16hl",
+      "downloadUri": "https://generativelanguage.googleapis.com/v1beta/files/l2n6dlyhncf7:download?alt=media",
+      "fileSize": 5124120,
+      "path": "/Users/pearl-9744/Claude/Projects/Huda Bayan/public/videos/surah/001-al-fatihah/03-worship-and-help.mp4",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "r_frame_rate": "24/1"
+          },
+          {
+            "codec_name": "aac",
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "6.000000",
+          "size": "5124120"
+        }
+      }
+    },
+    {
+      "scene": "04-guidance",
+      "operationId": "models/veo-3.1-fast-generate-preview/operations/xg6usi2u3i2c",
+      "downloadUri": "https://generativelanguage.googleapis.com/v1beta/files/ylulhox00ef2:download?alt=media",
+      "fileSize": 8255461,
+      "path": "/Users/pearl-9744/Claude/Projects/Huda Bayan/public/videos/surah/001-al-fatihah/04-guidance.mp4",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "r_frame_rate": "24/1"
+          },
+          {
+            "codec_name": "aac",
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "6.000000",
+          "size": "8255461"
+        }
+      }
+    }
+  ],
+  "master": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 720,
+        "r_frame_rate": "24/1"
+      }
+    ],
+    "format": {
+      "duration": "19.000000",
+      "size": "20352660"
+    }
+  }
+}

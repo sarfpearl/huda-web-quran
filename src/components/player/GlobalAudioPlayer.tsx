@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/Icon";
 import { youtubeWatchUrl } from "@/lib/youtube";
 import { cn } from "@/lib/utils";
-import { quranPlayerSubtitle } from "@/lib/data/quran";
+import { quranPlayerSubtitle } from "@/lib/data/service";
 
 /*
  * The single, persistent player UI. Mounted once in the root layout (below

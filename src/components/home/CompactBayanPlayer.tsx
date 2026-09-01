@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -21,10 +22,12 @@ import {
   isQuranTrack,
   isQuranTrackId,
   isSurahTrackId,
+  getSurahByTrackId,
   quranContentLabel,
   QURAN_TRACKS,
   SURAH_TRACKS,
-} from "@/lib/data/quran";
+  quranImageUrl,
+} from "@/lib/data/service";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
@@ -43,11 +46,39 @@ export function CompactBayanPlayer({
   const isLoading = isCurrentTrack && player.isLoading;
   const errorMsg = isCurrentTrack ? player.error : null;
   const isQuran = isQuranTrack(bayan.id);
+  const surah = isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined;
+
+  const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
+
+  useEffect(() => {
+    setCoverSrc(bayan.coverImageUrl ?? null);
+  }, [bayan.id, bayan.coverImageUrl]);
+
+  // Preload adjacent and sample Surah images to ensure instantaneous transition without flash
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (surah) {
+      const preloadNumbers = [
+        surah.number === 114 ? 1 : surah.number + 1,
+        surah.number === 1 ? 114 : surah.number - 1,
+        Math.floor(Math.random() * 114) + 1,
+        Math.floor(Math.random() * 114) + 1,
+      ];
+      preloadNumbers.forEach((n) => {
+        const img = new window.Image();
+        img.src = quranImageUrl("surah", n);
+      });
+    }
+  }, [surah]);
+
   // Player subtitle: NOW PLAYING · title · category.
   //   Bayan  → category name (e.g. "Iman & Taqwa")
-  //   Quran  → Para/Juz or Surah info (e.g. "Surah 1 • 7 Verses")
+  //   Surah  → "Quran • Surah 1 · 7 Verses · Meccan"
+  //   Quran  → Para/Juz info
   const categoryLine = isQuran
-    ? quranContentLabel(bayan.id) ?? bayan.category.name
+    ? (surah
+        ? `Quran • Surah ${surah.number} · ${surah.verses} Verses · ${surah.revelation}`
+        : quranContentLabel(bayan.id) ?? bayan.category.name)
     : bayan.category.name;
   const currentTime = isCurrentTrack ? player.currentTime : 0;
   const totalDuration = isCurrentTrack && player.duration > 0
@@ -58,7 +89,12 @@ export function CompactBayanPlayer({
     if (isCurrentTrack) {
       player.togglePlay();
     } else {
-      player.playBayan(bayan, categoryList);
+      const contextList = isSurahTrackId(bayan.id)
+        ? SURAH_TRACKS
+        : isQuranTrackId(bayan.id)
+        ? QURAN_TRACKS
+        : categoryList;
+      player.playBayan(bayan, contextList);
     }
   };
 
@@ -67,14 +103,19 @@ export function CompactBayanPlayer({
     if (isCurrentTrack) {
       player.seek(val);
     } else {
-      player.playBayan(bayan, categoryList);
+      const contextList = isSurahTrackId(bayan.id)
+        ? SURAH_TRACKS
+        : isQuranTrackId(bayan.id)
+        ? QURAN_TRACKS
+        : categoryList;
+      player.playBayan(bayan, contextList);
       setTimeout(() => player.seek(val), 100);
     }
   };
 
   // Shuffle is context-aware:
-  //   • Surah playing → jump to a different random Surah
-  //   • Juz playing   → jump to a different random Juz
+  //   • Surah playing → jump to a DIFFERENT random Surah (excluding current)
+  //   • Juz playing   → jump to a DIFFERENT random Juz (excluding current)
   //   • otherwise      → shuffle the Bayan category (existing behaviour)
   const playRandomFrom = (tracks: BayanWithRelations[]) => {
     if (tracks.length === 0) return;
@@ -101,12 +142,15 @@ export function CompactBayanPlayer({
       <div className="relative flex items-center justify-between gap-4 sm:gap-5">
         {/* Cover Artwork */}
         <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 shadow-md border border-emerald-500/30">
-          {bayan.coverImageUrl ? (
+          {coverSrc ? (
             <Image
-              src={bayan.coverImageUrl}
+              src={coverSrc}
               alt={bayan.title}
               fill
-              className="object-cover"
+              unoptimized={true}
+              priority
+              className="object-cover [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
+              onError={() => setCoverSrc("/images/scenes/quran.jpg")}
             />
           ) : (
             <CoverArt
@@ -129,14 +173,25 @@ export function CompactBayanPlayer({
           )}
         </div>
 
-        {/* Track Info — NOW PLAYING · Title · Reciter/Speaker · Category */}
+        {/* Track Info — NOW PLAYING · Title · Arabic Name · Reciter/Speaker · Category */}
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <span className="text-[10px] sm:text-xs font-semibold text-sand-300/50 uppercase tracking-widest">
             Now Playing
           </span>
-          <h3 className="truncate font-sans text-base sm:text-lg md:text-xl font-bold text-white tracking-tight mt-1">
-            {bayan.title}
-          </h3>
+          <div className="flex items-baseline gap-2 mt-1 min-w-0">
+            <h3 className="truncate font-sans text-base sm:text-lg md:text-xl font-bold text-white tracking-tight">
+              {bayan.title}
+            </h3>
+            {surah?.arabicName && (
+              <span
+                lang="ar"
+                dir="rtl"
+                className="font-arabic text-base sm:text-lg font-bold text-emerald-300 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+              >
+                {surah.arabicName}
+              </span>
+            )}
+          </div>
           <p className="truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5">
             {categoryLine}
           </p>

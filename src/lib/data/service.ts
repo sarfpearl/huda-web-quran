@@ -6,6 +6,26 @@ import type {
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
 import { seedBayan, seedCategories, seedSpeakers } from "./seed";
+import {
+  QURAN_SURAHS,
+  SURAH_TRACKS,
+  SURAH_TRACK_ID_PREFIX,
+  QURAN_JUZ,
+  QURAN_TRACKS,
+  type QuranSurah,
+  type QuranJuz,
+  type RevelationType,
+  isSurahTrackId,
+  isQuranTrackId,
+  isQuranTrack,
+  getSurahByTrackId,
+  getQuranJuzByTrackId,
+  getRandomSurahTrack,
+  quranPlayerSubtitle,
+  quranContentLabel,
+  quranImageUrl,
+  surahAudioUrl,
+} from "./quran";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────
@@ -295,6 +315,61 @@ export async function getAdminStats(): Promise<AdminStats> {
 
 /** Whether write operations are backed by a real database yet. */
 export const isWriteEnabled = USE_SUPABASE;
+
+// ── Quran & Surah Services (Single Source of Truth) ────────────────────────
+
+export {
+  QURAN_SURAHS,
+  SURAH_TRACKS,
+  SURAH_TRACK_ID_PREFIX,
+  QURAN_JUZ,
+  QURAN_TRACKS,
+  isSurahTrackId,
+  isQuranTrackId,
+  isQuranTrack,
+  getSurahByTrackId,
+  getQuranJuzByTrackId,
+  getRandomSurahTrack,
+  quranPlayerSubtitle,
+  quranContentLabel,
+  quranImageUrl,
+  surahAudioUrl,
+};
+export {
+  QURAN_ARTWORK_CONCEPTS,
+  getSurahArtwork,
+  type SurahArtworkConcept,
+} from "./quran-artwork";
+export type { QuranSurah, QuranJuz, RevelationType };
+
+export async function getSurahs(): Promise<QuranSurah[]> {
+  return resolve(QURAN_SURAHS);
+}
+
+export async function getSurahByNumber(num: number): Promise<QuranSurah | null> {
+  const s = QURAN_SURAHS.find((x) => x.number === num);
+  return resolve(s ?? null);
+}
+
+export async function getRandomSurah(excludeNumber?: number): Promise<QuranSurah> {
+  const pool = excludeNumber
+    ? QURAN_SURAHS.filter((s) => s.number !== excludeNumber)
+    : QURAN_SURAHS;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  return resolve(pick);
+}
+
+export async function getSurahTracks(): Promise<BayanWithRelations[]> {
+  return resolve(SURAH_TRACKS);
+}
+
+export async function getQuranJuzList(): Promise<QuranJuz[]> {
+  return resolve(QURAN_JUZ);
+}
+
+export async function getQuranJuzTracks(): Promise<BayanWithRelations[]> {
+  return resolve(QURAN_TRACKS);
+}
 
 // ── Supabase guard ───────────────────────────────────────────────────────
 

@@ -10,7 +10,12 @@ import { ImmersiveHeader } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { isQuranTrack } from "@/lib/data/quran";
+import {
+  isQuranTrack,
+  isSurahTrackId,
+  getSurahByTrackId,
+  SURAH_TRACKS,
+} from "@/lib/data/service";
 
 interface ImmersiveHomeClientProps {
   categories: Category[];
@@ -25,14 +30,25 @@ export function ImmersiveHomeClient({
 }: ImmersiveHomeClientProps) {
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
+  const [visualMode, setVisualMode] = useState<"video" | "image">("video");
 
   useEffect(() => {
     setMounted(true);
+    try {
+      const saved = localStorage.getItem("huda-visual-mode");
+      if (saved === "video" || saved === "image") {
+        setVisualMode(saved);
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  // Initial category: default to 'iman-taqwa' or the first available category
+  // Initial category: default to 'quran' or 'iman-taqwa'
   const defaultCategory =
-    categories.find((c) => c.slug === "iman-taqwa") ?? categories[0] ?? {
+    categories.find((c) => c.slug === "quran" || c.slug === "quran-recitation") ??
+    categories.find((c) => c.slug === "iman-taqwa") ??
+    categories[0] ?? {
       id: "iman-taqwa",
       name: "Iman & Taqwa",
       slug: "iman-taqwa",
@@ -57,19 +73,23 @@ export function ImmersiveHomeClient({
     return list.length > 0 ? list : allBayan;
   }, [allBayan, activeCategory.id]);
 
-  // Selected Bayan for the active category (or player's current track if playing within category)
+  // Selected track (defaults to Surah 1: Al-Fatihah, or active player track / category track)
   const activeBayan = useMemo(() => {
-    // Quran recitation (Juz or Surah) always drives the card while it is the
-    // active track (covers next/previous and auto-advance).
-    if (player.current && isQuranTrack(player.current.id)) {
+    if (player.current) {
       return player.current;
     }
     if (overrideBayan) return overrideBayan;
-    if (player.current && player.current.categoryId === activeCategory.id) {
-      return player.current;
+    // Default initial landing: Surah 1 (Al-Fatihah)
+    return SURAH_TRACKS[0] ?? categoryBayans[0] ?? allBayan[0] ?? null;
+  }, [overrideBayan, player.current, categoryBayans, allBayan]);
+
+  // Resolve active Surah metadata if activeBayan is a Surah track
+  const activeSurah = useMemo(() => {
+    if (activeBayan && isSurahTrackId(activeBayan.id)) {
+      return getSurahByTrackId(activeBayan.id) ?? null;
     }
-    return categoryBayans[0] ?? allBayan[0] ?? null;
-  }, [overrideBayan, player.current, activeCategory.id, categoryBayans, allBayan]);
+    return null;
+  }, [activeBayan]);
 
   const handleSelectCategory = (category: Category) => {
     setOverrideBayan(null);
@@ -108,18 +128,41 @@ export function ImmersiveHomeClient({
     handleSelectCategory(randomCat);
   };
 
+  const handleToggleVisualMode = () => {
+    setVisualMode((prev) => {
+      const next = prev === "video" ? "image" : "video";
+      try {
+        localStorage.setItem("huda-visual-mode", next);
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-10 overflow-hidden bg-slate-950 text-sand-50 select-none">
-      {/* Edge-to-Edge Dynamic Scene Background */}
-      <ImmersiveBackground categorySlug={activeCategory.slug} />
+      {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
+      <ImmersiveBackground
+        categorySlug={activeBayan?.category?.slug || activeCategory.slug}
+        activeSurahNumber={activeSurah?.number ?? null}
+        currentTime={player.currentTime}
+        duration={player.duration}
+        isPlaying={player.isPlaying}
+        visualMode={visualMode}
+      />
 
       {/* Bismillah Calligraphy — Top Center */}
       <p className="pointer-events-none absolute top-[5.5rem] sm:top-5 left-1/2 -translate-x-1/2 z-30 w-full px-6 sm:px-24 text-center font-arabic text-2xl sm:text-3xl md:text-4xl font-extrabold text-amber-300 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
         بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
       </p>
 
-      {/* Floating Top Header with Top-Right Hamburger Menu */}
-      <ImmersiveHeader onShuffle={handleShuffle}>
+      {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
+      <ImmersiveHeader
+        onShuffle={handleShuffle}
+        visualMode={visualMode}
+        onToggleVisualMode={handleToggleVisualMode}
+      >
         <TopicPickerModal
           categories={categories}
           speakers={speakers}
@@ -135,7 +178,7 @@ export function ImmersiveHomeClient({
       {/* Bottom Floating Player */}
       <div className="absolute bottom-4 sm:bottom-6 inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none">
         <div className="pointer-events-auto">
-          {/* Compact Integrated Bayan Player */}
+          {/* Compact Integrated Glassmorphism Player */}
           {activeBayan && (
             <CompactBayanPlayer
               bayan={activeBayan}

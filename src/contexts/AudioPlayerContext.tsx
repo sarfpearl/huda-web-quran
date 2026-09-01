@@ -10,7 +10,13 @@ import {
   useState,
 } from "react";
 import type { BayanWithRelations } from "@/types/bayan";
-import { incrementPlayCount } from "@/lib/data/service";
+import {
+  incrementPlayCount,
+  isQuranTrack,
+  isSurahTrackId,
+  SURAH_TRACKS,
+  SURAH_TRACK_ID_PREFIX,
+} from "@/lib/data/service";
 import { getSessionId } from "@/lib/audio/session";
 import { loadYouTubeIframeApi } from "@/lib/youtube/iframe-api";
 
@@ -351,7 +357,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         el.src = localAudioUrl;
         el.load();
 
-        const saved = readPositions()[bayan.id] ?? 0;
+        const isQuran = isQuranTrack(bayan.id);
+        const saved = isQuran ? 0 : (readPositions()[bayan.id] ?? 0);
         const startAt =
           saved > 0 && saved < bayan.durationSeconds - 5 ? saved : 0;
         setCurrentTime(startAt);
@@ -368,6 +375,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           if (startAt > 0) {
             try {
               el.currentTime = startAt;
+            } catch {
+              /* ignore */
+            }
+          } else {
+            try {
+              el.currentTime = 0;
             } catch {
               /* ignore */
             }
@@ -574,8 +587,17 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         /* fallback to queue */
       }
     }
+    if (current && isSurahTrackId(current.id)) {
+      const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
+      const nextNum = num >= 114 ? 1 : num + 1;
+      const nextTrack = SURAH_TRACKS[nextNum - 1];
+      if (nextTrack) {
+        playBayan(nextTrack, SURAH_TRACKS);
+        return;
+      }
+    }
     if (currentIndex < queue.length - 1) playFromQueue(currentIndex + 1);
-  }, [currentIndex, queue.length, playFromQueue]);
+  }, [current, currentIndex, queue.length, playFromQueue, playBayan]);
 
   const previous = useCallback(() => {
     if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.previousVideo === "function") {
@@ -592,8 +614,17 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       seek(0);
       return;
     }
+    if (current && isSurahTrackId(current.id)) {
+      const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
+      const prevNum = num <= 1 ? 114 : num - 1;
+      const prevTrack = SURAH_TRACKS[prevNum - 1];
+      if (prevTrack) {
+        playBayan(prevTrack, SURAH_TRACKS);
+        return;
+      }
+    }
     if (currentIndex > 0) playFromQueue(currentIndex - 1);
-  }, [currentIndex, playFromQueue, seek]);
+  }, [current, currentIndex, playFromQueue, playBayan, seek]);
 
   const setVolume = useCallback((v: number) => {
     const clamped = Math.min(1, Math.max(0, v));

@@ -208,10 +208,46 @@ export const LogoIcon = (p: IconProps) => (
   </Base>
 );
 export const YouTubeMusicIcon = (p: IconProps) => (
-  <Base {...p} strokeWidth={1.6}>
-    <circle cx="12" cy="12" r="9" />
-    <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
-    <polygon points="11,10 14,12 11,14" fill="white" stroke="none" />
+  <svg
+    viewBox="0 0 24 24"
+    width="1em"
+    height="1em"
+    fill="none"
+    {...p}
+  >
+    <circle cx="12" cy="12" r="11" fill="#FF0000" />
+    <circle cx="12" cy="12" r="5.5" stroke="white" strokeWidth="1.3" fill="none" />
+    <polygon points="10.5,8.8 15.5,12 10.5,15.2" fill="white" />
+  </svg>
+);
+
+export const VideoCameraIcon = (p: IconProps) => (
+  <Base {...p} strokeWidth={1.8}>
+    <rect x="2.5" y="5" width="13" height="14" rx="2.5" />
+    <path d="M15.5 10l5.5-3.5v11L15.5 14" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="9" cy="12" r="1.8" fill="#34d399" stroke="none" />
+  </Base>
+);
+
+export const ImageIcon = (p: IconProps) => (
+  <Base {...p} strokeWidth={1.8}>
+    <rect width="18" height="18" x="3" y="3" rx="3.5" />
+    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" />
+    <path
+      d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Base>
+);
+
+export const TvMenuIcon = (p: IconProps) => (
+  <Base {...p} strokeWidth={1.8}>
+    <rect x="2.5" y="4.5" width="19" height="15" rx="3.5" />
+    <line x1="16" y1="4.5" x2="16" y2="19.5" />
+    <circle cx="18.5" cy="8" r="0.75" fill="currentColor" stroke="none" />
+    <circle cx="18.5" cy="12" r="0.75" fill="currentColor" stroke="none" />
+    <circle cx="18.5" cy="16" r="0.75" fill="currentColor" stroke="none" />
   </Base>
 );
 
