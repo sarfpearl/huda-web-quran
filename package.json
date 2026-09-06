@@ -1,16 +1,16 @@
 {
-  "name": "huda-bayan",
+  "name": "huda-web-quran",
   "version": "0.1.0",
   "private": true,
-  "description": "Huda Bayan. An Islamic Bayan listening platform (Tamil).",
+  "description": "HuDa Web Quran. An immersive Holy Quran & Islamic Bayan listening platform.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "generate:quran-images": "node scripts/generate-quran-images.mjs",
-    "generate:quran-images-free": "node scripts/generate-quran-images-free.mjs"
+    "generate:quran-images": "node scripts/generation/generate-quran-images.mjs",
+    "generate:quran-images-free": "node scripts/generation/generate-quran-images-free.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.17.1",

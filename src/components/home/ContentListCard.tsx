@@ -31,7 +31,7 @@ export interface ContentListCardProps {
 }
 
 /**
- * Unified ContentListCard component for Huda Bayan.
+ * Unified ContentListCard component for HuDa Web Quran.
  * Renders an identical, visually consistent card structure for:
  * - Surah (114 chapters)
  * - Quran (30 Juz)

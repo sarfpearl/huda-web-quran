@@ -1,10 +1,10 @@
 /** Central site configuration used for SEO, share links, and branding. */
 export const siteConfig = {
-  name: "Huda",
-  fullName: "Huda Bayan",
+  name: "HuDa",
+  fullName: "HuDa Web Quran",
   tagline: "Listen. Reflect. Improve.",
   description:
-    "Discover Islamic Bayan, reminders and talks in Tamil that inspire faith and reflection. Listen to lectures by topic and speaker.",
+    "Discover and listen to the Holy Quran, Islamic Bayan and reminders in Tamil that inspire faith and reflection. Listen to lectures by topic and speaker.",
   // Prefer the env value; fall back to localhost for dev.
   url: (
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"

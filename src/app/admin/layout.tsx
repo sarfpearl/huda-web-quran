@@ -31,9 +31,9 @@ export default function AdminLayout({
               <LogoIcon />
             </span>
             <span className="text-sm font-semibold">
-              Huda Admin
+              HuDa Admin
               <span className="block text-[10px] font-normal uppercase tracking-widest text-muted">
-                Bayan
+                Admin Portal
               </span>
             </span>
           </Link>

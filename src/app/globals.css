@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 /*
- * Huda Bayan
+ * HuDa Web Quran
  * Semantic CSS variables drive light/dark theming. Tailwind reads brand
  * colors from tailwind.config; these vars handle surface/text semantics so
  * components stay theme-agnostic.

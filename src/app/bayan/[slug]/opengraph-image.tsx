@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/site";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Bayan on Huda Bayan";
+export const alt = "Bayan on HuDa Web Quran";
 
 export async function generateStaticParams() {
   const slugs = await getAllBayanSlugs();

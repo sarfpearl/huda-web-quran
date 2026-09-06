@@ -12,13 +12,13 @@ import type { Speaker } from "@/types/speaker";
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-/** High-quality live Islamic Bayan and Qur'an audio streams. */
+/** High-quality live Islamic Bayan and Qur'an audio streams (Mishari Rashid Alafasy). */
 const LIVE_AUDIO = [
-  "https://download.quranicaudio.com/quran/mishaari_raashid_al_afasy/001.mp3",
-  "https://download.quranicaudio.com/quran/mishaari_raashid_al_afasy/055.mp3",
-  "https://download.quranicaudio.com/quran/mishaari_raashid_al_afasy/036.mp3",
-  "https://download.quranicaudio.com/quran/mishaari_raashid_al_afasy/067.mp3",
-  "https://download.quranicaudio.com/quran/mishaari_raashid_al_afasy/018.mp3",
+  "https://server8.mp3quran.net/afs/001.mp3",
+  "https://server8.mp3quran.net/afs/055.mp3",
+  "https://server8.mp3quran.net/afs/036.mp3",
+  "https://server8.mp3quran.net/afs/067.mp3",
+  "https://server8.mp3quran.net/afs/018.mp3",
 ];
 
 export const seedCategories: Category[] = [

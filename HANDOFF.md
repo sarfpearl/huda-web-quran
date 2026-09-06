@@ -1,15 +1,15 @@
-# 🕌 Huda Bayan — Project Handoff
+# 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Claude / Antigravity / any AI assistant continuing this project
-> **Date:** 2026-08-19
+> **Updated:** 2026-09-03
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/Huda Bayan`
-> **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000) (config in `.claude/launch.json`)
+> **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ## 📌 Project Overview
 
-**Huda Bayan** is an immersive Islamic Bayan (sermon/lecture) listening web application. It is Tamil-language focused and built for Muslims to listen to lectures by category and speaker.
+**HuDa Web Quran** (Huda Bayan) is an immersive, modern Holy Quran and Islamic Bayan (sermon/lecture) listening web application. It is Tamil-language focused and built for Muslims to listen to talks by category, speaker, and recitation of all 114 Quran Surahs & 30 Juz with verse-aware 8K visuals and cinematic video backgrounds.
 
 Inspired by: `https://tamilfm.co/v/auto`
 
@@ -17,76 +17,76 @@ Inspired by: `https://tamilfm.co/v/auto`
 | Layer | Technology |
 |---|---|
 | Framework | **Next.js 14** (App Router, TypeScript) |
-| Styling | **Tailwind CSS v3** + custom CSS variables |
+| Styling | **Tailwind CSS v3** + Glassmorphism tokens & CSS variables |
 | Animations | **Framer Motion** |
-| Database | **Supabase** (wired but not yet active — runs on seed data by default) |
-| Font | **Poppins** via `next/font/google` |
-| Audio Engine | YouTube IFrame Player API + HTML5 `<audio>` |
-| Package name | `huda-bayan` |
+| Artwork Engine | **Verse-Based 8K Visual System (Surahs 1–114)** + Google Veo Cinematic Video Engine |
+| Image Generation | Pollinations.ai Flux 16:9 HD Pipeline + Gemini 8K Photorealistic Renderer |
+| Audio Engine | HTML5 `<audio>` Engine + YouTube IFrame API |
+| Package Name | `huda-bayan` (`huda-web-quran`) |
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-Huda Bayan/                      ← root folder
+Huda Bayan/                               ← Root workspace
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx             ← Home page (immersive full-screen)
-│   │   ├── layout.tsx           ← Root layout (Poppins font, providers)
-│   │   ├── globals.css          ← Global CSS + Tailwind directives
-│   │   ├── admin/               ← Admin CRUD (bayans, categories, speakers)
-│   │   ├── bayan/[slug]/        ← Bayan detail page + OG image
-│   │   ├── category/[slug]/     ← Category listing page
-│   │   ├── speaker/[slug]/      ← Speaker profile page
-│   │   ├── explore/             ← Browse page
-│   │   ├── search/              ← Search page
-│   │   └── api/youtube/         ← YouTube playlist & stream API routes
+│   │   ├── page.tsx                      ← Home page (immersive full-screen)
+│   │   ├── layout.tsx                    ← Root layout (Poppins font, theme & audio providers)
+│   │   ├── globals.css                   ← Global CSS + Tailwind directives + Glassmorphism
+│   │   ├── admin/                        ← Admin CRUD (bayans, categories, speakers)
+│   │   ├── bayan/[slug]/                 ← Bayan detail page + OG image
+│   │   ├── category/[slug]/              ← Category listing page
+│   │   ├── speaker/[slug]/               ← Speaker profile page
+│   │   └── api/youtube/                  ← YouTube playlist & stream API routes
 │   │
 │   ├── components/
 │   │   ├── home/
-│   │   │   ├── ImmersiveHomeClient.tsx   ← Main home page orchestrator
-│   │   │   ├── ImmersiveBackground.tsx  ← Full-screen scene backgrounds
-│   │   │   ├── ImmersiveHeader.tsx      ← Floating header
-│   │   │   ├── CompactBayanPlayer.tsx   ← Bottom glass player card (circular cover, clickable speed badge)
-│   │   │   └── TopicPickerModal.tsx     ← Right slide-over panel (Categories / Quran Juz / Explore tabs)
+│   │   │   ├── ImmersiveHomeClient.tsx    ← Main home page orchestrator (landing on Surah 1)
+│   │   │   ├── ImmersiveBackground.tsx   ← Dual-mode background (Video vs 8K Image)
+│   │   │   ├── SurahCinematicBackground.tsx ← 4K uncompressed crisp Retina background
+│   │   │   ├── ImmersiveHeader.tsx       ← Header with visual mode toggle & menu
+│   │   │   ├── CompactBayanPlayer.tsx    ← Bottom glass player card with circular cover
+│   │   │   ├── ContentListCard.tsx       ← List view card component
+│   │   │   └── TopicPickerModal.tsx      ← Control panel (Categories, Surahs 1-114, Juz 1-30, Speakers)
 │   │   ├── navigation/
 │   │   │   ├── Header.tsx
 │   │   │   ├── MobileBottomNav.tsx
-│   │   │   └── TimeLocationWidget.tsx   ← Live clock + location
-│   │   ├── player/GlobalAudioPlayer.tsx ← Persistent player (non-home)
-│   │   ├── layout/MainLayout.tsx        ← Route-aware layout switcher
-│   │   └── ui/                          ← Icon, CoverArt, Skeleton, etc.
+│   │   │   └── TimeLocationWidget.tsx    ← Live clock + location
+│   │   ├── player/GlobalAudioPlayer.tsx  ← Persistent player for secondary routes
+│   │   ├── layout/MainLayout.tsx         ← Route-aware layout switcher
+│   │   └── ui/                           ← Icon, CoverArt, Skeleton, etc.
 │   │
 │   ├── contexts/
-│   │   └── AudioPlayerContext.tsx       ← Global audio player engine
+│   │   └── AudioPlayerContext.tsx        ← Global audio engine (Surahs start at 0:00, sequential next/prev)
 │   │
 │   └── lib/
-│       ├── site.ts                      ← Brand config (name, url, tagline)
+│       ├── site.ts                       ← Brand config (name, url, tagline)
 │       ├── data/
-│       │   ├── seed.ts                  ← Demo data (categories, speakers, bayans)
-│       │   ├── quran.ts                 ← Quran Juz 1–30 + Surah 1–114 data, tracks & audio URLs
-│       │   └── service.ts               ← Data API layer
-│       └── youtube/
-│           ├── index.ts                 ← YouTube URL helpers
-│           └── iframe-api.ts            ← YT IFrame API loader
+│       │   ├── quran-artwork.ts          ← Single source of truth for 114 Surah verse concepts
+│       │   ├── quran.ts                  ← Quran Juz 1–30 + Surahs 1–114 metadata & audio URLs
+│       │   ├── surahList.ts              ← Thematic descriptions for all 114 Surahs
+│       │   ├── surahChapters.ts          ← Chapter definitions and verse metrics
+│       │   ├── seed.ts                   ← Bayan talks, speakers, and categories
+│       │   └── service.ts                ← Unified data service layer
+│       └── youtube/                      ← YouTube integration helpers
 │
 ├── scripts/
-│   ├── generate-quran-images-free.mjs  ← FREE cover generator (Pollinations, no key) ← USE THIS
-│   └── generate-quran-images.mjs       ← Gemini generator (needs paid billing; kept for later)
+│   ├── generate-quran-images-free.mjs   ← 16:9 HD verse-based image generator (Flux pipeline)
+│   ├── generate_veo_fatihah.mjs         ← Veo 3.1 4-scene video generator for Al-Fatihah
+│   └── generate_veo_baqarah_pilot.mjs   ← Veo 3.1 video pilot for Al-Baqarah
 │
 ├── public/
-│   ├── images/scenes/           ← 15 category background JPGs
-│   ├── images/quran/            ← 144 Quran covers: surah-1..114.jpg, juz-1..30.jpg
-│   ├── Glass.svg                ← Glassmorphism card asset
-│   ├── Menu.svg                 ← Hamburger menu icon
-│   ├── YT-Music.svg             ← YouTube Music button logo
-│   └── manifest.webmanifest     ← PWA manifest
+│   ├── images/quran/                    ← 114 Surah covers (surah-1..114.jpg) + 30 Juz covers
+│   ├── images/scenes/                   ← 16 Islamic category background images
+│   ├── videos/surah/                    ← Veo cinematic video loops (Al-Fatihah, Al-Baqarah, etc.)
+│   ├── Image-Mode.svg & Video-Mode.svg  ← Mode toggle icons
+│   ├── Glass.svg, Menu.svg, YT-Music.svg← UI vector assets
+│   └── manifest.webmanifest              ← PWA manifest
 │
-├── supabase/schema.sql          ← Full Supabase DB schema
-├── tailwind.config.ts           ← Design tokens
-├── package.json                 ← name: "huda-bayan"
-└── .env.example                 ← Environment variable template
+├── next.config.mjs                       ← High-DPI 4K deviceSizes (2560px, 3840px)
+└── tailwind.config.ts                    ← Design tokens and theme colors
 ```
 
 ---
@@ -123,8 +123,8 @@ responsive: wider width + smaller radius/padding on mobile (`sm:` bumps up).
 **`src/lib/site.ts`**
 ```ts
 export const siteConfig = {
-  name: "Huda",
-  fullName: "Huda Bayan",
+  name: "HuDa",
+  fullName: "HuDa Web Quran",
   tagline: "Listen. Reflect. Improve.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   locale: "ta_IN",
@@ -253,20 +253,27 @@ YOUTUBE_API_KEY=
 - [ ] **Admin authentication** — no auth guard on `/admin` routes yet
 
 ### ✅ Working Well
-- Immersive home with 15 animated scene backgrounds
-- Category switching with smooth crossfade transitions
-- YouTube IFrame audio playback
-- Unified iOS-style glass cards (player / hero / time widget), responsive
-- Bismillah calligraphy floats top-center; topic card shows category + Tamil + tagline
-- Player: circular cover art, dark-glass controls, clickable speed badge, YT playback-rate sync
-- Topic picker tabs: **Surah (114) / Quran Juz (30) / Bayan** — default Surah
-- Quran & Surah fully playable via the existing player (local audio, Sudais &
-  Maher Al-Muaiqly), with distinct rich AI cover images per item
-- Live clock + geolocation widget (top-left)
-- Mobile responsive + PWA manifest
-- SEO metadata + dynamic OG images per bayan
-- TypeScript strict mode — 0 errors
-- Admin panel (read-only in seed mode)
+- **Verse-Based 8K Quran Artwork System (Surahs 1–114)**:
+  - Single source of truth in `src/lib/data/quran-artwork.ts` mapping each Surah to specific Quranic Ayat, core theme, visual description, mood, and strict negative prompts (no faces, no calligraphy, no logos).
+  - High-resolution 16:9 widescreen artwork generated and saved to `public/images/quran/surah-[1-114].jpg` and `juz-[1-30].jpg`.
+- **Dual Visual Modes (Cinematic Video vs 8K Artwork)**:
+  - Header toggle switch between Video Mode and Image Mode with persistent `localStorage` preference.
+  - Video engine plays cinematic looping MP4 scenes generated with Google Veo (`public/videos/surah/`), with fallback to static 8K images.
+- **Retina Display & Visual Sharpness**:
+  - Configured `next.config.mjs` with 4K device sizes (`2560px`, `3840px`).
+  - Added `-webkit-optimize-contrast` and `unoptimized={true}` on hero background components to prevent blurriness on Mac Liquid Retina XDR displays.
+  - Dynamic cache busting (`?v=8`) via `quranImageUrl()` in `src/lib/data/quran.ts`.
+- **Audio Playback Engine**:
+  - Surahs start reliably at `0:00`.
+  - Next / Previous transport buttons cycle sequentially across all 114 Surahs.
+  - Initial landing track set to Surah 1: Al-Fatihah.
+- **Glassmorphic UI**:
+  - Dark glass player card with circular cover, animated equalizer, and playback speed control.
+  - Bismillah calligraphy floating top-center.
+  - Topic picker modal with 4 tabs: Categories, Surahs 1–114, Juz 1–30, and Speakers.
+- **Code Quality**:
+  - TypeScript strict mode — 0 errors (`npm run typecheck`).
+  - Clean Next.js 14 App Router architecture.
 
 ---
 

@@ -109,6 +109,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const currentPlaylistIdRef = useRef<string | null>(null);
   const activeSourceRef = useRef<SourceType>("local");
   const lastSaveRef = useRef<number>(0);
+  const retryCountRef = useRef<number>(0);
 
   const [queue, setQueue] = useState<BayanWithRelations[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -217,6 +218,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const loadCurrent = useCallback(
     async (bayan: BayanWithRelations, autoplay: boolean) => {
       setError(null);
+      retryCountRef.current = 0;
       const playlistId = bayan.youtubePlaylistId || bayan.category?.youtubePlaylistId;
       const isYoutubeSource =
         bayan.audioSource === "youtube" || Boolean(playlistId || bayan.youtubeVideoId);
@@ -704,12 +706,33 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [current, currentIndex, queue.length, next]);
 
   const onError = useCallback(() => {
+    const el = audioRef.current;
+    if (activeSourceRef.current === "local" && current && el) {
+      // Automatic fallback for Quran Surah tracks
+      if (current.id.startsWith("quran-surah-") && retryCountRef.current < 2) {
+        const num = Number(current.id.replace("quran-surah-", ""));
+        const pad = String(num).padStart(3, "0");
+        const fallbacks = [
+          `https://server8.mp3quran.net/afs/${pad}.mp3`,
+          `https://server11.mp3quran.net/sds/${pad}.mp3`,
+          `https://server6.mp3quran.net/thubti/${pad}.mp3`,
+        ];
+        retryCountRef.current += 1;
+        const nextUrl = fallbacks[retryCountRef.current % fallbacks.length];
+        console.warn(`[HuDa Audio] Audio stream encountered an error, trying backup CDN: ${nextUrl}`);
+        el.src = nextUrl;
+        el.load();
+        el.play().catch(() => {});
+        return;
+      }
+    }
+    retryCountRef.current = 0;
     setIsPlaying(false);
     setIsLoading(false);
     if (activeSourceRef.current === "local") {
       setError("Couldn't load this audio. Please try another.");
     }
-  }, []);
+  }, [current]);
 
   const value = useMemo<AudioPlayerApi>(
     () => ({

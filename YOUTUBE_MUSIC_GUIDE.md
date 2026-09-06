@@ -1,6 +1,6 @@
-# Huda Bayan · YouTube Music & Audio Integration Guide
+# HuDa Web Quran · YouTube Music & Audio Integration Guide
 
-> Comprehensive guide on YouTube Music integration, playlist streaming, iframe embedding, API credentials, and licensing considerations for Huda Bayan.
+> Comprehensive guide on YouTube Music integration, playlist streaming, iframe embedding, API credentials, and licensing considerations for HuDa Web Quran.
 
 ---
 
@@ -16,7 +16,7 @@
 
 ## 1. Overview
 
-**Huda Bayan** is an immersive Islamic audio web application inspired by `https://tamilfm.co/v/auto`. It features:
+**HuDa Web Quran** is an immersive Islamic audio web application inspired by `https://tamilfm.co/v/auto`. It features:
 - **Neomorphic 3D Audio Player**: Floating dark glass player card with animated equalizer, progress bar, and transport controls.
 - **Continuous YouTube Playlist Auto-Play**: Seamless playback of YouTube & YouTube Music playlists (e.g., Ramadan playlist `PLFRt54vRoHJs`).
 - **Control Center Right Panel**: Slide-out drawer with 3 tabs (*Categories*, *Speakers*, *Explore*) and instant search.
@@ -137,4 +137,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 
 ---
 
-*Huda Bayan — Created for Islamic Reminders, Bayans & Guidance.*
+*HuDa Web Quran — Created for Holy Quran, Islamic Reminders & Bayans.*

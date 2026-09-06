@@ -10,7 +10,10 @@ npm-debug.log*
 .vercel
 *.tsbuildinfo
 next-env.d.ts
-/huda-right-guidance-mp3
-
-huda-right-guidance-mp3/
 *.py
+
+# Production video masters and 4K raw renders (exceeds GitHub 100MB limit)
+/assets
+*-4k*.mp4
+*-master.mp4
+

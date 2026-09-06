@@ -81,7 +81,7 @@ export function ImmersiveHomeClient({
     if (overrideBayan) return overrideBayan;
     // Default initial landing: Surah 1 (Al-Fatihah)
     return SURAH_TRACKS[0] ?? categoryBayans[0] ?? allBayan[0] ?? null;
-  }, [overrideBayan, player.current, categoryBayans, allBayan]);
+  }, [overrideBayan, player, categoryBayans, allBayan]);
 
   // Resolve active Surah metadata if activeBayan is a Surah track
   const activeSurah = useMemo(() => {

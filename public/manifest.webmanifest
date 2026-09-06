@@ -1,7 +1,7 @@
 {
-  "name": "Huda Bayan",
-  "short_name": "Huda",
-  "description": "Discover and listen to Islamic Bayan and reminders in Tamil.",
+  "name": "HuDa Web Quran",
+  "short_name": "HuDa",
+  "description": "Discover and listen to the Holy Quran, Islamic Bayan and reminders in Tamil.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0e100f",

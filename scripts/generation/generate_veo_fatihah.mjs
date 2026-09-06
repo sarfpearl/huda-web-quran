@@ -201,7 +201,7 @@ async function generateVeoClipWithRetry(scene, outputFilePath, maxRetries = 3) {
 
 async function main() {
   console.log("==========================================================");
-  console.log("  Huda Bayan — Upgraded Cinematic Veo 3.1 Al-Fatihah Pipeline ");
+  console.log("  HuDa Web Quran — Upgraded Cinematic Veo 3.1 Al-Fatihah Pipeline ");
   console.log("==========================================================");
 
   const clipsDir = path.join(OUTPUT_DIR, "001-al-fatihah");
@@ -220,13 +220,6 @@ async function main() {
   }
 
   const masterMeta = assembleMasterVideo(clipPaths, finalMasterPath);
-
-  // Sync to secondary workspace if present
-  const secondaryDir = "/Users/pearl-9744/Claude/Projects/Huda Bayan/huda-right-guidance-mp3/public/videos/surah";
-  if (fs.existsSync(path.dirname(secondaryDir))) {
-    fs.mkdirSync(secondaryDir, { recursive: true });
-    fs.copyFileSync(finalMasterPath, path.join(secondaryDir, "001-al-fatihah.mp4"));
-  }
 
   console.log("\n==========================================================");
   console.log("             VEO 3.1 GENERATION SUMMARY REPORT             ");
