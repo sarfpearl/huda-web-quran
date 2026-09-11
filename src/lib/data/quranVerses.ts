@@ -580,7 +580,39 @@ const cacheKey = (surahNumber: number, reciterId: string) => `${surahNumber}::${
 
 /** Waqf (pause) diacritic marks that are not spoken words. */
 const WAQF_MARKS = /^[ۖ-ۭؕ-ؚۚۗۘۙۛۜ۟۠ۢۤ]+$/;
-const BISMILLAH_PREFIX = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ";
+/**
+ * Reduces Arabic text to a bare consonant skeleton: strips every combining mark
+ * (harakat, shadda, sukun, superscript alef, Quranic annotation signs) and the
+ * tatweel, and folds alef variants to a plain alef. Uthmani sources spell the
+ * Bismillah with subtly different code points, so a skeleton comparison is the
+ * only reliable way to detect it.
+ */
+function arabicSkeleton(text: string): string {
+  return text
+    .normalize("NFC")
+    .replace(/\p{Mn}/gu, "")
+    .replace(/\u0640/g, "")
+    .replace(/[\u0622\u0623\u0625\u0671\u0672\u0673]/g, "\u0627")
+    .replace(/\s+/g, "");
+}
+
+const BISMILLAH_SKELETON = arabicSkeleton("\u0628\u0650\u0633\u0652\u0645\u0650 \u0671\u0644\u0644\u0651\u064e\u0647\u0650 \u0671\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0670\u0646\u0650 \u0671\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650");
+
+/**
+ * Removes a leading Bismillah from ayah 1 of surahs 2-114 (surah 1 counts it as
+ * its own ayah; surah 9 has none). Matches on the consonant skeleton so it works
+ * across Uthmani code-point variants. Returns the text unchanged when no
+ * Bismillah prefix is present.
+ */
+function stripLeadingBismillah(textArabic: string, surahNumber: number): string {
+  if (surahNumber === 1 || surahNumber === 9) return textArabic;
+  const words = textArabic.trim().split(/\s+/);
+  if (words.length <= 4) return textArabic;
+  if (arabicSkeleton(words.slice(0, 4).join("")) === BISMILLAH_SKELETON) {
+    return words.slice(4).join(" ").trim();
+  }
+  return textArabic;
+}
 
 /** Splits an ayah's Uthmani text into spoken words (drops standalone waqf marks). */
 function splitArabicWords(textArabic: string): string[] {
@@ -618,8 +650,8 @@ async function applyReciterTimings(
 
       // Base word text: prefer explicit words, else split the Arabic text.
       let rawArabic = verse.textArabic.trim();
-      if (surahNumber !== 1 && surahNumber !== 9 && verse.ayahNumber === 1 && rawArabic.startsWith(BISMILLAH_PREFIX)) {
-        rawArabic = rawArabic.slice(BISMILLAH_PREFIX.length).trim();
+      if (verse.ayahNumber === 1) {
+        rawArabic = stripLeadingBismillah(rawArabic, surahNumber);
       }
       const wordsList =
         verse.words && verse.words.length > 0
@@ -828,8 +860,8 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
                     verse.timestampTo = vt.timestampToSec;
 
                     let rawArabic = verse.textArabic.trim();
-                    if (surahNumber !== 1 && surahNumber !== 9 && idx === 0 && rawArabic.startsWith(BISMILLAH_PREFIX)) {
-                      rawArabic = rawArabic.slice(BISMILLAH_PREFIX.length).trim();
+                    if (idx === 0) {
+                      rawArabic = stripLeadingBismillah(rawArabic, surahNumber);
                       verse.textArabic = rawArabic;
                     }
 
