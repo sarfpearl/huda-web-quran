@@ -1,0 +1,8 @@
+{
+  "reciterId": "shatri",
+  "qdcId": 4,
+  "audioTemplate": "https://download.quranicaudio.com/qdc/abu_bakr_shatri/murattal/{n}.mp3",
+  "templateVerified": true,
+  "surahsGenerated": 114,
+  "failed": []
+}

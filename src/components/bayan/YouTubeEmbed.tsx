@@ -32,7 +32,7 @@ export function YouTubeEmbed({
 
   const thumbUrl = videoId
     ? youtubeThumbnail(videoId)
-    : "/images/scenes/quran.jpg";
+    : "/assets/images/bayan/quran.jpg";
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black">

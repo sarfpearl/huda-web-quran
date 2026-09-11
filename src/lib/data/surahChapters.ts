@@ -4,6 +4,7 @@
  * Each of the 114 Surahs contains thematic chapters derived from the meaning
  * and progression of its verses, mapping to cinematic video journeys.
  */
+import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
 
 export interface SurahChapter {
   id: number;
@@ -79,18 +80,18 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
     verses: 286,
     revelation: "Medinan",
     slug: "al-baqarah",
-    masterVideoPath: "/videos/surah/002-al-baqarah/01-the-book-of-guidance.mp4",
-    isMultiChapter: true,
+    masterVideoPath: "/videos/surah/002-al-baqarah.mp4",
+    isMultiChapter: false,
     chapters: [
       {
         id: 1,
         fromVerse: 1,
-        toVerse: 5,
-        theme: "The Book of Guidance & The God-Conscious Believers",
-        mood: "transcendent, dawn certainty, clear bedrock pathway",
-        visualConcept: "Ancient desert plateau emerging from deep indigo darkness into crystal morning light with a solid bedrock stone pathway.",
-        videoPath: "/videos/surah/002-al-baqarah/01-the-book-of-guidance.mp4",
-        timeRange: [0, 0.08],
+        toVerse: 286,
+        theme: "The Book of Guidance & Faith in Allah",
+        mood: "serene, vast golden desert sand dunes",
+        visualConcept: "Real cinematic 4K drone sweep across rolling Arabian desert sand dunes.",
+        videoPath: "/videos/surah/002-al-baqarah.mp4",
+        timeRange: [0, 1.0],
       },
       {
         id: 2,
@@ -450,30 +451,40 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
  * Returns visual chapter metadata for a given Surah number (1-114).
  * Falls back to single default master path if not specifically multi-chaptered.
  */
+function slugify(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function getSurahVisualData(surahNum: number): SurahVisualData {
   if (SURAH_CHAPTERS_REGISTRY[surahNum]) {
     return SURAH_CHAPTERS_REGISTRY[surahNum];
   }
+  const concept = QURAN_ARTWORK_CONCEPTS.find((c) => c.surahNumber === surahNum);
   const pad = String(surahNum).padStart(3, "0");
-  const defaultPath = `/videos/surah/${pad}-surah.mp4`;
+  const slug = concept ? slugify(concept.name) : `surah-${surahNum}`;
+  const videoPath = `/videos/surah/${pad}-${slug}.mp4`;
   return {
     surahNumber: surahNum,
-    name: `Surah ${surahNum}`,
+    name: concept?.name ?? `Surah ${surahNum}`,
     arabicName: "",
     verses: 0,
     revelation: "Meccan",
-    slug: `surah-${surahNum}`,
-    masterVideoPath: defaultPath,
+    slug,
+    masterVideoPath: videoPath,
     isMultiChapter: false,
     chapters: [
       {
         id: 1,
         fromVerse: 1,
         toVerse: 999,
-        theme: "Spiritual Reflection and Contemplation",
-        mood: "serene, atmospheric",
-        visualConcept: "Cinematic atmospheric Islamic landscape with soft lighting.",
-        videoPath: defaultPath,
+        theme: concept?.core ?? "Spiritual Reflection and Contemplation",
+        mood: concept?.mood ?? "serene, atmospheric",
+        visualConcept: concept?.visual ?? "Cinematic atmospheric Islamic landscape with soft lighting.",
+        videoPath,
         timeRange: [0, 1.0],
       },
     ],

@@ -9,13 +9,25 @@ import { ImmersiveBackground } from "./ImmersiveBackground";
 import { ImmersiveHeader } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
+import { CenterVerseDisplay } from "./CenterVerseDisplay";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   isQuranTrack,
+  isQuranTrackId,
   isSurahTrackId,
   getSurahByTrackId,
   SURAH_TRACKS,
+  QURAN_SURAHS,
+  getSurahTracksForReciter,
+  quranSurahToTrack,
+  getDefaultReciter,
+  getReciterById,
+  resolveActiveReciter,
+  RECITER_STORAGE_KEY,
+  type QuranReciter,
 } from "@/lib/data/service";
+import { useQuranVerseSync, getVoiceProgressInVerse } from "@/lib/data/quranVerses";
+import { SyncQADebugHUD } from "./SyncQADebugHUD";
 
 interface ImmersiveHomeClientProps {
   categories: Category[];
@@ -31,18 +43,71 @@ export function ImmersiveHomeClient({
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
+  const [language, setLanguage] = useState<"en" | "ta">("en");
+  const [selectedReciter, setSelectedReciter] = useState<QuranReciter>(getDefaultReciter);
+
+  // Memoize surah tracks for the selected reciter
+  const surahTracksForCurrentReciter = useMemo(
+    () => getSurahTracksForReciter(selectedReciter),
+    [selectedReciter]
+  );
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      (window as any).__hudaPlaySurah = (surahNum: number) => {
+        const tracks = getSurahTracksForReciter(selectedReciter);
+        if (tracks[surahNum - 1]) {
+          player.playBayan(tracks[surahNum - 1], tracks);
+        }
+      };
+      setTimeout(() => {
+        const overs: string[] = [];
+        document.querySelectorAll("*").forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.right > window.innerWidth + 1) {
+            const cls = (el.className && typeof el.className === "string") ? el.className.split(" ")[0] : "";
+            overs.push(`${el.tagName}.${cls}:r=${Math.round(r.right)}`);
+          }
+        });
+        document.title = `W=${window.innerWidth},S=${document.documentElement.scrollWidth}: ` + overs.slice(0, 6).join(" | ");
+      }, 1000);
+    }
     try {
       const saved = localStorage.getItem("huda-visual-mode");
       if (saved === "video" || saved === "image") {
         setVisualMode(saved);
       }
+      const savedLang = localStorage.getItem("huda-translation-lang");
+      if (savedLang === "en" || savedLang === "ta") {
+        setLanguage(savedLang);
+      }
+      const savedReciterId = localStorage.getItem(RECITER_STORAGE_KEY);
+      if (savedReciterId) {
+        const found = getReciterById(savedReciterId);
+        if (found) {
+          setSelectedReciter(found);
+        }
+      }
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [player, selectedReciter]);
+
+  // Keep selectedReciter in sync if player.current changes to a Surah track with a different reciter
+  useEffect(() => {
+    if (player.current && isSurahTrackId(player.current.id)) {
+      const active = resolveActiveReciter(player.current);
+      if (active.id !== selectedReciter.id) {
+        setSelectedReciter(active);
+        try {
+          localStorage.setItem(RECITER_STORAGE_KEY, active.id);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }, [player.current, selectedReciter.id]);
 
   // Initial category: default to 'quran' or 'iman-taqwa'
   const defaultCategory =
@@ -79,9 +144,15 @@ export function ImmersiveHomeClient({
       return player.current;
     }
     if (overrideBayan) return overrideBayan;
-    // Default initial landing: Surah 1 (Al-Fatihah)
-    return SURAH_TRACKS[0] ?? categoryBayans[0] ?? allBayan[0] ?? null;
-  }, [overrideBayan, player, categoryBayans, allBayan]);
+    // Default initial landing: Surah 1 (Al-Fatihah) for active reciter
+    return (
+      surahTracksForCurrentReciter[0] ??
+      SURAH_TRACKS[0] ??
+      categoryBayans[0] ??
+      allBayan[0] ??
+      null
+    );
+  }, [overrideBayan, player, surahTracksForCurrentReciter, categoryBayans, allBayan]);
 
   // Resolve active Surah metadata if activeBayan is a Surah track
   const activeSurah = useMemo(() => {
@@ -140,33 +211,159 @@ export function ImmersiveHomeClient({
     });
   };
 
+  const handleToggleLanguage = () => {
+    setLanguage((prev) => {
+      const next = prev === "en" ? "ta" : "en";
+      try {
+        localStorage.setItem("huda-translation-lang", next);
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
+  const handleSeekToVerse = (targetTimeOrIndex: number) => {
+    if (typeof targetTimeOrIndex === "number") {
+      player.seek(targetTimeOrIndex);
+    }
+  };
+
+  const handleSelectReciter = (reciter: QuranReciter) => {
+    setSelectedReciter(reciter);
+    try {
+      localStorage.setItem(RECITER_STORAGE_KEY, reciter.id);
+    } catch {
+      /* ignore */
+    }
+
+    const currentSurahNum =
+      activeSurah?.number ??
+      (activeBayan && isSurahTrackId(activeBayan.id)
+        ? parseInt(activeBayan.id.replace("quran-surah-", ""), 10)
+        : 1);
+    const targetSurah =
+      QURAN_SURAHS.find((s) => s.number === currentSurahNum) ?? QURAN_SURAHS[0];
+    const newTrack = quranSurahToTrack(targetSurah, reciter);
+    const reciterSurahTracks = getSurahTracksForReciter(reciter);
+
+    // Keep current Ayah position
+    const seekTime =
+      currentSegment?.startTime ?? (player.currentTime > 0 ? player.currentTime : 0);
+
+    setOverrideBayan(newTrack);
+
+    if (player.isPlaying) {
+      player.playBayan(newTrack, reciterSurahTracks);
+      if (seekTime > 0) {
+        setTimeout(() => player.seek(seekTime), 150);
+        setTimeout(() => player.seek(seekTime), 500);
+      }
+    } else {
+      player.cueBayan(newTrack, reciterSurahTracks);
+      if (seekTime > 0) {
+        setTimeout(() => player.seek(seekTime), 150);
+        setTimeout(() => player.seek(seekTime), 500);
+      }
+    }
+  };
+
+  const isJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
+
+  const {
+    verses,
+    segments,
+    activeIndex,
+    activeSegmentIndex,
+    currentSegment,
+    currentVerse,
+    voiceProgress,
+    activeWord,
+    activeWordIndex,
+    hasWordTiming,
+    timingMode,
+    timingSource,
+    currentVideo,
+    showTranslation,
+    setShowTranslation,
+    handlePrevVerse,
+    handleNextVerse,
+    jumpToVerse,
+  } = useQuranVerseSync({
+    surahNumber: isJuz ? 1 : (activeSurah?.number ?? null),
+    categorySlug: activeBayan?.category?.slug || activeCategory.slug,
+    currentTime: player.currentTime,
+    duration: player.duration,
+    isPlaying: player.isPlaying,
+    onSeekToVerse: handleSeekToVerse,
+    isJuz,
+    reciter: selectedReciter,
+    isPrelude: player.isPrelude,
+    preludeType: player.preludeType,
+    preludeCurrentTime: player.preludeCurrentTime,
+    preludeDuration: player.preludeDuration,
+  });
+
   return (
     <div className="fixed inset-0 z-10 overflow-hidden bg-slate-950 text-sand-50 select-none">
       {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
       <ImmersiveBackground
         categorySlug={activeBayan?.category?.slug || activeCategory.slug}
         activeSurahNumber={activeSurah?.number ?? null}
-        currentTime={player.currentTime}
-        duration={player.duration}
+        ayahNumber={currentVerse?.ayahNumber ?? null}
+        videoSrc={currentVideo}
+        currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+        duration={player.isPrelude ? player.preludeDuration : player.duration}
         isPlaying={player.isPlaying}
         visualMode={visualMode}
       />
 
-      {/* Bismillah Calligraphy — Top Center */}
-      <p className="pointer-events-none absolute top-[5.5rem] sm:top-5 left-1/2 -translate-x-1/2 z-30 w-full px-6 sm:px-24 text-center font-arabic text-2xl sm:text-3xl md:text-4xl font-extrabold text-amber-300 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
-        بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-      </p>
+      {/* Voice-Primary Audio Synchronization QA Monitor */}
+      <SyncQADebugHUD
+        currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+        activeSurah={activeSurah}
+        currentVerse={currentVerse}
+        currentSegment={currentSegment}
+        activeVerseIndex={activeIndex}
+        totalVerses={verses.length}
+        voiceProgress={voiceProgress}
+        activeWord={activeWord}
+        selectedReciter={selectedReciter}
+        timingMode={timingMode}
+        timingSource={timingSource}
+      />
+
+      {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation) */}
+      <CenterVerseDisplay
+        currentVerse={currentVerse}
+        currentSegment={currentSegment}
+        currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+        isPlaying={player.isPlaying}
+        language={language}
+        showTranslation={showTranslation}
+        onPrevVerse={handlePrevVerse}
+        onNextVerse={handleNextVerse}
+        hasMultipleVerses={verses.length > 1}
+        activeWordIndex={activeWordIndex}
+        hasWordTiming={hasWordTiming}
+      />
 
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
       <ImmersiveHeader
         onShuffle={handleShuffle}
         visualMode={visualMode}
         onToggleVisualMode={handleToggleVisualMode}
+        language={language}
+        onToggleLanguage={handleToggleLanguage}
+        selectedReciter={selectedReciter}
+        onSelectReciter={handleSelectReciter}
+        isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
       >
         <TopicPickerModal
           categories={categories}
           speakers={speakers}
           allBayan={allBayan}
+          surahTracks={surahTracksForCurrentReciter}
           activeCategorySlug={activeCategory.slug}
           onSelectCategory={handleSelectCategory}
           onSelectSpeaker={handleSelectSpeaker}
@@ -178,12 +375,24 @@ export function ImmersiveHomeClient({
       {/* Bottom Floating Player */}
       <div className="absolute bottom-4 sm:bottom-6 inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none">
         <div className="pointer-events-auto">
-          {/* Compact Integrated Glassmorphism Player */}
+          {/* Compact Integrated Glassmorphism Player with Ayah Controls */}
           {activeBayan && (
             <CompactBayanPlayer
               bayan={activeBayan}
               categoryList={categoryBayans}
+              surahTracks={surahTracksForCurrentReciter}
               onShuffleCategory={handleShuffle}
+              activeSurah={activeSurah}
+              currentVerse={currentVerse}
+              currentSegment={currentSegment}
+              segments={segments}
+              totalVerses={activeSurah?.verses ?? verses.length}
+              activeVerseIndex={activeIndex}
+              language={language}
+              onToggleLanguage={handleToggleLanguage}
+              showTranslation={showTranslation}
+              onToggleShowTranslation={() => setShowTranslation((prev) => !prev)}
+              onSeekToVerse={jumpToVerse}
             />
           )}
         </div>

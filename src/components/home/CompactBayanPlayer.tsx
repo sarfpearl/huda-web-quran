@@ -27,26 +27,59 @@ import {
   QURAN_TRACKS,
   SURAH_TRACKS,
   quranImageUrl,
+  getSurahTracksForReciter,
+  resolveActiveReciter,
 } from "@/lib/data/service";
+import {
+  getVoiceProgressInVerse,
+  type AyahVerse,
+  type RecitationSegment,
+} from "@/lib/data/quranVerses";
+import type { QuranSurah } from "@/lib/data/quran";
+import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
   categoryList?: BayanWithRelations[];
+  surahTracks?: BayanWithRelations[];
   onShuffleCategory?: () => void;
+  activeSurah?: QuranSurah | null;
+  currentVerse?: AyahVerse | null;
+  currentSegment?: RecitationSegment | null;
+  segments?: RecitationSegment[];
+  totalVerses?: number;
+  activeVerseIndex?: number;
+  language?: "en" | "ta";
+  onToggleLanguage?: () => void;
+  showTranslation?: boolean;
+  onToggleShowTranslation?: () => void;
+  onSeekToVerse?: (verseIndex: number, totalVerses: number) => void;
 }
 
 export function CompactBayanPlayer({
   bayan,
   categoryList,
+  surahTracks,
   onShuffleCategory,
+  activeSurah,
+  currentVerse,
+  currentSegment,
+  segments,
+  totalVerses = 1,
+  activeVerseIndex = 0,
+  language = "en",
+  onToggleLanguage,
+  showTranslation = true,
+  onToggleShowTranslation,
+  onSeekToVerse,
 }: CompactBayanPlayerProps) {
   const player = useAudioPlayer();
   const isCurrentTrack = player.current?.id === bayan.id;
   const isPlaying = isCurrentTrack && player.isPlaying;
   const isLoading = isCurrentTrack && player.isLoading;
   const errorMsg = isCurrentTrack ? player.error : null;
-  const isQuran = isQuranTrack(bayan.id);
-  const surah = isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined;
+  const isQuran = isQuranTrack(bayan.id) || Boolean(activeSurah) || bayan.category?.slug === "quran" || bayan.category?.slug === "quran-recitation";
+  const surah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
 
   const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
 
@@ -80,17 +113,19 @@ export function CompactBayanPlayer({
         ? `Quran • Surah ${surah.number} · ${surah.verses} Verses · ${surah.revelation}`
         : quranContentLabel(bayan.id) ?? bayan.category.name)
     : bayan.category.name;
+  const currentSurah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
   const currentTime = isCurrentTrack ? player.currentTime : 0;
   const totalDuration = isCurrentTrack && player.duration > 0
     ? player.duration
-    : bayan.durationSeconds;
+    : (bayan.durationSeconds || (currentSurah ? SURAH_DURATIONS[currentSurah.number] : 300));
 
   const handlePlayToggle = () => {
     if (isCurrentTrack) {
       player.togglePlay();
     } else {
+      const activeSurahTracks = surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan));
       const contextList = isSurahTrackId(bayan.id)
-        ? SURAH_TRACKS
+        ? activeSurahTracks
         : isQuranTrackId(bayan.id)
         ? QURAN_TRACKS
         : categoryList;
@@ -103,8 +138,9 @@ export function CompactBayanPlayer({
     if (isCurrentTrack) {
       player.seek(val);
     } else {
+      const activeSurahTracks = surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan));
       const contextList = isSurahTrackId(bayan.id)
-        ? SURAH_TRACKS
+        ? activeSurahTracks
         : isQuranTrackId(bayan.id)
         ? QURAN_TRACKS
         : categoryList;
@@ -127,7 +163,7 @@ export function CompactBayanPlayer({
 
   const handleShuffle = () => {
     if (isSurahTrackId(bayan.id)) {
-      playRandomFrom(SURAH_TRACKS);
+      playRandomFrom(surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan)));
     } else if (isQuranTrackId(bayan.id)) {
       playRandomFrom(QURAN_TRACKS);
     } else {
@@ -136,7 +172,7 @@ export function CompactBayanPlayer({
   };
 
   return (
-    <div className="relative w-[94dvw] sm:w-[80dvw] max-w-[680px] rounded-[40px] overflow-hidden bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] px-6 py-5 sm:px-10 sm:py-6 transition-all select-none">
+    <div className="relative w-full sm:w-[80dvw] max-w-[680px] rounded-[40px] overflow-hidden bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] px-6 py-5 sm:px-10 sm:py-6 transition-all select-none">
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
       <div className="relative flex items-center justify-between gap-4 sm:gap-5">
@@ -150,7 +186,7 @@ export function CompactBayanPlayer({
               unoptimized={true}
               priority
               className="object-cover [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
-              onError={() => setCoverSrc("/images/scenes/quran.jpg")}
+              onError={() => setCoverSrc("/assets/images/bayan/quran.jpg")}
             />
           ) : (
             <CoverArt
@@ -195,6 +231,20 @@ export function CompactBayanPlayer({
           <p className="truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5">
             {categoryLine}
           </p>
+          {/* Active Ayah Pill Badge */}
+          {(currentSegment || currentVerse) && (
+            <div className="mt-2 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 w-fit rounded-full bg-black/40 border border-white/15 text-xs select-none">
+              <span className="text-sand-300/80 font-normal tabular-nums">
+                {currentSegment?.type === "istiadhah" ? (
+                  "Isti'adhah"
+                ) : currentSegment?.type === "bismillah" ? (
+                  "Bismillah"
+                ) : (
+                  <>Ayat {currentSegment?.type === "ayah" && currentSegment.ayahNumber ? currentSegment.ayahNumber : (currentVerse?.ayahNumber && currentVerse.ayahNumber > 0 ? currentVerse.ayahNumber : 1)}/{activeSurah?.verses || totalVerses || 1}</>
+                )}
+              </span>
+            </div>
+          )}
           {errorMsg && (
             <span className="truncate text-[11px] font-medium text-red-400 mt-1" role="alert">
               {errorMsg}
@@ -204,6 +254,7 @@ export function CompactBayanPlayer({
 
         {/* Right Vertical Action Stack */}
         <div className="flex flex-col gap-2.5 shrink-0">
+          {/* 1. Favorite Button */}
           <button
             type="button"
             className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 text-emerald-400 border border-white/10 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
@@ -211,26 +262,74 @@ export function CompactBayanPlayer({
           >
             <HeartIcon className="text-xs sm:text-sm" />
           </button>
+
+          {/* 2. Shuffle Button (Moved from bottom left per red arrow) */}
           <button
             type="button"
-            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-            aria-label="Add to Queue"
+            onClick={handleShuffle}
+            title={
+              isSurahTrackId(bayan.id)
+                ? "Play a random Surah"
+                : isQuranTrackId(bayan.id)
+                ? "Play a random Juz"
+                : "Random Category / Shuffle"
+            }
+            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
+            aria-label={
+              isSurahTrackId(bayan.id)
+                ? "Shuffle Surah"
+                : isQuranTrackId(bayan.id)
+                ? "Shuffle Juz"
+                : "Shuffle Category"
+            }
           >
-            <PlaylistAddIcon className="text-xs sm:text-sm" />
+            <ShuffleIcon className="text-xs sm:text-sm" />
           </button>
+
+          {/* 3. Playback Speed Button (Moved from bottom right per red arrow) */}
           <button
             type="button"
-            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-            aria-label="Share"
+            onClick={() => {
+              const rates = [1, 1.25, 1.5, 2];
+              const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
+              player.setPlaybackRate?.(rates[nextIdx]);
+            }}
+            title="Playback Speed"
+            aria-label="Playback Speed"
+            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
-            <ShareIcon className="text-xs sm:text-sm" />
+            {player.playbackRate}x
           </button>
         </div>
       </div>
 
-      {/* Lower Section — Audio Progress Slider & Time Labels */}
-      <div className="mt-5 px-1">
-        <div className="relative flex items-center">
+      {/* Lower Section — Audio Progress Slider with Embedded Ayah Dots & Time Labels */}
+      <div className="mt-4 px-1">
+        <div className="relative flex items-center h-4">
+          {/* Custom Track Layer with Dark Base, Played Fill, Active Verse Pill, and Division Dots */}
+          <div className="absolute inset-x-0 h-2.5 rounded-full bg-black/60 border border-white/10 overflow-hidden pointer-events-none">
+            {/* Played Emerald Progress Fill (ONLY for non-Quran Bayans; strictly removed for Quran) */}
+            {!isQuran && (
+              <div
+                className="absolute left-0 top-0 bottom-0 bg-emerald-500/80 transition-[width] duration-150"
+                style={{
+                  width: `${(currentTime / (totalDuration || 1)) * 100}%`,
+                }}
+              />
+            )}
+
+            {/* The ONLY Visual Synchronization Line for Quran: Continuous Voice-Primary Yellow Progress Fill */}
+            {isQuran && (
+              <div
+                className="absolute left-0 top-0.5 bottom-0.5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.95)] ring-1 ring-amber-300 transition-[width] duration-100 ease-linear pointer-events-none"
+                style={{
+                  width: `${Math.min(Math.max(totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0, currentTime > 0 ? 0.5 : 0), 100)}%`,
+                }}
+              />
+            )}
+          </div>
+
+          {/* Interactive Range Input with Voice-Matched Golden Thumb for Quran */}
           <input
             type="range"
             min={0}
@@ -239,14 +338,7 @@ export function CompactBayanPlayer({
             value={currentTime}
             onChange={handleSeek}
             aria-label="Progress"
-            className="neomorph-range h-2.5 w-full cursor-pointer appearance-none rounded-full"
-            style={{
-              background: `linear-gradient(to right, #10b981 ${
-                (currentTime / (totalDuration || 1)) * 100
-              }%, rgba(0,0,0,0.4) ${
-                (currentTime / (totalDuration || 1)) * 100
-              }%)`,
-            }}
+            className={`${isQuran ? "quran-range" : "neomorph-range"} relative z-20 h-2.5 w-full cursor-pointer appearance-none bg-transparent`}
           />
         </div>
 
@@ -256,99 +348,40 @@ export function CompactBayanPlayer({
         </div>
       </div>
 
-      {/* Bottom Transport Controls Bar */}
-      <div className="mt-4 flex items-center justify-center gap-1.5 sm:justify-between sm:gap-0 px-1 sm:px-2">
+      {/* Bottom Transport Controls Bar — Centered Primary Controls */}
+      <div className="mt-4 flex items-center justify-center gap-3 sm:gap-4 px-1 sm:px-2">
         <button
           type="button"
-          onClick={handleShuffle}
-          title={
-            isSurahTrackId(bayan.id)
-              ? "Play a random Surah"
-              : isQuranTrackId(bayan.id)
-              ? "Play a random Juz"
-              : "Random Category / Shuffle"
-          }
-          className="grid h-8 w-8 sm:h-9 sm:w-9 shrink-0 place-items-center rounded-full bg-black/40 border border-white/10 text-sand-300/50 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
-          aria-label={
-            isSurahTrackId(bayan.id)
-              ? "Shuffle Surah"
-              : isQuranTrackId(bayan.id)
-              ? "Shuffle Juz"
-              : "Shuffle Category"
-          }
+          onClick={player.previous}
+          className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          aria-label="Previous"
         >
-          <ShuffleIcon className="text-sm" />
+          <PrevIcon className="text-sm" />
+        </button>
+
+        {/* Glowing Emerald Play Button */}
+        <button
+          type="button"
+          onClick={handlePlayToggle}
+          className="grid h-14 w-14 sm:h-15 sm:w-15 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          aria-label={isPlaying ? "Pause" : "Play"}
+        >
+          {isLoading ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+          ) : isPlaying ? (
+            <PauseIcon className="text-lg" />
+          ) : (
+            <PlayIcon className="text-lg ml-0.5" />
+          )}
         </button>
 
         <button
           type="button"
-          className="grid h-8 w-8 sm:h-9 sm:w-9 shrink-0 place-items-center rounded-full bg-black/40 border border-white/10 text-sand-300/50 hover:bg-black/60 hover:text-white transition-all active:scale-90 cursor-pointer"
-          aria-label="Repeat"
+          onClick={player.next}
+          className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          aria-label="Next"
         >
-          <RepeatIcon className="text-sm" />
-        </button>
-
-        {/* Center Primary Transport Controls */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          <button
-            type="button"
-            onClick={player.previous}
-            className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-            aria-label="Previous"
-          >
-            <PrevIcon className="text-sm" />
-          </button>
-
-          {/* Glowing Emerald Play Button */}
-          <button
-            type="button"
-            onClick={handlePlayToggle}
-            className="grid h-14 w-14 sm:h-15 sm:w-15 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-            aria-label={isPlaying ? "Pause" : "Play"}
-          >
-            {isLoading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
-            ) : isPlaying ? (
-              <PauseIcon className="text-lg" />
-            ) : (
-              <PlayIcon className="text-lg ml-0.5" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={player.next}
-            className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-            aria-label="Next"
-          >
-            <NextIcon className="text-sm" />
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            const rates = [1, 1.25, 1.5, 2];
-            const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
-            player.setPlaybackRate?.(rates[nextIdx]);
-          }}
-          className="grid h-8 w-8 sm:h-9 sm:w-9 shrink-0 place-items-center rounded-full bg-black/40 border border-white/10 text-sand-300/50 hover:bg-black/60 hover:text-white transition-all active:scale-90 cursor-pointer"
-          aria-label="Speed"
-        >
-          <EqualizerIcon className="text-sm" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            const rates = [1, 1.25, 1.5, 2];
-            const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
-            player.setPlaybackRate?.(rates[nextIdx]);
-          }}
-          aria-label="Playback Speed"
-          className="grid h-8 w-8 sm:h-9 sm:w-9 shrink-0 place-items-center rounded-full bg-black/40 border border-white/10 text-[10px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-        >
-          {player.playbackRate}x
+          <NextIcon className="text-sm" />
         </button>
       </div>
     </div>

@@ -20,12 +20,29 @@ import {
   isQuranTrack,
   getSurahByTrackId,
   getQuranJuzByTrackId,
+  getSurahTracksForReciter,
   getRandomSurahTrack,
+  quranSurahToTrack,
   quranPlayerSubtitle,
   quranContentLabel,
   quranImageUrl,
   surahAudioUrl,
 } from "./quran";
+export {
+  QURAN_RECITERS,
+  getDefaultReciter,
+  getReciterById,
+  resolveActiveReciter,
+  buildReciterSurahUrl,
+  RECITER_STORAGE_KEY,
+  type QuranReciter,
+} from "./quranReciters";
+export {
+  PRELUDE_AUDIO,
+  getSurahPreludeConfig,
+  getReciterAyah1TrimOffset,
+  type SurahPreludeConfig,
+} from "./surahTrimming";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────
@@ -330,6 +347,8 @@ export {
   getSurahByTrackId,
   getQuranJuzByTrackId,
   getRandomSurahTrack,
+  getSurahTracksForReciter,
+  quranSurahToTrack,
   quranPlayerSubtitle,
   quranContentLabel,
   quranImageUrl,

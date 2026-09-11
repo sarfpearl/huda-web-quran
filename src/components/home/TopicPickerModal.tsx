@@ -15,6 +15,8 @@ import {
   QURAN_SURAHS,
   SURAH_TRACKS,
   quranImageUrl,
+  getSurahTracksForReciter,
+  resolveActiveReciter,
 } from "@/lib/data/service";
 import { ContentListCard } from "./ContentListCard";
 
@@ -24,6 +26,7 @@ interface TopicPickerModalProps {
   categories: Category[];
   speakers?: Speaker[];
   allBayan?: BayanWithRelations[];
+  surahTracks?: BayanWithRelations[];
   activeCategorySlug: string;
   onSelectCategory: (category: Category) => void;
   onSelectSpeaker?: (speaker: Speaker) => void;
@@ -32,27 +35,28 @@ interface TopicPickerModalProps {
 }
 
 const SCENE_THUMBNAILS: Record<string, string> = {
-  "iman-taqwa": "/images/scenes/iman-taqwa.jpg",
-  "quran": "/images/scenes/quran.jpg",
-  "quran-recitation": "/images/scenes/quran.jpg",
-  "salah": "/images/scenes/salah.jpg",
-  "ramadan": "/images/scenes/ramadan.jpg",
-  "dua": "/images/scenes/dua.jpg",
-  "hajj-umrah": "/images/scenes/hajj-umrah.jpg",
-  "akhlaq": "/images/scenes/akhlaq.jpg",
-  "self-improvement": "/images/scenes/self-improvement.jpg",
-  "womens-topics": "/images/scenes/womens-topics.jpg",
-  "family": "/images/scenes/family.jpg",
-  "marriage": "/images/scenes/marriage.jpg",
-  "parenting": "/images/scenes/parenting.jpg",
-  "youth": "/images/scenes/youth.jpg",
-  "death-akhirah": "/images/scenes/death-akhirah.jpg",
-  "islamic-history": "/images/scenes/islamic-history.jpg",
+  "iman-taqwa": "/assets/images/bayan/iman-taqwa.jpg",
+  "quran": "/assets/images/bayan/quran.jpg",
+  "quran-recitation": "/assets/images/bayan/quran.jpg",
+  "salah": "/assets/images/bayan/salah.jpg",
+  "ramadan": "/assets/images/bayan/ramadan.jpg",
+  "dua": "/assets/images/bayan/dua.jpg",
+  "hajj-umrah": "/assets/images/bayan/hajj-umrah.jpg",
+  "akhlaq": "/assets/images/bayan/akhlaq.jpg",
+  "self-improvement": "/assets/images/bayan/self-improvement.jpg",
+  "womens-topics": "/assets/images/bayan/womens-topics.jpg",
+  "family": "/assets/images/bayan/family.jpg",
+  "marriage": "/assets/images/bayan/marriage.jpg",
+  "parenting": "/assets/images/bayan/parenting.jpg",
+  "youth": "/assets/images/bayan/youth.jpg",
+  "death-akhirah": "/assets/images/bayan/death-akhirah.jpg",
+  "islamic-history": "/assets/images/bayan/islamic-history.jpg",
 };
 
 export function TopicPickerModal({
   categories,
   activeCategorySlug,
+  surahTracks,
   onSelectCategory,
 }: TopicPickerModalProps) {
   const player = useAudioPlayer();
@@ -97,11 +101,11 @@ export function TopicPickerModal({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="pointer-events-auto grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+        className="pointer-events-auto grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
         aria-label="Open Content Browser"
         title="Content Browser"
       >
-        <TvMenuIcon className="text-lg sm:text-xl" />
+        <TvMenuIcon className="text-base sm:text-xl" />
       </button>
 
       {/* Mac Control Center Style Right Slide-Over Panel */}
@@ -229,7 +233,9 @@ export function TopicPickerModal({
                         isActive={isTrackCurrent}
                         isPlaying={isTrackCurrent && player.isPlaying}
                         onClick={() => {
-                          player.playBayan(SURAH_TRACKS[s.number - 1], SURAH_TRACKS);
+                          const activeReciter = resolveActiveReciter(player.current);
+                          const activeSurahTracks = surahTracks || getSurahTracksForReciter(activeReciter);
+                          player.playBayan(activeSurahTracks[s.number - 1], activeSurahTracks);
                           setIsOpen(false);
                         }}
                       />
@@ -265,7 +271,7 @@ export function TopicPickerModal({
                 {activeTab === "bayan" &&
                   filteredCategories.map((c, index) => {
                     const isCatActive = c.slug === activeCategorySlug;
-                    const thumb = SCENE_THUMBNAILS[c.slug] || "/images/scenes/iman-taqwa.jpg";
+                    const thumb = SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg";
                     return (
                       <ContentListCard
                         key={c.id}

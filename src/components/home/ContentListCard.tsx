@@ -88,7 +88,7 @@ export function ContentListCard({
           quality={95}
           sizes="(max-width: 768px) 128px, 160px"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => setImgSrc("/images/scenes/quran.jpg")}
+          onError={() => setImgSrc("/assets/images/bayan/quran.jpg")}
         />
       </div>
 

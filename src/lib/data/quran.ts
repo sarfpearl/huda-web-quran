@@ -21,11 +21,22 @@ const RECITER_BASE =
 export const TRACK_ID_PREFIX = "quran-juz-";
 export const JUZ_TRACK_ID_PREFIX = "quran-juz-";
 
+const SURAH_SLUG_MAP: Record<number, string> = {};
+for (const entry of SURAH_METADATA_LIST) {
+  SURAH_SLUG_MAP[entry.num] = entry.slug;
+}
+
 export function quranImageUrl(
   kind: "surah" | "juz",
   num: number
 ): string {
-  return `/images/quran/${kind}-${num}.jpg?v=8`;
+  if (kind === "surah") {
+    const pad = String(num).padStart(3, "0");
+    const slug = SURAH_SLUG_MAP[num] || `surah-${num}`;
+    return `/assets/images/surah/${pad}-${slug}.jpg?v=15`;
+  }
+  const pad = String(num).padStart(2, "0");
+  return `/assets/images/quran/juz-${pad}.jpg`;
 }
 
 /** Public shape consumed by the Quran picker UI. */
@@ -153,11 +164,14 @@ export function getQuranJuzByTrackId(id: string): QuranJuz | undefined {
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+import { SURAH_DURATIONS } from "./surahDurations";
+
 export const SURAH_TRACK_ID_PREFIX = "quran-surah-";
-const SUDAIS_BASE = "https://server11.mp3quran.net/sds";
 
 export const surahAudioUrl = (n: number) =>
-  `${SUDAIS_BASE}/${String(n).padStart(3, "0")}.mp3`;
+  n === 1
+    ? "/assets/audio/surah/001.mp3"
+    : `https://server11.mp3quran.net/sds/${String(n).padStart(3, "0")}.mp3`;
 
 export type RevelationType = "Meccan" | "Medinan";
 
@@ -326,44 +340,60 @@ export const QURAN_SURAHS: QuranSurah[] = SURAH_METADATA_LIST.map((s) => {
   };
 });
 
-const SUDAIS_RECITER: Speaker = {
-  id: "reciter-abdur-rahman-as-sudais",
-  name: "Abdur Rahman As-Sudais",
-  slug: "abdur-rahman-as-sudais",
-  bio: "Holy Qur'an reciter",
-  profileImageUrl: null,
-  isActive: true,
-  createdAt: "",
-};
+import {
+  type QuranReciter,
+  getDefaultReciter,
+  buildReciterSurahUrl,
+} from "./quranReciters";
 
-export function quranSurahToTrack(surah: QuranSurah): BayanWithRelations {
+export function quranSurahToTrack(
+  surah: QuranSurah,
+  reciter?: QuranReciter
+): BayanWithRelations {
+  const activeReciter = reciter || getDefaultReciter();
+  const speaker: Speaker = {
+    id: `reciter-${activeReciter.id}`,
+    name: activeReciter.displayName,
+    slug: activeReciter.id,
+    bio: `${activeReciter.style} · ${activeReciter.country}`,
+    profileImageUrl: activeReciter.photoUrl,
+    isActive: true,
+    createdAt: "",
+  };
+
+  const audioUrl = buildReciterSurahUrl(activeReciter, surah.number);
+
   return {
     id: `${SURAH_TRACK_ID_PREFIX}${surah.number}`,
     title: surah.name,
     slug: `${SURAH_TRACK_ID_PREFIX}${surah.number}`,
     description: `Surah ${surah.number} • ${surah.verses} Verses`,
-    speakerId: SUDAIS_RECITER.id,
+    speakerId: speaker.id,
     categoryId: QURAN_CATEGORY.id,
     language: "Arabic",
     coverImageUrl: surah.image || quranImageUrl("surah", surah.number),
     audioSource: "local",
-    audioUrl: surah.audioUrl,
+    audioUrl,
     youtubeVideoId: null,
     youtubePlaylistId: null,
-    durationSeconds: 300,
+    durationSeconds: SURAH_DURATIONS[surah.number] ?? (surah.number === 1 ? 36 : 300),
     publishedAt: null,
     isFeatured: false,
     isPublished: true,
     playCount: 0,
     createdAt: "",
     updatedAt: "",
-    speaker: SUDAIS_RECITER,
+    speaker,
     category: QURAN_CATEGORY,
   };
 }
 
+export function getSurahTracksForReciter(reciter: QuranReciter): BayanWithRelations[] {
+  return QURAN_SURAHS.map((s) => quranSurahToTrack(s, reciter));
+}
+
 export const SURAH_TRACKS: BayanWithRelations[] =
-  QURAN_SURAHS.map(quranSurahToTrack);
+  QURAN_SURAHS.map((s) => quranSurahToTrack(s));
 
 export function isSurahTrackId(id: string | undefined | null): boolean {
   return typeof id === "string" && id.startsWith(SURAH_TRACK_ID_PREFIX);

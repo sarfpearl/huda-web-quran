@@ -221,6 +221,57 @@ export const YouTubeMusicIcon = (p: IconProps) => (
   </svg>
 );
 
+export const ImamQuranIcon = (p: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    width="1em"
+    height="1em"
+    fill="none"
+    {...p}
+  >
+    {/* Subtle emerald circular background disc matching glassmorphism */}
+    <circle cx="12" cy="12" r="11" fill="#047857" fillOpacity="0.8" />
+    <circle cx="12" cy="12" r="11" stroke="#34D399" strokeWidth="1" strokeOpacity="0.5" />
+
+    {/* Voice / Recitation soundwaves emanating from the Quran */}
+    <path
+      d="M9 4a4.2 4.2 0 0 1 6 0"
+      stroke="#A7F3D0"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+    <path
+      d="M7.4 2.2a6.4 6.4 0 0 1 9.2 0"
+      stroke="#D1FAE5"
+      strokeWidth="1.1"
+      strokeLinecap="round"
+      strokeOpacity="0.8"
+    />
+
+    {/* Open Holy Quran Pages */}
+    <path
+      d="M4.6 15.2c2.2-1.3 4.8-1.1 7.4.4 2.6-1.5 5.2-1.7 7.4-.4V8.5c-2.2-1.3-4.8-1.1-7.4.4-2.6-1.5-5.2-1.7-7.4-.4v6.7Z"
+      fill="#FEF3C7"
+      stroke="#F59E0B"
+      strokeWidth="0.85"
+      strokeLinejoin="round"
+    />
+    {/* Central book spine divider */}
+    <line x1="12" y1="8.9" x2="12" y2="15.6" stroke="#D97706" strokeWidth="1" strokeLinecap="round" />
+
+    {/* Small emerald recitation play badge at book heart */}
+    <polygon points="10.8,11.2 13.6,12.5 10.8,13.8" fill="#047857" />
+
+    {/* Traditional wooden Rehal (X-bookstand) */}
+    <path
+      d="M7.2 16.2l9.6 4.2M16.8 16.2l-9.6 4.2"
+      stroke="#FBBF24"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 export const VideoCameraIcon = (p: IconProps) => (
   <Base {...p} strokeWidth={1.8}>
     <rect x="2.5" y="5" width="13" height="14" rx="2.5" />

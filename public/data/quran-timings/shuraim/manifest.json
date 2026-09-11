@@ -1,0 +1,8 @@
+{
+  "reciterId": "shuraim",
+  "qdcId": 10,
+  "audioTemplate": "https://download.quranicaudio.com/qdc/saud_ash-shuraym/murattal/{nnn}.mp3",
+  "templateVerified": true,
+  "surahsGenerated": 114,
+  "failed": []
+}

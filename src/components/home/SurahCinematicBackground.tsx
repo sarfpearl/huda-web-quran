@@ -5,9 +5,12 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { quranImageUrl } from "@/lib/data/service";
 import { resolveSurahVideoPath } from "@/lib/data/surahChapters";
+import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 
 interface SurahCinematicBackgroundProps {
   surahNumber: number;
+  ayahNumber?: number | null;
+  videoSrc?: string | null;
   currentTime?: number;
   duration?: number;
   isPlaying?: boolean;
@@ -15,6 +18,8 @@ interface SurahCinematicBackgroundProps {
 
 export function SurahCinematicBackground({
   surahNumber,
+  ayahNumber = null,
+  videoSrc: propVideoSrc,
   currentTime = 0,
   duration = 0,
   isPlaying = false,
@@ -24,7 +29,13 @@ export function SurahCinematicBackground({
   const [videoError, setVideoError] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
-  const videoSrc = resolveSurahVideoPath(surahNumber, currentTime, duration);
+  // 1. Resolve verse-level real footage ONLY (Zero fallbacks to legacy AI or unrelated videos)
+  const resolvedVideo = typeof propVideoSrc !== "undefined"
+    ? propVideoSrc
+    : ayahNumber
+    ? getAyahVideo(surahNumber, ayahNumber)?.videoPath || null
+    : null;
+  const videoSrc = resolvedVideo;
 
   // Reset states when video source changes
   useEffect(() => {
@@ -32,7 +43,7 @@ export function SurahCinematicBackground({
     setVideoReady(false);
   }, [videoSrc]);
 
-  // Sync video play state with audio player
+  // Sync video play/pause state with master audio player
   useEffect(() => {
     const video = videoRef.current;
     if (!video || videoError) return;
@@ -41,6 +52,8 @@ export function SurahCinematicBackground({
       video.play().catch(() => {
         /* autoplay policies handled silently */
       });
+    } else {
+      video.pause();
     }
   }, [isPlaying, videoError, videoSrc]);
 
@@ -67,28 +80,31 @@ export function SurahCinematicBackground({
         </motion.div>
       </AnimatePresence>
 
-      {/* 2. Seamless Cinematic Video Layer */}
+      {/* 2. Seamless Cinematic Real-Footage Video Layer with Soft Crossfade */}
       {!videoError && videoSrc && (
-        <motion.div
-          key={videoSrc}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: videoReady ? 1 : 0 }}
-          transition={{ duration: 0.6 }}
-          className="absolute inset-0 h-full w-full"
-        >
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            autoPlay
-            loop
-            muted
-            playsInline
-            onLoadedData={() => setVideoReady(true)}
-            onCanPlay={() => setVideoReady(true)}
-            onError={() => setVideoError(true)}
-            className="h-full w-full object-cover object-center"
-          />
-        </motion.div>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={videoSrc}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: videoReady ? 1 : 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="absolute inset-0 h-full w-full"
+          >
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              autoPlay
+              loop
+              muted
+              playsInline
+              onLoadedData={() => setVideoReady(true)}
+              onCanPlay={() => setVideoReady(true)}
+              onError={() => setVideoError(true)}
+              className="h-full w-full object-cover object-center"
+            />
+          </motion.div>
+        </AnimatePresence>
       )}
 
       {/* 3. Atmospheric Contrast Overlay */}

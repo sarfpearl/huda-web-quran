@@ -14,8 +14,12 @@ import {
   incrementPlayCount,
   isQuranTrack,
   isSurahTrackId,
-  SURAH_TRACKS,
   SURAH_TRACK_ID_PREFIX,
+  getSurahTracksForReciter,
+  resolveActiveReciter,
+  getSurahPreludeConfig,
+  getReciterAyah1TrimOffset,
+  PRELUDE_AUDIO,
 } from "@/lib/data/service";
 import { getSessionId } from "@/lib/audio/session";
 import { loadYouTubeIframeApi } from "@/lib/youtube/iframe-api";
@@ -55,10 +59,19 @@ interface AudioPlayerState {
   playbackRate: number;
   isExpanded: boolean;
   continueListening: ContinueListening | null;
+  // Custom prelude (Isti'adhah & Bismillah)
+  isPrelude: boolean;
+  preludeType: "fatihah" | "bismillah" | "none" | null;
+  preludeCurrentTime: number;
+  preludeDuration: number;
 }
 
 interface AudioPlayerApi extends AudioPlayerState {
   playBayan: (
+    bayan: BayanWithRelations,
+    contextList?: BayanWithRelations[]
+  ) => void;
+  cueBayan: (
     bayan: BayanWithRelations,
     contextList?: BayanWithRelations[]
   ) => void;
@@ -104,12 +117,15 @@ function writePosition(bayanId: string, seconds: number) {
 
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const preludeAudioRef = useRef<HTMLAudioElement | null>(null);
   const ytPlayerRef = useRef<any>(null);
   const ytReadyRef = useRef<boolean>(false);
   const currentPlaylistIdRef = useRef<string | null>(null);
   const activeSourceRef = useRef<SourceType>("local");
   const lastSaveRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
+  const isPreludeRef = useRef<boolean>(false);
+  const currentTrimOffsetRef = useRef<number>(0);
 
   const [queue, setQueue] = useState<BayanWithRelations[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -124,6 +140,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [isExpanded, setIsExpanded] = useState(false);
   const [continueListening, setContinueListening] =
     useState<ContinueListening | null>(null);
+
+  // Custom Prelude State (Isti'adhah & Bismillah)
+  const [isPrelude, setIsPrelude] = useState(false);
+  const [preludeType, setPreludeType] = useState<"fatihah" | "bismillah" | "none" | null>(null);
+  const [preludeCurrentTime, setPreludeCurrentTime] = useState(0);
+  const [preludeDuration, setPreludeDuration] = useState(0);
 
   const current = queue[currentIndex] ?? null;
 
@@ -150,13 +172,19 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  // Sync volume, mute & playbackRate to HTML5 audio element
+  // Sync volume, mute & playbackRate to HTML5 audio elements
   useEffect(() => {
     const el = audioRef.current;
     if (el) {
       el.volume = volume;
       el.muted = isMuted;
       el.playbackRate = playbackRate;
+    }
+    const pel = preludeAudioRef.current;
+    if (pel) {
+      pel.volume = volume;
+      pel.muted = isMuted;
+      pel.playbackRate = playbackRate;
     }
     if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === "function") {
       try {
@@ -221,7 +249,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       retryCountRef.current = 0;
       const playlistId = bayan.youtubePlaylistId || bayan.category?.youtubePlaylistId;
       const isYoutubeSource =
-        bayan.audioSource === "youtube" || Boolean(playlistId || bayan.youtubeVideoId);
+        bayan.audioSource === "youtube" ||
+        (bayan.audioSource !== "local" && Boolean(playlistId || bayan.youtubeVideoId));
       const localAudioUrl =
         bayan.audioSource === "local" && bayan.audioUrl && !bayan.audioUrl.includes("SoundHelix")
           ? bayan.audioUrl
@@ -351,6 +380,53 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           }
         }
 
+        const isSurah = isSurahTrackId(bayan.id);
+        const surahNum = isSurah ? Number(bayan.id.replace(SURAH_TRACK_ID_PREFIX, "")) : null;
+        const preludeCfg = surahNum ? getSurahPreludeConfig(surahNum) : null;
+        const trimOffset = surahNum ? getReciterAyah1TrimOffset(surahNum, bayan.speaker?.slug) : 0;
+        currentTrimOffsetRef.current = trimOffset;
+
+        if (preludeCfg && preludeCfg.hasPrelude && preludeCfg.url) {
+          isPreludeRef.current = true;
+          setIsPrelude(true);
+          setPreludeType(preludeCfg.type);
+          setPreludeCurrentTime(0);
+          setPreludeDuration(preludeCfg.duration);
+          setCurrentTime(0);
+          setDuration(bayan.durationSeconds ? Math.max(0, bayan.durationSeconds - trimOffset) : 300);
+
+          const pel = preludeAudioRef.current;
+          if (pel) {
+            pel.src = preludeCfg.url;
+            pel.currentTime = 0;
+            pel.load();
+            if (autoplay) {
+              pel.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+            }
+          }
+
+          // Preload reciter stream in background
+          const el = audioRef.current;
+          if (el) {
+            el.preload = "auto";
+            el.src = localAudioUrl;
+            el.load();
+          }
+          return;
+        }
+
+        // Standard non-prelude track (Surah 9, non-Quran bayans, etc.)
+        if (preludeAudioRef.current) {
+          preludeAudioRef.current.pause();
+          preludeAudioRef.current.src = "";
+        }
+        isPreludeRef.current = false;
+        setIsPrelude(false);
+        setPreludeType(null);
+        setPreludeCurrentTime(0);
+        setPreludeDuration(0);
+        currentTrimOffsetRef.current = 0;
+
         const el = audioRef.current;
         if (!el) return;
 
@@ -365,14 +441,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           saved > 0 && saved < bayan.durationSeconds - 5 ? saved : 0;
         setCurrentTime(startAt);
 
-        // Start playback ASAP — don't wait for full metadata. The browser
-        // begins buffering immediately and plays as soon as it can, which
-        // noticeably cuts the startup delay on large remote recitations.
+        // Start playback ASAP
         if (autoplay) {
           el.play().catch(() => setIsPlaying(false));
         }
 
-        // Once metadata arrives, apply the saved resume position & duration.
+        // Once metadata arrives, apply duration
         const onLoaded = () => {
           if (startAt > 0) {
             try {
@@ -514,7 +588,43 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     [queue, loadCurrent, persistLast]
   );
 
+  const cueBayan = useCallback(
+    (bayan: BayanWithRelations, contextList?: BayanWithRelations[]) => {
+      let nextQueue: BayanWithRelations[];
+      let index: number;
+
+      if (contextList && contextList.length > 0) {
+        nextQueue = contextList;
+        index = Math.max(
+          0,
+          contextList.findIndex((b) => b.id === bayan.id)
+        );
+      } else {
+        const existing = queue.findIndex((b) => b.id === bayan.id);
+        if (existing >= 0) {
+          nextQueue = queue;
+          index = existing;
+        } else {
+          nextQueue = [bayan];
+          index = 0;
+        }
+      }
+
+      setQueue(nextQueue);
+      setCurrentIndex(index);
+      loadCurrent(nextQueue[index], false);
+      persistLast(nextQueue[index], readPositions()[bayan.id] ?? 0);
+      setContinueListening(null);
+    },
+    [queue, loadCurrent, persistLast]
+  );
+
   const pause = useCallback(() => {
+    if (isPreludeRef.current && preludeAudioRef.current) {
+      preludeAudioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
     if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
       try {
         ytPlayerRef.current.pauseVideo();
@@ -528,6 +638,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const resume = useCallback(() => {
+    if (isPreludeRef.current && preludeAudioRef.current) {
+      preludeAudioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      return;
+    }
     if (!current) return;
     if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === "function") {
       try {
@@ -543,7 +657,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         loadCurrent(current, true);
         return;
       }
-      el.play().catch(() => setIsPlaying(false));
+      el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }
   }, [current, loadCurrent]);
 
@@ -553,6 +667,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [isPlaying, pause, resume]);
 
   const seek = useCallback((seconds: number) => {
+    // If user explicitly seeks during prelude, stop prelude and jump directly into the Surah verses
+    const wasInPrelude = isPreludeRef.current;
+    if (wasInPrelude) {
+      if (preludeAudioRef.current) {
+        preludeAudioRef.current.pause();
+      }
+      isPreludeRef.current = false;
+      setIsPrelude(false);
+      setPreludeType(null);
+    }
     if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === "function") {
       try {
         ytPlayerRef.current.seekTo(seconds, true);
@@ -564,13 +688,28 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     const el = audioRef.current;
     if (!el) return;
-    el.currentTime = Math.max(0, seconds);
-    setCurrentTime(el.currentTime);
-  }, []);
+    const offset = currentTrimOffsetRef.current;
+    const target = Math.max(0, seconds) + offset;
+    try {
+      el.currentTime = target;
+    } catch {
+      /* ignore */
+    }
+    setCurrentTime(Math.max(0, seconds));
+    if (wasInPrelude && isPlaying) {
+      el.play().catch(() => setIsPlaying(false));
+    }
+  }, [isPlaying]);
 
   const playFromQueue = useCallback(
     (index: number) => {
       if (index < 0 || index >= queue.length) return;
+      if (preludeAudioRef.current) {
+        preludeAudioRef.current.pause();
+        preludeAudioRef.current.src = "";
+      }
+      isPreludeRef.current = false;
+      setIsPrelude(false);
       setCurrentIndex(index);
       loadCurrent(queue[index], true);
       persistLast(queue[index], 0);
@@ -580,6 +719,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   const next = useCallback(() => {
+    if (preludeAudioRef.current) {
+      preludeAudioRef.current.pause();
+      preludeAudioRef.current.src = "";
+    }
+    isPreludeRef.current = false;
+    setIsPrelude(false);
+
     if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.nextVideo === "function") {
       console.log("[Huda Audio] Next playlist item");
       try {
@@ -592,9 +738,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (current && isSurahTrackId(current.id)) {
       const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
       const nextNum = num >= 114 ? 1 : num + 1;
-      const nextTrack = SURAH_TRACKS[nextNum - 1];
+      const activeReciter = resolveActiveReciter(current);
+      const surahTracks = getSurahTracksForReciter(activeReciter);
+      const nextTrack = surahTracks[nextNum - 1];
       if (nextTrack) {
-        playBayan(nextTrack, SURAH_TRACKS);
+        playBayan(nextTrack, surahTracks);
         return;
       }
     }
@@ -602,6 +750,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [current, currentIndex, queue.length, playFromQueue, playBayan]);
 
   const previous = useCallback(() => {
+    if (preludeAudioRef.current) {
+      preludeAudioRef.current.pause();
+      preludeAudioRef.current.src = "";
+    }
+    isPreludeRef.current = false;
+    setIsPrelude(false);
+
     if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.previousVideo === "function") {
       console.log("[Huda Audio] Previous playlist item");
       try {
@@ -619,9 +774,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (current && isSurahTrackId(current.id)) {
       const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
       const prevNum = num <= 1 ? 114 : num - 1;
-      const prevTrack = SURAH_TRACKS[prevNum - 1];
+      const activeReciter = resolveActiveReciter(current);
+      const surahTracks = getSurahTracksForReciter(activeReciter);
+      const prevTrack = surahTracks[prevNum - 1];
       if (prevTrack) {
-        playBayan(prevTrack, SURAH_TRACKS);
+        playBayan(prevTrack, surahTracks);
         return;
       }
     }
@@ -686,21 +843,76 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
+  const onPreludeEnded = useCallback(() => {
+    isPreludeRef.current = false;
+    setIsPrelude(false);
+    setPreludeType(null);
+    setPreludeCurrentTime(0);
+
+    const el = audioRef.current;
+    if (!el) return;
+    const offset = currentTrimOffsetRef.current;
+    try {
+      el.currentTime = offset;
+    } catch {
+      /* ignore */
+    }
+    setCurrentTime(0);
+    el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+  }, []);
+
+  const onPreludeTimeUpdate = useCallback(() => {
+    const pel = preludeAudioRef.current;
+    if (!pel || !isPreludeRef.current) return;
+    // Surah 1: the reciter's own audio already recites Bismillah, so we play
+    // only the Isti'adhah portion of the prelude and then hand off to the
+    // reciter's voice — avoiding a duplicated Bismillah while still opening with
+    // "A'udhu billahi..." → the reciter's own "Bismillah..." → the ayahs.
+    const src = pel.currentSrc || pel.src;
+    if (src.includes("fatihah-prelude") && pel.currentTime >= PRELUDE_AUDIO.fatihah.istiadhahEndTime) {
+      pel.pause();
+      onPreludeEnded();
+      return;
+    }
+    setPreludeCurrentTime(pel.currentTime);
+    setCurrentTime(0); // Audio counter strictly stays at 00:00 during prelude!
+  }, [onPreludeEnded]);
+
+  const onPreludeError = useCallback(() => {
+    console.warn("[Huda Audio] Prelude playback failed, continuing to main reciter audio");
+    onPreludeEnded();
+  }, [onPreludeEnded]);
+
   const onTimeUpdate = useCallback(() => {
     const el = audioRef.current;
     if (!el || !current || activeSourceRef.current !== "local") return;
-    setCurrentTime(el.currentTime);
+    if (isPreludeRef.current) {
+      setCurrentTime(0);
+      return;
+    }
+    const offset = currentTrimOffsetRef.current;
+    const effectiveTime = Math.max(0, el.currentTime - offset);
+    setCurrentTime(effectiveTime);
 
-    const now = Math.floor(el.currentTime);
+    const now = Math.floor(effectiveTime);
     if (now !== lastSaveRef.current) {
       lastSaveRef.current = now;
-      writePosition(current.id, el.currentTime);
-      persistLast(current, el.currentTime);
+      writePosition(current.id, effectiveTime);
+      persistLast(current, effectiveTime);
     }
   }, [current, persistLast]);
 
   const onEnded = useCallback(() => {
     if (current) writePosition(current.id, 0);
+    if (current && isSurahTrackId(current.id)) {
+      const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
+      if (num < 114) {
+        next();
+        return;
+      }
+      setIsPlaying(false);
+      return;
+    }
     if (currentIndex < queue.length - 1) next();
     else setIsPlaying(false);
   }, [current, currentIndex, queue.length, next]);
@@ -749,7 +961,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       playbackRate,
       isExpanded,
       continueListening,
+      isPrelude,
+      preludeType,
+      preludeCurrentTime,
+      preludeDuration,
       playBayan,
+      cueBayan,
       togglePlay,
       pause,
       resume,
@@ -781,7 +998,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       playbackRate,
       isExpanded,
       continueListening,
+      isPrelude,
+      preludeType,
+      preludeCurrentTime,
+      preludeDuration,
       playBayan,
+      cueBayan,
       togglePlay,
       pause,
       resume,
@@ -803,20 +1025,42 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   return (
     <AudioPlayerContext.Provider value={value}>
+      {/* Dedicated HTML5 audio element for custom prelude (Isti'adhah & Bismillah) */}
+      <audio
+        ref={preludeAudioRef}
+        preload="auto"
+        onTimeUpdate={onPreludeTimeUpdate}
+        onEnded={onPreludeEnded}
+        onError={onPreludeError}
+      />
+
       {/* Persistent HTML5 audio element for direct local MP3 audio */}
       <audio
         ref={audioRef}
         preload="none"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onPlaying={() => {
-          setIsPlaying(true);
-          setIsLoading(false);
-          setError(null);
+        onPlay={() => {
+          if (!isPreludeRef.current) setIsPlaying(true);
         }}
-        onWaiting={() => setIsLoading(true)}
+        onPause={() => {
+          if (!isPreludeRef.current) setIsPlaying(false);
+        }}
+        onPlaying={() => {
+          if (!isPreludeRef.current) {
+            setIsPlaying(true);
+            setIsLoading(false);
+            setError(null);
+          }
+        }}
+        onWaiting={() => {
+          if (!isPreludeRef.current) setIsLoading(true);
+        }}
         onTimeUpdate={onTimeUpdate}
-        onDurationChange={(e) => setDuration(e.currentTarget.duration || 0)}
+        onSeeked={onTimeUpdate}
+        onDurationChange={(e) => {
+          const rawDur = e.currentTarget.duration || 0;
+          const offset = currentTrimOffsetRef.current;
+          setDuration(Math.max(0, rawDur - offset));
+        }}
         onEnded={onEnded}
         onError={onError}
       />
