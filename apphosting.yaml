@@ -1,0 +1,48 @@
+# Firebase App Hosting configuration for HuDa Web Quran (Next.js).
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+#
+# App Hosting builds and runs the full Next.js server (SSR + /api routes),
+# so the YouTube API routes and dynamic audio features work in production.
+
+runConfig:
+  # Scale to zero when idle; raise maxInstances as traffic grows.
+  minInstances: 0
+  maxInstances: 2
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # Built-in demo data by default (no Supabase needed to go live).
+  - variable: NEXT_PUBLIC_DATA_SOURCE
+    value: seed
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Quran cover artwork on.
+  - variable: NEXT_PUBLIC_QURAN_IMAGES
+    value: "1"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Set this to your live URL after the backend is created
+  # (e.g. https://<backend-id>--<project-id>.web.app or your custom domain).
+  # - variable: NEXT_PUBLIC_SITE_URL
+  #   value: https://your-live-url
+  #   availability: [BUILD, RUNTIME]
+
+  # Optional — live YouTube playlist metadata. Store the value in Cloud Secret
+  # Manager (firebase apphosting:secrets:set youtube-api-key) then uncomment:
+  # - variable: YOUTUBE_API_KEY
+  #   secret: youtube-api-key
+
+  # Optional — Supabase cloud DB (only if NEXT_PUBLIC_DATA_SOURCE=supabase):
+  # - variable: NEXT_PUBLIC_SUPABASE_URL
+  #   value: https://your-project-ref.supabase.co
+  #   availability: [BUILD, RUNTIME]
+  # - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+  #   secret: supabase-anon-key
+  # - variable: SUPABASE_SERVICE_ROLE_KEY
+  #   secret: supabase-service-role-key
