@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   QURAN_RECITERS,
+  reciterHasWordTiming,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
 import { ImamQuranIcon } from "@/components/ui/Icon";
@@ -139,6 +140,7 @@ export function ReciterPickerModal({
           filteredReciters.map((reciter) => {
             const isSelected = selectedReciter.id === reciter.id;
             const hasError = imageErrors[reciter.id];
+            const wordSync = reciterHasWordTiming(reciter);
 
             return (
               <button
@@ -189,6 +191,24 @@ export function ReciterPickerModal({
                     <h4 className="truncate text-xs sm:text-sm font-semibold text-white">
                       {reciter.name}
                     </h4>
+                    {wordSync ? (
+                      <span
+                        title="Word-by-word live sync"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-wide text-emerald-300"
+                      >
+                        <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+                          <path d="M4 12h2M9 6v12M14 3v18M19 9v6" />
+                        </svg>
+                        Word Sync
+                      </span>
+                    ) : (
+                      <span
+                        title="Verse-level highlight (no word timing for this reciter)"
+                        className="shrink-0 inline-flex items-center rounded-full bg-white/[0.06] border border-white/10 px-1.5 py-[1px] text-[9px] font-medium uppercase tracking-wide text-sand-300/60"
+                      >
+                        Ayah
+                      </span>
+                    )}
                   </div>
                   <p className="truncate text-[11px] text-sand-300/70 mt-0.5">
                     {reciter.style} · {reciter.country}
