@@ -33,6 +33,7 @@ export {
   getDefaultReciter,
   getReciterById,
   resolveActiveReciter,
+  reciterHasWordTiming,
   buildReciterSurahUrl,
   RECITER_STORAGE_KEY,
   type QuranReciter,

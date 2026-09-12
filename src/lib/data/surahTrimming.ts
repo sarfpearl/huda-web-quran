@@ -9,7 +9,10 @@
  * 3. Surah 9 (At-Tawbah) has NO Bismillah per Islamic tradition; begins directly at Ayah 1.
  * 4. Reciter streams are trimmed to start directly at Ayah 1, preventing repetition of Bismillah/Isti'adhah.
  * 5. While the prelude audio is playing, the audio counter remains at 00:00. Count starts only when Ayat 1 begins.
+ * 6. Audio Only reciters (no word-level timing) skip the prelude entirely and play the raw source stream as-is.
  */
+
+import { reciterHasWordTiming, type QuranReciter } from "./quranReciters";
 
 export const PRELUDE_AUDIO = {
   fatihah: {
@@ -32,7 +35,23 @@ export interface SurahPreludeConfig {
   duration: number;
 }
 
-export function getSurahPreludeConfig(surahNumber: number): SurahPreludeConfig {
+const NO_PRELUDE: SurahPreludeConfig = {
+  hasPrelude: false,
+  type: "none",
+  url: null,
+  duration: 0,
+};
+
+export function getSurahPreludeConfig(
+  surahNumber: number,
+  reciter?: QuranReciter | null
+): SurahPreludeConfig {
+  // Audio Only reciters (no word-level timing) play the raw source stream exactly
+  // as it comes from the source — no Isti'adhah/Bismillah prelude is prepended and
+  // nothing is trimmed. The reciter's own recitation is shown as-is.
+  if (reciter && !reciterHasWordTiming(reciter)) {
+    return NO_PRELUDE;
+  }
   if (surahNumber === 1) {
     return {
       hasPrelude: true,

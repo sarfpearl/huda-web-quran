@@ -1,5 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+/* Kavivanar — Unicode Tamil cursive/handwriting display font for translations. */
+@import url('https://fonts.googleapis.com/css2?family=Kavivanar&display=swap');
+
+/* KFGQPC Uthmanic Script HAFS — Madinah Mushaf font for Quran Arabic text. */
+@font-face {
+  font-family: 'Uthmanic Hafs';
+  src: url('/fonts/UthmanicHafs.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -14,7 +25,8 @@
 @layer base {
   :root {
     --font-poppins: 'Poppins', sans-serif;
-    --font-arabic: 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
+    --font-arabic: 'Uthmanic Hafs', 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
+    --font-tamil: 'Kavivanar', 'Poppins', sans-serif;
     /* Height reserved for the mobile bottom nav (incl. safe area). The player
        bar is positioned `bottom: var(--nav-height)` so the two never overlap. */
     --nav-height: calc(56px + env(safe-area-inset-bottom));
@@ -197,7 +209,9 @@
 
   /* Quran Center Display Text Legibility */
   .quran-arabic-shadow {
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 0 32px rgba(0, 0, 0, 0.8), 0 0 2px rgba(0, 0, 0, 1);
+    /* Crisp, tight contrast for the fine Uthmanic strokes — legible on the video
+       background without a heavy glow that thickens/blurs the calligraphy. */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.55);
   }
   .quran-translation-shadow {
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.7);

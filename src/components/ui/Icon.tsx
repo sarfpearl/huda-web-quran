@@ -274,9 +274,15 @@ export const ImamQuranIcon = (p: IconProps) => (
 
 export const VideoCameraIcon = (p: IconProps) => (
   <Base {...p} strokeWidth={1.8}>
-    <rect x="2.5" y="5" width="13" height="14" rx="2.5" />
-    <path d="M15.5 10l5.5-3.5v11L15.5 14" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="9" cy="12" r="1.8" fill="#34d399" stroke="none" />
+    {/* Rounded frame matched to ImageIcon, with a centered play triangle */}
+    <rect width="18" height="18" x="3" y="3" rx="3.5" />
+    <path
+      d="M10 8.75v6.5l5.5-3.25L10 8.75Z"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth={1.4}
+      strokeLinejoin="round"
+    />
   </Base>
 );
 
