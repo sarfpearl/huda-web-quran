@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { AyahVerse, QuranWordTiming, RecitationSegment } from "@/lib/data/quranVerses";
 import type { QuranSurah } from "@/lib/data/quran";
 
@@ -16,6 +16,9 @@ interface SyncQADebugHUDProps {
   selectedReciter?: { displayName: string };
   timingMode?: "EXACT_WORD_TIMING" | "AYAH_LEVEL_FALLBACK";
   timingSource?: string;
+  /** Controlled open state (so only one header popover is open at a time). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function SyncQADebugHUD({
@@ -30,56 +33,71 @@ export function SyncQADebugHUD({
   selectedReciter,
   timingMode = "AYAH_LEVEL_FALLBACK",
   timingSource,
+  open,
+  onOpenChange,
 }: SyncQADebugHUDProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // Controlled if `open`/`onOpenChange` are provided; else self-managed.
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = open ?? internalOpen;
+  const setOpen = (v: boolean) => (onOpenChange ? onOpenChange(v) : setInternalOpen(v));
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click (e.g. clicking EN, the background, anywhere else).
   useEffect(() => {
-    if (window.innerWidth >= 1024) {
-      setIsOpen(true);
-    }
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setIsOpen(false);
-      } else {
-        setIsOpen(true);
+    if (!isOpen) return;
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
       }
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const isExact = timingMode === "EXACT_WORD_TIMING";
 
+  // QA HUD: inline pill in the header with a teaching-tip popover.
   return (
-    <aside
-      aria-label="Audio Synchronization QA Monitor"
-      className="fixed top-20 right-4 z-50 pointer-events-auto select-none font-mono transition-all"
-    >
-      {/* Minimized Toggle Button */}
-      {!isOpen ? (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-amber-400/50 text-amber-300 text-xs font-semibold shadow-lg hover:bg-black transition-all cursor-pointer"
-        >
-          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-          <span>SYNC QA HUD</span>
-        </button>
-      ) : (
-        <div className="w-84 rounded-2xl bg-black/90 backdrop-blur-xl border border-amber-400/50 p-4 text-xs text-sand-100 shadow-[0_12px_40px_rgba(0,0,0,0.85)]">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-2 mb-3 border-b border-white/10">
+    <div ref={containerRef} className="relative shrink-0 font-mono">
+      {/* QA pill — styled to match the EN language button, with a QA/activity icon */}
+      <button
+        type="button"
+        onClick={() => setOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-label="Voice Sync QA Monitor"
+        title="Voice Sync QA HUD"
+        className="pointer-events-auto flex items-center gap-1 justify-center h-9 px-2.5 sm:h-11 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
+      >
+        {/* Activity / pulse-line icon (QA monitor) */}
+        <svg className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12h3l2.5-7 5 14 2.5-7H21" />
+        </svg>
+        <span>QA</span>
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-3 z-50 pointer-events-auto select-none">
+          {/* Teaching-tip pointer arrow (desktop only — mobile popover is centered) */}
+          <span className="hidden sm:block absolute -top-[7px] right-6 h-3.5 w-3.5 rotate-45 rounded-[3px] bg-slate-950 border-l border-t border-white/15" />
+          <div className="relative w-full sm:w-[26rem] max-w-[calc(100vw-1.5rem)] rounded-3xl bg-slate-950/95 backdrop-blur-2xl border border-white/15 p-4 sm:p-5 text-xs text-sand-100 shadow-[0_25px_60px_rgba(0,0,0,0.85)]">
+          {/* Header — desktop dismisses via outside-click/arrow; mobile gets a close button */}
+          <div className="flex items-center justify-between gap-2 pb-2 mb-3 border-b border-white/10">
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${isExact ? "bg-emerald-400" : "bg-amber-400"} animate-pulse`} />
               <span className="font-bold tracking-wider text-amber-300">VOICE SYNC QA HUD</span>
             </div>
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
-              className="p-1 rounded text-white/50 hover:text-white transition-colors cursor-pointer"
-              title="Minimize HUD"
+              onClick={() => setOpen(false)}
+              aria-label="Close QA monitor"
+              className="sm:hidden grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -210,8 +228,9 @@ export function SyncQADebugHUD({
               )}
             </div>
           </div>
+          </div>
         </div>
       )}
-    </aside>
+    </div>
   );
 }

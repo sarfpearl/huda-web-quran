@@ -29,6 +29,7 @@ import {
   quranImageUrl,
   getSurahTracksForReciter,
   resolveActiveReciter,
+  reciterHasWordTiming,
 } from "@/lib/data/service";
 import {
   getVoiceProgressInVerse,
@@ -172,12 +173,12 @@ export function CompactBayanPlayer({
   };
 
   return (
-    <div className="relative w-full sm:w-[80dvw] max-w-[680px] rounded-[40px] overflow-hidden bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] px-6 py-5 sm:px-10 sm:py-6 transition-all select-none">
+    <div className="relative w-full sm:w-[80dvw] max-w-[680px] rounded-[28px] sm:rounded-[40px] overflow-hidden bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] px-4 py-4 sm:px-10 sm:py-6 transition-all select-none">
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
-      <div className="relative flex items-center justify-between gap-4 sm:gap-5">
+      <div className="relative flex items-center justify-between gap-3 sm:gap-5">
         {/* Cover Artwork */}
-        <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 shadow-md border border-emerald-500/30">
+        <div className="relative h-20 w-20 sm:h-36 sm:w-36 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 shadow-md border border-emerald-500/30">
           {coverSrc ? (
             <Image
               src={coverSrc}
@@ -231,8 +232,9 @@ export function CompactBayanPlayer({
           <p className="truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5">
             {categoryLine}
           </p>
-          {/* Active Ayah Pill Badge */}
-          {(currentSegment || currentVerse) && (
+          {/* Active Ayah Pill Badge — hidden for Audio Only reciters, whose ayah
+              position is an unsynced estimate that would not match the voice. */}
+          {(currentSegment || currentVerse) && reciterHasWordTiming(resolveActiveReciter(bayan)) && (
             <div className="mt-2 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 w-fit rounded-full bg-black/40 border border-white/15 text-xs select-none">
               <span className="text-sand-300/80 font-normal tabular-nums">
                 {currentSegment?.type === "istiadhah" ? (

@@ -21,6 +21,29 @@ interface CenterVerseDisplayProps {
   hasMultipleVerses?: boolean;
   activeWordIndex?: number;
   hasWordTiming?: boolean;
+  /** Whether the selected reciter supports word-level voice sync. When false
+   *  (Verse Sync reciters), the verse text and translation are hidden entirely,
+   *  since the voice and on-screen letters do not line up word-for-word. */
+  reciterWordSync?: boolean;
+}
+
+/**
+ * Authentic Madinah-mushaf end-of-ayah marker. The Uthmanic Hafs font's own
+ * Arabic-Indic digit glyphs ARE the ornamental ayah rosette — rendering the
+ * number alone (no U+06DD, RTL, no letter-spacing) encloses it in the ornament.
+ * (Adding U+06DD would draw a second empty ornament next to it.)
+ */
+function AyahOrnament({ n }: { n: number }) {
+  return (
+    <span
+      lang="ar"
+      dir="rtl"
+      aria-label={`Ayah ${n}`}
+      className="font-arabic text-amber-300 select-none align-middle mx-1.5 tracking-normal [letter-spacing:0] text-[1.2em]"
+    >
+      {toArabicNumerals(n)}
+    </span>
+  );
 }
 
 export function CenterVerseDisplay({
@@ -35,6 +58,7 @@ export function CenterVerseDisplay({
   hasMultipleVerses = false,
   activeWordIndex: propWordIndex,
   hasWordTiming: propHasWordTiming,
+  reciterWordSync = true,
 }: CenterVerseDisplayProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -43,6 +67,11 @@ export function CenterVerseDisplay({
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
+
+  // Verse Sync reciters: hide the verse text + meaning — the recitation audio
+  // does not align word-for-word with the on-screen letters, so showing them
+  // would be misleading. Just the immersive background + audio play.
+  if (!reciterWordSync) return null;
 
   const isPrelude = "type" in activeItem && (activeItem.type === "istiadhah" || activeItem.type === "bismillah");
   const ayahNum =
@@ -131,7 +160,7 @@ export function CenterVerseDisplay({
           <h2
             dir="rtl"
             lang="ar"
-            className={`font-arabic font-bold text-white text-center leading-[2.1] sm:leading-[2.4] tracking-wide quran-arabic-shadow drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)] max-w-4xl mx-auto px-4 sm:px-8 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic font-normal text-white text-center leading-[2.1] sm:leading-[2.4] tracking-wide quran-arabic-shadow max-w-4xl mx-auto px-4 sm:px-8 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {wordsToRender.length > 0 ? (
               <span className="inline-flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-1 sm:gap-y-2">
@@ -166,35 +195,19 @@ export function CenterVerseDisplay({
                       }`}
                     >
                       {w.word}
-                      {/* Synchronized voice yellow highlight line under currently spoken word */}
-                      {isActive && (
-                        <span
-                          className="absolute -bottom-1 sm:-bottom-1.5 inset-x-0 h-0.5 sm:h-1 bg-amber-400 rounded-full shadow-[0_0_12px_rgba(251,191,36,0.95)] transition-all duration-150"
-                        />
-                      )}
                     </span>
                   );
                 })}
                 {/* Canonical Quran Ayah Number / Verse End Marker (Uthmani Typography) */}
                 {!isPrelude && ayahNum > 0 && !hasTrailingAyahMarker && (
-                  <span
-                    aria-label={`Ayah ${ayahNum}`}
-                    className="inline-flex items-center justify-center font-arabic text-amber-300 font-bold select-none text-[0.82em] mr-2.5 sm:mr-3.5 px-2 py-0.5 rounded-full border border-amber-400/40 bg-amber-400/10 shadow-[0_0_10px_rgba(251,191,36,0.35)] align-middle"
-                  >
-                    {toArabicNumerals(ayahNum)}
-                  </span>
+                  <AyahOrnament n={ayahNum} />
                 )}
               </span>
             ) : (
               <span>
                 {activeItem.textArabic}
                 {!isPrelude && ayahNum > 0 && !hasTrailingAyahMarker && (
-                  <span
-                    aria-label={`Ayah ${ayahNum}`}
-                    className="inline-flex items-center justify-center font-arabic text-amber-300 font-bold select-none text-[0.82em] mr-2.5 sm:mr-3.5 px-2 py-0.5 rounded-full border border-amber-400/40 bg-amber-400/10 shadow-[0_0_10px_rgba(251,191,36,0.35)] align-middle"
-                  >
-                    {toArabicNumerals(ayahNum)}
-                  </span>
+                  <AyahOrnament n={ayahNum} />
                 )}
               </span>
             )}
@@ -203,7 +216,8 @@ export function CenterVerseDisplay({
           {/* English / Tamil Translation (Directly below Arabic, with generous breathing space) */}
           {showTranslation && (
             <p
-              className={`font-serif sm:font-sans font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] tracking-wide quran-translation-shadow drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] mt-4 sm:mt-5 md:mt-6 px-4 sm:px-10 max-w-3xl mx-auto transition-opacity duration-300 ${translationSizeClass}`}
+              lang={language === "ta" ? "ta" : "en"}
+              className={`${language === "ta" ? "font-tamil italic" : "font-serif sm:font-sans"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] tracking-wide quran-translation-shadow drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] mt-4 sm:mt-5 md:mt-6 px-4 sm:px-10 max-w-3xl mx-auto transition-opacity duration-300 ${translationSizeClass}`}
             >
               {language === "ta"
                 ? activeItem.textTamil || activeItem.textEnglish

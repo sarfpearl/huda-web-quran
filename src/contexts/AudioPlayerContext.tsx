@@ -382,7 +382,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
         const isSurah = isSurahTrackId(bayan.id);
         const surahNum = isSurah ? Number(bayan.id.replace(SURAH_TRACK_ID_PREFIX, "")) : null;
-        const preludeCfg = surahNum ? getSurahPreludeConfig(surahNum) : null;
+        const preludeReciter = isSurah ? resolveActiveReciter(bayan) : null;
+        const preludeCfg = surahNum ? getSurahPreludeConfig(surahNum, preludeReciter) : null;
         const trimOffset = surahNum ? getReciterAyah1TrimOffset(surahNum, bayan.speaker?.slug) : 0;
         currentTrimOffsetRef.current = trimOffset;
 

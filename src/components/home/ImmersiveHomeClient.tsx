@@ -22,6 +22,7 @@ import {
   quranSurahToTrack,
   getDefaultReciter,
   getReciterById,
+  reciterHasWordTiming,
   resolveActiveReciter,
   RECITER_STORAGE_KEY,
   type QuranReciter,
@@ -318,21 +319,6 @@ export function ImmersiveHomeClient({
         visualMode={visualMode}
       />
 
-      {/* Voice-Primary Audio Synchronization QA Monitor */}
-      <SyncQADebugHUD
-        currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
-        activeSurah={activeSurah}
-        currentVerse={currentVerse}
-        currentSegment={currentSegment}
-        activeVerseIndex={activeIndex}
-        totalVerses={verses.length}
-        voiceProgress={voiceProgress}
-        activeWord={activeWord}
-        selectedReciter={selectedReciter}
-        timingMode={timingMode}
-        timingSource={timingSource}
-      />
-
       {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation) */}
       <CenterVerseDisplay
         currentVerse={currentVerse}
@@ -346,6 +332,7 @@ export function ImmersiveHomeClient({
         hasMultipleVerses={verses.length > 1}
         activeWordIndex={activeWordIndex}
         hasWordTiming={hasWordTiming}
+        reciterWordSync={reciterHasWordTiming(selectedReciter)}
       />
 
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
@@ -358,6 +345,21 @@ export function ImmersiveHomeClient({
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
+        qaHud={
+          <SyncQADebugHUD
+            currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+            activeSurah={activeSurah}
+            currentVerse={currentVerse}
+            currentSegment={currentSegment}
+            activeVerseIndex={activeIndex}
+            totalVerses={verses.length}
+            voiceProgress={voiceProgress}
+            activeWord={activeWord}
+            selectedReciter={selectedReciter}
+            timingMode={timingMode}
+            timingSource={timingSource}
+          />
+        }
       >
         <TopicPickerModal
           categories={categories}
@@ -374,7 +376,7 @@ export function ImmersiveHomeClient({
 
       {/* Bottom Floating Player */}
       <div className="absolute bottom-4 sm:bottom-6 inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none">
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto w-full max-w-[680px] flex justify-center">
           {/* Compact Integrated Glassmorphism Player with Ayah Controls */}
           {activeBayan && (
             <CompactBayanPlayer
