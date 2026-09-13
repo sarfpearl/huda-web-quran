@@ -17,3 +17,8 @@ next-env.d.ts
 *-4k*.mp4
 *-master.mp4
 
+# Tooling and temporary files
+.chrome-profile/
+scratch/
+*.bak
+

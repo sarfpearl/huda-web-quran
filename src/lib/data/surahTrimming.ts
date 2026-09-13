@@ -12,7 +12,7 @@
  * 6. Audio Only reciters (no word-level timing) skip the prelude entirely and play the raw source stream as-is.
  */
 
-import { reciterHasWordTiming, type QuranReciter } from "./quranReciters";
+import { reciterHasWordTiming, reciterEmbedsOwnBismillah, type QuranReciter } from "./quranReciters";
 
 export const PRELUDE_AUDIO = {
   fatihah: {
@@ -69,14 +69,21 @@ export function getSurahPreludeConfig(
       duration: 0,
     };
   }
-  // Surahs 2 to 114:
-  // With voice trim removed, reciters naturally recite Bismillah at the start of their audio stream from 0.00s.
-  // No artificial prelude is prepended to prevent duplicate Bismillah recitation.
+  // Surahs 2 to 114 (Word Sync reciters):
+  // These reciters' QDC murattal masters begin directly at Ayah 1 with no
+  // Bismillah, so we prepend our own dedicated Bismillah prelude clip. During it
+  // the audio counter stays at 00:00; Ayah 1 counting begins after handoff.
+  // The one exception is a reciter whose own stream already recites the Bismillah
+  // (Dosari, surahs 2-78) — there we let their own voice recite it (surfaced as a
+  // Bismillah segment in the recitation timeline) so it is never doubled.
+  if (reciterEmbedsOwnBismillah(reciter, surahNumber)) {
+    return NO_PRELUDE;
+  }
   return {
-    hasPrelude: false,
-    type: "none",
-    url: null,
-    duration: 0,
+    hasPrelude: true,
+    type: "bismillah",
+    url: PRELUDE_AUDIO.bismillah.url,
+    duration: PRELUDE_AUDIO.bismillah.duration,
   };
 }
 

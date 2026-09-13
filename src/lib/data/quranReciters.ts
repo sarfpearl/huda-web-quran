@@ -743,6 +743,30 @@ export function reciterHasWordTiming(reciter?: QuranReciter | null): boolean {
   return !!reciter?.qdcId && !!reciter?.qdcAudioTemplate;
 }
 
+/**
+ * True when the reciter's paired audio master already recites its OWN Bismillah
+ * before ayah 1 of the given surah (surahs 2-114; surah 9 has no Bismillah).
+ *
+ * Only Yasser Al-Dosari streams a quranicaudio.com full-surah master
+ * (…/quran/yasser_ad-dussary/NNN.mp3) that includes the Bismillah, and only for
+ * surahs 2-78 — his juz-30 files (79-114) begin directly at ayah 1. Every other
+ * word-timing reciter streams a QDC murattal master (…/qdc/…/murattal/N.mp3)
+ * that always begins at ayah 1 with no Bismillah.
+ *
+ * Verified from the cached /data/quran-timings datasets (ayah-1 onset ≥ 1.5s for
+ * Dosari 2-78, ≈0s everywhere else). When this returns false the app plays its
+ * own dedicated Bismillah prelude clip, so word-sync surahs 2-114 always open
+ * with the Bismillah while never doubling it.
+ */
+export function reciterEmbedsOwnBismillah(
+  reciter: QuranReciter | null | undefined,
+  surahNumber: number
+): boolean {
+  if (!reciterHasWordTiming(reciter)) return false;
+  if (surahNumber < 2 || surahNumber === 9) return false;
+  return reciter!.id === "dosari" && surahNumber <= 78;
+}
+
 export const RECITER_STORAGE_KEY = "huda-selected-reciter";
 
 export function getDefaultReciter(): QuranReciter {
