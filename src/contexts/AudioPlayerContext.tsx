@@ -402,7 +402,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             pel.currentTime = 0;
             pel.load();
             if (autoplay) {
-              pel.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+              setIsLoading(true); // show spinner while the prelude buffers
+              pel.play().then(() => setIsPlaying(true)).catch(() => {
+                setIsPlaying(false);
+                setIsLoading(false);
+              });
             }
           }
 
@@ -640,7 +644,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   const resume = useCallback(() => {
     if (isPreludeRef.current && preludeAudioRef.current) {
-      preludeAudioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      setIsLoading(true); // spinner while the prelude resumes/buffers
+      preludeAudioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsLoading(false));
       return;
     }
     if (!current) return;
@@ -859,7 +867,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       /* ignore */
     }
     setCurrentTime(0);
-    el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    setIsLoading(true); // handoff gap: spinner until the reciter stream starts
+    el.play().then(() => setIsPlaying(true)).catch(() => {
+      setIsPlaying(false);
+      setIsLoading(false);
+    });
   }, []);
 
   const onPreludeTimeUpdate = useCallback(() => {
@@ -1031,6 +1043,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         ref={preludeAudioRef}
         preload="auto"
         onTimeUpdate={onPreludeTimeUpdate}
+        onWaiting={() => { if (isPreludeRef.current) setIsLoading(true); }}
+        onPlaying={() => { if (isPreludeRef.current) setIsLoading(false); }}
+        onCanPlay={() => { if (isPreludeRef.current) setIsLoading(false); }}
         onEnded={onPreludeEnded}
         onError={onPreludeError}
       />
