@@ -33,7 +33,7 @@ export function quranImageUrl(
   if (kind === "surah") {
     const pad = String(num).padStart(3, "0");
     const slug = SURAH_SLUG_MAP[num] || `surah-${num}`;
-    return `/assets/images/surah/${pad}-${slug}.jpg?v=15`;
+    return `/assets/images/surah/${pad}-${slug}.jpg?v=22`;
   }
   const pad = String(num).padStart(2, "0");
   return `/assets/images/quran/juz-${pad}.jpg`;

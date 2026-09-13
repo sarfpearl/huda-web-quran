@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
 import { getAyahVideo } from "./surahVerseVideos";
-import { type QuranReciter, getReciterTimingCapability, reciterHasWordTiming, getReciterById } from "./quranReciters";
+import { type QuranReciter, getReciterTimingCapability, reciterHasWordTiming, reciterEmbedsOwnBismillah, getReciterById } from "./quranReciters";
 
 export interface QuranWordTiming {
   word: string;
@@ -1298,6 +1298,26 @@ export function getRecitationTimeline(
   const totalWeight = verses.reduce((sum, v) => sum + Math.max((v.textArabic || "").length, 10), 0);
   let currentStart = 0;
   const segments: RecitationSegment[] = [];
+
+  // Reciters that recite their OWN Bismillah before Ayah 1 (Dosari, surahs 2-78)
+  // stream it as part of their audio. Surface it as a Bismillah segment synced to
+  // that voice so word-sync opens with the Bismillah just like every other reciter
+  // (whose Bismillah comes from our dedicated prelude clip instead). Its bounds are
+  // [0 → Ayah 1 voice onset] read straight from the reciter's QDC timing.
+  if (reciterEmbedsOwnBismillah(reciter, surahNumber ?? 0)) {
+    const v1Start = verses[0]?.timestampFrom;
+    const bismillahEnd = typeof v1Start === "number" && v1Start > 1 ? v1Start : 6.0;
+    segments.push({
+      id: "prelude-bismillah",
+      type: "bismillah",
+      startTime: 0,
+      endTime: bismillahEnd,
+      textArabic: CANONICAL_BISMILLAH.textArabic,
+      textEnglish: CANONICAL_BISMILLAH.textEnglish,
+      textTamil: CANONICAL_BISMILLAH.textTamil,
+      words: getEffectiveWordsForText(CANONICAL_BISMILLAH.textArabic, 0, bismillahEnd),
+    });
+  }
 
   for (let i = 0; i < verses.length; i++) {
     const v = verses[i];
