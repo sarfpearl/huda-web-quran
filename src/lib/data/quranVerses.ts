@@ -17,6 +17,19 @@ export interface QuranWordTiming {
   endTime: number;   // In seconds relative to audio start
 }
 
+/**
+ * Raw QDC audio segment in recitation order. `wordIndex` is the 1-based position
+ * of the word in the canonical word list. A word recited more than once appears
+ * here as several segments sharing the same `wordIndex`, so the live highlight
+ * can follow the voice back onto a repeated word (something the flat per-word
+ * `words[]` array cannot express).
+ */
+export interface WordSegment {
+  wordIndex: number;
+  startTime: number;
+  endTime: number;
+}
+
 export type RecitationSegmentType = "istiadhah" | "bismillah" | "ayah";
 
 export interface AyahWordSync {
@@ -70,6 +83,7 @@ export interface RecitationSegment {
   ayahNumber?: number;
   verseKey?: string;
   words?: QuranWordTiming[];
+  wordSegments?: WordSegment[];
   video?: AyahVideoSync | null;
 }
 
@@ -149,6 +163,7 @@ export interface AyahVerse {
   timestampFrom?: number; // In seconds
   timestampTo?: number;   // In seconds
   words?: QuranWordTiming[];
+  wordSegments?: WordSegment[];
 }
 
 /** Pre-seeded instant verses for zero-latency initial render & offline reliability */
@@ -663,14 +678,71 @@ async function applyReciterTimings(
           ? verse.words.map((w) => w.word)
           : splitArabicWords(rawArabic);
 
-      const segs = vt.segments as { startSec: number; endSec: number }[] | undefined;
+      const segs = vt.segments as
+        | { startSec: number; endSec: number; wordIndex?: number }[]
+        | undefined;
       let words = verse.words;
+      let wordSegments: WordSegment[] | undefined;
       if (wordsList.length > 0 && segs && segs.length > 0) {
-        if (wordsList.length === segs.length) {
+        const hasWordIndex = segs.every(
+          (s) => typeof s.wordIndex === "number" && (s.wordIndex as number) > 0
+        );
+        if (hasWordIndex) {
+          // Keep the raw segments (in recitation order) so the live highlight can
+          // follow the voice exactly, including back onto a repeated word.
+          wordSegments = segs.map((s) => ({
+            wordIndex: s.wordIndex as number,
+            startTime: s.startSec,
+            endTime: s.endSec,
+          }));
+          // Map by QDC wordIndex (1-based), not by position. Some reciters recite
+          // a word more than once, giving several segments for one word. Take each
+          // word's FIRST occurrence (extending only across *consecutive* same-index
+          // segments, i.e. an elongated single utterance). A later, non-contiguous
+          // repeat is left in the gap before the next word, where the existing
+          // "hold current word until the next word's voice" logic keeps the
+          // highlight steady — instead of the old proportional stretch that
+          // desynced these reciters ("same word highlighted twice").
+          const byIdx = new Map<number, { start: number; end: number }>();
+          for (let k = 0; k < segs.length; k++) {
+            const wi = segs[k].wordIndex as number;
+            const prevWi = k > 0 ? (segs[k - 1].wordIndex as number) : undefined;
+            const cur = byIdx.get(wi);
+            if (!cur) {
+              byIdx.set(wi, { start: segs[k].startSec, end: segs[k].endSec });
+            } else if (prevWi === wi) {
+              // consecutive continuation of the same word (elongation) → extend
+              cur.end = Math.max(cur.end, segs[k].endSec);
+            }
+            // non-contiguous repeat → ignore; first occurrence already recorded
+          }
+          let lastEnd =
+            typeof vt.timestampFromSec === "number" ? vt.timestampFromSec : segs[0].startSec;
+          words = wordsList.map((word, i) => {
+            const t = byIdx.get(i + 1);
+            if (t) {
+              lastEnd = t.end;
+              return { word, startTime: t.start, endTime: t.end };
+            }
+            // Word with no segment (e.g. a skipped index): bridge the gap to the
+            // next timed word so the highlight keeps advancing.
+            let nextStart = lastEnd;
+            for (let j = i + 1; j < wordsList.length; j++) {
+              const tn = byIdx.get(j + 1);
+              if (tn) {
+                nextStart = tn.start;
+                break;
+              }
+            }
+            const start = lastEnd;
+            lastEnd = nextStart;
+            return { word, startTime: start, endTime: nextStart };
+          });
+        } else if (wordsList.length === segs.length) {
           words = wordsList.map((word, i) => ({ word, startTime: segs[i].startSec, endTime: segs[i].endSec }));
         } else {
-          // Segment/word count mismatch: distribute proportionally so highlight
-          // still tracks the voice across the ayah.
+          // No wordIndex and count mismatch: distribute proportionally so the
+          // highlight still tracks the voice across the ayah.
           const n = segs.length;
           words = wordsList.map((word, i) => {
             const si = Math.min(Math.floor((i / wordsList.length) * n), n - 1);
@@ -685,6 +757,7 @@ async function applyReciterTimings(
         timestampFrom: vt.timestampFromSec,
         timestampTo: vt.timestampToSec,
         words,
+        wordSegments,
       };
     });
   } catch {
@@ -1029,6 +1102,39 @@ export function getVoiceProgressInSegment(
   const firstWord = words[0];
   const lastWord = words[totalWords - 1];
 
+  // Preferred path: drive the active word straight from the raw QDC segments (in
+  // recitation order). This follows the voice exactly — when a reciter repeats a
+  // word, the highlight jumps back onto that word for the repeat instead of
+  // holding the next one. Falls back to the flat words[] scan when unavailable.
+  const rawSegs = "wordSegments" in segment ? (segment.wordSegments as WordSegment[] | undefined) : undefined;
+  if (rawSegs && rawSegs.length > 0) {
+    const clampIdx = (wi: number) => Math.min(Math.max(wi - 1, 0), totalWords - 1);
+    if (currentTime < rawSegs[0].startTime) {
+      return { progress: 0, activeWordIndex: -1, activeWord: null, hasWordTiming: true };
+    }
+    for (let i = 0; i < rawSegs.length; i++) {
+      const s = rawSegs[i];
+      const next = rawSegs[i + 1];
+      // Inside this segment's voice, or in the pause before the next segment
+      // begins (hold the current word so the highlight doesn't flicker).
+      if (
+        (currentTime >= s.startTime && currentTime < s.endTime) ||
+        (next && currentTime >= s.endTime && currentTime < next.startTime)
+      ) {
+        const idx = clampIdx(s.wordIndex);
+        return { progress: (idx + 1) / totalWords, activeWordIndex: idx, activeWord: words[idx] ?? null, hasWordTiming: true };
+      }
+    }
+    // After the last segment: hold the final word while still within the verse.
+    const lastSeg = rawSegs[rawSegs.length - 1];
+    const toBound = typeof tTo === "number" ? tTo : lastSeg.endTime;
+    if (currentTime >= lastSeg.endTime && currentTime < toBound + 0.5) {
+      const idx = clampIdx(lastSeg.wordIndex);
+      return { progress: 1, activeWordIndex: idx, activeWord: words[idx] ?? null, hasWordTiming: true };
+    }
+    return { progress: 1, activeWordIndex: -1, activeWord: null, hasWordTiming: true };
+  }
+
   // Before first word voice begins
   if (currentTime < firstWord.startTime) {
     return { progress: 0, activeWordIndex: -1, activeWord: null, hasWordTiming: true };
@@ -1227,6 +1333,7 @@ export function getRecitationTimeline(
         ayahNumber: v.ayahNumber,
         verseKey: v.verseKey,
         words: hasOwnTiming ? getEffectiveWords(v) : [],
+        wordSegments: hasOwnTiming ? v.wordSegments : undefined,
         video: vVideo ? { source: vVideo.videoPath } : null,
       });
     }
@@ -1258,6 +1365,7 @@ export function getRecitationTimeline(
           ayahNumber: ayahNum,
           verseKey: `1:${ayahNum}`,
           words: getEffectiveWords(v),
+          wordSegments: v.wordSegments,
           video: vVideo ? { source: vVideo.videoPath } : null,
         });
       }
@@ -1357,6 +1465,7 @@ export function getRecitationTimeline(
       ayahNumber: v.ayahNumber,
       verseKey: v.verseKey,
       words: shiftedWords,
+      wordSegments: hasOwnTiming ? v.wordSegments : undefined,
       video: vVideo ? { source: vVideo.videoPath } : null,
     });
   }
