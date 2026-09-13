@@ -650,11 +650,16 @@ async function applyReciterTimings(
 
       // Base word text: prefer explicit words, else split the Arabic text.
       let rawArabic = verse.textArabic.trim();
-      if (verse.ayahNumber === 1) {
+      const strippedAyah1 = verse.ayahNumber === 1;
+      if (strippedAyah1) {
         rawArabic = stripLeadingBismillah(rawArabic, surahNumber);
       }
+      // The center display renders `words`, not `textArabic`. For ayah 1 always
+      // derive the word list from the freshly stripped text — never from a
+      // pre-built `verse.words` — so a stale/unstripped base (e.g. an older
+      // cached copy) can't leak the leading Bismillah into the on-screen words.
       const wordsList =
-        verse.words && verse.words.length > 0
+        !strippedAyah1 && verse.words && verse.words.length > 0
           ? verse.words.map((w) => w.word)
           : splitArabicWords(rawArabic);
 
@@ -785,7 +790,9 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
     return memoryCache.get(baseKey)!;
   }
 
-  const storageKey = `huda-verses-v5-${surahNumber}`;
+  // v6: bumped to invalidate stale caches that stored ayah 1 with an un-stripped
+  // leading Bismillah in its word list (showed "Bismillah + الم" merged).
+  const storageKey = `huda-verses-v6-${surahNumber}`;
   if (typeof window !== "undefined") {
     try {
       const cached = localStorage.getItem(storageKey);
