@@ -16,6 +16,7 @@ import {
   isQuranTrackId,
   isSurahTrackId,
   getSurahByTrackId,
+  getQuranJuzByTrackId,
   SURAH_TRACKS,
   QURAN_SURAHS,
   getSurahTracksForReciter,
@@ -159,6 +160,14 @@ export function ImmersiveHomeClient({
   const activeSurah = useMemo(() => {
     if (activeBayan && isSurahTrackId(activeBayan.id)) {
       return getSurahByTrackId(activeBayan.id) ?? null;
+    }
+    return null;
+  }, [activeBayan]);
+
+  // Resolve active Juz metadata if activeBayan is a Quran Juz track
+  const activeJuz = useMemo(() => {
+    if (activeBayan && isQuranTrackId(activeBayan.id)) {
+      return getQuranJuzByTrackId(activeBayan.id) ?? null;
     }
     return null;
   }, [activeBayan]);
@@ -311,6 +320,7 @@ export function ImmersiveHomeClient({
       <ImmersiveBackground
         categorySlug={activeBayan?.category?.slug || activeCategory.slug}
         activeSurahNumber={activeSurah?.number ?? null}
+        activeJuzNumber={activeJuz?.id ?? null}
         ayahNumber={currentVerse?.ayahNumber ?? null}
         videoSrc={currentVideo}
         currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
