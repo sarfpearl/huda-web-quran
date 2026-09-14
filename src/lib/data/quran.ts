@@ -36,7 +36,7 @@ export function quranImageUrl(
     return `/assets/images/surah/${pad}-${slug}.jpg?v=23`;
   }
   const pad = String(num).padStart(2, "0");
-  return `/assets/images/quran/juz-${pad}.jpg?v=2`;
+  return `/assets/images/quran/juz-${pad}.jpg?v=3`;
 }
 
 /** Public shape consumed by the Quran picker UI. */
