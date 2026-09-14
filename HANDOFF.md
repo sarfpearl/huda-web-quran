@@ -20,7 +20,7 @@
 | Play-button loading spinner during prelude buffering | `AudioPlayerContext.tsx` |
 | **Word highlight follows the voice through repeated words** (map QDC by `wordIndex`, drive active word from raw `wordSegments`) | `quranVerses.ts` |
 | Hi-res surah cover artwork (84 images) + cache-buster `?v=23` | `public/assets/images/surah/*`, `quran.ts` |
-| **30 Quran Juz bespoke 8K Retina artworks** (Juz 01–12 complete, upscaled 2560x1440, cache-buster `?v=3`; Juz 11 bird removed 100% aniconic; Juz 10 artistic re-creation queued; Juz 13–30 pending quota reset) | `public/assets/images/quran/juz-*`, `src/lib/data/quran.ts` |
+| **30 Quran Juz bespoke 8K Retina artworks** (Juz 01–24 complete [80% done], upscaled 2560x1440, cache-buster `?v=4`; Juz 10 re-created with Moorish sanctuary; Juz 11 100% aniconic; Juz 25–30 pending next reset in ~4h 45m) | `public/assets/images/quran/juz-*`, `src/lib/data/quran.ts` |
 
 ### 🎬 VIDEO WORK (the reason for this handoff → Antigravity)
 - Surah videos are **committed on `feat/reciter-sync-min` but NOT on `main`/live yet** (~1GB, 48+ files).
