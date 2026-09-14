@@ -36,7 +36,7 @@ export function quranImageUrl(
     return `/assets/images/surah/${pad}-${slug}.jpg?v=23`;
   }
   const pad = String(num).padStart(2, "0");
-  return `/assets/images/quran/juz-${pad}.jpg?v=3`;
+  return `/assets/images/quran/juz-${pad}.jpg?v=4`;
 }
 
 /** Public shape consumed by the Quran picker UI. */
@@ -111,11 +111,11 @@ const QURAN_CATEGORY: Category = {
 };
 
 const QURAN_RECITER: Speaker = {
-  id: "reciter-maher-al-muaiqly",
+  id: "reciter-maher",
   name: "Maher Al-Muaiqly",
-  slug: "maher-al-muaiqly",
+  slug: "maher",
   bio: "Holy Qur'an reciter",
-  profileImageUrl: null,
+  profileImageUrl: "https://i.pinimg.com/564x/56/67/6f/56676fdf7c3127885b51dc73db761a6b.jpg",
   isActive: true,
   createdAt: "",
 };
@@ -431,7 +431,7 @@ export function quranPlayerSubtitle(id: string): string | undefined {
 
 export function quranContentLabel(id: string): string | undefined {
   const juz = getQuranJuzByTrackId(id);
-  if (juz) return `Quran • Juz ${juz.id}`;
+  if (juz) return `Quran • Juz ${juz.id} · Sheikh Maher Al-Muaiqly`;
   const surah = getSurahByTrackId(id);
   if (surah) return `Quran • Surah ${surah.number}`;
   return undefined;
