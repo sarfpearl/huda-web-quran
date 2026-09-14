@@ -1,9 +1,42 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Claude / Antigravity / any AI assistant continuing this project
-> **Updated:** 2026-09-03
-> **Project Path:** `/Users/pearl-9744/Claude/Projects/Huda Bayan`
+> **Updated:** 2026-09-14
+> **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)
+> **Live:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push to `main`)
+> **Repo:** `github.com/sarfpearl/huda-web-quran` · working branch `feat/reciter-sync-min`
+
+---
+
+## 🟢 Latest Status — 2026-09-14 (read this first)
+
+**Everything except the surah videos is LIVE on `main`.** Recent work shipped this cycle:
+
+| Shipped to live | Where |
+|---|---|
+| Bismillah prelude for word-sync surahs 2–114 (never surah 9) | `surahTrimming.ts`, `quranReciters.ts` (`reciterEmbedsOwnBismillah`) |
+| Ayah-1 "Bismillah + الم" merge fix (word list from stripped text; cache key v5→v6) | `quranVerses.ts` |
+| Play-button loading spinner during prelude buffering | `AudioPlayerContext.tsx` |
+| **Word highlight follows the voice through repeated words** (map QDC by `wordIndex`, drive active word from raw `wordSegments`) | `quranVerses.ts` |
+| Hi-res surah cover artwork (84 images) + cache-buster `?v=23` | `public/assets/images/surah/*`, `quran.ts` |
+| **30 Quran Juz bespoke 8K Retina artworks** (Juz 01–12 complete, upscaled 2560x1440, cache-buster `?v=2`; Juz 13–30 pending quota reset) | `public/assets/images/quran/juz-*`, `src/lib/data/quran.ts` |
+
+### 🎬 VIDEO WORK (the reason for this handoff → Antigravity)
+- Surah videos are **committed on `feat/reciter-sync-min` but NOT on `main`/live yet** (~1GB, 48+ files).
+- **Path convention** the app expects (see `src/lib/data/surahVerseVideos.ts` → `videoPath`):
+  - Surah-level loop: `public/videos/surah/NNN-slug.mp4` (e.g. `001-al-fatihah.mp4`)
+  - Per-ayah clips: `public/videos/surah/NNN-slug/<clip-name>.mp4` (e.g. `002-al-baqarah/08e-ruin-of-cultivation-vs-shelter-of-peace.mp4`)
+  - New videos must be registered in `surahVerseVideos.ts` (map ayah → `videoPath`) or they won't play.
+- Video/Image mode toggle lives in `ImmersiveHeader`; video engine is in `ImmersiveBackground.tsx` / `SurahCinematicBackground.tsx`.
+
+### ⚠️ DEPLOY CONSTRAINT (important for whoever pushes the videos)
+This Claude sandbox reaches GitHub through an egress **proxy** (`http.proxy 127.0.0.1:3128`) that returns **HTTP 408 on large pushes** — a single ~1GB push fails, and even ~130MB failed. What worked:
+- **Small pushes** (code, a few files): fine.
+- **Medium sets** (the 84 images, ~91MB): **chunked** into ~18MB batches (`split -l 18 list /tmp/b_`; per batch `git checkout <branch> -- <files>` → commit → `git push origin <tmp>:main`).
+- **The ~1GB videos: not pushable through the proxy.** Ship them from a machine with **direct GitHub access (no proxy)** — e.g. Antigravity — with `git push`, or move videos to **Git LFS / Firebase Storage / a CDN**. macOS bash here is 3.2 (no `mapfile`; use `split` + `cat file | xargs`).
+
+To publish the videos from Antigravity: `git push origin feat/reciter-sync-min`, then merge into `main` (Vercel redeploys). `main` and `feat` differ ONLY by the video files right now.
 
 ---
 
