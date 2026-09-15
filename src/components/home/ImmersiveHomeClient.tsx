@@ -96,16 +96,19 @@ export function ImmersiveHomeClient({
     }
   }, [player, selectedReciter]);
 
-  // Keep selectedReciter in sync if player.current changes to a Surah track with a different reciter
+  // Keep selectedReciter in sync if player.current changes to a Surah track with a different reciter, or a Quran Juz track
   useEffect(() => {
-    if (player.current && isSurahTrackId(player.current.id)) {
+    if (player.current && (isSurahTrackId(player.current.id) || isQuranTrackId(player.current.id))) {
       const active = resolveActiveReciter(player.current);
       if (active.id !== selectedReciter.id) {
         setSelectedReciter(active);
-        try {
-          localStorage.setItem(RECITER_STORAGE_KEY, active.id);
-        } catch {
-          /* ignore */
+        // Only persist Surah reciter preference (do not overwrite saved Surah reciter with Juz reciter)
+        if (isSurahTrackId(player.current.id)) {
+          try {
+            localStorage.setItem(RECITER_STORAGE_KEY, active.id);
+          } catch {
+            /* ignore */
+          }
         }
       }
     }
@@ -247,6 +250,7 @@ export function ImmersiveHomeClient({
       /* ignore */
     }
 
+    const isPlayingJuz = activeBayan && isQuranTrackId(activeBayan.id);
     const currentSurahNum =
       activeSurah?.number ??
       (activeBayan && isSurahTrackId(activeBayan.id)
@@ -257,23 +261,22 @@ export function ImmersiveHomeClient({
     const newTrack = quranSurahToTrack(targetSurah, reciter);
     const reciterSurahTracks = getSurahTracksForReciter(reciter);
 
-    // Keep current Ayah position
-    const seekTime =
-      currentSegment?.startTime ?? (player.currentTime > 0 ? player.currentTime : 0);
+    const isSamePacing = reciterHasWordTiming(selectedReciter) && reciterHasWordTiming(reciter);
+    const seekTime = isPlayingJuz || !isSamePacing
+      ? 0
+      : (currentSegment?.startTime ?? (player.currentTime > 0 ? player.currentTime : 0));
 
     setOverrideBayan(newTrack);
 
     if (player.isPlaying) {
       player.playBayan(newTrack, reciterSurahTracks);
       if (seekTime > 0) {
-        setTimeout(() => player.seek(seekTime), 150);
-        setTimeout(() => player.seek(seekTime), 500);
+        setTimeout(() => player.seek(seekTime), 250);
       }
     } else {
       player.cueBayan(newTrack, reciterSurahTracks);
       if (seekTime > 0) {
-        setTimeout(() => player.seek(seekTime), 150);
-        setTimeout(() => player.seek(seekTime), 500);
+        setTimeout(() => player.seek(seekTime), 250);
       }
     }
   };
@@ -300,7 +303,7 @@ export function ImmersiveHomeClient({
     handleNextVerse,
     jumpToVerse,
   } = useQuranVerseSync({
-    surahNumber: isJuz ? 1 : (activeSurah?.number ?? null),
+    surahNumber: isJuz ? null : (activeSurah?.number ?? null),
     categorySlug: activeBayan?.category?.slug || activeCategory.slug,
     currentTime: player.currentTime,
     duration: player.duration,
@@ -331,8 +334,8 @@ export function ImmersiveHomeClient({
 
       {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation) */}
       <CenterVerseDisplay
-        currentVerse={currentVerse}
-        currentSegment={currentSegment}
+        currentVerse={isJuz ? null : currentVerse}
+        currentSegment={isJuz ? null : currentSegment}
         currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
         isPlaying={player.isPlaying}
         language={language}
@@ -343,6 +346,7 @@ export function ImmersiveHomeClient({
         activeWordIndex={activeWordIndex}
         hasWordTiming={hasWordTiming}
         reciterWordSync={reciterHasWordTiming(selectedReciter)}
+        isJuz={isJuz}
       />
 
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
@@ -355,20 +359,23 @@ export function ImmersiveHomeClient({
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
+        isJuz={isJuz}
         qaHud={
-          <SyncQADebugHUD
-            currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
-            activeSurah={activeSurah}
-            currentVerse={currentVerse}
-            currentSegment={currentSegment}
-            activeVerseIndex={activeIndex}
-            totalVerses={verses.length}
-            voiceProgress={voiceProgress}
-            activeWord={activeWord}
-            selectedReciter={selectedReciter}
-            timingMode={timingMode}
-            timingSource={timingSource}
-          />
+          !isJuz && (
+            <SyncQADebugHUD
+              currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+              activeSurah={activeSurah}
+              currentVerse={currentVerse}
+              currentSegment={currentSegment}
+              activeVerseIndex={activeIndex}
+              totalVerses={verses.length}
+              voiceProgress={voiceProgress}
+              activeWord={activeWord}
+              selectedReciter={selectedReciter}
+              timingMode={timingMode}
+              timingSource={timingSource}
+            />
+          )
         }
       >
         <TopicPickerModal
@@ -395,11 +402,11 @@ export function ImmersiveHomeClient({
               surahTracks={surahTracksForCurrentReciter}
               onShuffleCategory={handleShuffle}
               activeSurah={activeSurah}
-              currentVerse={currentVerse}
-              currentSegment={currentSegment}
-              segments={segments}
-              totalVerses={activeSurah?.verses ?? verses.length}
-              activeVerseIndex={activeIndex}
+              currentVerse={isJuz ? null : currentVerse}
+              currentSegment={isJuz ? null : currentSegment}
+              segments={isJuz ? [] : segments}
+              totalVerses={isJuz ? 1 : (activeSurah?.verses ?? verses.length)}
+              activeVerseIndex={isJuz ? 0 : activeIndex}
               language={language}
               onToggleLanguage={handleToggleLanguage}
               showTranslation={showTranslation}

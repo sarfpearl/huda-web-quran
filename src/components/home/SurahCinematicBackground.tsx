@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { quranImageUrl } from "@/lib/data/service";
@@ -25,42 +25,86 @@ export function SurahCinematicBackground({
   isPlaying = false,
 }: SurahCinematicBackgroundProps) {
   const surahImageSrc = quranImageUrl("surah", surahNumber);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [videoError, setVideoError] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
 
-  // 1. Resolve verse-level real footage ONLY (Zero fallbacks to legacy AI or unrelated videos)
-  const resolvedVideo = typeof propVideoSrc !== "undefined"
-    ? propVideoSrc
-    : ayahNumber
-    ? getAyahVideo(surahNumber, ayahNumber)?.videoPath || null
-    : null;
-  const videoSrc = resolvedVideo;
+  // 1. Resolve active video source:
+  //    - propVideoSrc if explicitly given
+  //    - Exact Ayah video if available
+  //    - Surah chapter or master video fallback (guarantees continuous footage without dropping to null)
+  const resolvedVideo = useMemo(() => {
+    if (propVideoSrc) return propVideoSrc;
+    if (ayahNumber) {
+      const ayahVid = getAyahVideo(surahNumber, ayahNumber)?.videoPath;
+      if (ayahVid) return ayahVid;
+    }
+    return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
+  }, [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]);
 
-  // Reset states when video source changes
+  // Dual-slot video architecture for 100% seamless, flicker-free crossfading
+  const [slotA, setSlotA] = useState<{ src: string | null; loaded: boolean }>({
+    src: resolvedVideo,
+    loaded: false,
+  });
+  const [slotB, setSlotB] = useState<{ src: string | null; loaded: boolean }>({
+    src: null,
+    loaded: false,
+  });
+  // activeSlot: 0 = Slot A is active, 1 = Slot B is active
+  const [activeSlot, setActiveSlot] = useState<0 | 1>(0);
+
+  const videoRefA = useRef<HTMLVideoElement | null>(null);
+  const videoRefB = useRef<HTMLVideoElement | null>(null);
+
+  // When resolvedVideo changes, load it into the idle slot without blanking the active slot
   useEffect(() => {
-    setVideoError(false);
-    setVideoReady(false);
-  }, [videoSrc]);
+    if (!resolvedVideo) return;
 
-  // Sync video play/pause state with master audio player
+    const currentSrc = activeSlot === 0 ? slotA.src : slotB.src;
+    if (resolvedVideo === currentSrc) return;
+
+    if (activeSlot === 0) {
+      setSlotB({ src: resolvedVideo, loaded: false });
+    } else {
+      setSlotA({ src: resolvedVideo, loaded: false });
+    }
+  }, [resolvedVideo, activeSlot, slotA.src, slotB.src]);
+
+  // When idle slot is decoded and ready to play, smoothly crossfade to it
+  const handleSlotCanPlay = (slotIndex: 0 | 1) => {
+    if (slotIndex === 0) {
+      setSlotA((prev) => ({ ...prev, loaded: true }));
+      if (activeSlot === 1) {
+        if (isPlaying && videoRefA.current) {
+          videoRefA.current.play().catch(() => {});
+        }
+        setActiveSlot(0);
+      }
+    } else {
+      setSlotB((prev) => ({ ...prev, loaded: true }));
+      if (activeSlot === 0) {
+        if (isPlaying && videoRefB.current) {
+          videoRefB.current.play().catch(() => {});
+        }
+        setActiveSlot(1);
+      }
+    }
+  };
+
+  // Sync play/pause with master audio player
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || videoError) return;
+    const activeVideo = activeSlot === 0 ? videoRefA.current : videoRefB.current;
+    if (!activeVideo) return;
 
     if (isPlaying) {
-      video.play().catch(() => {
-        /* autoplay policies handled silently */
-      });
+      activeVideo.play().catch(() => {});
     } else {
-      video.pause();
+      activeVideo.pause();
     }
-  }, [isPlaying, videoError, videoSrc]);
+  }, [isPlaying, activeSlot]);
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-950">
-      {/* 1. Base HD Surah Artwork Layer (Always present as instant poster/fallback) */}
-      <AnimatePresence mode="popLayout" initial={false}>
+      {/* 1. Base HD Surah Artwork Layer (Persistent backdrop, zero layout pop) */}
+      <AnimatePresence initial={false}>
         <motion.div
           key={`surah-bg-${surahNumber}`}
           initial={{ opacity: 0, scale: 1.02 }}
@@ -80,35 +124,42 @@ export function SurahCinematicBackground({
         </motion.div>
       </AnimatePresence>
 
-      {/* 2. Seamless Cinematic Real-Footage Video Layer with Soft Crossfade */}
-      {!videoError && videoSrc && (
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div
-            key={videoSrc}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: videoReady ? 1 : 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="absolute inset-0 h-full w-full"
-          >
-            <video
-              ref={videoRef}
-              src={videoSrc}
-              autoPlay
-              loop
-              muted
-              playsInline
-              onLoadedData={() => setVideoReady(true)}
-              onCanPlay={() => setVideoReady(true)}
-              onError={() => setVideoError(true)}
-              className="h-full w-full object-cover object-center"
-            />
-          </motion.div>
-        </AnimatePresence>
+      {/* 2. Video Slot A */}
+      {slotA.src && (
+        <video
+          ref={videoRefA}
+          src={slotA.src}
+          autoPlay={isPlaying}
+          loop
+          muted
+          playsInline
+          preload="auto"
+          onCanPlay={() => handleSlotCanPlay(0)}
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out ${
+            activeSlot === 0 && slotA.loaded ? "opacity-100 z-[2]" : "opacity-0 z-[1]"
+          }`}
+        />
       )}
 
-      {/* 3. Atmospheric Contrast Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
+      {/* 3. Video Slot B */}
+      {slotB.src && (
+        <video
+          ref={videoRefB}
+          src={slotB.src}
+          autoPlay={isPlaying}
+          loop
+          muted
+          playsInline
+          preload="auto"
+          onCanPlay={() => handleSlotCanPlay(1)}
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out ${
+            activeSlot === 1 && slotB.loaded ? "opacity-100 z-[2]" : "opacity-0 z-[1]"
+          }`}
+        />
+      )}
+
+      {/* 4. Atmospheric Contrast Overlay */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
     </div>
   );
 }

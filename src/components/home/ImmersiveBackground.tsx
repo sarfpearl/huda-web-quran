@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { SurahCinematicBackground } from "./SurahCinematicBackground";
+import { JuzCinematicBackground } from "./JuzCinematicBackground";
 import { quranImageUrl } from "@/lib/data/service";
 
 interface ImmersiveBackgroundProps {
@@ -56,7 +57,7 @@ export function ImmersiveBackground({
     const surahImageSrc = quranImageUrl("surah", activeSurahNumber);
     return (
       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={`surah-img-${activeSurahNumber}`}
             initial={mounted ? { opacity: 0, scale: 1.02 } : false}
@@ -80,12 +81,37 @@ export function ImmersiveBackground({
     );
   }
 
-  // 3. If a Juz is active: render crisp static HD artwork for that Juz
+  // 3. If a Juz is active:
   if (activeJuzNumber) {
     const juzImageSrc = quranImageUrl("juz", activeJuzNumber);
+    const hasJuzVideo = activeJuzNumber === 1;
+
+    if (visualMode === "video" && hasJuzVideo) {
+      return (
+        <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
+          <div className="absolute inset-0 h-full w-full">
+            <Image
+              src={juzImageSrc}
+              alt={`Juz ${activeJuzNumber}`}
+              fill
+              priority
+              unoptimized={true}
+              className="object-cover object-center [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
+            />
+          </div>
+          <JuzCinematicBackground
+            juzNumber={activeJuzNumber}
+            isPlaying={isPlaying}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
+        </div>
+      );
+    }
+
+    // Image mode or Juz 2-30: Pure bespoke 8K Retina artwork
     return (
       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={`juz-img-${activeJuzNumber}`}
             initial={mounted ? { opacity: 0, scale: 1.02 } : false}
@@ -111,7 +137,7 @@ export function ImmersiveBackground({
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
-      <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence initial={false}>
         <motion.div
           key={categorySlug}
           initial={mounted ? { opacity: 0, scale: 1.04 } : false}
