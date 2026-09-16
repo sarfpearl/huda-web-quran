@@ -1730,7 +1730,15 @@ export function useQuranVerseSync({
     setManualIndex(null);
 
     if (surahNumber) {
-      setVerses(getFallbackVerses(surahNumber));
+      // Only replace verses with fallback if switching to a DIFFERENT surah.
+      // When merely switching reciters for the current surah, preserve current verses
+      // to eliminate visual flashing/flickering.
+      setVerses((prev) => {
+        if (prev.length > 0 && prev[0]?.surahNumber === surahNumber) {
+          return prev;
+        }
+        return getFallbackVerses(surahNumber);
+      });
       fetchSurahVerses(surahNumber, reciter?.id).then((data) => {
         if (!cancelled && data.length > 0) {
           setVerses(data);

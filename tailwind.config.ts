@@ -66,7 +66,7 @@ const config: Config = {
           "sans-serif",
         ],
         poppins: ["var(--font-poppins)", "Poppins", "sans-serif"],
-        tamil: ["var(--font-tamil)", "var(--font-poppins)", "Poppins", "sans-serif"],
+        tamil: ["var(--font-tamil)", "Noto Serif Tamil", "serif"],
         arabic: ["var(--font-arabic)", "serif"],
       },
       borderRadius: {

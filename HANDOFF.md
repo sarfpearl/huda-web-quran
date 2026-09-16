@@ -20,6 +20,9 @@
 | Play-button loading spinner during prelude buffering | `AudioPlayerContext.tsx` |
 | **Word highlight follows the voice through repeated words** (map QDC by `wordIndex`, drive active word from raw `wordSegments`) | `quranVerses.ts` |
 | Hi-res surah cover artwork (84 images) + cache-buster `?v=23` | `public/assets/images/surah/*`, `quran.ts` |
+| **30 Quran Juz bespoke 8K Retina artworks** (Juz 01–28 complete, upscaled 2560x1440, cache-buster `?v=5`; Juz 10 re-created with Moorish sanctuary; Juz 11 100% aniconic; Juz 29–30 pending quota reset) | `public/assets/images/quran/juz-*`, `src/lib/data/quran.ts` |
+| **Noto Serif Tamil typography** (replaced Kavivanar with official Google Noto Serif Tamil for Quran translations) | `src/app/globals.css`, `tailwind.config.ts` |
+| **Zero-flicker video & artwork playback** (dual-slot seamless crossfade, reciter picker anti-flicker) | `src/components/home/*` |
 
 ### 🎬 VIDEO WORK (the reason for this handoff → Antigravity)
 - Surah videos are **committed on `feat/reciter-sync-min` but NOT on `main`/live yet** (~1GB, 48+ files).

@@ -773,9 +773,16 @@ export function getDefaultReciter(): QuranReciter {
   return QURAN_RECITERS[0]; // Sheikh Abdul Rahman Al-Sudais
 }
 
+const RECITER_ALIASES: Record<string, string> = {
+  "maher-al-muaiqly": "maher",
+  "abdul-rahman-al-sudais": "sudais",
+  "mishari-al-afasy": "alafasy",
+};
+
 export function getReciterById(id?: string | null): QuranReciter {
   if (!id) return getDefaultReciter();
-  return QURAN_RECITERS.find((r) => r.id === id) || getDefaultReciter();
+  const resolvedId = RECITER_ALIASES[id] || id;
+  return QURAN_RECITERS.find((r) => r.id === resolvedId) || getDefaultReciter();
 }
 
 export function resolveActiveReciter(
@@ -790,6 +797,11 @@ export function resolveActiveReciter(
 ): QuranReciter {
   if (typeof trackOrSpeakerOrId === "string") {
     return getReciterById(trackOrSpeakerOrId);
+  }
+
+  // 0. From specific Quran Juz audio URL
+  if (trackOrSpeakerOrId?.audioUrl && trackOrSpeakerOrId.audioUrl.includes("quran-juz-audio-mp3")) {
+    return getReciterById("maher");
   }
 
   // 1. From speaker object slug or id

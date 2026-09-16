@@ -232,9 +232,8 @@ export function CompactBayanPlayer({
           <p className="truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5">
             {categoryLine}
           </p>
-          {/* Active Ayah Pill Badge — hidden for Audio Only reciters, whose ayah
-              position is an unsynced estimate that would not match the voice. */}
-          {(currentSegment || currentVerse) && reciterHasWordTiming(resolveActiveReciter(bayan)) && (
+          {/* Active Ayah Pill Badge — only for Surahs with word timing; hidden for Juz and Audio Only reciters */}
+          {!isQuranTrackId(bayan.id) && (currentSegment || currentVerse) && reciterHasWordTiming(resolveActiveReciter(bayan)) && (
             <div className="mt-2 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 w-fit rounded-full bg-black/40 border border-white/15 text-xs select-none">
               <span className="text-sand-300/80 font-normal tabular-nums">
                 {currentSegment?.type === "istiadhah" ? (

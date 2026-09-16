@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, isValidElement, cloneElement, type ReactElement } from "react";
+import { useState, useEffect, useRef, isValidElement, cloneElement, type ReactElement } from "react";
 import Image from "next/image";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
@@ -27,6 +27,8 @@ interface ImmersiveHeaderProps {
   selectedReciter?: QuranReciter;
   onSelectReciter?: (reciter: QuranReciter) => void;
   isQuranActive?: boolean;
+  /** Whether currently playing a 30 Juz track */
+  isJuz?: boolean;
   /** Optional leading control rendered before the language toggle (e.g. QA HUD). */
   qaHud?: React.ReactNode;
   children?: React.ReactNode;
@@ -41,6 +43,7 @@ export function ImmersiveHeader({
   selectedReciter = getDefaultReciter(),
   onSelectReciter,
   isQuranActive = true,
+  isJuz = false,
   qaHud,
   children,
 }: ImmersiveHeaderProps) {
@@ -50,6 +53,7 @@ export function ImmersiveHeader({
   const [activePopover, setActivePopover] = useState<"reciter" | "qa" | null>(null);
   const isReciterSelectorOpen = activePopover === "reciter";
   const [headerAvatarError, setHeaderAvatarError] = useState(false);
+  const reciterTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setHeaderAvatarError(false);
@@ -58,9 +62,9 @@ export function ImmersiveHeader({
   const isPlayingQuran =
     (isQuranActive || (bayan ? isSurahTrackId(bayan.id) : false)) && player.isPlaying;
 
-  // Translation language toggle is only meaningful for Word Sync reciters, since
-  // Audio Only reciters show no verse text / meaning on screen.
-  const showLanguageToggle = reciterHasWordTiming(selectedReciter);
+  // Translation language toggle is only meaningful for Word Sync reciters when not in full-screen Juz artwork mode,
+  // since Audio Only reciters and Juz mode show no verse text / meaning on screen.
+  const showLanguageToggle = reciterHasWordTiming(selectedReciter) && !isJuz;
 
   const handleToggleReciterSelector = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -113,6 +117,7 @@ export function ImmersiveHeader({
         {/* Quran Voice / Reciter Selector Control */}
         <div className="relative">
           <button
+            ref={reciterTriggerRef}
             type="button"
             onClick={handleToggleReciterSelector}
             className="pointer-events-auto relative grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
@@ -121,21 +126,23 @@ export function ImmersiveHeader({
             aria-expanded={isReciterSelectorOpen}
             aria-haspopup="dialog"
           >
-            {selectedReciter.photoUrl && !headerAvatarError ? (
-              <div className="relative h-full w-full p-0.5 rounded-full overflow-hidden">
+            <div className="relative h-full w-full p-0.5 rounded-full overflow-hidden">
+              <div className="absolute inset-0 grid place-items-center text-sand-200">
+                <ImamQuranIcon className="text-lg sm:text-2xl" />
+              </div>
+              {selectedReciter.photoUrl && !headerAvatarError && (
                 <Image
+                  key={selectedReciter.id}
                   src={selectedReciter.photoUrl}
                   alt={selectedReciter.name}
                   width={44}
                   height={44}
                   unoptimized={true}
-                  className="h-full w-full rounded-full object-cover"
+                  className="absolute inset-0 h-full w-full rounded-full object-cover"
                   onError={() => setHeaderAvatarError(true)}
                 />
-              </div>
-            ) : (
-              <ImamQuranIcon className="text-lg sm:text-2xl" />
-            )}
+              )}
+            </div>
           </button>
 
           {/* Playing indicator — sibling of the button so the button's
@@ -159,6 +166,8 @@ export function ImmersiveHeader({
               onSelectReciter?.(reciter);
             }}
             isPlayingQuran={isPlayingQuran}
+            isJuz={isJuz}
+            triggerRef={reciterTriggerRef}
           />
         </div>
 
