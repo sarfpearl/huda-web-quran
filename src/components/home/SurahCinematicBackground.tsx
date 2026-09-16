@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
-import { quranImageUrl } from "@/lib/data/service";
-import { resolveSurahVideoPath } from "@/lib/data/surahChapters";
+import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 
 interface SurahCinematicBackgroundProps {
@@ -24,17 +21,22 @@ export function SurahCinematicBackground({
   duration = 0,
   isPlaying = false,
 }: SurahCinematicBackgroundProps) {
-  const surahImageSrc = quranImageUrl("surah", surahNumber);
-
   // 1. Resolve active video source:
   //    - propVideoSrc if explicitly given
   //    - Exact Ayah video if available
-  //    - Surah chapter or master video fallback (guarantees continuous footage without dropping to null)
+  //    - Thematic chapter matching active Ayah
+  //    - Continuous playback chapter or master video fallback
   const resolvedVideo = useMemo(() => {
     if (propVideoSrc) return propVideoSrc;
     if (ayahNumber) {
       const ayahVid = getAyahVideo(surahNumber, ayahNumber)?.videoPath;
       if (ayahVid) return ayahVid;
+
+      const surahData = getSurahVisualData(surahNumber);
+      const chapterForVerse = surahData.chapters.find(
+        (c) => ayahNumber >= c.fromVerse && ayahNumber <= c.toVerse
+      );
+      if (chapterForVerse?.videoPath) return chapterForVerse.videoPath;
     }
     return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
   }, [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]);
@@ -103,26 +105,7 @@ export function SurahCinematicBackground({
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-950">
-      {/* 1. Base HD Surah Artwork Layer (Persistent backdrop, zero layout pop) */}
-      <AnimatePresence initial={false}>
-        <motion.div
-          key={`surah-bg-${surahNumber}`}
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
-          className="absolute inset-0 h-full w-full"
-        >
-          <Image
-            src={surahImageSrc}
-            alt=""
-            fill
-            priority
-            unoptimized={true}
-            className="object-cover object-center [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
-          />
-        </motion.div>
-      </AnimatePresence>
+      {/* Video-First Layer: No static image backdrop, no poster, direct cinematic video display */}
 
       {/* 2. Video Slot A */}
       {slotA.src && (

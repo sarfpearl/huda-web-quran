@@ -283,6 +283,125 @@ export const SURAH_VERSE_VIDEOS_REGISTRY: Record<number, Record<number, SurahVer
       loopMethod: "1.0s Broadcast Overlap Crossfade (xfade continuous)",
       status: "APPROVED",
     },
+    // Ayah 284: Chapter 11A — Cosmic Dominion, Omniscience & Scrutiny of the Inward Soul
+    284: {
+      surahNumber: 2,
+      ayahNumber: 284,
+      videoPath: "/videos/surah/002-al-baqarah/11a-cosmic-dominion-and-hidden-scrutiny.mp4",
+      theme: "Cosmic Dominion, Omniscience & The Weight of Accountability (Hero 1 - Native 4K)",
+      category: "Desert / Vast Horizon & Mountain Ridgeline",
+      visualSubject: "Expansive high-altitude desert plateau and immense open valley in Western Arabia with weathered sandstone and granite ridges under serene open sky.",
+      source: "HuDa Authentic Cinematic Archive",
+      originalUrl: "/videos/surah/002-al-baqarah/11a-cosmic-dominion-and-hidden-scrutiny.mp4",
+      license: "HuDa Master Production",
+      resolution: "3840x2160 / 1920x1080 (Hero 1 Native 4K / Web Derivative)",
+      recitationDuration: 32.0,
+      videoDuration: 8.0,
+      loopMethod: "Seamless Soft Loop",
+      status: "APPROVED",
+    },
+    // Ayah 285: Chapter 11B — The Unbroken Covenant of Faith & Sincere Submission
+    285: {
+      surahNumber: 2,
+      ayahNumber: 285,
+      videoPath: "/videos/surah/002-al-baqarah/11b-the-covenant-of-faith-and-submission.mp4",
+      theme: "The Unbroken Covenant of Faith & Sincere Submission ('Sami'na wa-Ata'na')",
+      category: "Mountain Pass & Dawn Valley",
+      visualSubject: "Ancient natural desert mountain pass in Western Arabia during early morning with steady linear glide along gravel trail toward distant ridges.",
+      source: "HuDa Authentic Cinematic Archive",
+      originalUrl: "/videos/surah/002-al-baqarah/11b-the-covenant-of-faith-and-submission.mp4",
+      license: "HuDa Master Production",
+      resolution: "1920x1080 (Standard 1080p)",
+      recitationDuration: 28.0,
+      videoDuration: 8.0,
+      loopMethod: "Seamless Soft Loop",
+      status: "APPROVED",
+    },
+    // Ayah 286: Chapter 11C — The Burden, Mercy, Forgiveness & Grand Finale
+    286: {
+      surahNumber: 2,
+      ayahNumber: 286,
+      videoPath: "/videos/surah/002-al-baqarah/11c-proportionate-mercy-and-ultimate-refuge.mp4",
+      theme: "Humility, Proportionate Burden, Divine Mercy & Ultimate Refuge (Surah 002 Finale - Native 4K)",
+      category: "Natural Rock Overhang / Shelter & Early Dawn",
+      visualSubject: "Motionless documentary perspective securely beneath ancient natural sandstone rock overhang looking out across quiet valley after gentle rain.",
+      source: "HuDa Authentic Cinematic Archive",
+      originalUrl: "/videos/surah/002-al-baqarah/11c-proportionate-mercy-and-ultimate-refuge.mp4",
+      license: "HuDa Master Production",
+      resolution: "3840x2160 / 1920x1080 (Hero 2 Native 4K Finale / Web Derivative)",
+      recitationDuration: 45.0,
+      videoDuration: 8.0,
+      loopMethod: "Seamless Soft Loop (Static Master)",
+      status: "APPROVED",
+    },
+  },
+  // Surah 3: Aal-e-Imran — Hero 1 Native 4K Master
+  3: {
+    ...Object.fromEntries(
+      [1, 2, 3, 4, 5, 6, 7, 8, 9].map((ayah) => [
+        ayah,
+        {
+          surahNumber: 3,
+          ayahNumber: ayah,
+          videoPath: "/videos/surah/003-aal-e-imran/01a-the-immutable-foundation-and-muhkamat.mp4",
+          theme: "The Immutable Foundation, Muhkamat & Steadfast Faith (Hero 1 - Native 4K)",
+          category: "Desert / Weathered Granite Strata & Dawn Mist",
+          visualSubject: "Documentary tripod view of rugged Western Arabian granite formations and ancient geological strata standing firm under calm dawn sky.",
+          source: "HuDa Master Production (Veo 3.1 4K)",
+          originalUrl: "/videos/surah/003-aal-e-imran/01a-the-immutable-foundation-and-muhkamat.mp4",
+          license: "HuDa Master Production",
+          resolution: "3840x2160 / 1920x1080 (Hero 1 Native 4K / Web Derivative)",
+          recitationDuration: 25.0,
+          videoDuration: 8.0,
+          loopMethod: "Seamless Soft Loop (Static Master)",
+          status: "APPROVED" as const,
+        },
+      ])
+    ),
+    // Subchapter 02A: Verses 10–17 — The Wealth of This World and the Better Return
+    ...Object.fromEntries(
+      [10, 11, 12, 13, 14, 15, 16, 17].map((ayah) => [
+        ayah,
+        {
+          surahNumber: 3,
+          ayahNumber: ayah,
+          videoPath: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
+          theme: "The Wealth of This World and the Better Return (Standard 1080p)",
+          category: "Wadi Valley / Alluvial Terraces & Pre-Dawn Stream",
+          visualSubject: "Authentic documentary static view of a shallow clear stream trickling through weathered dry-stone boundaries in a Western Arabian agricultural wadi under calm pre-dawn light.",
+          source: "HuDa Master Production (Veo 3.1 1080p)",
+          originalUrl: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
+          license: "HuDa Master Production",
+          resolution: "1920x1080 (Full HD Web Derivative)",
+          recitationDuration: 20.0,
+          videoDuration: 8.0,
+          loopMethod: "Seamless Soft Loop (Static Master)",
+          status: "APPROVED" as const,
+        },
+      ])
+    ),
+    // Subchapter 02B: Verses 18–25 — The Supreme Testimony of Tawhid, Equity & The Day of Reckoning
+    ...Object.fromEntries(
+      [18, 19, 20, 21, 22, 23, 24, 25].map((ayah) => [
+        ayah,
+        {
+          surahNumber: 3,
+          ayahNumber: ayah,
+          videoPath: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
+          theme: "The Supreme Testimony of Tawhid, Equity & The Day of Reckoning (Standard 1080p)",
+          category: "Plateau / Tuwaiq Escarpment Sedimentary Bedrock",
+          visualSubject: "Authentic documentary static view of the Tuwaiq Escarpment limestone plateau with weathered bedrock pavement and clear mid-morning daylight.",
+          source: "HuDa Master Production (Veo 3.1 1080p)",
+          originalUrl: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
+          license: "HuDa Master Production",
+          resolution: "1920x1080 (Full HD Web Derivative)",
+          recitationDuration: 20.0,
+          videoDuration: 8.0,
+          loopMethod: "Seamless Soft Loop (Static Master)",
+          status: "APPROVED" as const,
+        },
+      ])
+    ),
   },
 };
 
