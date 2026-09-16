@@ -15,6 +15,8 @@ interface ReciterPickerModalProps {
   selectedReciter: QuranReciter;
   onSelectReciter: (reciter: QuranReciter) => void;
   isPlayingQuran: boolean;
+  isJuz?: boolean;
+  triggerRef?: React.RefObject<HTMLElement>;
 }
 
 export function ReciterPickerModal({
@@ -23,29 +25,34 @@ export function ReciterPickerModal({
   selectedReciter,
   onSelectReciter,
   isPlayingQuran,
+  isJuz = false,
+  triggerRef,
 }: ReciterPickerModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [syncFilter, setSyncFilter] = useState<"word" | "verse">("word");
+  // Initialize syncFilter directly to match the selected reciter to avoid tab flip flicker
+  const [syncFilter, setSyncFilter] = useState<"word" | "verse">(() =>
+    reciterHasWordTiming(selectedReciter) ? "word" : "verse"
+  );
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const panelRef = useRef<HTMLDivElement>(null);
   const selectedItemRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
 
-  // On open: jump to the tab that contains the currently selected reciter and
-  // clear any stale search so the selected item is guaranteed to be in the list.
+  // On open: sync tab and scroll selected item into view once smoothly
   useEffect(() => {
-    if (!isOpen) return;
-    setSearchQuery("");
-    setSyncFilter(reciterHasWordTiming(selectedReciter) ? "word" : "verse");
+    if (isOpen && !wasOpenRef.current) {
+      wasOpenRef.current = true;
+      setSearchQuery("");
+      setSyncFilter(reciterHasWordTiming(selectedReciter) ? "word" : "verse");
+      const id = requestAnimationFrame(() => {
+        selectedItemRef.current?.scrollIntoView({ block: "nearest" });
+      });
+      return () => cancelAnimationFrame(id);
+    }
+    if (!isOpen) {
+      wasOpenRef.current = false;
+    }
   }, [isOpen, selectedReciter]);
-
-  // Scroll the selected reciter into view once the list for the active tab renders.
-  useEffect(() => {
-    if (!isOpen) return;
-    const id = requestAnimationFrame(() => {
-      selectedItemRef.current?.scrollIntoView({ block: "center" });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [isOpen, syncFilter]);
 
   // Close on Escape key press
   useEffect(() => {
@@ -59,10 +66,13 @@ export function ReciterPickerModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Close on outside click
+  // Close on outside click, but ignore clicks on the trigger button to prevent toggle race flicker
   useEffect(() => {
     if (!isOpen) return;
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      if (triggerRef?.current && triggerRef.current.contains(e.target as Node)) {
+        return; // Button's own click listener handles toggle cleanly
+      }
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -73,7 +83,7 @@ export function ReciterPickerModal({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("touchstart", handlePointerDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   if (!isOpen) return null;
 
@@ -155,6 +165,16 @@ export function ReciterPickerModal({
         </svg>
       </div>
 
+      {/* Context banner when playing 30 Juz */}
+      {isJuz && (
+        <div className="mb-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 p-2.5 flex items-start gap-2 text-left">
+          <span className="text-emerald-400 text-xs shrink-0 mt-0.5">ℹ️</span>
+          <p className="text-[11px] text-sand-200/90 leading-snug">
+            30 Juz is recited by <span className="font-semibold text-emerald-300">Sheikh Maher Al-Muaiqly</span>. Selecting a reciter below will switch to 114 Surahs recitation.
+          </p>
+        </div>
+      )}
+
       {/* Sync Mode Segment Control */}
       <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-black/40 border border-white/10 p-1">
         {([
@@ -220,23 +240,23 @@ export function ReciterPickerModal({
               >
                 {/* Reciter Photo or Fallback Avatar */}
                 <div className="relative h-11 w-11 shrink-0">
-                  <div className="h-full w-full overflow-hidden rounded-full border border-white/15 bg-slate-900 shadow-sm">
-                    {reciter.photoUrl && !hasError ? (
+                  <div className="relative h-full w-full overflow-hidden rounded-full border border-white/15 bg-emerald-950/60 shadow-sm">
+                    {/* Permanent base initial to guarantee zero layout flash */}
+                    <div className="absolute inset-0 grid place-items-center text-emerald-300 font-bold text-sm select-none">
+                      {reciter.displayName.charAt(0)}
+                    </div>
+                    {reciter.photoUrl && !hasError && (
                       <Image
                         src={reciter.photoUrl}
                         alt={reciter.name}
                         width={44}
                         height={44}
                         unoptimized={true}
-                        className="h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover"
                         onError={() =>
                           setImageErrors((prev) => ({ ...prev, [reciter.id]: true }))
                         }
                       />
-                    ) : (
-                      <div className="h-full w-full grid place-items-center bg-emerald-900/50 text-emerald-300 font-bold text-sm">
-                        {reciter.displayName.charAt(0)}
-                      </div>
                     )}
                   </div>
 

@@ -243,6 +243,8 @@ export function ImmersiveHomeClient({
   };
 
   const handleSelectReciter = (reciter: QuranReciter) => {
+    if (reciter.id === selectedReciter.id) return;
+
     setSelectedReciter(reciter);
     try {
       localStorage.setItem(RECITER_STORAGE_KEY, reciter.id);
