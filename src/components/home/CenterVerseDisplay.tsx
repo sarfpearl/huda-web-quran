@@ -25,6 +25,8 @@ interface CenterVerseDisplayProps {
    *  (Verse Sync reciters), the verse text and translation are hidden entirely,
    *  since the voice and on-screen letters do not line up word-for-word. */
   reciterWordSync?: boolean;
+  /** When a 30 Juz track is playing, hide center verses to focus purely on the 8K artwork */
+  isJuz?: boolean;
 }
 
 /**
@@ -59,11 +61,15 @@ export function CenterVerseDisplay({
   activeWordIndex: propWordIndex,
   hasWordTiming: propHasWordTiming,
   reciterWordSync = true,
+  isJuz = false,
 }: CenterVerseDisplayProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // During 30 Juz playback, display pure 8K artwork without mismatched verse overlay
+  if (isJuz) return null;
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
@@ -217,7 +223,7 @@ export function CenterVerseDisplay({
           {showTranslation && (
             <p
               lang={language === "ta" ? "ta" : "en"}
-              className={`${language === "ta" ? "font-tamil italic" : "font-serif sm:font-sans"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] tracking-wide quran-translation-shadow drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] mt-4 sm:mt-5 md:mt-6 px-4 sm:px-10 max-w-3xl mx-auto transition-opacity duration-300 ${translationSizeClass}`}
+              className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] tracking-wide quran-translation-shadow drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] mt-4 sm:mt-5 md:mt-6 px-4 sm:px-10 max-w-3xl mx-auto transition-opacity duration-300 ${translationSizeClass}`}
             >
               {language === "ta"
                 ? activeItem.textTamil || activeItem.textEnglish

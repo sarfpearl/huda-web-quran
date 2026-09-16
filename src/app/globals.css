@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-/* Kavivanar — Unicode Tamil cursive/handwriting display font for translations. */
-@import url('https://fonts.googleapis.com/css2?family=Kavivanar&display=swap');
+/* Noto Serif Tamil — Elegant Unicode Tamil serif font for translations. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
 
 /* KFGQPC Uthmanic Script HAFS — Madinah Mushaf font for Quran Arabic text. */
 @font-face {
@@ -26,7 +26,7 @@
   :root {
     --font-poppins: 'Poppins', sans-serif;
     --font-arabic: 'Uthmanic Hafs', 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
-    --font-tamil: 'Kavivanar', 'Poppins', sans-serif;
+    --font-tamil: 'Noto Serif Tamil', serif;
     /* Height reserved for the mobile bottom nav (incl. safe area). The player
        bar is positioned `bottom: var(--nav-height)` so the two never overlap. */
     --nav-height: calc(56px + env(safe-area-inset-bottom));
