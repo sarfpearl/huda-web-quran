@@ -888,3 +888,38 @@ export function getReciterTimingCapability(
     sourceDescription: `Ayah Boundary Sync (Fallback — Word Timing Unverified for ${name})`,
   };
 }
+
+/**
+ * everyayah.com folder names for reciters that publish per-ayah recitations.
+ * Used to assemble a Juz's exact ayahs in a chosen reciter's voice (see
+ * buildJuzAyahUrls in quran.ts). Verified reachable (HTTP 200). Reciters absent
+ * from this map fall back to whole-surah playback.
+ */
+export const EVERYAYAH_FOLDERS: Record<string, string> = {
+  sudais: "Abdurrahmaan_As-Sudais_192kbps",
+  alafasy: "Alafasy_128kbps",
+  maher: "Maher_AlMuaiqly_64kbps",
+  ghamdi: "Ghamadi_40kbps",
+  dosari: "Yasser_Ad-Dussary_128kbps",
+  abdulbaset: "Abdul_Basit_Murattal_192kbps",
+  minshawi: "Minshawy_Murattal_128kbps",
+  hussary: "Husary_128kbps",
+  hudhaifi: "Hudhaify_128kbps",
+  ajmi: "ahmed_ibn_ali_al_ajamy_128kbps",
+  juhani: "Abdullaah_3awwaad_Al-Juhaynee_128kbps",
+  shuraim: "Saood_ash-Shuraym_128kbps",
+  shatri: "Abu_Bakr_Ash-Shaatree_128kbps",
+  basfar: "Abdullah_Basfar_192kbps",
+  qatami: "Nasser_Alqatami_128kbps",
+  banna: "mahmoud_ali_al_banna_32kbps",
+  akhdar: "Ibrahim_Akhdar_32kbps",
+  abbad: "Fares_Abbad_64kbps",
+  jaber: "Ali_Jaber_64kbps",
+  ayyoub: "Muhammad_Ayyoub_128kbps",
+  tablawi: "Mohammad_al_Tablaway_128kbps",
+};
+
+/** everyayah folder for a reciter id, or null if it has no per-ayah recitation. */
+export function getEveryAyahFolder(reciterId: string): string | null {
+  return EVERYAYAH_FOLDERS[reciterId] ?? null;
+}

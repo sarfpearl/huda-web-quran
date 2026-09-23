@@ -62,9 +62,11 @@ export function ImmersiveHeader({
   const isPlayingQuran =
     (isQuranActive || (bayan ? isSurahTrackId(bayan.id) : false)) && player.isPlaying;
 
-  // Translation language toggle is only meaningful for Word Sync reciters when not in full-screen Juz artwork mode,
-  // since Audio Only reciters and Juz mode show no verse text / meaning on screen.
-  const showLanguageToggle = reciterHasWordTiming(selectedReciter) && !isJuz;
+  // Translation language toggle is meaningful for Word Sync reciters whenever
+  // verse text is on screen — that's every Surah, and now also a Juz played
+  // per-ayah in a Word Sync reciter's voice (player.ayahSequence is set then).
+  const showLanguageToggle =
+    reciterHasWordTiming(selectedReciter) && (!isJuz || Boolean(player.ayahSequence));
 
   const handleToggleReciterSelector = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -69,8 +69,9 @@ export function CenterVerseDisplay({
   }, []);
 
   // During 30 Juz playback, display pure 8K artwork without mismatched verse overlay
-  if (isJuz) return null;
-
+  // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
+  // here (its current ayah) — so we no longer blanket-hide on isJuz; we render
+  // whenever there's an active verse. Maher's full-Juz file passes none.
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
 

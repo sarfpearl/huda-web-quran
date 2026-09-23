@@ -112,13 +112,22 @@ export function CompactBayanPlayer({
   const categoryLine = isQuran
     ? (surah
         ? `Quran • Surah ${surah.number} · ${surah.verses} Verses · ${surah.revelation}`
-        : quranContentLabel(bayan.id) ?? bayan.category.name)
+        : quranContentLabel(bayan.id, bayan.speaker?.name) ?? bayan.category.name)
     : bayan.category.name;
   const currentSurah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
   const currentTime = isCurrentTrack ? player.currentTime : 0;
   const totalDuration = isCurrentTrack && player.duration > 0
     ? player.duration
     : (bayan.durationSeconds || (currentSurah ? SURAH_DURATIONS[currentSurah.number] : 300));
+
+  // Per-ayah Juz: the progress bar spans the whole Juz (ayah index + intra-ayah
+  // fraction) instead of resetting every ayah, and shows "Ayah X / Y".
+  const ayahSeq = isCurrentTrack ? player.ayahSequence : null;
+  const isAyahSeq = Boolean(ayahSeq && isQuranTrackId(bayan.id));
+  const ayahFraction = totalDuration > 0 ? Math.min(currentTime / totalDuration, 1) : 0;
+  const juzProgressPct = isAyahSeq && ayahSeq
+    ? ((ayahSeq.index + ayahFraction) / ayahSeq.total) * 100
+    : (totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0);
 
   const handlePlayToggle = () => {
     if (isCurrentTrack) {
@@ -324,7 +333,7 @@ export function CompactBayanPlayer({
               <div
                 className="absolute left-0 top-0.5 bottom-0.5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.95)] ring-1 ring-amber-300 transition-[width] duration-100 ease-linear pointer-events-none"
                 style={{
-                  width: `${Math.min(Math.max(totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0, currentTime > 0 ? 0.5 : 0), 100)}%`,
+                  width: `${Math.min(Math.max(juzProgressPct, (isAyahSeq ? juzProgressPct : currentTime) > 0 ? 0.5 : 0), 100)}%`,
                 }}
               />
             )}
@@ -334,18 +343,27 @@ export function CompactBayanPlayer({
           <input
             type="range"
             min={0}
-            max={totalDuration || 1}
+            max={isAyahSeq && ayahSeq ? ayahSeq.total - 1 : (totalDuration || 1)}
             step={1}
-            value={currentTime}
-            onChange={handleSeek}
+            value={isAyahSeq && ayahSeq ? ayahSeq.index : currentTime}
+            onChange={isAyahSeq ? (e) => player.jumpToAyah(Number(e.target.value)) : handleSeek}
             aria-label="Progress"
             className={`${isQuran ? "quran-range" : "neomorph-range"} relative z-20 h-2.5 w-full cursor-pointer appearance-none bg-transparent`}
           />
         </div>
 
         <div className="mt-2 flex items-center justify-between text-xs font-mono font-medium text-sand-300/60">
-          <span>{formatClock(currentTime)}</span>
-          <span>{formatClock(totalDuration)}</span>
+          {isAyahSeq && ayahSeq ? (
+            <>
+              <span>Ayah {ayahSeq.index + 1}</span>
+              <span>{ayahSeq.total} āyāt</span>
+            </>
+          ) : (
+            <>
+              <span>{formatClock(currentTime)}</span>
+              <span>{formatClock(totalDuration)}</span>
+            </>
+          )}
         </div>
       </div>
 

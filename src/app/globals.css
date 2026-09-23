@@ -3,13 +3,18 @@
 /* Noto Serif Tamil — Elegant Unicode Tamil serif font for translations. */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
 
-/* KFGQPC Uthmanic Script HAFS — Madinah Mushaf font for Quran Arabic text. */
+/* KFGQPC Uthmanic Script HAFS — Madinah Mushaf font for Quran Arabic text.
+   Prefer the locally-installed face by its real family name, else the bundled
+   file. font-display: block waits for HAFS instead of flashing the Amiri
+   fallback (font is preloaded in layout.tsx so the wait is negligible). */
 @font-face {
   font-family: 'Uthmanic Hafs';
-  src: url('/fonts/UthmanicHafs.otf') format('opentype');
+  src: local('KFGQPC Uthmanic Script HAFS Regular'),
+       local('KFGQPC Uthmanic Script HAFS'),
+       url('/fonts/UthmanicHafs.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @tailwind base;

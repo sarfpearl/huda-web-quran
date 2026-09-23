@@ -40,7 +40,11 @@ export function JuzCinematicBackground({
   }
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-950">
+    // NOTE: no opaque background here — the identical bespoke Juz artwork is rendered
+    // directly behind this layer (see ImmersiveBackground). Keeping this layer transparent
+    // lets that still fill the ~8ms decode gap at every loop seek, so the loop wrap no
+    // longer flashes black.
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
       <video
         ref={videoRef}
         src={videoSrc}

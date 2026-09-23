@@ -170,7 +170,7 @@ export function ReciterPickerModal({
         <div className="mb-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 p-2.5 flex items-start gap-2 text-left">
           <span className="text-emerald-400 text-xs shrink-0 mt-0.5">ℹ️</span>
           <p className="text-[11px] text-sand-200/90 leading-snug">
-            30 Juz is recited by <span className="font-semibold text-emerald-300">Sheikh Maher Al-Muaiqly</span>. Selecting a reciter below will switch to 114 Surahs recitation.
+            <span className="font-semibold text-emerald-300">Sheikh Maher Al-Muaiqly</span> has the dedicated full-Juz recording. Choose any reciter and this Juz will play in their voice, ayah by ayah.
           </p>
         </div>
       )}

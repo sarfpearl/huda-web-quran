@@ -64,6 +64,15 @@ export default function RootLayout({
       className="font-sans"
     >
       <head>
+        {/* Preload the KFGQPC Uthmanic Script HAFS Mushaf font so the Quran
+            Arabic paints in the correct face immediately (no Amiri fallback flash). */}
+        <link
+          rel="preload"
+          href="/fonts/UthmanicHafs.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen font-sans antialiased">

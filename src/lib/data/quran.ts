@@ -344,7 +344,100 @@ import {
   type QuranReciter,
   getDefaultReciter,
   buildReciterSurahUrl,
+  getEveryAyahFolder,
 } from "./quranReciters";
+
+// ── Per-ayah Juz recitation (any reciter, via everyayah.com) ────────────
+// Only Maher has a dedicated full-Juz recording. To recite a Juz in another
+// reciter's voice we stream that Juz's EXACT ayahs from everyayah.com and let
+// the player chain them. Juz boundaries cut mid-surah, so we track ayah-level
+// start points and enumerate across surahs.
+
+const surahVerseCount = (n: number): number =>
+  SURAH_METADATA_EXTRAS[n]?.verses ?? 0;
+
+// [surah, ayah] where each Juz begins (1-indexed). Uses the INDO-PAK (South
+// Asian) Juz division — the one the app's Juz names follow (Juz 4 "Lan
+// Tanaloo" 3:92, Juz 23 "Wa Mali" 36:22, etc.) and that Sheikh Maher's full-Juz
+// files use. This differs from the King Fahd/Madani division at Juz 4, 7, 11,
+// 20, 21, 23; using King Fahd boundaries here made every non-Maher (per-ayah)
+// reciter start a few ayahs off from Maher and from the printed Mushaf.
+const JUZ_START_AYAH: [number, number][] = [
+  [1, 1], [2, 142], [2, 253], [3, 92], [4, 24], [4, 148], [5, 83], [6, 111], [7, 88], [8, 41],
+  [9, 94], [11, 6], [12, 53], [15, 1], [17, 1], [18, 75], [21, 1], [23, 1], [25, 21], [27, 60],
+  [29, 45], [33, 31], [36, 22], [39, 32], [41, 47], [46, 1], [51, 31], [58, 1], [67, 1], [78, 1],
+];
+
+/** Ordered [surah, ayah] pairs that make up a Juz (1–30), inclusive. */
+export function getJuzAyahPairs(juzId: number): Array<[number, number]> {
+  if (juzId < 1 || juzId > 30) return [];
+  const [s0, a0] = JUZ_START_AYAH[juzId - 1];
+  // End = the ayah just before the next Juz starts (or 114:6 for Juz 30).
+  let sEnd: number, aEnd: number;
+  if (juzId === 30) {
+    sEnd = 114;
+    aEnd = 6;
+  } else {
+    const [ns, na] = JUZ_START_AYAH[juzId];
+    if (na > 1) {
+      sEnd = ns;
+      aEnd = na - 1;
+    } else {
+      sEnd = ns - 1;
+      aEnd = surahVerseCount(sEnd);
+    }
+  }
+  const pairs: Array<[number, number]> = [];
+  for (let s = s0; s <= sEnd; s++) {
+    const from = s === s0 ? a0 : 1;
+    const to = s === sEnd ? aEnd : surahVerseCount(s);
+    for (let a = from; a <= to; a++) pairs.push([s, a]);
+  }
+  return pairs;
+}
+
+const pad3 = (n: number) => String(n).padStart(3, "0");
+
+/**
+ * everyayah.com per-ayah URLs for a Juz in a given reciter's voice, or null if
+ * the reciter has no per-ayah recitation (caller should fall back).
+ */
+export function buildJuzAyahUrls(juzId: number, reciterId: string): string[] | null {
+  const folder = getEveryAyahFolder(reciterId);
+  if (!folder) return null;
+  const pairs = getJuzAyahPairs(juzId);
+  if (pairs.length === 0) return null;
+  return pairs.map(([s, a]) => `https://everyayah.com/data/${folder}/${pad3(s)}${pad3(a)}.mp3`);
+}
+
+/**
+ * A Juz "display" track carrying a specific reciter, so the Now Playing chrome
+ * shows "Juz N • <reciter>" and the Juz artwork/background stays, while the
+ * player streams the reciter's per-ayah audio underneath.
+ */
+export function quranJuzToTrackForReciter(
+  juz: QuranJuz,
+  reciter: QuranReciter,
+  firstAyahUrl?: string
+): BayanWithRelations {
+  const speaker: Speaker = {
+    id: `reciter-${reciter.id}`,
+    name: reciter.displayName,
+    slug: reciter.id,
+    bio: `${reciter.style} · ${reciter.country}`,
+    profileImageUrl: reciter.photoUrl,
+    isActive: true,
+    createdAt: "",
+  };
+  return {
+    ...quranJuzToTrack(juz),
+    speakerId: speaker.id,
+    speaker,
+    // Not used for playback (the per-ayah sequence drives audio) but kept
+    // consistent so reciter resolution and UI read the chosen reciter.
+    audioUrl: firstAyahUrl ?? juz.audioUrl,
+  };
+}
 
 export function quranSurahToTrack(
   surah: QuranSurah,
@@ -429,9 +522,9 @@ export function quranPlayerSubtitle(id: string): string | undefined {
   return undefined;
 }
 
-export function quranContentLabel(id: string): string | undefined {
+export function quranContentLabel(id: string, reciterName?: string): string | undefined {
   const juz = getQuranJuzByTrackId(id);
-  if (juz) return `Quran • Juz ${juz.id} · Sheikh Maher Al-Muaiqly`;
+  if (juz) return `Quran • Juz ${juz.id} · ${reciterName || "Sheikh Maher Al-Muaiqly"}`;
   const surah = getSurahByTrackId(id);
   if (surah) return `Quran • Surah ${surah.number}`;
   return undefined;
