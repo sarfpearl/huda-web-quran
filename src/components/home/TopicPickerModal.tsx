@@ -31,6 +31,8 @@ interface TopicPickerModalProps {
   onSelectCategory: (category: Category) => void;
   onSelectSpeaker?: (speaker: Speaker) => void;
   onSelectBayan?: (bayan: BayanWithRelations) => void;
+  /** Play a Juz in the currently-selected reciter's voice (per-ayah). */
+  onSelectJuz?: (juzId: number) => void;
   onShuffle?: () => void;
 }
 
@@ -58,6 +60,7 @@ export function TopicPickerModal({
   activeCategorySlug,
   surahTracks,
   onSelectCategory,
+  onSelectJuz,
 }: TopicPickerModalProps) {
   const player = useAudioPlayer();
   const [isOpen, setIsOpen] = useState(false);
@@ -260,7 +263,11 @@ export function TopicPickerModal({
                         isActive={isTrackCurrent}
                         isPlaying={isTrackCurrent && player.isPlaying}
                         onClick={() => {
-                          player.playBayan(QURAN_TRACKS[j.id - 1], QURAN_TRACKS);
+                          if (onSelectJuz) {
+                            onSelectJuz(j.id);
+                          } else {
+                            player.playBayan(QURAN_TRACKS[j.id - 1], QURAN_TRACKS);
+                          }
                           setIsOpen(false);
                         }}
                       />

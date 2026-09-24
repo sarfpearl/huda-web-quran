@@ -260,6 +260,23 @@ export function ImmersiveHomeClient({
     }
   };
 
+  // Picking a Juz from the browser plays it ayah-by-ayah in the CURRENTLY-
+  // selected reciter's voice — including Sheikh Maher — so the ayah progress
+  // bar, word highlight and verse text work uniformly for every reciter. Only a
+  // reciter with no per-ayah audio at all falls back to Maher's full-Juz file.
+  const handleSelectJuz = (juzId: number) => {
+    const juz = getQuranJuzByTrackId(`quran-juz-${juzId}`);
+    if (!juz) return;
+    const ayahUrls = buildJuzAyahUrls(juz.id, selectedReciter.id);
+    if (ayahUrls && ayahUrls.length > 0) {
+      const displayTrack = quranJuzToTrackForReciter(juz, selectedReciter, ayahUrls[0]);
+      player.playAyahSequence(displayTrack, ayahUrls, 0);
+      return;
+    }
+    const juzTrack = QURAN_TRACKS[juz.id - 1];
+    if (juzTrack) player.playBayan(juzTrack, QURAN_TRACKS);
+  };
+
   const handleSelectReciter = (reciter: QuranReciter) => {
     if (reciter.id === selectedReciter.id) return;
 
@@ -273,20 +290,11 @@ export function ImmersiveHomeClient({
     }
 
     // ── Changing reciter while a JUZ is playing ──────────────────────────
+    // Every reciter (including Maher) streams the Juz's EXACT ayahs in their own
+    // voice, ayah-by-ayah from everyayah.com, so the ayah progress bar / word
+    // highlight stay consistent. If a per-ayah sequence is already playing,
+    // resume at the SAME ayah instead of restarting from the first one.
     if (isPlayingJuz && activeJuz) {
-      // Maher has the authentic dedicated full-Juz recording — restore it.
-      if (reciter.id === "maher") {
-        const juzTrack = QURAN_TRACKS[activeJuz.id - 1];
-        if (juzTrack) {
-          if (player.isPlaying) player.playBayan(juzTrack, QURAN_TRACKS);
-          else player.cueBayan(juzTrack, QURAN_TRACKS);
-          return;
-        }
-      }
-      // Other reciters: stream the Juz's EXACT ayahs in their voice, chained
-      // ayah-by-ayah from everyayah.com — same Juz, different reciter. If a
-      // per-ayah sequence is already playing, resume at the SAME ayah in the new
-      // voice instead of restarting from the first ayah.
       const ayahUrls = buildJuzAyahUrls(activeJuz.id, reciter.id);
       if (ayahUrls && ayahUrls.length > 0) {
         const resumeIndex = player.ayahSequence?.index ?? 0;
@@ -382,9 +390,12 @@ export function ImmersiveHomeClient({
     ) {
       return { hasWordTiming: false, activeWordIndex: -1 };
     }
-    const ayahStart = juzAyahVerse.timestampFrom ?? words[0].startTime ?? 0;
-    const ayahEnd =
-      juzAyahVerse.timestampTo ?? words[words.length - 1].endTime ?? ayahStart;
+    // Reference the actual first/last WORD-segment times as the ayah window —
+    // NOT timestampFrom/To, which can sit several seconds off from the segment
+    // times and shift the whole highlight ahead. The everyayah audio matches
+    // these segment times (same reciter recording, same duration).
+    const ayahStart = words[0].startTime ?? 0;
+    const ayahEnd = words[words.length - 1].endTime ?? ayahStart;
     const qdcDur = ayahEnd - ayahStart;
     const eaDur = player.duration > 0 ? player.duration : qdcDur;
     const scale = qdcDur > 0 ? eaDur / qdcDur : 1;
@@ -504,6 +515,7 @@ export function ImmersiveHomeClient({
           surahTracks={surahTracksForCurrentReciter}
           activeCategorySlug={activeCategory.slug}
           onSelectCategory={handleSelectCategory}
+          onSelectJuz={handleSelectJuz}
           onSelectSpeaker={handleSelectSpeaker}
           onSelectBayan={handleSelectBayan}
           onShuffle={handleShuffle}
