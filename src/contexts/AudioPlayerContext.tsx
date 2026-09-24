@@ -278,6 +278,49 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, [isPlaying, duration]);
 
+  // Keep the screen awake while a recitation is playing (Screen Wake Lock API).
+  // The browser drops the lock whenever the tab is hidden, so re-acquire on
+  // return. Release is delayed briefly so ayah-to-ayah gaps don't let it lapse.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("wakeLock" in navigator)) return;
+    let sentinel: WakeLockSentinel | null = null;
+    let cancelled = false;
+
+    const acquire = async () => {
+      if (cancelled || sentinel || document.visibilityState !== "visible") return;
+      try {
+        const lock = await navigator.wakeLock.request("screen");
+        if (cancelled) {
+          lock.release().catch(() => {});
+          return;
+        }
+        sentinel = lock;
+        lock.addEventListener("release", () => {
+          if (sentinel === lock) sentinel = null;
+        });
+      } catch {
+        /* denied (e.g. battery saver) — nothing to do */
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && isPlaying) acquire();
+    };
+
+    if (isPlaying) {
+      acquire();
+      document.addEventListener("visibilitychange", onVisibility);
+    }
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      const lock = sentinel;
+      sentinel = null;
+      if (lock) setTimeout(() => lock.release().catch(() => {}), 3000);
+    };
+  }, [isPlaying]);
+
   const persistLast = useCallback(
     (bayan: BayanWithRelations, position: number) => {
       try {

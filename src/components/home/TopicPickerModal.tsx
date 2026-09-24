@@ -22,6 +22,9 @@ import { ContentListCard } from "./ContentListCard";
 
 type ModalTab = "surah" | "quran" | "bayan";
 
+// Bayan tab is hidden for now — flip to true to bring it back (code kept intact).
+const SHOW_BAYAN_TAB = false;
+
 interface TopicPickerModalProps {
   categories: Category[];
   speakers?: Speaker[];
@@ -184,6 +187,7 @@ export function TopicPickerModal({
                   Juz
                 </button>
 
+                {SHOW_BAYAN_TAB && (
                 <button
                   type="button"
                   onClick={() => setActiveTab("bayan")}
@@ -196,6 +200,7 @@ export function TopicPickerModal({
                 >
                   Bayan
                 </button>
+                )}
               </div>
 
               {/* 3. Search Input Box */}
