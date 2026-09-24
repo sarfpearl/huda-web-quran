@@ -82,9 +82,7 @@ export function SyncQADebugHUD({
 
       {isOpen && (
         <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-3 z-50 pointer-events-auto select-none">
-          {/* Teaching-tip pointer arrow (desktop only — mobile popover is centered) */}
-          <span className="hidden sm:block absolute -top-[7px] right-6 h-3.5 w-3.5 rotate-45 rounded-[3px] bg-slate-950 border-l border-t border-white/15" />
-          <div className="relative w-full sm:w-[26rem] max-w-[calc(100vw-1.5rem)] rounded-3xl bg-slate-950/95 backdrop-blur-2xl border border-white/15 p-4 sm:p-5 text-xs text-sand-100 shadow-[0_25px_60px_rgba(0,0,0,0.85)]">
+          <div className="relative w-full sm:w-[26rem] max-w-[calc(100vw-1.5rem)] rounded-3xl bg-black/[0.08] backdrop-blur-[14px] border border-white/15 p-4 sm:p-5 text-xs text-sand-100 shadow-[0_25px_60px_rgba(0,0,0,0.85)]">
           {/* Header — desktop dismisses via outside-click/arrow; mobile gets a close button */}
           <div className="flex items-center justify-between gap-2 pb-2 mb-3 border-b border-white/10">
             <div className="flex items-center gap-2">

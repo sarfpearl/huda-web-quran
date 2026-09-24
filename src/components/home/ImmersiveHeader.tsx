@@ -24,6 +24,9 @@ interface ImmersiveHeaderProps {
   onToggleVisualMode?: () => void;
   language?: "en" | "ta";
   onToggleLanguage?: () => void;
+  /** Ayah meaning (translation) visibility + toggle */
+  showMeaning?: boolean;
+  onToggleMeaning?: () => void;
   selectedReciter?: QuranReciter;
   onSelectReciter?: (reciter: QuranReciter) => void;
   isQuranActive?: boolean;
@@ -40,6 +43,8 @@ export function ImmersiveHeader({
   onToggleVisualMode,
   language = "en",
   onToggleLanguage,
+  showMeaning = true,
+  onToggleMeaning,
   selectedReciter = getDefaultReciter(),
   onSelectReciter,
   isQuranActive = true,
@@ -90,12 +95,13 @@ export function ImmersiveHeader({
       <TimeLocationWidget />
 
       {/* Top Right Header Controls */}
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         {/* QA HUD pill (leading, before the language toggle) */}
         {qaHudControlled}
 
         {/* Language Switcher (First — only for Word Sync reciters that show text) */}
-        {onToggleLanguage && showLanguageToggle && (
+        {/* Hidden while the meaning is off — there's no translation to switch */}
+        {onToggleLanguage && showLanguageToggle && showMeaning && (
           <button
             type="button"
             onClick={onToggleLanguage}
@@ -113,6 +119,34 @@ export function ImmersiveHeader({
               <path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z" />
             </svg>
             <span className={`text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>{language === "ta" ? "தமிழ்" : "EN"}</span>
+          </button>
+        )}
+
+        {/* Ayah Meaning show/hide (only when verse text is on screen) */}
+        {onToggleMeaning && showLanguageToggle && (
+          <button
+            type="button"
+            onClick={onToggleMeaning}
+            aria-pressed={showMeaning}
+            aria-label={showMeaning ? "Hide Ayah meaning" : "Show Ayah meaning"}
+            title={
+              language === "ta"
+                ? showMeaning ? "அர்த்தத்தை மறை" : "அர்த்தத்தைக் காட்டு"
+                : showMeaning ? "Hide meaning" : "Show meaning"
+            }
+            className={`pointer-events-auto flex items-center gap-1 justify-center h-9 px-2.5 sm:h-11 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+              showMeaning ? "text-amber-300" : "text-white/60"
+            }`}
+          >
+            {/* Open book icon; slashed when the meaning is hidden */}
+            <svg className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 5.5C4.5 4 8 4 12 6c4-2 7.5-2 10-.5V19c-2.5-1.5-6-1.5-10 .5-4-2-7.5-2-10-.5Z" />
+              <path d="M12 6v13.5" />
+              {!showMeaning && <path d="M3 3l18 18" />}
+            </svg>
+            <span className={`hidden sm:inline text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>
+              {language === "ta" ? "அர்த்தம்" : "Meaning"}
+            </span>
           </button>
         )}
 

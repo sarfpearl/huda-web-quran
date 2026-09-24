@@ -41,9 +41,18 @@ export function SurahCinematicBackground({
     return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
   }, [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]);
 
+  // Only commit a clip once it has stayed wanted briefly — rapid ayah stepping
+  // or a transient ayah value must not start a crossfade per step.
+  const [stableVideo, setStableVideo] = useState<string | null>(resolvedVideo);
+  useEffect(() => {
+    if (resolvedVideo === stableVideo) return;
+    const t = setTimeout(() => setStableVideo(resolvedVideo), 350);
+    return () => clearTimeout(t);
+  }, [resolvedVideo, stableVideo]);
+
   // Dual-slot video architecture for 100% seamless, flicker-free crossfading
   const [slotA, setSlotA] = useState<{ src: string | null; loaded: boolean }>({
-    src: resolvedVideo,
+    src: stableVideo,
     loaded: false,
   });
   const [slotB, setSlotB] = useState<{ src: string | null; loaded: boolean }>({
@@ -56,38 +65,82 @@ export function SurahCinematicBackground({
   const videoRefA = useRef<HTMLVideoElement | null>(null);
   const videoRefB = useRef<HTMLVideoElement | null>(null);
 
-  // When resolvedVideo changes, load it into the idle slot without blanking the active slot
+  // When stableVideo changes, load it into the idle slot without blanking the active slot
   useEffect(() => {
-    if (!resolvedVideo) return;
+    if (!stableVideo) return;
 
     const currentSrc = activeSlot === 0 ? slotA.src : slotB.src;
-    if (resolvedVideo === currentSrc) return;
+    if (stableVideo === currentSrc) return;
+
+    // The idle slot may already hold this clip (e.g. stepping back to the
+    // previous one). Its src won't change, so `canplay` won't fire again —
+    // reuse it directly instead of resetting it to "not loaded" forever.
+    const idle = activeSlot === 0 ? slotB : slotA;
+    const idleVideo = activeSlot === 0 ? videoRefB.current : videoRefA.current;
+    if (idle.src === stableVideo) {
+      if (idle.loaded || (idleVideo && idleVideo.readyState >= 3)) {
+        if (!idle.loaded) (activeSlot === 0 ? setSlotB : setSlotA)((prev) => ({ ...prev, loaded: true }));
+        if (isPlaying && idleVideo) idleVideo.play().catch(() => {});
+        setActiveSlot(activeSlot === 0 ? 1 : 0);
+      }
+      return;
+    }
 
     if (activeSlot === 0) {
-      setSlotB({ src: resolvedVideo, loaded: false });
+      setSlotB({ src: stableVideo, loaded: false });
     } else {
-      setSlotA({ src: resolvedVideo, loaded: false });
+      setSlotA({ src: stableVideo, loaded: false });
     }
-  }, [resolvedVideo, activeSlot, slotA.src, slotB.src]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stableVideo, activeSlot, slotA.src, slotB.src]);
+
+  // The src we actually want on screen. A slot may only take over if it holds
+  // this src — otherwise a hidden, looping slot re-firing `canplay` would flip
+  // the background back to the previous clip (visible as flicker).
+  const wantedSrcRef = useRef<string | null>(stableVideo);
+  wantedSrcRef.current = stableVideo;
 
   // When idle slot is decoded and ready to play, smoothly crossfade to it
   const handleSlotCanPlay = (slotIndex: 0 | 1) => {
-    if (slotIndex === 0) {
-      setSlotA((prev) => ({ ...prev, loaded: true }));
-      if (activeSlot === 1) {
-        if (isPlaying && videoRefA.current) {
-          videoRefA.current.play().catch(() => {});
-        }
-        setActiveSlot(0);
-      }
-    } else {
-      setSlotB((prev) => ({ ...prev, loaded: true }));
-      if (activeSlot === 0) {
-        if (isPlaying && videoRefB.current) {
-          videoRefB.current.play().catch(() => {});
-        }
-        setActiveSlot(1);
-      }
+    const slot = slotIndex === 0 ? slotA : slotB;
+    const video = slotIndex === 0 ? videoRefA.current : videoRefB.current;
+    if (!slot.loaded) {
+      (slotIndex === 0 ? setSlotA : setSlotB)((prev) => ({ ...prev, loaded: true }));
+    }
+    if (activeSlot === slotIndex || slot.src !== wantedSrcRef.current) return;
+    if (isPlaying && video) video.play().catch(() => {});
+    setActiveSlot(slotIndex);
+  };
+
+  // A clip can finish buffering before React attaches onCanPlay (SSR/hydration,
+  // cached files) — then the event is missed and the slot stays hidden. Catch
+  // up from readyState whenever a slot is waiting.
+  useEffect(() => {
+    if (slotA.src && !slotA.loaded && (videoRefA.current?.readyState ?? 0) >= 3) handleSlotCanPlay(0);
+    if (slotB.src && !slotB.loaded && (videoRefB.current?.readyState ?? 0) >= 3) handleSlotCanPlay(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotA.src, slotA.loaded, slotB.src, slotB.loaded, activeSlot]);
+
+  // Once the incoming clip has faded in, pause the outgoing one so it stops
+  // looping (and decoding) underneath.
+  useEffect(() => {
+    const outgoing = activeSlot === 0 ? videoRefB.current : videoRefA.current;
+    if (!outgoing) return;
+    const t = setTimeout(() => outgoing.pause(), 750);
+    return () => clearTimeout(t);
+  }, [activeSlot]);
+
+  // Safety net: the ACTIVE clip must never sit paused while audio plays (a
+  // browser/media interruption during a track switch left a frozen black
+  // first frame). The outgoing clip is paused on purpose and is ignored.
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
+  const activeSlotRef = useRef(activeSlot);
+  activeSlotRef.current = activeSlot;
+  const resumeIfActive = (slotIndex: 0 | 1) => {
+    const v = slotIndex === 0 ? videoRefA.current : videoRefB.current;
+    if (v && isPlayingRef.current && activeSlotRef.current === slotIndex) {
+      v.play().catch(() => {});
     }
   };
 
@@ -118,8 +171,15 @@ export function SurahCinematicBackground({
           playsInline
           preload="auto"
           onCanPlay={() => handleSlotCanPlay(0)}
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out ${
-            activeSlot === 0 && slotA.loaded ? "opacity-100 z-[2]" : "opacity-0 z-[1]"
+          onPause={() => resumeIfActive(0)}
+          className={`absolute inset-0 h-full w-full object-cover object-center ${
+            // active: fades in on top · loaded outgoing: stays opaque beneath
+            // (no dark dip mid-fade) · still loading: hidden
+            activeSlot === 0 && slotA.loaded
+              ? "opacity-100 z-[2] transition-opacity duration-700 ease-in-out"
+              : slotA.loaded
+              ? "opacity-100 z-[1]"
+              : "opacity-0 z-[1]"
           }`}
         />
       )}
@@ -135,8 +195,15 @@ export function SurahCinematicBackground({
           playsInline
           preload="auto"
           onCanPlay={() => handleSlotCanPlay(1)}
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out ${
-            activeSlot === 1 && slotB.loaded ? "opacity-100 z-[2]" : "opacity-0 z-[1]"
+          onPause={() => resumeIfActive(1)}
+          className={`absolute inset-0 h-full w-full object-cover object-center ${
+            // active: fades in on top · loaded outgoing: stays opaque beneath
+            // (no dark dip mid-fade) · still loading: hidden
+            activeSlot === 1 && slotB.loaded
+              ? "opacity-100 z-[2] transition-opacity duration-700 ease-in-out"
+              : slotB.loaded
+              ? "opacity-100 z-[1]"
+              : "opacity-0 z-[1]"
           }`}
         />
       )}

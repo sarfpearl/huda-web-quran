@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
@@ -16,9 +16,6 @@ interface CenterVerseDisplayProps {
   isPlaying?: boolean;
   language?: "en" | "ta";
   showTranslation?: boolean;
-  onPrevVerse?: () => void;
-  onNextVerse?: () => void;
-  hasMultipleVerses?: boolean;
   activeWordIndex?: number;
   hasWordTiming?: boolean;
   /** Whether the selected reciter supports word-level voice sync. When false
@@ -35,6 +32,13 @@ interface CenterVerseDisplayProps {
  * number alone (no U+06DD, RTL, no letter-spacing) encloses it in the ornament.
  * (Adding U+06DD would draw a second empty ornament next to it.)
  */
+/** True when a pane's text block is taller than the pane (i.e. it must scroll). */
+function overflows(pane: HTMLElement) {
+  const cs = getComputedStyle(pane);
+  const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  return ((pane.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + pad > pane.clientHeight + 2;
+}
+
 function AyahOrnament({ n }: { n: number }) {
   return (
     <span
@@ -55,9 +59,6 @@ export function CenterVerseDisplay({
   isPlaying = false,
   language = "en",
   showTranslation = true,
-  onPrevVerse,
-  onNextVerse,
-  hasMultipleVerses = false,
   activeWordIndex: propWordIndex,
   hasWordTiming: propHasWordTiming,
   reciterWordSync = true,
@@ -67,6 +68,178 @@ export function CenterVerseDisplay({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reserve exactly the space the floating player occupies (its height varies
+  // with viewport), so the verse stage never runs underneath it.
+  const [bottomInset, setBottomInset] = useState<number | null>(null);
+  useEffect(() => {
+    const dock = document.querySelector<HTMLElement>("[data-player-dock]");
+    if (!dock) return;
+    const measure = () => {
+      const top = dock.getBoundingClientRect().top;
+      setBottomInset(Math.max(0, window.innerHeight - top) + 12);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(dock);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  // Fit-to-stage: long ayahs (e.g. 2:102, 2:282) are shrunk until the Arabic
+  // and meaning panes fit between the header and the player. With the meaning
+  // shown they sit side by side (md+: Arabic right, meaning left) or stacked
+  // (mobile: Arabic top, meaning bottom). Each pane scrolls on its own once the
+  // text hits its readable floor, and auto-follows the recitation.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const arabicPaneRef = useRef<HTMLDivElement>(null);
+  const meaningPaneRef = useRef<HTMLDivElement>(null);
+  const activeItemForFit = currentSegment ?? currentVerse;
+  const fitKey = currentSegment
+    ? `${currentSegment.id}-${currentSegment.type}`
+    : `${currentVerse?.surahNumber}-${currentVerse?.verseKey}`;
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const panes = () =>
+      [arabicPaneRef.current, meaningPaneRef.current].filter((x): x is HTMLDivElement => !!x);
+    const fit = () => {
+      // Scale font-size (not CSS zoom — zoom changes don't relayout synchronously
+      // in every Chromium build, so measurements would be stale). Each text has
+      // a readable floor (data-fit-min, px); past that its pane scrolls instead.
+      // Binary-search the largest scale at which `group` fits: short ayahs grow
+      // into free space (up to data-fit-max), long ones shrink (to data-fit-min).
+      const fitGroup = (texts: HTMLElement[], fits: () => boolean, maxOverride?: number) => {
+        if (texts.length === 0) return;
+        texts.forEach((t) => (t.style.fontSize = ""));
+        const bases = texts.map((t) => parseFloat(getComputedStyle(t).fontSize));
+        const mins = texts.map((t, j) => Math.min(bases[j], Number(t.dataset.fitMin) || 0));
+        // Growth cap depends on screen size: medium on phones, larger on
+        // tablets, full on desktop (data-fit-max-mobile / -tablet / -max).
+        const vw = window.innerWidth;
+        const capOf = (t: HTMLElement) =>
+          Number(
+            (vw < 640 ? t.dataset.fitMaxMobile : vw < 1024 ? t.dataset.fitMaxTablet : undefined) ??
+              t.dataset.fitMax
+          ) || 0;
+        const maxs = texts.map((t, j) => {
+          const cap = capOf(t);
+          // Never grow past the cap; shrink the base down to it on small screens.
+          const m = cap > 0 ? cap : bases[j];
+          return maxOverride ? Math.max(mins[j], Math.min(m, maxOverride)) : m;
+        });
+        const apply = (scale: number) =>
+          texts.forEach(
+            (t, j) => (t.style.fontSize = `${Math.min(maxs[j], Math.max(mins[j], bases[j] * scale))}px`)
+          );
+        apply(1);
+        let lo = 1;
+        let hi = 2.4;
+        if (!fits()) {
+          lo = 0.3;
+          hi = 1;
+        }
+        for (let i = 0; i < 8; i++) {
+          const mid = (lo + hi) / 2;
+          apply(mid);
+          if (fits()) lo = mid;
+          else hi = mid;
+        }
+        apply(lo);
+      };
+      // Fit by real layout height (offsetHeight of each text block), not
+      // scrollHeight — glyph ink, the ayah ornament and the scaled active word
+      // add phantom overflow that would block growth.
+      const blockH = (pn: HTMLElement) => (pn.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
+      const textsIn = (el: HTMLElement) => Array.from(el.querySelectorAll<HTMLElement>("[data-fit-text]"));
+      // Fit inside the stage minus its faded top/bottom strips (28px + 32px) —
+      // the panes carry that as padding, so text that fits is never faded.
+      const avail = Math.max(0, content.clientHeight - 60);
+      const cs = getComputedStyle(content);
+      // Arabic has priority: it is sized first, and the meaning is capped at
+      // MEANING_RATIO of the Arabic size (Arabic clearly larger than the meaning).
+      const MEANING_RATIO = 0.6;
+      const [arPane, mnPane] = [arabicPaneRef.current, meaningPaneRef.current];
+      const arPx = () => {
+        const h = arPane?.querySelector<HTMLElement>("[data-fit-text]");
+        return h ? parseFloat(getComputedStyle(h).fontSize) : 0;
+      };
+      if (cs.flexDirection.startsWith("row")) {
+        // Side by side: each column gets the full height; the meaning column is
+        // capped relative to the Arabic.
+        if (arPane) fitGroup(textsIn(arPane), () => blockH(arPane) <= avail);
+        if (mnPane) fitGroup(textsIn(mnPane), () => blockH(mnPane) <= avail, arPx() * MEANING_RATIO);
+      } else {
+        // Stacked: Arabic first within most of the height (all of it when the
+        // meaning is hidden), then the meaning takes what is left.
+        const gap = parseFloat(cs.rowGap) || 0;
+        const arBudget = mnPane ? avail * 0.68 : avail;
+        if (arPane) fitGroup(textsIn(arPane), () => blockH(arPane) <= arBudget);
+        if (mnPane) {
+          fitGroup(
+            textsIn(mnPane),
+            () => (arPane ? blockH(arPane) + gap : 0) + blockH(mnPane) <= avail,
+            arPx() * MEANING_RATIO
+          );
+        }
+      }
+      // Soft top/bottom fade only on a pane that still needs scrolling.
+      for (const pn of panes()) {
+        pn.scrollTop = 0;
+        const mask =
+          overflows(pn)
+            ? "linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 28px), transparent 100%)"
+            : "";
+        pn.style.maskImage = mask;
+        pn.style.webkitMaskImage = mask;
+      }
+    };
+    fit();
+    // Re-fit when the stage resizes or the text changes late (word timings,
+    // web fonts). A settled fit yields the same sizes, so this doesn't loop.
+    const ro = new ResizeObserver(() => fit());
+    ro.observe(content);
+    content.querySelectorAll("[data-fit-text]").forEach((t) => ro.observe(t));
+    let cancelled = false;
+    document.fonts?.ready.then(() => {
+      if (!cancelled) fit();
+    });
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+    };
+  }, [fitKey, showTranslation, language, reciterWordSync, Boolean(activeItemForFit)]);
+
+  // Auto-scroll: the Arabic pane keeps the active word in view; the meaning
+  // pane tracks recitation progress through the ayah.
+  useEffect(() => {
+    if (typeof propWordIndex !== "number" || propWordIndex < 0) return;
+    const ar = arabicPaneRef.current;
+    if (ar && overflows(ar)) {
+      const el = ar.querySelector<HTMLElement>(`[data-word-idx="${propWordIndex}"]`);
+      if (el) {
+        const s = ar.getBoundingClientRect();
+        const r = el.getBoundingClientRect();
+        if (r.top < s.top + s.height * 0.15 || r.bottom > s.bottom - s.height * 0.25) {
+          ar.scrollTo({ top: ar.scrollTop + (r.top - s.top) - s.height * 0.3, behavior: "smooth" });
+        }
+      }
+    }
+    const mn = meaningPaneRef.current;
+    if (mn && overflows(mn)) {
+      const total = ar?.querySelectorAll("[data-word-idx]").length ?? 0;
+      const p = total > 1 ? Math.min(1, propWordIndex / (total - 1)) : 0;
+      // Hold the meaning at its start for the first 20% of the recitation and
+      // reach its end by 90%, so both the opening and closing lines get read.
+      const progress = Math.min(1, Math.max(0, (p - 0.2) / 0.7));
+      const top = progress * (mn.scrollHeight - mn.clientHeight);
+      if (Math.abs(top - mn.scrollTop) > 8) mn.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [propWordIndex, fitKey]);
 
   // During 30 Juz playback, display pure 8K artwork without mismatched verse overlay
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
@@ -89,6 +262,7 @@ export function CenterVerseDisplay({
       : 0;
 
   const hasTrailingAyahMarker = /[\u0660-\u0669\u06dd\uFD3E\uFD3F]\s*$/.test(activeItem.textArabic || "");
+  const showOrnament = !isPrelude && ayahNum > 0 && !hasTrailingAyahMarker;
 
   // Adaptive font sizing based on Arabic length for perfect screen balance
   const arabicLength = activeItem.textArabic?.length || 0;
@@ -127,135 +301,148 @@ export function CenterVerseDisplay({
       ? effectiveWords
       : rawWords.map((w) => ({ word: w, startTime: 0, endTime: 0 }));
 
-  const itemKey = currentSegment
-    ? `${currentSegment.id}-${currentSegment.type}`
-    : `${currentVerse?.surahNumber}-${currentVerse?.verseKey}`;
+  const itemKey = fitKey;
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-16 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56">
-      <div className="pointer-events-auto relative w-full max-w-5xl mx-auto flex flex-col items-center select-none group">
-        {/* Previous Verse Chevron */}
-        {hasMultipleVerses && onPrevVerse && (
-          <button
-            type="button"
-            onClick={onPrevVerse}
-            aria-label="Previous Ayah"
-            className="absolute left-0 sm:-left-6 md:-left-12 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 rounded-full text-white/70 hover:text-white bg-black/30 hover:bg-black/60 backdrop-blur-sm border border-white/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-all active:scale-90 cursor-pointer"
-          >
-            <svg
-              className="w-5 h-5 sm:w-6 sm:h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-        )}
-
-        {/* Verse Container (Permanently visible, never trapped in exit animations) */}
+    <div
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
+      style={bottomInset != null ? { paddingBottom: bottomInset } : undefined}
+    >
+      <div
+        className={`pointer-events-auto relative w-full h-full min-h-0 mx-auto flex flex-col items-center justify-center select-none group ${
+          showTranslation ? "max-w-5xl md:max-w-[min(94vw,1800px)]" : "max-w-5xl"
+        }`}
+      >
+        {/* Verse Container (Permanently visible, never trapped in exit animations).
+            Meaning shown → split: md+ side by side (Arabic right, meaning left),
+            mobile stacked (Arabic top, meaning bottom). Each pane scrolls alone. */}
         <div
           key={itemKey}
-          className="flex flex-col items-center text-center w-full px-2 animate-in fade-in duration-200"
+          ref={contentRef}
+          // Soft fade on the stage's top/bottom edges (below the header, above the
+          // player): only text that actually reaches an edge fades out.
+          style={{
+            maskImage: "linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 32px), transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 32px), transparent 100%)",
+          }}
+          className={`flex flex-col w-full h-full min-h-0 justify-center text-center px-2 animate-in fade-in duration-200 ${
+            showTranslation
+              ? "items-stretch gap-3 sm:gap-4 md:flex-row-reverse md:items-center md:gap-8 lg:gap-12"
+              : "items-center"
+          }`}
         >
+          <div
+            ref={arabicPaneRef}
+            className={`flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar ${
+              // Stacked (mobile): Arabic keeps its fitted height (≤ 68%) and never
+              // shrinks — the meaning pane below takes the rest and scrolls.
+              // Padding equals the stage's fade strips (28px top / 32px bottom), so
+              // a pane scrolled fully to an edge still shows that line clearly.
+              showTranslation
+                ? "shrink-0 max-h-[68%] pt-[28px] md:pb-[32px] md:max-h-full md:shrink md:flex-[1.35] md:basis-0 md:min-w-0"
+                : "w-full pt-[28px] pb-[32px]"
+            }`}
+          >
+          {/* Leading is repeated at md/lg: md:text-* / lg:text-* carry a fixed px
+              line-height that would override sm:leading and not scale with auto-fit. */}
+          {/* Word row is block-level flex, not inline-flex: an inline-flex row sits on
+              the h2's baseline and hangs below its line box, which reads as overflow
+              and blocks auto-fit growth. */}
           {/* Main Quran Arabic Calligraphy (Centred, Bold, Glow/Shadow, Voice-Synchronized) */}
           <h2
+            data-fit-text
+            data-fit-min={22}
+            data-fit-max={84}
+            data-fit-max-tablet={56}
+            data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic font-normal text-white text-center leading-[2.1] sm:leading-[2.4] tracking-wide quran-arabic-shadow max-w-4xl mx-auto px-4 sm:px-8 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] tracking-wide quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {wordsToRender.length > 0 ? (
-              <span className="inline-flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-1 sm:gap-y-2">
+              <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">
                 {wordsToRender.map((w, idx) => {
+                  let wordEl: JSX.Element;
                   // If word-level timing does NOT exist: Fallback highlights the complete active Ayah in amber/gold
                   if (!hasWordTiming) {
-                    return (
+                    wordEl = (
                       <span
                         key={`${idx}-${w.word}`}
-                        className="relative inline-block text-amber-300 drop-shadow-[0_0_24px_rgba(251,191,36,0.9)] transition-all duration-150"
+                        data-word-idx={idx}
+                        className="relative inline-block text-amber-300 [text-shadow:0_0_18px_rgba(251,191,36,0.75),0_1px_3px_rgba(0,0,0,0.9)] transition-[color,text-shadow,transform] duration-150"
+                      >
+                        {w.word}
+                      </span>
+                    );
+                  } else {
+                    const isActive = idx === activeWordIndex;
+                    const isPast =
+                      activeWordIndex !== -1
+                        ? idx < activeWordIndex
+                        : typeof currentTime === "number" && currentTime >= (w.endTime ?? 0);
+                    wordEl = (
+                      <span
+                        key={`${idx}-${w.word}`}
+                        data-word-idx={idx}
+                        className={`relative inline-block transition-[color,text-shadow,transform] duration-150 ${
+                          isActive
+                            ? "text-amber-300 [text-shadow:0_0_18px_rgba(251,191,36,0.85),0_1px_3px_rgba(0,0,0,0.9)] scale-[1.04]"
+                            : isPast
+                            ? "text-white/95"
+                            : "text-white/60"
+                        }`}
                       >
                         {w.word}
                       </span>
                     );
                   }
-
-                  const isActive = idx === activeWordIndex;
-                  const isPast =
-                    activeWordIndex !== -1
-                      ? idx < activeWordIndex
-                      : typeof currentTime === "number" && currentTime >= (w.endTime ?? 0);
-
-                  return (
-                    <span
-                      key={`${idx}-${w.word}`}
-                      className={`relative inline-block transition-all duration-150 ${
-                        isActive
-                          ? "text-amber-300 drop-shadow-[0_0_24px_rgba(251,191,36,1)] scale-[1.04]"
-                          : isPast
-                          ? "text-white/95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
-                          : "text-white/60 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                      }`}
-                    >
-                      {w.word}
-                    </span>
-                  );
+                  // Keep the ayah-end ornament glued to the LAST word so it never
+                  // wraps onto a line of its own.
+                  if (idx === wordsToRender.length - 1 && showOrnament) {
+                    return (
+                      <span key={`${idx}-${w.word}-end`} className="inline-flex items-center whitespace-nowrap">
+                        {wordEl}
+                        <AyahOrnament n={ayahNum} />
+                      </span>
+                    );
+                  }
+                  return wordEl;
                 })}
-                {/* Canonical Quran Ayah Number / Verse End Marker (Uthmani Typography) */}
-                {!isPrelude && ayahNum > 0 && !hasTrailingAyahMarker && (
-                  <AyahOrnament n={ayahNum} />
-                )}
               </span>
             ) : (
               <span>
                 {activeItem.textArabic}
-                {!isPrelude && ayahNum > 0 && !hasTrailingAyahMarker && (
+                {showOrnament && (
                   <AyahOrnament n={ayahNum} />
                 )}
               </span>
             )}
           </h2>
+          </div>
 
-          {/* English / Tamil Translation (Directly below Arabic, with generous breathing space) */}
+          {/* English / Tamil Meaning — left column on md+, bottom pane on mobile */}
           {showTranslation && (
+            <div
+              ref={meaningPaneRef}
+              className="flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar pb-[32px] md:pt-[28px] md:flex-1 md:basis-0 md:min-w-0 md:border-r md:border-white/15 md:pr-6 lg:pr-10"
+            >
             <p
+              data-fit-text
+              data-fit-min={13}
+              data-fit-max={30}
+              data-fit-max-tablet={26}
+              data-fit-max-mobile={24}
               lang={language === "ta" ? "ta" : "en"}
-              className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] tracking-wide quran-translation-shadow drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] mt-4 sm:mt-5 md:mt-6 px-4 sm:px-10 max-w-3xl mx-auto transition-opacity duration-300 ${translationSizeClass}`}
+              className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] md:text-left tracking-wide quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-opacity duration-300 ${translationSizeClass}`}
             >
               {language === "ta"
                 ? activeItem.textTamil || activeItem.textEnglish
                 : activeItem.textEnglish}
             </p>
+            </div>
           )}
         </div>
 
-        {/* Next Verse Chevron */}
-        {hasMultipleVerses && onNextVerse && (
-          <button
-            type="button"
-            onClick={onNextVerse}
-            aria-label="Next Ayah"
-            className="absolute right-0 sm:-right-6 md:-right-12 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 rounded-full text-white/70 hover:text-white bg-black/30 hover:bg-black/60 backdrop-blur-sm border border-white/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-all active:scale-90 cursor-pointer"
-          >
-            <svg
-              className="w-5 h-5 sm:w-6 sm:h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-        )}
       </div>
     </div>
   );

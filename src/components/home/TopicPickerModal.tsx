@@ -130,7 +130,7 @@ export function TopicPickerModal({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="pointer-events-auto fixed inset-y-0 right-0 z-50 flex h-full w-[88vw] max-w-md flex-col bg-[#0c1015]/95 border-l border-white/15 p-4 md:p-6 shadow-2xl backdrop-blur-2xl"
+              className="pointer-events-auto fixed inset-y-0 right-0 z-50 flex h-full w-[88vw] max-w-md flex-col bg-black/[0.08] border-l border-white/15 p-4 md:p-6 shadow-2xl backdrop-blur-[14px]"
             >
               {/* 1. Shared Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -181,7 +181,7 @@ export function TopicPickerModal({
                       : "text-sand-200/60 hover:text-white"
                   )}
                 >
-                  Quran
+                  Juz
                 </button>
 
                 <button

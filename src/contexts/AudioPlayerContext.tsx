@@ -65,24 +65,49 @@ interface AudioPlayerState {
   preludeCurrentTime: number;
   preludeDuration: number;
   // Set while a Juz is playing per-ayah in a chosen reciter's voice.
-  ayahSequence: { index: number; total: number } | null;
+  ayahSequence: AyahSequenceState | null;
 }
 
+/** A short clip played before an ayah in a per-ayah Juz sequence. */
+export interface AyahPrelude {
+  url: string;
+  type: "istiadhah" | "bismillah";
+}
+
+/** Per-ayah Juz sequence state. `preType` is set while a prelude clip
+ *  (Isti'adhah / Bismillah) plays before ayah `index`. */
+export interface AyahSequenceState {
+  index: number;
+  total: number;
+  preType: AyahPrelude["type"] | null;
+}
+
+/** Start position: seconds, or computed from the loaded track's real duration
+ *  (for reciters whose ayah positions are estimated proportionally). */
+type StartAt = number | ((durationSeconds: number) => number);
+
 interface AudioPlayerApi extends AudioPlayerState {
+  /** `opts.startAt` (seconds on the track timeline — or a function of the
+   *  track's real duration, resolved once metadata loads) starts there directly — skipping
+   *  the Bismillah prelude — e.g. to keep the same ayah after a reciter change. */
   playBayan: (
     bayan: BayanWithRelations,
-    contextList?: BayanWithRelations[]
+    contextList?: BayanWithRelations[],
+    opts?: { startAt?: StartAt }
   ) => void;
   cueBayan: (
     bayan: BayanWithRelations,
-    contextList?: BayanWithRelations[]
+    contextList?: BayanWithRelations[],
+    opts?: { startAt?: StartAt }
   ) => void;
   /** Play a display track backed by a chained per-ayah audio sequence,
    *  optionally starting at a given ayah index (to resume across reciters). */
   playAyahSequence: (
     displayTrack: BayanWithRelations,
     ayahUrls: string[],
-    startIndex?: number
+    startIndex?: number,
+    /** Clips to play before given ayah indexes (Isti'adhah / Bismillah). */
+    preludes?: Record<number, AyahPrelude[]>
   ) => void;
   /** Jump to a specific ayah index within the active per-ayah sequence. */
   jumpToAyah: (index: number) => void;
@@ -139,7 +164,23 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const currentTrimOffsetRef = useRef<number>(0);
   // Active per-ayah recitation sequence (a Juz recited in a chosen reciter's
   // voice, streamed ayah-by-ayah from everyayah.com). Null for normal tracks.
-  const ayahSeqRef = useRef<{ urls: string[]; index: number } | null>(null);
+  const ayahSeqRef = useRef<{
+    urls: string[];
+    index: number;
+    pre: Record<number, AyahPrelude[]>;
+    /** Position in pre[index] being played; -1 while the ayah itself plays. */
+    preStep: number;
+  } | null>(null);
+  // One-shot start position for the next loadCurrent (see playBayan opts).
+  const pendingStartAtRef = useRef<StartAt | null>(null);
+  // True between loading a track with a forced start and applying it — the
+  // element reports t=0 meanwhile, which would flash ayah 1 on screen.
+  const forcedSeekPendingRef = useRef(false);
+  // Per-ayah prefetch: the next ayahs are downloaded into memory (blob URLs)
+  // while the current one plays, so each ayah starts instantly instead of
+  // waiting ~0.5s on the network after the previous one ends.
+  const ayahBlobRef = useRef<Map<string, string>>(new Map());
+  const ayahInflightRef = useRef<Set<string>>(new Set());
 
   const [queue, setQueue] = useState<BayanWithRelations[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -161,7 +202,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [preludeCurrentTime, setPreludeCurrentTime] = useState(0);
   const [preludeDuration, setPreludeDuration] = useState(0);
   // Per-ayah Juz sequence position (for the progress bar & current-ayah verse).
-  const [ayahSequence, setAyahSequence] = useState<{ index: number; total: number } | null>(null);
+  const [ayahSequence, setAyahSequence] = useState<AyahSequenceState | null>(null);
 
   const current = queue[currentIndex] ?? null;
 
@@ -261,11 +302,24 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
    */
   const loadCurrent = useCallback(
     async (bayan: BayanWithRelations, autoplay: boolean) => {
+      const forcedStart = pendingStartAtRef.current;
+      // A function start resolves against the real duration on metadata; until
+      // then use the track's nominal duration so the UI shows the right ayah.
+      const startFn = typeof forcedStart === "function" ? forcedStart : null;
+      const nominalDur = bayan.durationSeconds || 0;
+      const forcedStartAt: number | null = startFn
+        ? nominalDur > 0 ? startFn(nominalDur) : 0
+        : (forcedStart as number | null);
+      const hasForcedStart = Boolean(startFn || (forcedStartAt && forcedStartAt > 0));
+      pendingStartAtRef.current = null;
+      forcedSeekPendingRef.current = false;
       setError(null);
       retryCountRef.current = 0;
       // Any normal load cancels an in-flight per-ayah Juz sequence.
       ayahSeqRef.current = null;
       setAyahSequence(null);
+      ayahBlobRef.current.forEach((b) => URL.revokeObjectURL(b));
+      ayahBlobRef.current.clear();
       const playlistId = bayan.youtubePlaylistId || bayan.category?.youtubePlaylistId;
       const isYoutubeSource =
         bayan.audioSource === "youtube" ||
@@ -406,7 +460,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         const trimOffset = surahNum ? getReciterAyah1TrimOffset(surahNum, bayan.speaker?.slug) : 0;
         currentTrimOffsetRef.current = trimOffset;
 
-        if (preludeCfg && preludeCfg.hasPrelude && preludeCfg.url) {
+        // Resuming mid-surah (forcedStartAt) skips the Bismillah prelude.
+        if (preludeCfg && preludeCfg.hasPrelude && preludeCfg.url && !hasForcedStart) {
           isPreludeRef.current = true;
           setIsPrelude(true);
           setPreludeType(preludeCfg.type);
@@ -462,8 +517,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         const isQuran = isQuranTrack(bayan.id);
         const saved = isQuran ? 0 : (readPositions()[bayan.id] ?? 0);
         const startAt =
-          saved > 0 && saved < bayan.durationSeconds - 5 ? saved : 0;
+          forcedStartAt && forcedStartAt > 0
+            ? forcedStartAt
+            : saved > 0 && saved < bayan.durationSeconds - 5 ? saved : 0;
+        // Forced starts are on the track timeline (ayah-1 trim offset excluded),
+        // like seek(); saved positions are raw element time.
+        const rawStartAt = forcedStartAt && forcedStartAt > 0 ? startAt + trimOffset : startAt;
         setCurrentTime(startAt);
+        if (startFn && nominalDur > 0) setDuration(Math.max(0, nominalDur - trimOffset));
+        forcedSeekPendingRef.current = hasForcedStart;
 
         // Start playback ASAP
         if (autoplay) {
@@ -472,9 +534,18 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
         // Once metadata arrives, apply duration
         const onLoaded = () => {
-          if (startAt > 0) {
+          if (startFn) {
+            const realDur = Number.isFinite(el.duration) ? el.duration - trimOffset : nominalDur;
+            const t = Math.max(0, Math.min(startFn(realDur), realDur - 1));
             try {
-              el.currentTime = startAt;
+              el.currentTime = t + trimOffset;
+            } catch {
+              /* ignore */
+            }
+            setCurrentTime(t);
+          } else if (startAt > 0) {
+            try {
+              el.currentTime = rawStartAt;
             } catch {
               /* ignore */
             }
@@ -485,7 +556,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
               /* ignore */
             }
           }
-          setDuration(Number.isFinite(el.duration) ? el.duration : bayan.durationSeconds);
+          forcedSeekPendingRef.current = false;
+          setDuration(
+            Number.isFinite(el.duration) ? Math.max(0, el.duration - trimOffset) : bayan.durationSeconds
+          );
           setIsLoading(false);
         };
         el.addEventListener("loadedmetadata", onLoaded, { once: true });
@@ -580,7 +654,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   const playBayan = useCallback(
-    (bayan: BayanWithRelations, contextList?: BayanWithRelations[]) => {
+    (bayan: BayanWithRelations, contextList?: BayanWithRelations[], opts?: { startAt?: StartAt }) => {
       let nextQueue: BayanWithRelations[];
       let index: number;
 
@@ -603,6 +677,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
       setQueue(nextQueue);
       setCurrentIndex(index);
+      pendingStartAtRef.current = opts?.startAt ?? null;
       loadCurrent(nextQueue[index], true);
       persistLast(nextQueue[index], readPositions()[bayan.id] ?? 0);
       setContinueListening(null);
@@ -613,7 +688,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   const cueBayan = useCallback(
-    (bayan: BayanWithRelations, contextList?: BayanWithRelations[]) => {
+    (bayan: BayanWithRelations, contextList?: BayanWithRelations[], opts?: { startAt?: StartAt }) => {
       let nextQueue: BayanWithRelations[];
       let index: number;
 
@@ -636,6 +711,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
       setQueue(nextQueue);
       setCurrentIndex(index);
+      pendingStartAtRef.current = opts?.startAt ?? null;
       loadCurrent(nextQueue[index], false);
       persistLast(nextQueue[index], readPositions()[bayan.id] ?? 0);
       setContinueListening(null);
@@ -649,7 +725,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
    * "Juz 4 • Al-Sudais") while the player chains `ayahUrls` back-to-back.
    */
   const playAyahSequence = useCallback(
-    (displayTrack: BayanWithRelations, ayahUrls: string[], startIndex: number = 0) => {
+    (
+      displayTrack: BayanWithRelations,
+      ayahUrls: string[],
+      startIndex: number = 0,
+      preludes: Record<number, AyahPrelude[]> = {}
+    ) => {
       if (!ayahUrls || ayahUrls.length === 0) return;
       const startIdx = Math.max(0, Math.min(startIndex, ayahUrls.length - 1));
       // Stop any YouTube / prelude source and switch to the local element.
@@ -668,40 +749,106 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       retryCountRef.current = 0;
       setError(null);
 
-      ayahSeqRef.current = { urls: ayahUrls, index: startIdx };
-      setAyahSequence({ index: startIdx, total: ayahUrls.length });
+      ayahSeqRef.current = { urls: ayahUrls, index: startIdx, pre: preludes, preStep: -1 };
       setQueue([displayTrack]);
       setCurrentIndex(0);
       setContinueListening(null);
       setCurrentTime(0);
       setDuration(0);
-
-      const el = audioRef.current;
-      if (el) {
-        el.src = ayahUrls[startIdx];
-        el.currentTime = 0;
-        el.load();
-        el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      }
+      loadAyahAt(startIdx, true);
+      setIsPlaying(true);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-  // Load a specific ayah of the active sequence (keeps ayahSequence state in sync).
-  const loadAyahAt = useCallback((i: number) => {
+  // Keep blobs for a small window around the current ayah; free the rest.
+  const prefetchAyahsAround = useCallback((urls: string[], idx: number) => {
+    const pre = ayahSeqRef.current?.pre ?? {};
+    const preUrls = (i: number) => (pre[i] ?? []).map((p) => p.url);
+    const ahead: string[] = [];
+    for (let i = idx; i < idx + 3; i++) {
+      if (i > idx && urls[i]) ahead.push(...preUrls(i), urls[i]);
+    }
+    const keep = new Set([...urls.slice(Math.max(0, idx - 1), idx + 3), ...preUrls(idx), ...ahead]);
+    for (const [url, blobUrl] of ayahBlobRef.current) {
+      if (!keep.has(url)) {
+        URL.revokeObjectURL(blobUrl);
+        ayahBlobRef.current.delete(url);
+      }
+    }
+    for (const url of ahead) {
+      if (ayahBlobRef.current.has(url) || ayahInflightRef.current.has(url)) continue;
+      ayahInflightRef.current.add(url);
+      fetch(url)
+        .then((r) => (r.ok ? r.blob() : null))
+        .then((b) => {
+          // Only keep it if this ayah is still part of the active sequence.
+          if (b && ayahSeqRef.current) {
+            ayahBlobRef.current.set(url, URL.createObjectURL(b));
+          }
+        })
+        .catch(() => {
+          /* fall back to streaming that ayah */
+        })
+        .finally(() => ayahInflightRef.current.delete(url));
+    }
+  }, []);
+
+  const ayahSrc = (url: string) => ayahBlobRef.current.get(url) ?? url;
+
+  // Load a specific ayah of the active sequence (keeps ayahSequence state in
+  // sync). With `withPre`, that ayah's prelude clips (Isti'adhah / Bismillah)
+  // play first; the ayah follows from onEnded (see advanceAyahSequence).
+  const loadAyahAt = useCallback((i: number, withPre: boolean = true) => {
     const seq = ayahSeqRef.current;
     if (!seq) return;
     const idx = Math.max(0, Math.min(i, seq.urls.length - 1));
     seq.index = idx;
-    setAyahSequence({ index: idx, total: seq.urls.length });
+    const pre = withPre ? seq.pre[idx] ?? [] : [];
+    seq.preStep = pre.length > 0 ? 0 : -1;
+    setAyahSequence({ index: idx, total: seq.urls.length, preType: pre[0]?.type ?? null });
     const el = audioRef.current;
+    prefetchAyahsAround(seq.urls, idx);
     if (el) {
-      el.src = seq.urls[idx];
+      el.src = ayahSrc(pre.length > 0 ? pre[0].url : seq.urls[idx]);
       el.currentTime = 0;
       el.load();
       el.play().catch(() => {});
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefetchAyahsAround]);
+
+  // Current clip finished (or failed): next prelude clip → the ayah itself →
+  // the next ayah (with its own preludes). Returns false at the sequence end.
+  const advanceAyahSequence = useCallback((): boolean => {
+    const seq = ayahSeqRef.current;
+    if (!seq) return false;
+    if (seq.preStep >= 0) {
+      const pre = seq.pre[seq.index] ?? [];
+      const nextStep = seq.preStep + 1;
+      const el = audioRef.current;
+      if (nextStep < pre.length) {
+        seq.preStep = nextStep;
+        setAyahSequence({ index: seq.index, total: seq.urls.length, preType: pre[nextStep].type });
+        if (el) {
+          el.src = ayahSrc(pre[nextStep].url);
+          el.currentTime = 0;
+          el.load();
+          el.play().catch(() => {});
+        }
+        return true;
+      }
+      loadAyahAt(seq.index, false); // preludes done → the ayah itself
+      return true;
+    }
+    if (seq.index + 1 < seq.urls.length) {
+      loadAyahAt(seq.index + 1, true);
+      return true;
+    }
+    return false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadAyahAt]);
 
   const jumpToAyah = useCallback((index: number) => {
     if (ayahSeqRef.current) loadAyahAt(index);
@@ -988,6 +1135,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [onPreludeEnded]);
 
   const onPreludeError = useCallback(() => {
+    // Clearing the prelude's src (src = "") on every track switch fires an
+    // `error` event too. Only a prelude that is actually playing may hand off —
+    // otherwise this reset the new track to 0 (ayah 1 flashed on reciter change).
+    if (!isPreludeRef.current) return;
     console.warn("[Huda Audio] Prelude playback failed, continuing to main reciter audio");
     onPreludeEnded();
   }, [onPreludeEnded]);
@@ -995,6 +1146,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const onTimeUpdate = useCallback(() => {
     const el = audioRef.current;
     if (!el || !current || activeSourceRef.current !== "local") return;
+    if (forcedSeekPendingRef.current) return;
     if (isPreludeRef.current) {
       setCurrentTime(0);
       return;
@@ -1019,9 +1171,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // Per-ayah Juz sequence: advance to the next ayah in the chosen voice.
     const seq = ayahSeqRef.current;
     if (seq) {
-      if (seq.index + 1 < seq.urls.length) {
-        loadAyahAt(seq.index + 1);
-      } else {
+      if (!advanceAyahSequence()) {
         ayahSeqRef.current = null;
         setAyahSequence(null);
         setIsPlaying(false);
@@ -1040,15 +1190,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     if (currentIndex < queue.length - 1) next();
     else setIsPlaying(false);
-  }, [current, currentIndex, queue.length, next, loadAyahAt]);
+  }, [current, currentIndex, queue.length, next, advanceAyahSequence]);
 
   const onError = useCallback(() => {
     // A single missing/failed ayah file must not kill a Juz sequence — skip it.
     const seq = ayahSeqRef.current;
     if (seq) {
-      if (seq.index + 1 < seq.urls.length) {
-        loadAyahAt(seq.index + 1);
-      } else {
+      if (!advanceAyahSequence()) {
         ayahSeqRef.current = null;
         setAyahSequence(null);
         setIsPlaying(false);
@@ -1081,7 +1229,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (activeSourceRef.current === "local") {
       setError("Couldn't load this audio. Please try another.");
     }
-  }, [current, loadAyahAt]);
+  }, [current, advanceAyahSequence]);
 
   const value = useMemo<AudioPlayerApi>(
     () => ({
@@ -1203,6 +1351,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         onTimeUpdate={onTimeUpdate}
         onSeeked={onTimeUpdate}
         onDurationChange={(e) => {
+          // A pending forced start applies duration + time together on
+          // loadedmetadata; updating duration alone first flashed a wrong ayah.
+          if (forcedSeekPendingRef.current) return;
           const rawDur = e.currentTarget.duration || 0;
           const offset = currentTrimOffsetRef.current;
           setDuration(Math.max(0, rawDur - offset));

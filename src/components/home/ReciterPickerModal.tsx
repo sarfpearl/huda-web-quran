@@ -108,10 +108,8 @@ export function ReciterPickerModal({
       role="dialog"
       aria-modal="true"
       aria-label="Quran Reciter Selection"
-      className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-14 sm:right-0 sm:w-96 z-50 rounded-3xl bg-slate-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 sm:p-5 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200"
+      className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-14 sm:right-0 sm:w-96 z-50 rounded-3xl bg-black/[0.08] backdrop-blur-[14px] border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 sm:p-5 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200"
     >
-      {/* Teaching-tip pointer arrow up to the reciter avatar button (desktop) */}
-      <span className="hidden sm:block absolute -top-1 right-7 h-3.5 w-3.5 rotate-45 rounded-[3px] bg-slate-950/95 border-l border-t border-white/15" />
 
       {/* Header with Title and Close Button */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
@@ -165,16 +163,6 @@ export function ReciterPickerModal({
         </svg>
       </div>
 
-      {/* Context banner when playing 30 Juz */}
-      {isJuz && (
-        <div className="mb-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 p-2.5 flex items-start gap-2 text-left">
-          <span className="text-emerald-400 text-xs shrink-0 mt-0.5">ℹ️</span>
-          <p className="text-[11px] text-sand-200/90 leading-snug">
-            This Juz plays <span className="font-semibold text-emerald-300">ayah by ayah</span> in your chosen reciter's voice — with word highlight and meaning, just like the Surahs.
-          </p>
-        </div>
-      )}
-
       {/* Sync Mode Segment Control */}
       <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-black/40 border border-white/10 p-1">
         {([
@@ -208,6 +196,45 @@ export function ReciterPickerModal({
             </button>
           );
         })}
+      </div>
+
+      {/* What happens to the playback position when switching reciter */}
+      <div
+        className={`mb-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left border ${
+          syncFilter === "word"
+            ? "bg-emerald-500/[0.08] border-emerald-400/20"
+            : "bg-amber-400/[0.07] border-amber-300/20"
+        }`}
+      >
+        <span
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
+            syncFilter === "word" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"
+          }`}
+          aria-hidden="true"
+        >
+          {syncFilter === "word" ? (
+            // bookmark: keeps your place
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 3h12v18l-6-4-6 4V3Z" />
+            </svg>
+          ) : (
+            // restart: plays from the beginning
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v5h5" />
+            </svg>
+          )}
+        </span>
+        <div className="min-w-0">
+          <p className={`text-xs font-semibold ${syncFilter === "word" ? "text-emerald-300" : "text-amber-300"}`}>
+            {syncFilter === "word" ? "Continues from the same ayah" : "Starts again from Ayah 1"}
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-sand-300/80">
+            {syncFilter === "word"
+              ? "Change the reciter anytime — the recitation carries on from where you are."
+              : `If you change to one of these reciters, the ${isJuz ? "Juz" : "Surah"} will play again from the beginning.`}
+          </p>
+        </div>
       </div>
 
       {/* Reciter List */}

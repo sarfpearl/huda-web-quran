@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -37,6 +37,7 @@ import {
   type RecitationSegment,
 } from "@/lib/data/quranVerses";
 import type { QuranSurah } from "@/lib/data/quran";
+import { haptic } from "@/lib/haptics";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 
 interface CompactBayanPlayerProps {
@@ -55,6 +56,16 @@ interface CompactBayanPlayerProps {
   showTranslation?: boolean;
   onToggleShowTranslation?: () => void;
   onSeekToVerse?: (verseIndex: number, totalVerses: number) => void;
+  /** Ayah step controls (« ») — shown between track prev/next when provided */
+  onPrevVerse?: () => void;
+  onNextVerse?: () => void;
+  /** What |< / >| step through — used for their tooltips. */
+  trackKind?: "Surah" | "Juz" | null;
+  /** Estimated Juz clock for per-ayah Juz playback (seconds). */
+  juzTiming?: { elapsed: number; total: number } | null;
+  /** Override |< / >| (e.g. a per-ayah Juz steps to the previous / next Juz). */
+  onPrevTrack?: () => void;
+  onNextTrack?: () => void;
 }
 
 export function CompactBayanPlayer({
@@ -73,7 +84,15 @@ export function CompactBayanPlayer({
   showTranslation = true,
   onToggleShowTranslation,
   onSeekToVerse,
+  onPrevVerse,
+  onNextVerse,
+  trackKind = null,
+  juzTiming = null,
+  onPrevTrack,
+  onNextTrack,
 }: CompactBayanPlayerProps) {
+  const prevTrackLabel = trackKind ? `Previous ${trackKind}` : "Previous";
+  const nextTrackLabel = trackKind ? `Next ${trackKind}` : "Next";
   const player = useAudioPlayer();
   const isCurrentTrack = player.current?.id === bayan.id;
   const isPlaying = isCurrentTrack && player.isPlaying;
@@ -126,7 +145,9 @@ export function CompactBayanPlayer({
   const isAyahSeq = Boolean(ayahSeq && isQuranTrackId(bayan.id));
   const ayahFraction = totalDuration > 0 ? Math.min(currentTime / totalDuration, 1) : 0;
   const juzProgressPct = isAyahSeq && ayahSeq
-    ? ((ayahSeq.index + ayahFraction) / ayahSeq.total) * 100
+    ? juzTiming && juzTiming.total > 0
+      ? Math.min(100, (juzTiming.elapsed / juzTiming.total) * 100)
+      : ((ayahSeq.index + ayahFraction) / ayahSeq.total) * 100
     : (totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0);
 
   const handlePlayToggle = () => {
@@ -143,8 +164,18 @@ export function CompactBayanPlayer({
     }
   };
 
+  // Haptic tick each time a scrub crosses into a different ayah.
+  const lastScrubAyahRef = useRef<number | null>(null);
+  const ayahAtTime = (t: number) =>
+    segments?.find((sg) => sg.type === "ayah" && t >= sg.startTime && t < sg.endTime)?.ayahNumber ?? null;
+
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
+    const ayah = ayahAtTime(val);
+    if (ayah != null && ayah !== lastScrubAyahRef.current) {
+      if (lastScrubAyahRef.current != null) haptic(8);
+      lastScrubAyahRef.current = ayah;
+    }
     if (isCurrentTrack) {
       player.seek(val);
     } else {
@@ -241,11 +272,19 @@ export function CompactBayanPlayer({
           <p className="truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5">
             {categoryLine}
           </p>
-          {/* Active Ayah Pill Badge — only for Surahs with word timing; hidden for Juz and Audio Only reciters */}
-          {!isQuranTrackId(bayan.id) && (currentSegment || currentVerse) && reciterHasWordTiming(resolveActiveReciter(bayan)) && (
+          {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
+          {(isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse)) ? (
             <div className="mt-2 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 w-fit rounded-full bg-black/40 border border-white/15 text-xs select-none">
               <span className="text-sand-300/80 font-normal tabular-nums">
-                {currentSegment?.type === "istiadhah" ? (
+                {isAyahSeq && ayahSeq ? (
+                  ayahSeq.preType === "istiadhah" ? (
+                    "Isti'adhah"
+                  ) : ayahSeq.preType === "bismillah" ? (
+                    "Bismillah"
+                  ) : (
+                    <>Ayat {ayahSeq.index + 1}/{ayahSeq.total}</>
+                  )
+                ) : currentSegment?.type === "istiadhah" ? (
                   "Isti'adhah"
                 ) : currentSegment?.type === "bismillah" ? (
                   "Bismillah"
@@ -254,7 +293,7 @@ export function CompactBayanPlayer({
                 )}
               </span>
             </div>
-          )}
+          ) : null}
           {errorMsg && (
             <span className="truncate text-[11px] font-medium text-red-400 mt-1" role="alert">
               {errorMsg}
@@ -263,7 +302,7 @@ export function CompactBayanPlayer({
         </div>
 
         {/* Right Vertical Action Stack */}
-        <div className="flex flex-col gap-2.5 shrink-0">
+        <div className="flex flex-col gap-2 shrink-0">
           {/* 1. Favorite Button */}
           <button
             type="button"
@@ -346,14 +385,29 @@ export function CompactBayanPlayer({
             max={isAyahSeq && ayahSeq ? ayahSeq.total - 1 : (totalDuration || 1)}
             step={1}
             value={isAyahSeq && ayahSeq ? ayahSeq.index : currentTime}
-            onChange={isAyahSeq ? (e) => player.jumpToAyah(Number(e.target.value)) : handleSeek}
+            onChange={
+              isAyahSeq
+                ? (e) => {
+                    haptic(8);
+                    player.jumpToAyah(Number(e.target.value));
+                  }
+                : handleSeek
+            }
+            onPointerDown={() => {
+              lastScrubAyahRef.current = ayahAtTime(currentTime);
+            }}
             aria-label="Progress"
             className={`${isQuran ? "quran-range" : "neomorph-range"} relative z-20 h-2.5 w-full cursor-pointer appearance-none bg-transparent`}
           />
         </div>
 
         <div className="mt-2 flex items-center justify-between text-xs font-mono font-medium text-sand-300/60">
-          {isAyahSeq && ayahSeq ? (
+          {isAyahSeq && juzTiming ? (
+            <>
+              <span>{formatClock(juzTiming.elapsed)}</span>
+              <span>{formatClock(juzTiming.total)}</span>
+            </>
+          ) : isAyahSeq && ayahSeq ? (
             <>
               <span>Ayah {ayahSeq.index + 1}</span>
               <span>{ayahSeq.total} āyāt</span>
@@ -368,20 +422,35 @@ export function CompactBayanPlayer({
       </div>
 
       {/* Bottom Transport Controls Bar — Centered Primary Controls */}
-      <div className="mt-4 flex items-center justify-center gap-3 sm:gap-4 px-1 sm:px-2">
+      <div className="mt-4 flex items-center justify-center gap-2 px-1 sm:px-2">
         <button
           type="button"
-          onClick={player.previous}
+          onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
           className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-          aria-label="Previous"
+          aria-label={prevTrackLabel}
+          title={prevTrackLabel}
         >
           <PrevIcon className="text-sm" />
         </button>
 
+        {onPrevVerse && (
+          <button
+            type="button"
+            onClick={() => { haptic(); onPrevVerse(); }}
+            className={ayahStepBtn}
+            aria-label="Previous Ayah"
+            title="Previous Ayah"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+            </svg>
+          </button>
+        )}
+
         {/* Glowing Emerald Play Button */}
         <button
           type="button"
-          onClick={handlePlayToggle}
+          onClick={() => { haptic(); handlePlayToggle(); }}
           className="grid h-14 w-14 sm:h-15 sm:w-15 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -394,11 +463,26 @@ export function CompactBayanPlayer({
           )}
         </button>
 
+        {onNextVerse && (
+          <button
+            type="button"
+            onClick={() => { haptic(); onNextVerse(); }}
+            className={ayahStepBtn}
+            aria-label="Next Ayah"
+            title="Next Ayah"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </button>
+        )}
+
         <button
           type="button"
-          onClick={player.next}
+          onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
           className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-          aria-label="Next"
+          aria-label={nextTrackLabel}
+          title={nextTrackLabel}
         >
           <NextIcon className="text-sm" />
         </button>
@@ -406,3 +490,6 @@ export function CompactBayanPlayer({
     </div>
   );
 }
+
+const ayahStepBtn =
+  "grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";

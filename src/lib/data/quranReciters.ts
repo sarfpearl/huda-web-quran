@@ -770,7 +770,8 @@ export function reciterEmbedsOwnBismillah(
 export const RECITER_STORAGE_KEY = "huda-selected-reciter";
 
 export function getDefaultReciter(): QuranReciter {
-  return QURAN_RECITERS[0]; // Sheikh Abdul Rahman Al-Sudais
+  // Landing reciter on every page load: Sheikh Mishari Al-afasi (Word Sync).
+  return QURAN_RECITERS.find((r) => r.id === "alafasy") ?? QURAN_RECITERS[0];
 }
 
 const RECITER_ALIASES: Record<string, string> = {

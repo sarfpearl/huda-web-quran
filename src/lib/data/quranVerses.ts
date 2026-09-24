@@ -822,6 +822,11 @@ export function getFallbackVerses(surahNumber: number): AyahVerse[] {
  * Fetch full verse-by-verse data for a Surah from public Quran API
  * with transparent in-memory and localStorage caching.
  */
+/** Synchronous peek at already-fetched verses for a surah + reciter (or null). */
+export function peekSurahVerses(surahNumber: number, reciterId?: string | null): AyahVerse[] | null {
+  return memoryCache.get(cacheKey(surahNumber, getReciterById(reciterId).id)) ?? null;
+}
+
 export async function fetchSurahVerses(
   surahNumber: number,
   reciterId?: string | null
@@ -1715,7 +1720,9 @@ export function useQuranVerseSync({
   });
 
   const [manualIndex, setManualIndex] = useState<number | null>(null);
-  const [showTranslation, setShowTranslation] = useState(true);
+  // Ayah meaning starts OFF on every page load (Arabic only); the header
+  // toggle turns it on for the session.
+  const [showTranslation, setShowTranslation] = useState(false);
   const manualTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevTimeRef = useRef<number>(currentTime);
 
@@ -1754,9 +1761,14 @@ export function useQuranVerseSync({
   }, [surahNumber, categorySlug, reciter?.id]);
 
   // Construct master recitation segments timeline strictly aligned with the active reciter
+  // Use this reciter's cached timings synchronously when available, so a
+  // reciter switch never renders one frame of the new audio time against the
+  // previous reciter's timeline (which flashed a wrong ayah).
+  const cachedVerses = surahNumber ? peekSurahVerses(surahNumber, reciter?.id) : null;
+  const timelineVerses = cachedVerses ?? verses;
   const segments = useMemo(() => {
-    return getRecitationTimeline(surahNumber, verses, isJuz, duration, reciter);
-  }, [surahNumber, verses, isJuz, duration, reciter]);
+    return getRecitationTimeline(surahNumber, timelineVerses, isJuz, duration, reciter);
+  }, [surahNumber, timelineVerses, isJuz, duration, reciter]);
 
   // Prelude segment timeline when prelude is active
   const preludeSegments = useMemo<RecitationSegment[]>(() => {

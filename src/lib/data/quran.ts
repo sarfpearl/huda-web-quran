@@ -1,3 +1,4 @@
+import { PRELUDE_AUDIO } from "./surahTrimming";
 import type { BayanWithRelations } from "@/types/bayan";
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
@@ -408,6 +409,30 @@ export function buildJuzAyahUrls(juzId: number, reciterId: string): string[] | n
   const pairs = getJuzAyahPairs(juzId);
   if (pairs.length === 0) return null;
   return pairs.map(([s, a]) => `https://everyayah.com/data/${folder}/${pad3(s)}${pad3(a)}.mp3`);
+}
+
+/**
+ * Prelude clips for a per-ayah Juz, keyed by ayah index in the sequence. Only
+ * where a SURAH begins (ayah 1) — nothing extra at the start of a Juz:
+ *  - Al-Fatihah (1): Isti'adhah, then its own 1:1 — which IS the Bismillah.
+ *  - At-Tawbah (9): nothing (no Bismillah by tradition).
+ *  - Every other Surah: Bismillah, in the reciter's own voice (their 1:1).
+ */
+export function buildJuzPreludes(
+  juzId: number,
+  reciterId: string
+): Record<number, { url: string; type: "istiadhah" | "bismillah" }[]> {
+  const folder = getEveryAyahFolder(reciterId);
+  const pairs = getJuzAyahPairs(juzId);
+  if (!folder || pairs.length === 0) return {};
+  const bismillah = { url: `https://everyayah.com/data/${folder}/001001.mp3`, type: "bismillah" as const };
+  const istiadhah = { url: PRELUDE_AUDIO.fatihah.url, type: "istiadhah" as const };
+  const out: Record<number, { url: string; type: "istiadhah" | "bismillah" }[]> = {};
+  pairs.forEach(([surah, ayah], i) => {
+    if (ayah !== 1 || surah === 9) return;
+    out[i] = surah === 1 ? [istiadhah] : [bismillah];
+  });
+  return out;
 }
 
 /**

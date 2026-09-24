@@ -24,6 +24,7 @@ import {
   quranSurahToTrack,
   quranJuzToTrackForReciter,
   buildJuzAyahUrls,
+  buildJuzPreludes,
   getJuzAyahPairs,
   getDefaultReciter,
   getReciterById,
@@ -32,7 +33,17 @@ import {
   RECITER_STORAGE_KEY,
   type QuranReciter,
 } from "@/lib/data/service";
-import { useQuranVerseSync, getVoiceProgressInVerse, fetchSurahVerses, type AyahVerse } from "@/lib/data/quranVerses";
+import {
+  useQuranVerseSync,
+  getVoiceProgressInVerse,
+  fetchSurahVerses,
+  getRecitationTimeline,
+  CANONICAL_ISTIADHAH,
+  CANONICAL_BISMILLAH,
+  type AyahVerse,
+  type RecitationSegment,
+} from "@/lib/data/quranVerses";
+import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
 
 interface ImmersiveHomeClientProps {
@@ -86,13 +97,8 @@ export function ImmersiveHomeClient({
       if (savedLang === "en" || savedLang === "ta") {
         setLanguage(savedLang);
       }
-      const savedReciterId = localStorage.getItem(RECITER_STORAGE_KEY);
-      if (savedReciterId) {
-        const found = getReciterById(savedReciterId);
-        if (found) {
-          setSelectedReciter(found);
-        }
-      }
+      // Reciter is NOT restored: every page load lands on Al-Fatihah with the
+      // default reciter (Sheikh Mishari Al-afasi), Surah tab.
     } catch {
       /* ignore */
     }
@@ -154,6 +160,15 @@ export function ImmersiveHomeClient({
   const [overrideBayan, setOverrideBayan] = useState<BayanWithRelations | null>(null);
   // Current ayah's text + translation while a Juz plays per-ayah (word-sync reciter).
   const [juzAyahVerse, setJuzAyahVerse] = useState<AyahVerse | null>(null);
+  // Short-lived info notice (e.g. Audio Only reciter → plays from Ayah 1).
+  const [notice, setNotice] = useState<{ id: number; text: string } | null>(null);
+  const showNotice = (text: string) => setNotice({ id: Date.now(), text });
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 4500);
+    return () => clearTimeout(t);
+  }, [notice]);
+
 
   // Filter Bayans belonging to current active category
   const categoryBayans = useMemo(() => {
@@ -270,7 +285,7 @@ export function ImmersiveHomeClient({
     const ayahUrls = buildJuzAyahUrls(juz.id, selectedReciter.id);
     if (ayahUrls && ayahUrls.length > 0) {
       const displayTrack = quranJuzToTrackForReciter(juz, selectedReciter, ayahUrls[0]);
-      player.playAyahSequence(displayTrack, ayahUrls, 0);
+      player.playAyahSequence(displayTrack, ayahUrls, 0, buildJuzPreludes(juz.id, selectedReciter.id));
       return;
     }
     const juzTrack = QURAN_TRACKS[juz.id - 1];
@@ -282,7 +297,20 @@ export function ImmersiveHomeClient({
 
     const isPlayingJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
 
-    setSelectedReciter(reciter);
+    // Rule: switching to a WORD SYNC reciter keeps the current ayah (their own
+    // timings place it exactly). Switching to an AUDIO ONLY reciter restarts the
+    // Surah / Juz from its first ayah — without timings its ayah positions are
+    // only estimates, so resuming "the same ayah" would land somewhere else.
+    const keepAyah = reciterHasWordTiming(reciter);
+    if (!keepAyah) {
+      const what = isPlayingJuz ? `Juz ${activeJuz?.id ?? ""}`.trim() : activeSurah?.name ?? "The Surah";
+      showNotice(
+        language === "ta"
+          ? `${reciter.displayName} — Audio Only. ${what} முதல் ayah-விலிருந்து மீண்டும் ஒலிக்கும்.`
+          : `${reciter.displayName} is Audio Only — ${what} will play again from the beginning.`
+      );
+    }
+
     try {
       localStorage.setItem(RECITER_STORAGE_KEY, reciter.id);
     } catch {
@@ -297,10 +325,11 @@ export function ImmersiveHomeClient({
     if (isPlayingJuz && activeJuz) {
       const ayahUrls = buildJuzAyahUrls(activeJuz.id, reciter.id);
       if (ayahUrls && ayahUrls.length > 0) {
-        const resumeIndex = player.ayahSequence?.index ?? 0;
+        const resumeIndex = keepAyah ? player.ayahSequence?.index ?? 0 : 0;
         const startUrl = ayahUrls[Math.min(resumeIndex, ayahUrls.length - 1)] ?? ayahUrls[0];
         const displayTrack = quranJuzToTrackForReciter(activeJuz, reciter, startUrl);
-        player.playAyahSequence(displayTrack, ayahUrls, resumeIndex);
+        setSelectedReciter(reciter);
+        player.playAyahSequence(displayTrack, ayahUrls, resumeIndex, buildJuzPreludes(activeJuz.id, reciter.id));
         return;
       }
       // Reciter has no per-ayah audio → fall through to whole-surah playback
@@ -311,7 +340,15 @@ export function ImmersiveHomeClient({
     //  - Playing a Juz (no per-ayah audio for this reciter) → the Juz's own
     //    starting Surah, instead of jumping to Al-Fatihah.
     //  - Playing a Surah → the same Surah (keep the listener's place).
-    const currentSurahNum = isPlayingJuz
+    // Juz playing ayah-by-ayah but the new reciter has no per-ayah audio → keep
+    // the place: continue the SURAH + ayah the Juz was on in full-surah audio.
+    const juzPair =
+      keepAyah && isPlayingJuz && activeJuz && player.ayahSequence
+        ? getJuzAyahPairs(activeJuz.id)[player.ayahSequence.index] ?? null
+        : null;
+    const currentSurahNum = juzPair
+      ? juzPair[0]
+      : isPlayingJuz
       ? (activeJuz ? (JUZ_START_SURAH[activeJuz.id] ?? 1) : 1)
       : (activeSurah?.number ??
         (activeBayan && isSurahTrackId(activeBayan.id)
@@ -322,29 +359,60 @@ export function ImmersiveHomeClient({
     const newTrack = quranSurahToTrack(targetSurah, reciter);
     const reciterSurahTracks = getSurahTracksForReciter(reciter);
 
-    // Coming from a Juz we start the Surah from the top; within Surahs we keep
-    // the listener's position only when both reciters share word-sync pacing.
-    const isSamePacing = reciterHasWordTiming(selectedReciter) && reciterHasWordTiming(reciter);
-    const seekTime = isPlayingJuz || !isSamePacing
+    // Keep the listener on the SAME ayah. Each reciter paces differently, so the
+    // old reciter's timestamp would land on a different ayah — resolve that
+    // ayah's start in the NEW reciter's own timeline first, then start the new
+    // track right there (skipping the Bismillah prelude). Juz → from the top.
+    const resumeAyah = !keepAyah
       ? 0
-      : (currentSegment?.startTime ?? (player.currentTime > 0 ? player.currentTime : 0));
+      : juzPair
+      ? juzPair[1]
+      : !isPlayingJuz && !player.isPrelude ? currentVerse?.ayahNumber ?? 0 : 0;
+    const wasPlaying = player.isPlaying;
 
-    setOverrideBayan(newTrack);
+    // Swap the displayed track only together with the audio — setting it before
+    // the timings fetch resolves showed the new track at t=0 (ayah 1) briefly.
+    const start = (startAt?: number | ((dur: number) => number)) => {
+      const opts =
+        typeof startAt === "function" || (startAt && startAt > 0) ? { startAt } : undefined;
+      // Reciter, displayed track and audio switch together (one render).
+      setSelectedReciter(reciter);
+      setOverrideBayan(newTrack);
+      if (wasPlaying) player.playBayan(newTrack, reciterSurahTracks, opts);
+      else player.cueBayan(newTrack, reciterSurahTracks, opts);
+    };
 
-    if (player.isPlaying) {
-      player.playBayan(newTrack, reciterSurahTracks);
-      if (seekTime > 0) {
-        setTimeout(() => player.seek(seekTime), 250);
-      }
-    } else {
-      player.cueBayan(newTrack, reciterSurahTracks);
-      if (seekTime > 0) {
-        setTimeout(() => player.seek(seekTime), 250);
-      }
+    if (resumeAyah <= 1) {
+      start();
+      return;
     }
+    fetchSurahVerses(targetSurah.number, reciter.id)
+      .then((newVerses) => {
+        // +50ms: an ayah's start equals the previous ayah's end, so landing
+        // exactly on it briefly resolved to the previous ayah.
+        const ayahStartFor = (dur: number) => {
+          const seg = getRecitationTimeline(targetSurah.number, newVerses, false, dur, reciter).find(
+            (sg) => sg.type === "ayah" && sg.ayahNumber === resumeAyah
+          );
+          return seg ? seg.startTime + 0.05 : 0;
+        };
+        // Word-sync reciter: absolute timestamps from its own timings.
+        start(ayahStartFor(SURAH_DURATIONS[targetSurah.number] ?? 0));
+      })
+      .catch(() => start());
   };
 
   const isJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
+  // Voice Sync QA HUD is a developer tool — hidden for end users. Open the
+  // app with ?qa=1 in the URL to show it.
+  const [showQaHud, setShowQaHud] = useState(false);
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("qa") === "1") setShowQaHud(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Load the current ayah's text + translation while a Juz plays per-ayah, so
   // the center display shows the Arabic + meaning (word-sync reciters only —
@@ -373,6 +441,93 @@ export function ImmersiveHomeClient({
       cancelled = true;
     };
   }, [ayahSeqIndex, activeJuz, selectedReciter.id]);
+
+  // Juz clock: a per-ayah Juz has no single audio file, so estimate each ayah's
+  // length (word-sync reciters: QDC word window — same recording as everyayah;
+  // others: the verse's default timestamps) and sum them for elapsed / total.
+  const hasAyahSeq = Boolean(player.ayahSequence);
+  const [juzAyahDurations, setJuzAyahDurations] = useState<number[] | null>(null);
+  useEffect(() => {
+    if (!isJuz || !activeJuz || !hasAyahSeq) {
+      setJuzAyahDurations(null);
+      return;
+    }
+    const pairs = getJuzAyahPairs(activeJuz.id);
+    const surahs = [...new Set(pairs.map(([sn]) => sn))];
+    let cancelled = false;
+    Promise.all(surahs.map((sn) => fetchSurahVerses(sn, selectedReciter.id).then((v) => [sn, v] as const)))
+      .then((entries) => {
+        if (cancelled) return;
+        const bySurah = new Map(entries);
+        setJuzAyahDurations(
+          pairs.map(([sn, an]) => {
+            const v = bySurah.get(sn)?.find((x) => x.ayahNumber === an);
+            const w = v?.words;
+            if (w && w.length > 0) {
+              const d = (w[w.length - 1].endTime ?? 0) - (w[0].startTime ?? 0);
+              if (d > 0) return d;
+            }
+            const d = (v?.timestampTo ?? 0) - (v?.timestampFrom ?? 0);
+            return d > 0 ? d : 6;
+          })
+        );
+      })
+      .catch(() => !cancelled && setJuzAyahDurations(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [isJuz, activeJuz, hasAyahSeq, selectedReciter.id]);
+
+  // Self-correcting: record each ayah's REAL file length as it plays and scale
+  // the not-yet-played estimates by the observed real/estimate ratio (the word
+  // windows omit each file's lead/trail silence, so raw estimates run short).
+  const [juzMeasured, setJuzMeasured] = useState<Record<number, number>>({});
+  useEffect(() => setJuzMeasured({}), [juzAyahDurations]);
+  const seqIdx = player.ayahSequence?.index ?? -1;
+  useEffect(() => {
+    if (seqIdx < 0 || !(player.duration > 0) || player.isLoading || player.ayahSequence?.preType) return;
+    setJuzMeasured((m) => (m[seqIdx] === player.duration ? m : { ...m, [seqIdx]: player.duration }));
+  }, [seqIdx, player.duration, player.isLoading, player.ayahSequence?.preType]);
+
+  const juzTiming = useMemo(() => {
+    const seq = player.ayahSequence;
+    if (!juzAyahDurations || !seq) return null;
+    let realSum = 0;
+    let estSum = 0;
+    for (const [k, v] of Object.entries(juzMeasured)) {
+      realSum += v;
+      estSum += juzAyahDurations[Number(k)] ?? 0;
+    }
+    const ratio = estSum > 0 ? realSum / estSum : 1;
+    const durOf = (i: number) => juzMeasured[i] ?? (juzAyahDurations[i] ?? 0) * ratio;
+    let total = 0;
+    let before = 0;
+    for (let i = 0; i < juzAyahDurations.length; i++) {
+      const d = durOf(i);
+      total += d;
+      if (i < seq.index) before += d;
+    }
+    const inAyah = seq.preType ? 0 : Math.min(player.currentTime, durOf(seq.index));
+    return { elapsed: before + inAyah, total };
+  }, [juzAyahDurations, juzMeasured, player.ayahSequence, player.currentTime]);
+
+  // While a Juz prelude clip plays (Isti'adhah / Bismillah before an ayah),
+  // show that text instead of the upcoming ayah.
+  const juzPreType = isJuz ? player.ayahSequence?.preType ?? null : null;
+  const juzPreSegment = useMemo<RecitationSegment | null>(() => {
+    if (!juzPreType) return null;
+    const c = juzPreType === "istiadhah" ? CANONICAL_ISTIADHAH : CANONICAL_BISMILLAH;
+    return {
+      id: `juz-prelude-${juzPreType}`,
+      type: juzPreType,
+      startTime: 0,
+      endTime: 0,
+      textArabic: c.textArabic,
+      textEnglish: c.textEnglish,
+      textTamil: c.textTamil,
+      words: [],
+    };
+  }, [juzPreType]);
 
   // Word-by-word highlight for the per-ayah Juz. The QDC word timings are
   // Surah-relative; the everyayah ayah audio starts at 0 and may differ in
@@ -447,6 +602,12 @@ export function ImmersiveHomeClient({
     preludeDuration: player.preludeDuration,
   });
 
+  // Ayah meaning (translation) is OFF on every page load; the toggle only
+  // applies to the current session.
+  const handleToggleMeaning = () => {
+    setShowTranslation((prev) => !prev);
+  };
+
   return (
     <div className="fixed inset-0 z-10 overflow-hidden bg-slate-950 text-sand-50 select-none">
       {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
@@ -456,25 +617,27 @@ export function ImmersiveHomeClient({
         activeJuzNumber={activeJuz?.id ?? null}
         ayahNumber={currentVerse?.ayahNumber ?? null}
         videoSrc={currentVideo}
-        currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
-        duration={player.isPrelude ? player.preludeDuration : player.duration}
+        // Always the MAIN recitation clock: the prelude clip's own 0→5s clock
+        // read as surah progress swept through every chapter video (flicker).
+        currentTime={player.currentTime}
+        duration={player.duration}
         isPlaying={player.isPlaying}
         visualMode={visualMode}
       />
 
+      {/* 20% black scrim over every background so the verse text stays legible */}
+      <div className="absolute inset-0 z-[1] bg-black/20 pointer-events-none" aria-hidden="true" />
+
       {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation) */}
       <CenterVerseDisplay
-        currentVerse={isJuz ? juzAyahVerse : currentVerse}
-        currentSegment={isJuz ? null : currentSegment}
+        currentVerse={isJuz ? (juzPreSegment ? null : juzAyahVerse) : currentVerse}
+        currentSegment={isJuz ? juzPreSegment : currentSegment}
         currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
         isPlaying={player.isPlaying}
         language={language}
         showTranslation={showTranslation}
-        onPrevVerse={handlePrevVerse}
-        onNextVerse={handleNextVerse}
-        hasMultipleVerses={verses.length > 1}
         activeWordIndex={isJuz ? juzWordSync.activeWordIndex : activeWordIndex}
-        hasWordTiming={isJuz ? juzWordSync.hasWordTiming : hasWordTiming}
+        hasWordTiming={isJuz ? !juzPreSegment && juzWordSync.hasWordTiming : hasWordTiming}
         reciterWordSync={reciterHasWordTiming(selectedReciter)}
         isJuz={isJuz}
       />
@@ -486,12 +649,14 @@ export function ImmersiveHomeClient({
         onToggleVisualMode={handleToggleVisualMode}
         language={language}
         onToggleLanguage={handleToggleLanguage}
+        showMeaning={showTranslation}
+        onToggleMeaning={handleToggleMeaning}
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
         isJuz={isJuz}
         qaHud={
-          !isJuz && (
+          showQaHud && !isJuz && (
             <SyncQADebugHUD
               currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
               activeSurah={activeSurah}
@@ -523,7 +688,21 @@ export function ImmersiveHomeClient({
       </ImmersiveHeader>
 
       {/* Bottom Floating Player */}
-      <div className="absolute bottom-4 sm:bottom-6 inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none">
+      <div data-player-dock className="absolute bottom-4 sm:bottom-6 inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none">
+        {notice && (
+          <div
+            key={notice.id}
+            role="status"
+            aria-live="polite"
+            className="mb-3 max-w-[680px] w-full sm:w-auto flex items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
+          >
+            <svg className="h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v5h5" />
+            </svg>
+            <span className={language === "ta" ? "font-tamil" : ""}>{notice.text}</span>
+          </div>
+        )}
         <div className="pointer-events-auto w-full max-w-[680px] flex justify-center">
           {/* Compact Integrated Glassmorphism Player with Ayah Controls */}
           {activeBayan && (
@@ -541,7 +720,26 @@ export function ImmersiveHomeClient({
               language={language}
               onToggleLanguage={handleToggleLanguage}
               showTranslation={showTranslation}
-              onToggleShowTranslation={() => setShowTranslation((prev) => !prev)}
+              onToggleShowTranslation={handleToggleMeaning}
+              onPrevVerse={
+                isJuz
+                  ? player.ayahSequence
+                    ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) - 1)
+                    : undefined
+                  : verses.length > 1 ? handlePrevVerse : undefined
+              }
+              onNextVerse={
+                isJuz
+                  ? player.ayahSequence
+                    ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) + 1)
+                    : undefined
+                  : verses.length > 1 ? handleNextVerse : undefined
+              }
+              trackKind={isJuz ? "Juz" : activeSurah ? "Surah" : null}
+              juzTiming={isJuz ? juzTiming : null}
+              // Juz: |< / >| move between Juz (1 ↔ 30 wraps), not between ayahs.
+              onPrevTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id <= 1 ? 30 : activeJuz.id - 1) : undefined}
+              onNextTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1) : undefined}
               onSeekToVerse={jumpToVerse}
             />
           )}
