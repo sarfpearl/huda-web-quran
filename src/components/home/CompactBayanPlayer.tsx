@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -16,6 +17,9 @@ import {
   ShuffleIcon,
   RepeatIcon,
   EqualizerIcon,
+  ChevronDownIcon,
+  VolumeIcon,
+  MuteIcon,
 } from "@/components/ui/Icon";
 import { formatClock } from "@/lib/utils";
 import {
@@ -103,6 +107,57 @@ export function CompactBayanPlayer({
 
   const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
 
+  // Collapsed = compact pill (cover + transport). Remembered per viewer.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
+    } catch {}
+  }, []);
+  // Both views stay mounted at their natural size and crossfade; only the empty
+  // glass shell resizes (CSS transition to the measured size of the active view),
+  // so nothing reflows mid-animation.
+  const fullRef = useRef<HTMLDivElement>(null);
+  const compactRef = useRef<HTMLDivElement>(null);
+  const [shellSize, setShellSize] = useState<{ w: number; h: number } | null>(null);
+  const [animate, setAnimate] = useState(false);
+
+  useLayoutEffect(() => {
+    const active = collapsed ? compactRef.current : fullRef.current;
+    const inactive = collapsed ? fullRef.current : compactRef.current;
+    if (!active) return;
+    active.inert = false;
+    if (inactive) inactive.inert = true;
+    const measure = () => setShellSize({ w: active.offsetWidth, h: active.offsetHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(active);
+    return () => ro.disconnect();
+  }, [collapsed]);
+
+  // Shared cover: on switch, a copy of the artwork flies along a curve from the
+  // full player's cover to the compact play button (and back).
+  const fullCoverRef = useRef<HTMLDivElement>(null);
+  const compactCoverRef = useRef<HTMLButtonElement>(null);
+  const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; expand: boolean; id: number } | null>(null);
+
+  const toggleCollapsed = (next: boolean) => {
+    if (next === collapsed) return;
+    haptic();
+    const src = next ? fullCoverRef.current : compactCoverRef.current;
+    const dst = next ? compactCoverRef.current : fullCoverRef.current;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (src && dst && !reduceMotion) {
+      // Both views stay mounted (untransformed), so the destination rect is final already.
+      setFlight({ from: src.getBoundingClientRect(), to: dst.getBoundingClientRect(), expand: !next, id: Date.now() });
+    }
+    setAnimate(true);
+    setCollapsed(next);
+    try {
+      localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+    } catch {}
+  };
+
   useEffect(() => {
     setCoverSrc(bayan.coverImageUrl ?? null);
   }, [bayan.id, bayan.coverImageUrl]);
@@ -150,6 +205,8 @@ export function CompactBayanPlayer({
       : ((ayahSeq.index + ayahFraction) / ayahSeq.total) * 100
     : (totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0);
 
+  const barPct = Math.min(Math.max(juzProgressPct, 0), 100);
+
   const handlePlayToggle = () => {
     if (isCurrentTrack) {
       player.togglePlay();
@@ -169,8 +226,9 @@ export function CompactBayanPlayer({
   const ayahAtTime = (t: number) =>
     segments?.find((sg) => sg.type === "ayah" && t >= sg.startTime && t < sg.endTime)?.ayahNumber ?? null;
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => seekToTime(Number(e.target.value));
+
+  const seekToTime = (val: number) => {
     const ayah = ayahAtTime(val);
     if (ayah != null && ayah !== lastScrubAyahRef.current) {
       if (lastScrubAyahRef.current != null) haptic(8);
@@ -212,13 +270,265 @@ export function CompactBayanPlayer({
     }
   };
 
-  return (
-    <div className="relative w-full sm:w-[80dvw] max-w-[680px] rounded-[28px] sm:rounded-[40px] overflow-hidden bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] px-4 py-4 sm:px-10 sm:py-6 transition-all select-none">
+  // Ring scrubber: drag around the cover's ring to seek (tap the cover to play / pause).
+  //   Per-ayah Juz → the ring steps through ayāt; otherwise it seeks in time.
+  const ringRef = useRef<HTMLDivElement>(null);
+  const scrubRef = useRef<{ x: number; y: number; active: boolean; last: number } | null>(null);
+  const suppressClickRef = useRef(false);
+  const [dragPct, setDragPct] = useState<number | null>(null);
+
+  const seekToFraction = (f: number) => {
+    if (isAyahSeq && ayahSeq) {
+      const idx = Math.min(ayahSeq.total - 1, Math.floor(f * ayahSeq.total));
+      if (idx !== ayahSeq.index) {
+        haptic(8);
+        player.jumpToAyah(idx);
+      }
+    } else {
+      seekToTime(f * (totalDuration || 1));
+    }
+  };
+
+  const fractionAt = (e: React.PointerEvent) => {
+    const r = ringRef.current!.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    // 0 at 12 o'clock, clockwise.
+    let f = (Math.atan2(dx, -dy) / (2 * Math.PI) + 1) % 1;
+    // Don't wrap across 12 o'clock mid-drag — pin to the ends instead.
+    const last = scrubRef.current?.last;
+    if (last != null && Math.abs(f - last) > 0.5) f = last > 0.5 ? 1 : 0;
+    return f;
+  };
+
+  const startScrub = (e: React.PointerEvent) => {
+    const st = scrubRef.current!;
+    st.active = true;
+    ringRef.current!.setPointerCapture(e.pointerId);
+    lastScrubAyahRef.current = ayahAtTime(currentTime);
+    st.last = ringPct / 100;
+    const f = fractionAt(e);
+    st.last = f;
+    setDragPct(f * 100);
+    seekToFraction(f);
+  };
+
+  const onRingPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const r = ringRef.current!.getBoundingClientRect();
+    const dist = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
+    scrubRef.current = { x: e.clientX, y: e.clientY, active: false, last: ringPct / 100 };
+    suppressClickRef.current = false;
+    // Pressing on the ring band scrubs straight away; on the cover it waits for a drag.
+    if (dist > r.width * 0.36) startScrub(e);
+  };
+
+  const onRingPointerMove = (e: React.PointerEvent) => {
+    const st = scrubRef.current;
+    if (!st) return;
+    if (!st.active) {
+      if (Math.hypot(e.clientX - st.x, e.clientY - st.y) < 6) return;
+      startScrub(e);
+      return;
+    }
+    const f = fractionAt(e);
+    st.last = f;
+    setDragPct(f * 100);
+    seekToFraction(f);
+  };
+
+  const endScrub = () => {
+    if (scrubRef.current?.active) suppressClickRef.current = true;
+    scrubRef.current = null;
+    setDragPct(null);
+  };
+
+  const onRingKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      handlePlayToggle();
+      return;
+    }
+    const dir = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    if (isAyahSeq && ayahSeq) player.jumpToAyah(ayahSeq.index + dir);
+    else seekToTime(Math.min(Math.max(currentTime + dir * 5, 0), totalDuration || 0));
+  };
+
+  const ringPct = dragPct ?? Math.min(Math.max(juzProgressPct, 0), 100);
+  const thumbAngle = (ringPct / 100) * 2 * Math.PI;
+  const compactView = (
+      <div
+        ref={compactRef}
+        aria-hidden={!collapsed}
+        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] items-center gap-1 sm:gap-2 p-1.5 sm:p-2`}
+      >
+        <VolumeControl buttonClassName={compactBtn} active={collapsed} />
+
+        <button
+          type="button"
+          onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
+          className={compactBtn}
+          aria-label={prevTrackLabel}
+          title={prevTrackLabel}
+        >
+          <PrevIcon className="text-xs sm:text-sm" />
+        </button>
+
+        {onPrevVerse && (
+          <button
+            type="button"
+            onClick={() => { haptic(); onPrevVerse(); }}
+            className={compactBtn}
+            aria-label="Previous Ayah"
+            title="Previous Ayah"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+            </svg>
+          </button>
+        )}
+
+        {/* Cover = play button, ringed by the seek bar — tap to play / pause, drag the ring to seek */}
+        <div
+          ref={ringRef}
+          role="slider"
+          tabIndex={0}
+          aria-label="Seek"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(ringPct)}
+          aria-valuetext={
+            isAyahSeq && ayahSeq
+              ? `Ayah ${ayahSeq.index + 1} of ${ayahSeq.total}`
+              : `${formatClock(currentTime)} of ${formatClock(totalDuration)}`
+          }
+          onKeyDown={onRingKeyDown}
+          onPointerDown={onRingPointerDown}
+          onPointerMove={onRingPointerMove}
+          onPointerUp={endScrub}
+          onPointerCancel={endScrub}
+          className="group relative mx-0.5 sm:mx-1 h-14 w-14 sm:h-15 sm:w-15 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+        >
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => {
+              if (suppressClickRef.current) {
+                suppressClickRef.current = false;
+                return;
+              }
+              haptic();
+              handlePlayToggle();
+            }}
+            ref={compactCoverRef}
+            className={`${flight ? "invisible" : ""} absolute inset-[5px] sm:inset-[6px] overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 cursor-pointer active:scale-95 transition-transform`}
+            aria-label={isPlaying ? "Pause" : "Play"}
+            title={bayan.title}
+          >
+            {coverSrc ? (
+              <Image
+                src={coverSrc}
+                alt=""
+                fill
+                unoptimized={true}
+                draggable={false}
+                className="object-cover pointer-events-none"
+                onError={() => setCoverSrc("/assets/images/bayan/quran.jpg")}
+              />
+            ) : (
+              <CoverArt seed={bayan.slug} icon={bayan.category.icon} rounded="rounded-full" className="h-full w-full" />
+            )}
+            <span className="absolute inset-0 grid place-items-center bg-black/20 text-emerald-400 [filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]">
+              {isLoading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+              ) : isPlaying ? (
+                <PauseIcon className="text-base sm:text-xl" />
+              ) : (
+                <PlayIcon className="text-base sm:text-xl ml-0.5" />
+              )}
+            </span>
+          </button>
+          <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="16.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.4" />
+            <circle
+              cx="18"
+              cy="18"
+              r="16.5"
+              fill="none"
+              stroke={isQuran ? "#fbbf24" : "#f5f5f4"}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              pathLength={100}
+              strokeDasharray={`${ringPct} 100`}
+              transform="rotate(-90 18 18)"
+              className={dragPct == null ? "transition-[stroke-dasharray] duration-150 ease-linear" : ""}
+            />
+            {/* Thumb — grows while dragging */}
+            <circle
+              cx={18 + 16.5 * Math.sin(thumbAngle)}
+              cy={18 - 16.5 * Math.cos(thumbAngle)}
+              r={dragPct == null ? 2.2 : 3.2}
+              fill={isQuran ? "#fde68a" : "#ffffff"}
+              stroke="rgba(0,0,0,0.5)"
+              strokeWidth="0.6"
+              className="transition-[r] duration-150"
+            />
+          </svg>
+        </div>
+
+
+        {onNextVerse && (
+          <button
+            type="button"
+            onClick={() => { haptic(); onNextVerse(); }}
+            className={compactBtn}
+            aria-label="Next Ayah"
+            title="Next Ayah"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
+          className={compactBtn}
+          aria-label={nextTrackLabel}
+          title={nextTrackLabel}
+        >
+          <NextIcon className="text-xs sm:text-sm" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => toggleCollapsed(false)}
+          className={compactBtn}
+          aria-label="Expand player"
+          title="Expand player"
+        >
+          <ChevronDownIcon className="text-sm rotate-180" />
+        </button>
+      </div>
+  );
+
+  const fullView = (
+    <div
+      ref={fullRef}
+      aria-hidden={collapsed}
+      className={`${viewBase} ${collapsed ? viewHidden : viewShown} w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-10 sm:py-6`}
+    >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
       <div className="relative flex items-center justify-between gap-3 sm:gap-5">
         {/* Cover Artwork */}
-        <div className="relative h-20 w-20 sm:h-36 sm:w-36 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 shadow-md border border-emerald-500/30">
+        <div
+          ref={fullCoverRef}
+          className={`${flight ? "invisible" : ""} relative h-20 w-20 sm:h-36 sm:w-36 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 shadow-md border border-emerald-500/30`}
+        >
           {coverSrc ? (
             <Image
               src={coverSrc}
@@ -354,29 +664,22 @@ export function CompactBayanPlayer({
 
       {/* Lower Section — Audio Progress Slider with Embedded Ayah Dots & Time Labels */}
       <div className="mt-4 px-1">
-        <div className="relative flex items-center h-4">
-          {/* Custom Track Layer with Dark Base, Played Fill, Active Verse Pill, and Division Dots */}
-          <div className="absolute inset-x-0 h-2.5 rounded-full bg-black/60 border border-white/10 overflow-hidden pointer-events-none">
-            {/* Played Emerald Progress Fill (ONLY for non-Quran Bayans; strictly removed for Quran) */}
-            {!isQuran && (
-              <div
-                className="absolute left-0 top-0 bottom-0 bg-emerald-500/80 transition-[width] duration-150"
-                style={{
-                  width: `${(currentTime / (totalDuration || 1)) * 100}%`,
-                }}
-              />
-            )}
-
-            {/* The ONLY Visual Synchronization Line for Quran: Continuous Voice-Primary Yellow Progress Fill */}
-            {isQuran && (
-              <div
-                className="absolute left-0 top-0.5 bottom-0.5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.95)] ring-1 ring-amber-300 transition-[width] duration-100 ease-linear pointer-events-none"
-                style={{
-                  width: `${Math.min(Math.max(juzProgressPct, (isAyahSeq ? juzProgressPct : currentTime) > 0 ? 0.5 : 0), 100)}%`,
-                }}
-              />
-            )}
+        <div className="group relative flex items-center h-5">
+          {/* Track · played fill · knob (Quran = gold, Bayan = emerald). The native
+              thumb is hidden; the knob below mirrors the same progress. */}
+          <div className="absolute inset-x-0 h-2 rounded-full bg-black/55 overflow-hidden pointer-events-none">
+            <div
+              className={`absolute inset-y-0 left-0 rounded-full ${isQuran ? "bg-amber-400" : "bg-emerald-500"} transition-[width] duration-100 ease-linear`}
+              style={{ width: `${barPct}%` }}
+            />
           </div>
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute top-1/2 z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-black/85 ${
+              isQuran ? "bg-amber-400" : "bg-emerald-500"
+            } shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-[left,transform] duration-100 ease-linear group-active:scale-110`}
+            style={{ left: `${barPct}%` }}
+          />
 
           {/* Interactive Range Input with Voice-Matched Golden Thumb for Quran */}
           <input
@@ -397,7 +700,7 @@ export function CompactBayanPlayer({
               lastScrubAyahRef.current = ayahAtTime(currentTime);
             }}
             aria-label="Progress"
-            className={`${isQuran ? "quran-range" : "neomorph-range"} relative z-20 h-2.5 w-full cursor-pointer appearance-none bg-transparent`}
+            className="quran-range relative z-20 h-5 w-full cursor-pointer appearance-none bg-transparent"
           />
         </div>
 
@@ -422,11 +725,13 @@ export function CompactBayanPlayer({
       </div>
 
       {/* Bottom Transport Controls Bar — Centered Primary Controls */}
-      <div className="mt-4 flex items-center justify-center gap-2 px-1 sm:px-2">
+      <div className="mt-4 flex items-center justify-center gap-1 sm:gap-2 sm:px-2">
+        <VolumeControl active={!collapsed} />
+
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label={prevTrackLabel}
           title={prevTrackLabel}
         >
@@ -480,16 +785,244 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className="grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label={nextTrackLabel}
           title={nextTrackLabel}
         >
           <NextIcon className="text-sm" />
         </button>
+
+        <button
+          type="button"
+          onClick={() => toggleCollapsed(true)}
+          className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          aria-label="Minimize player"
+          title="Minimize player"
+        >
+          <ChevronDownIcon className="text-sm" />
+        </button>
+      </div>
+    </div>
+  );
+
+  // Pill radius = half its height; full card keeps its class corners.
+  const radius = collapsed && shellSize ? (shellSize.h + 2) / 2 : undefined;
+  return (
+    <div
+      className={`relative overflow-hidden rounded-[28px] sm:rounded-[40px] bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] select-none motion-reduce:transition-none ${
+        animate ? "transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" : ""
+      } ${shellSize ? "" : "invisible"}`}
+      style={{
+        width: shellSize ? shellSize.w + 2 : undefined,
+        height: shellSize ? shellSize.h + 2 : undefined,
+        borderRadius: radius,
+      }}
+    >
+      {fullView}
+      {compactView}
+      {flight &&
+        createPortal(
+          <CoverFlight key={flight.id} {...flight} src={coverSrc} onDone={() => setFlight(null)} />,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+/** Volume button — tap opens a small slider (with mute) above it. The popover
+ *  is portalled to <body> so the player shell's overflow clipping can't cut it. */
+function VolumeControl({
+  buttonClassName = volumeBtn,
+  active = true,
+}: {
+  buttonClassName?: string;
+  active?: boolean;
+}) {
+  const { volume, isMuted, setVolume, toggleMute } = useAudioPlayer();
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; bottom: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+  const silent = isMuted || volume === 0;
+  const level = isMuted ? 0 : volume;
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const popW = popRef.current?.offsetWidth ?? 170;
+      const left = Math.min(Math.max(8, r.left), window.innerWidth - popW - 8);
+      setPos({ left, bottom: window.innerHeight - r.top + 8 });
+    };
+    place();
+    const close = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (!btnRef.current?.contains(t) && !popRef.current?.contains(t)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("resize", place);
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("resize", place);
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // Close when this view is hidden (player switched between full / compact).
+  useEffect(() => {
+    if (!active) setOpen(false);
+  }, [active]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const popover = (
+    <div
+      ref={popRef}
+      style={{ left: pos?.left ?? -9999, bottom: pos?.bottom ?? 0 }}
+      className={`fixed z-[60] flex items-center gap-2 rounded-full bg-black/70 backdrop-blur-md border border-white/15 px-2 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] origin-bottom-left transition-[opacity,transform] duration-200 ease-out ${
+        open && pos ? "opacity-100 scale-100" : "pointer-events-none opacity-0 scale-95"
+      }`}
+      aria-hidden={!open}
+    >
+      <button
+        type="button"
+        tabIndex={open ? 0 : -1}
+        onClick={() => { haptic(); toggleMute(); }}
+        className="grid h-7 w-7 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+        aria-label={isMuted ? "Unmute" : "Mute"}
+        title={isMuted ? "Unmute" : "Mute"}
+      >
+        {silent ? <MuteIcon className="text-sm" /> : <VolumeIcon className="text-sm" />}
+      </button>
+      <div className="relative flex items-center h-4 w-28">
+        <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/15 overflow-hidden pointer-events-none">
+          <div className="h-full bg-emerald-400" style={{ width: `${level * 100}%` }} />
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={level}
+          tabIndex={open ? 0 : -1}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          aria-label="Volume level"
+          className="neomorph-range relative z-10 h-1.5 w-full cursor-pointer appearance-none bg-transparent"
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => { haptic(); setOpen((o) => !o); }}
+        className={`${buttonClassName} ${open ? "!text-emerald-400" : ""}`}
+        aria-label="Volume"
+        aria-expanded={open}
+        title={silent ? "Muted" : `Volume ${Math.round(volume * 100)}%`}
+      >
+        {silent ? <MuteIcon className="text-sm" /> : <VolumeIcon className="text-sm" />}
+      </button>
+      {mounted && createPortal(popover, document.body)}
+    </>
+  );
+}
+
+const volumeBtn =
+  "grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+
+/** The flying cover copy. Sits at the destination rect and animates in from the
+ *  source on three layers (X, Y, scale) with separate easings, so the path curves:
+ *    collapse → sideways first, then drops into the play button;
+ *    expand   → lifts off the pill first, then drifts across to the artwork slot. */
+function CoverFlight({
+  from,
+  to,
+  src,
+  expand,
+  onDone,
+}: {
+  from: DOMRect;
+  to: DOMRect;
+  src: string | null;
+  expand: boolean;
+  onDone: () => void;
+}) {
+  const xRef = useRef<HTMLDivElement>(null);
+  const yRef = useRef<HTMLDivElement>(null);
+  const sRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const k = from.width / to.width;
+    const duration = expand ? 620 : 560;
+    const fast = "cubic-bezier(0.2, 0.75, 0.3, 1)"; // leads the motion
+    const slow = "cubic-bezier(0.55, 0, 0.3, 1)"; // follows
+    const anims = [
+      xRef.current!.animate(
+        [{ transform: `translateX(${dx}px)` }, { transform: "translateX(0)" }],
+        { duration, easing: expand ? slow : fast },
+      ),
+      yRef.current!.animate(
+        [{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }],
+        { duration, easing: expand ? fast : slow },
+      ),
+      sRef.current!.animate(
+        [{ transform: `scale(${k})` }, { transform: "scale(1)" }],
+        { duration, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+      ),
+    ];
+    let cancelled = false;
+    Promise.all(anims.map((an) => an.finished))
+      .then(() => !cancelled && onDone())
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      anims.forEach((an) => an.cancel());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div
+      ref={xRef}
+      aria-hidden="true"
+      className="pointer-events-none fixed z-[70] will-change-transform"
+      style={{ left: to.left, top: to.top, width: to.width, height: to.height }}
+    >
+      <div ref={yRef} className="h-full w-full will-change-transform">
+        <div
+          ref={sRef}
+          className="h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-500/30 shadow-[0_12px_30px_rgba(0,0,0,0.6)] will-change-transform"
+        >
+          {src && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
+const COLLAPSED_KEY = "huda:player-collapsed";
+
+// Views sit bottom-centred inside the shell so it can resize around them.
+const viewBase =
+  "absolute bottom-0 left-1/2 -translate-x-1/2 transition-[opacity,transform,filter] motion-reduce:transition-none";
+const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
+const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
+
+const compactBtn =
+  "grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+
 const ayahStepBtn =
-  "grid h-10 w-10 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
