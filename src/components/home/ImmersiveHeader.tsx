@@ -94,7 +94,7 @@ export function ImmersiveHeader({
       : qaHud;
 
   return (
-    <header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+1rem)] pb-4 pointer-events-none box-border">
+    <header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border">
       {/* Top Left Time & Location */}
       <TimeLocationWidget />
 

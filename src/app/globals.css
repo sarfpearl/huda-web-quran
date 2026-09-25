@@ -108,6 +108,31 @@
     min-height: 0;
   }
 
+  /* iOS 26 Safari tab: it paints a flat colour behind its bars while the page
+     sits at scrollY 0, and the real page pixels once it has scrolled. Give the
+     locked page a 64px runway (still overflow: hidden, so only script scrolls
+     it) and leave the fixed layers transparent so none of them is sampled as
+     the bar colour. MainLayout adds .safari-bleed and scrolls to the runway. */
+  html.screen-locked.safari-bleed body {
+    position: static;
+    height: auto;
+    min-height: calc(100lvh + 64px);
+  }
+  html.safari-bleed .bleed-clear {
+    background-color: transparent !important; /* beats the bg-* utility */
+  }
+
+  /* Home-screen app: iOS 26 blurs about 40pt below the status bar; the
+     immersive header starts under that band so its buttons stay sharp. */
+  :root {
+    --header-gap: 1rem;
+  }
+  @media (display-mode: standalone) {
+    :root {
+      --header-gap: 2.75rem;
+    }
+  }
+
   body {
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));

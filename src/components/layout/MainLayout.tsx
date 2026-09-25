@@ -17,7 +17,23 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     if (!isHome) return;
     const root = document.documentElement;
     root.classList.add("screen-locked");
-    return () => root.classList.remove("screen-locked");
+    if (!isSafari26Tab()) return () => root.classList.remove("screen-locked");
+
+    // iOS 26 Safari shows the scene behind its bars only once the page has
+    // scrolled; hold it on the 64px runway (see .safari-bleed in globals.css).
+    root.classList.add("safari-bleed");
+    const hold = () => {
+      if (window.scrollY < 1) window.scrollTo(0, 64);
+    };
+    hold();
+    window.addEventListener("scroll", hold, { passive: true });
+    window.addEventListener("pageshow", hold);
+    return () => {
+      window.removeEventListener("scroll", hold);
+      window.removeEventListener("pageshow", hold);
+      root.classList.remove("screen-locked", "safari-bleed");
+      window.scrollTo(0, 0);
+    };
   }, [isHome]);
 
   // iOS Safari ignores user-scalable=no, so block its pinch gestures directly.
@@ -41,7 +57,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       // 99% alpha, not opaque: iOS 26 Safari clips opaque fixed layers to the
       // inner viewport, leaving bars above/below; translucent ones go edge to edge.
       // Black, not slate: Safari tints its bars with this colour.
-      <div className="fixed inset-0 overflow-hidden font-sans select-none bg-black/[0.99]">
+      <div className="bleed-clear fixed inset-0 overflow-hidden font-sans select-none bg-black/[0.99]">
         {/* Full-screen homepage content */}
         {children}
       </div>
@@ -58,4 +74,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       {!isAdmin && <MobileBottomNav />}
     </>
   );
+}
+
+/** Safari 26+ in a normal iPhone / iPad tab (not the home-screen app, not Chrome / Firefox / Edge). */
+function isSafari26Tab(): boolean {
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (!ios || /CriOS|FxiOS|EdgiOS/.test(ua)) return false;
+  const standalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return !standalone && Number(ua.match(/Version\/(\d+)/)?.[1] ?? 0) >= 26;
 }

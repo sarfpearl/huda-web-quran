@@ -240,6 +240,19 @@ export function CompactBayanPlayer({
   // fraction) instead of resetting every ayah, and shows "Ayah X / Y".
   const ayahSeq = isCurrentTrack ? player.ayahSequence : null;
   const isAyahSeq = Boolean(ayahSeq && isQuranTrackId(bayan.id));
+
+  // Ayat pill position; « is off on the first ayah (and the Isti'adhah /
+  // Bismillah before it), » is off on the last.
+  const surahAyah =
+    currentSegment?.type === "ayah" && currentSegment.ayahNumber
+      ? currentSegment.ayahNumber
+      : currentVerse?.ayahNumber && currentVerse.ayahNumber > 0 ? currentVerse.ayahNumber : 1;
+  const surahAyahTotal = activeSurah?.verses || totalVerses || 1;
+  const inPrelude = isAyahSeq && ayahSeq
+    ? Boolean(ayahSeq.preType)
+    : currentSegment?.type === "istiadhah" || currentSegment?.type === "bismillah";
+  const atFirstAyah = inPrelude || (isAyahSeq && ayahSeq ? ayahSeq.index <= 0 : surahAyah <= 1);
+  const atLastAyah = !inPrelude && (isAyahSeq && ayahSeq ? ayahSeq.index >= ayahSeq.total - 1 : surahAyah >= surahAyahTotal);
   const ayahFraction = totalDuration > 0 ? Math.min(currentTime / totalDuration, 1) : 0;
   const juzProgressPct = isAyahSeq && ayahSeq
     ? juzTiming && juzTiming.total > 0
@@ -601,11 +614,12 @@ export function CompactBayanPlayer({
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
           {(isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse)) ? (
-            <div className="mt-2 inline-flex h-9 items-center w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
+            <div className="mt-2 inline-flex h-9 items-center gap-1.5 w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
               {onPrevVerse ? (
                 <button
                   type="button"
                   onClick={() => { haptic(); onPrevVerse(); }}
+                  disabled={atFirstAyah}
                   className={pillStepBtn}
                   aria-label="Previous Ayah"
                   title="Previous Ayah"
@@ -617,7 +631,7 @@ export function CompactBayanPlayer({
               ) : (
                 <span className="w-3" />
               )}
-              <span className="text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
+              <span className="px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
                 {isAyahSeq && ayahSeq ? (
                   ayahSeq.preType === "istiadhah" ? (
                     "Isti'adhah"
@@ -631,13 +645,14 @@ export function CompactBayanPlayer({
                 ) : currentSegment?.type === "bismillah" ? (
                   "Bismillah"
                 ) : (
-                  <>Ayat {currentSegment?.type === "ayah" && currentSegment.ayahNumber ? currentSegment.ayahNumber : (currentVerse?.ayahNumber && currentVerse.ayahNumber > 0 ? currentVerse.ayahNumber : 1)}/{activeSurah?.verses || totalVerses || 1}</>
+                  <>Ayat {surahAyah}/{surahAyahTotal}</>
                 )}
               </span>
               {onNextVerse ? (
                 <button
                   type="button"
                   onClick={() => { haptic(); onNextVerse(); }}
+                  disabled={atLastAyah}
                   className={pillStepBtn}
                   aria-label="Next Ayah"
                   title="Next Ayah"
@@ -1045,4 +1060,4 @@ const compactBtn =
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 const pillStepBtn =
-  "grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer";
+  "grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";

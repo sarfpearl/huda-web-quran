@@ -689,8 +689,9 @@ export function ImmersiveHomeClient({
     <div
       ref={sceneRef}
       // 99% alpha: iOS 26 Safari clips opaque fixed layers short of its bars.
-      // Black, not slate: Safari tints its bars with this colour.
-      className="fixed inset-0 z-10 overflow-hidden bg-black/[0.99] text-sand-50 select-none"
+      // Black, not slate: Safari tints its bars with this colour. bleed-clear:
+      // transparent in the iOS 26 Safari tab (see .safari-bleed in globals.css).
+      className="bleed-clear fixed inset-0 z-10 overflow-hidden bg-black/[0.99] text-sand-50 select-none"
     >
       {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
       <ImmersiveBackground
