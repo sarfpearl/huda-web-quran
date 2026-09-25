@@ -64,7 +64,7 @@ async function promptInstall(): Promise<boolean> {
 
 /** The browser toolbar drawn in the phone mockup — each puts its menu button somewhere else. */
 type Chrome =
-  | "safari26" // iOS 26 Safari: floating bar, ••• at the bottom right
+  | "safari26" // iOS 26 Safari: floating bar, long-press the address pill
   | "safari" // older Safari: toolbar with Share in the middle
   | "chromeIOS" // Share in the address bar
   | "firefoxIOS" // ☰ at the bottom right
@@ -74,8 +74,9 @@ type Chrome =
   | "inapp"; // Instagram / Facebook / … webview: ⋯ at the top right
 
 type Scene =
-  | { kind: "tap" } // tap the toolbar button
-  | { kind: "menu"; at: "top" | "bottom" | "sheet"; items: string[]; hi: number }
+  | { kind: "tap"; hold?: boolean } // tap (or press and hold) the toolbar button
+  | { kind: "menu"; at: "top" | "bottom" | "bottomLeft" | "sheet"; items: string[]; hi: number }
+  | { kind: "shareSheet" } // iOS 26 share sheet: tap View More
   | { kind: "confirm"; style: "ios" | "iosWebApp" | "android" }
   | { kind: "done" };
 
@@ -199,9 +200,22 @@ function detectEnv(): Env | null {
         browser: "Safari",
         chrome: "safari26",
         steps: [
-          { scene: { kind: "tap" }, en: "Tap ••• at the bottom right", ta: "கீழே வலதுபுறம் உள்ள ••• ஐத் தொடவும்" },
-          { scene: { kind: "menu", at: "bottom", items: ["Translate", "Share", "Add to Bookmarks", "Find on Page"], hi: 1 }, en: "Tap Share", ta: "Share ஐத் தொடவும்" },
-          IOS_SHARE_SHEET,
+          {
+            scene: { kind: "tap", hold: true },
+            en: "Press and hold the address bar at the bottom",
+            ta: "கீழே உள்ள முகவரிப் பட்டையை அழுத்திப் பிடிக்கவும்",
+          },
+          {
+            scene: { kind: "menu", at: "bottomLeft", items: ["Translate", "Share", "Add to Bookmarks", "Mute This Tab", "Find on Page"], hi: 1 },
+            en: "Tap Share",
+            ta: "Share ஐத் தொடவும்",
+          },
+          { scene: { kind: "shareSheet" }, en: "Tap View More", ta: "View More ஐத் தொடவும்" },
+          {
+            scene: { kind: "menu", at: "sheet", items: ["Add Bookmark to…", "Add to Favorites", "Add to Quick Note", "Find on Page", "Add to Home Screen"], hi: 4 },
+            en: "Tap “Add to Home Screen”",
+            ta: "“Add to Home Screen” ஐத் தொடவும்",
+          },
           {
             scene: { kind: "confirm", style: "iosWebApp" },
             en: "Keep “Open as Web App” on, then tap Add",
@@ -494,19 +508,28 @@ export function InstallGuideButton({ className = "" }: { className?: string }) {
 /* Animated phone mockup                                               */
 /* ------------------------------------------------------------------ */
 
-/** Pulsing tap marker drawn over whatever should be tapped. */
-function Tap({ className = "" }: { className?: string }) {
+/** Pulsing tap marker drawn over whatever should be tapped; `hold` = press and hold. */
+function Tap({ className = "", hold = false }: { className?: string; hold?: boolean }) {
   const reduce = useReducedMotion();
   return (
     <span className={`pointer-events-none absolute z-20 h-7 w-7 -translate-x-1/2 -translate-y-1/2 ${className}`} aria-hidden="true">
-      {!reduce && (
-        <motion.span
-          className="absolute inset-0 rounded-full border-2 border-emerald-300"
-          initial={{ scale: 0.6, opacity: 1 }}
-          animate={{ scale: 1.8, opacity: 0 }}
-          transition={{ duration: 1.1, repeat: Infinity, ease: "easeOut" }}
-        />
-      )}
+      {!reduce &&
+        (hold ? (
+          // The finger stays down: the ring closes in slowly, then lets go.
+          <motion.span
+            className="absolute inset-0 rounded-full border-2 border-emerald-300"
+            initial={{ scale: 1.9, opacity: 0 }}
+            animate={{ scale: [1.9, 1, 1], opacity: [0, 1, 0] }}
+            transition={{ duration: 1.6, times: [0, 0.75, 1], repeat: Infinity, ease: "easeInOut" }}
+          />
+        ) : (
+          <motion.span
+            className="absolute inset-0 rounded-full border-2 border-emerald-300"
+            initial={{ scale: 0.6, opacity: 1 }}
+            animate={{ scale: 1.8, opacity: 0 }}
+            transition={{ duration: 1.1, repeat: Infinity, ease: "easeOut" }}
+          />
+        ))}
       <motion.span
         className="absolute inset-[9px] rounded-full bg-emerald-300/60 shadow-[0_0_10px_rgba(110,231,183,0.8)]"
         initial={reduce ? false : { scale: 1.4, opacity: 0 }}
@@ -547,20 +570,26 @@ function UrlPill({ children }: { children?: ReactNode }) {
 }
 
 /** The browser's top and bottom bars; the menu button is `hot` on the tap step. */
-function Toolbars({ chrome, hot }: { chrome: Chrome; hot: boolean }) {
+function Toolbars({ chrome, hot, hold = false }: { chrome: Chrome; hot: boolean; hold?: boolean }) {
   const top = "absolute inset-x-0 top-5 z-10 flex items-center gap-1 bg-[#1c1c1e] px-2 py-1.5";
   const bottom = "absolute inset-x-0 bottom-0 z-10 flex items-center justify-around bg-[#1c1c1e] px-2 pb-3 pt-1.5";
   switch (chrome) {
     case "safari26":
       return (
+        // ‹ · address pill (≡ url ↻) · tabs — the pill is what gets held
         <div className="absolute inset-x-2 bottom-3 z-10 flex items-center gap-1.5">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[10px] text-white/70">‹</span>
-          <span className="flex h-6 min-w-0 flex-1 items-center rounded-full bg-white/15 px-2 text-[8px] text-white/70">
+          <span
+            className={`relative flex h-6 min-w-0 flex-1 items-center gap-1 rounded-full px-2 text-[8px] ${
+              hot ? "bg-emerald-400/25 text-emerald-100" : "bg-white/15 text-white/70"
+            }`}
+          >
+            <span className="shrink-0">≡</span>
             <span className="truncate">huda-web-quran.vercel.app</span>
+            <span className="ml-auto shrink-0">↻</span>
+            {hot && <Tap hold={hold} className="left-1/2 top-1/2" />}
           </span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
-            <Btn hot={hot}>•••</Btn>
-          </span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[10px] text-white/70">⧉</span>
         </div>
       );
     case "safari":
@@ -660,20 +689,22 @@ function Toolbars({ chrome, hot }: { chrome: Chrome; hot: boolean }) {
   }
 }
 
-function MenuPanel({ at, items, hi }: { at: "top" | "bottom" | "sheet"; items: string[]; hi: number }) {
+function MenuPanel({ at, items, hi }: { at: "top" | "bottom" | "bottomLeft" | "sheet"; items: string[]; hi: number }) {
   const place =
     at === "top"
       ? "right-1.5 top-12 w-[70%] rounded-xl"
       : at === "bottom"
         ? "right-1.5 bottom-12 w-[70%] rounded-xl"
-        : "inset-x-0 bottom-0 rounded-t-2xl pb-3 pt-2";
+        : at === "bottomLeft"
+          ? "left-3 bottom-11 w-[72%] rounded-xl"
+          : "inset-x-0 bottom-0 rounded-t-2xl pb-3 pt-2";
   return (
     <motion.div
       className={`absolute z-30 overflow-hidden bg-[#2c2c2e] shadow-2xl ${place}`}
       initial={{ opacity: 0, y: at === "top" ? -12 : 16, scale: at === "sheet" ? 1 : 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", damping: 24, stiffness: 300 }}
-      style={{ transformOrigin: at === "top" ? "top right" : "bottom right" }}
+      style={{ transformOrigin: at === "top" ? "top right" : at === "bottomLeft" ? "bottom center" : "bottom right" }}
     >
       {at === "sheet" && <div className="mx-auto mb-1.5 h-1 w-6 rounded-full bg-white/25" />}
       {items.map((label, i) => (
@@ -723,7 +754,11 @@ function ConfirmPanel({ style }: { style: "ios" | "iosWebApp" | "android" }) {
       transition={{ type: "spring", damping: 26, stiffness: 280 }}
     >
       <div className="flex items-center justify-between gap-1 whitespace-nowrap text-[7.5px]">
-        <span className="text-white/50">Cancel</span>
+        {style === "iosWebApp" ? (
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/60">✕</span>
+        ) : (
+          <span className="text-white/50">Cancel</span>
+        )}
         <span className="min-w-0 flex-1 truncate text-center font-semibold text-white">Add to Home Screen</span>
         <span className="relative shrink-0 rounded-full bg-sky-500 px-2 py-0.5 font-semibold text-white">
           Add
@@ -742,6 +777,47 @@ function ConfirmPanel({ style }: { style: "ios" | "iosWebApp" | "android" }) {
           </span>
         </div>
       )}
+    </motion.div>
+  );
+}
+
+/** iOS 26 share sheet: people, apps, then actions — View More opens the full list. */
+function ShareSheet() {
+  const actions = ["Copy", "Bookmark", "Reading List", "View More"];
+  return (
+    <motion.div
+      className="absolute inset-x-0 bottom-0 z-30 rounded-t-2xl bg-[#2c2c2e] px-2 pb-4 pt-2 shadow-2xl"
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", damping: 26, stiffness: 280 }}
+    >
+      <div className="flex items-center gap-1.5 border-b border-white/5 pb-1.5">
+        <img src="/icon-192.png" alt="" className="h-5 w-5 rounded-md" />
+        <span className="min-w-0 truncate text-[8px] font-semibold text-white">HuDa Web Quran</span>
+      </div>
+      <div className="mt-2 flex justify-around">
+        {["bg-sky-400", "bg-emerald-400", "bg-sky-500", "bg-amber-300"].map((c) => (
+          <span key={c} className={`h-5 w-5 rounded-lg ${c} opacity-70`} />
+        ))}
+      </div>
+      <div className="mt-2.5 flex justify-around">
+        {actions.map((label, i) => {
+          const hi = i === actions.length - 1;
+          return (
+            <div key={label} className="flex w-7 flex-col items-center gap-0.5">
+              <span
+                className={`relative flex h-6 w-6 items-center justify-center rounded-full text-[9px] ${
+                  hi ? "bg-emerald-400/25 text-emerald-100" : "bg-white/10 text-white/60"
+                }`}
+              >
+                {hi ? "⌃" : "·"}
+                {hi && <Tap className="left-1/2 top-1/2" />}
+              </span>
+              <span className={`text-center text-[6px] leading-tight ${hi ? "font-semibold text-emerald-100" : "text-white/60"}`}>{label}</span>
+            </div>
+          );
+        })}
+      </div>
     </motion.div>
   );
 }
@@ -796,9 +872,12 @@ function PhoneDemo({ chrome, scene, sceneKey }: { chrome: Chrome; scene: Scene; 
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {scene.kind !== "done" && <Toolbars chrome={chrome} hot={scene.kind === "tap"} />}
-          {(scene.kind === "menu" || scene.kind === "confirm") && <div className="absolute inset-0 z-20 bg-black/40" />}
+          {scene.kind !== "done" && (
+            <Toolbars chrome={chrome} hot={scene.kind === "tap"} hold={scene.kind === "tap" && scene.hold} />
+          )}
+          {scene.kind !== "tap" && scene.kind !== "done" && <div className="absolute inset-0 z-20 bg-black/40" />}
           {scene.kind === "menu" && <MenuPanel at={scene.at} items={scene.items} hi={scene.hi} />}
+          {scene.kind === "shareSheet" && <ShareSheet />}
           {scene.kind === "confirm" && <ConfirmPanel style={scene.style} />}
           {scene.kind === "done" && <HomeScreenDone />}
         </motion.div>

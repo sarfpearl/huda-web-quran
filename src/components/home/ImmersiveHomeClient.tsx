@@ -689,7 +689,8 @@ export function ImmersiveHomeClient({
     <div
       ref={sceneRef}
       // 99% alpha: iOS 26 Safari clips opaque fixed layers short of its bars.
-      className="fixed inset-0 z-10 overflow-hidden bg-slate-950/[0.99] text-sand-50 select-none"
+      // Black, not slate: Safari tints its bars with this colour.
+      className="fixed inset-0 z-10 overflow-hidden bg-black/[0.99] text-sand-50 select-none"
     >
       {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
       <ImmersiveBackground
@@ -889,9 +890,20 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
     let frame = 0;
     // Tallest visible height seen at this width — the keyboard shrinks it a lot.
     let full = { width: 0, height: 0 };
+    // Home-screen app (iOS black-translucent status bar): the fixed scene comes
+    // up a status bar short of the screen, leaving a black strip at the bottom.
+    // Stretch it to the physical screen height.
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
+        if (standalone) {
+          const long = Math.max(screen.width, screen.height);
+          const short = Math.min(screen.width, screen.height);
+          scene.style.minHeight = `${window.innerHeight >= window.innerWidth ? long : short}px`;
+        }
         const r = scene.getBoundingClientRect();
         const top = Math.max(0, Math.round(vv.offsetTop - r.top));
         const bottom = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));

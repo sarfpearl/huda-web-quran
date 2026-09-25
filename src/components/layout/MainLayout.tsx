@@ -40,7 +40,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     return (
       // 99% alpha, not opaque: iOS 26 Safari clips opaque fixed layers to the
       // inner viewport, leaving bars above/below; translucent ones go edge to edge.
-      <div className="fixed inset-0 overflow-hidden font-sans select-none bg-slate-950/[0.99]">
+      // Black, not slate: Safari tints its bars with this colour.
+      <div className="fixed inset-0 overflow-hidden font-sans select-none bg-black/[0.99]">
         {/* Full-screen homepage content */}
         {children}
       </div>

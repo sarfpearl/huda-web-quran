@@ -110,9 +110,11 @@ export function CompactBayanPlayer({
 
   const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
 
-  // Collapsed = compact pill (cover + transport). Remembered per viewer.
+  // Collapsed = compact pill (cover + transport). Remembered per viewer on
+  // larger screens; phones always open on the full player (see below).
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
+    if (window.matchMedia(SMALL_SCREEN).matches) return;
     try {
       setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
     } catch {}
@@ -174,7 +176,7 @@ export function CompactBayanPlayer({
     const was = prevTranslationRef.current;
     prevTranslationRef.current = showTranslation;
     if (was === showTranslation) return;
-    const small = window.matchMedia("(max-width: 767px)").matches;
+    const small = window.matchMedia(SMALL_SCREEN).matches;
     if (showTranslation && small && !collapsed) {
       toggleCollapsed(true, false);
       autoCollapsedRef.current = true;
@@ -184,6 +186,19 @@ export function CompactBayanPlayer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showTranslation]);
+
+  // Small screens: the full player shows until playback starts, then it shrinks
+  // to the compact pill so a long ayah has the screen. Not remembered, and a
+  // manual expand stays until the next play.
+  const wasPlayingRef = useRef(isPlaying);
+  useEffect(() => {
+    const was = wasPlayingRef.current;
+    wasPlayingRef.current = isPlaying;
+    if (!isPlaying || was || collapsed) return;
+    if (!window.matchMedia(SMALL_SCREEN).matches) return;
+    toggleCollapsed(true, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying]);
 
   useEffect(() => {
     setCoverSrc(bayan.coverImageUrl ?? null);
@@ -1017,6 +1032,7 @@ function CoverFlight({
 }
 
 const COLLAPSED_KEY = "huda:player-collapsed";
+const SMALL_SCREEN = "(max-width: 767px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
 const viewBase =
