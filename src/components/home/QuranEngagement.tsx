@@ -490,11 +490,14 @@ export function EngagementOverlay({
   e,
   lang = "en",
   alignTo,
+  keyboardOpen = false,
 }: {
   e: QuranEngagement;
   lang?: Lang;
   /** Container of the player card; the overlay matches the card's edges. */
   alignTo?: RefObject<HTMLElement>;
+  /** On-screen keyboard is up: the player is hidden and the list gets the room. */
+  keyboardOpen?: boolean;
 }) {
   const playerWidth = usePlayerWidth(alignTo);
   const [text, setText] = useState("");
@@ -507,7 +510,7 @@ export function EngagementOverlay({
   useLayoutEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [e.comments.length, composerOpen]);
+  }, [e.comments.length, composerOpen, keyboardOpen]);
 
   useEffect(() => {
     if (composerOpen) inputRef.current?.focus();
@@ -548,7 +551,7 @@ export function EngagementOverlay({
 
   return (
     <div
-      style={playerWidth ? { width: playerWidth, maxWidth: "100%" } : undefined}
+      style={playerWidth && !keyboardOpen ? { width: playerWidth, maxWidth: "100%" } : undefined}
       className="pointer-events-none relative mb-2 flex w-full max-w-[680px] flex-col"
     >
       {/* Comments (one general stream, newest at the bottom) — shown with the
@@ -558,7 +561,11 @@ export function EngagementOverlay({
           data-engagement-keep
           ref={listRef}
           aria-label={T.comment[lang]}
-          className="no-scrollbar pointer-events-auto mb-2 flex max-h-[28vh] w-[85%] flex-col items-start gap-1.5 overflow-y-auto pt-6 [mask-image:linear-gradient(to_bottom,transparent,black_28px)]"
+          className={cn(
+            "no-scrollbar pointer-events-auto mb-2 flex w-[85%] flex-col items-start gap-1.5 overflow-y-auto pt-6 [mask-image:linear-gradient(to_bottom,transparent,black_28px)]",
+            // Keyboard up: the list fills the room between the header and the box.
+            keyboardOpen ? "max-h-[calc(var(--vv-height,60vh)-11rem)]" : "max-h-[28vh]"
+          )}
         >
           <AnimatePresence initial={false}>
             {e.comments.map((c) => (
@@ -602,7 +609,7 @@ export function EngagementOverlay({
             placeholder={!e.configured ? T.unavailable[lang] : name ? T.say[lang] : T.yourName[lang]}
             aria-label={name ? T.say[lang] : T.yourName[lang]}
             className={cn(
-              "min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-sand-200/45 focus:outline-none",
+              "min-w-0 flex-1 bg-transparent text-base sm:text-sm text-white placeholder:text-sand-200/45 focus:outline-none",
               lang === "ta" && "font-tamil"
             )}
           />

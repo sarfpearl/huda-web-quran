@@ -77,7 +77,9 @@ export function CenterVerseDisplay({
     if (!dock) return;
     const measure = () => {
       const top = dock.getBoundingClientRect().top;
-      setBottomInset(Math.max(0, window.innerHeight - top) + 12);
+      // Measured against the full-screen scene (it can run under Safari's bars).
+      const bottom = dock.parentElement?.getBoundingClientRect().bottom ?? window.innerHeight;
+      setBottomInset(Math.max(0, bottom - top) + 12);
     };
     measure();
     const ro = new ResizeObserver(measure);

@@ -145,8 +145,10 @@ export function CompactBayanPlayer({
   const compactCoverRef = useRef<HTMLButtonElement>(null);
   const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; expand: boolean; id: number } | null>(null);
 
-  const toggleCollapsed = (next: boolean) => {
+  const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
+    // A manual switch overrides any pending auto-restore (see below).
+    if (remember) autoCollapsedRef.current = false;
     haptic();
     const src = next ? fullCoverRef.current : compactCoverRef.current;
     const dst = next ? compactCoverRef.current : fullCoverRef.current;
@@ -157,10 +159,31 @@ export function CompactBayanPlayer({
     }
     setAnimate(true);
     setCollapsed(next);
+    if (!remember) return;
     try {
       localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
     } catch {}
   };
+
+  // Small screens: turning the translation on shrinks the full player to the
+  // compact pill so the meaning has room; turning it off brings it back (only
+  // if it was the auto-collapse). Not remembered — the saved choice stays.
+  const autoCollapsedRef = useRef(false);
+  const prevTranslationRef = useRef(showTranslation);
+  useEffect(() => {
+    const was = prevTranslationRef.current;
+    prevTranslationRef.current = showTranslation;
+    if (was === showTranslation) return;
+    const small = window.matchMedia("(max-width: 767px)").matches;
+    if (showTranslation && small && !collapsed) {
+      toggleCollapsed(true, false);
+      autoCollapsedRef.current = true;
+    } else if (!showTranslation && autoCollapsedRef.current) {
+      autoCollapsedRef.current = false;
+      if (collapsed) toggleCollapsed(false, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showTranslation]);
 
   useEffect(() => {
     setCoverSrc(bayan.coverImageUrl ?? null);

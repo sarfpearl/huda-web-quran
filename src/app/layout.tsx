@@ -50,6 +50,9 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // App-like: no pinch / double-tap zoom, and no auto-zoom when an input focuses.
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 

@@ -83,12 +83,23 @@
     overflow-x: hidden;
   }
 
+  /* No pinch / double-tap zoom (scrolling still works) */
+  html {
+    touch-action: pan-x pan-y;
+  }
+
   /* Immersive home: fixed screen, no document scroll or overscroll bounce */
   html.screen-locked,
   html.screen-locked body {
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+  }
+
+  /* Fallback colour Safari paints behind its bars */
+  html.screen-locked,
+  html.screen-locked body {
+    background-color: #000;
   }
 
   html.screen-locked body {

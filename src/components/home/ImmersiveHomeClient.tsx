@@ -474,6 +474,8 @@ export function ImmersiveHomeClient({
 
   // Player container — the Comments / View count row aligns to the card's edges.
   const playerWrapRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const keyboardOpen = useVisibleArea(sceneRef);
   // View count / live / comments for the Surah or Juz on screen.
   const engagement = useQuranEngagement(quranContentOf(activeBayan?.id));
   const isJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
@@ -683,7 +685,11 @@ export function ImmersiveHomeClient({
   };
 
   return (
-    <div className="fixed inset-0 z-10 overflow-hidden bg-slate-950 text-sand-50 select-none">
+    <div
+      ref={sceneRef}
+      // 99% alpha: iOS 26 Safari clips opaque fixed layers short of its bars.
+      className="fixed inset-0 z-10 overflow-hidden bg-slate-950/[0.99] text-sand-50 select-none"
+    >
       {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
       <ImmersiveBackground
         categorySlug={activeBayan?.category?.slug || activeCategory.slug}
@@ -762,9 +768,17 @@ export function ImmersiveHomeClient({
         />
       </ImmersiveHeader>
 
+      {/* Typing a comment: dim the verse so the comments read cleanly over it */}
+      {keyboardOpen && engagement.composerOpen && (
+        <div className="absolute inset-0 z-[35] bg-black/50 pointer-events-none" aria-hidden="true" />
+      )}
+
       {/* Bottom Floating Player */}
-      <div data-player-dock className="absolute bottom-4 sm:bottom-6 inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none">
-        {notice && (
+      <div
+        data-player-dock
+        className="absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none"
+      >
+        {notice && !keyboardOpen && (
           <div
             key={notice.id}
             role="status"
@@ -779,7 +793,10 @@ export function ImmersiveHomeClient({
           </div>
         )}
         {/* Live comments + composer (the Live / view count strip frames the player below) */}
-        <EngagementOverlay e={engagement} lang={language} alignTo={playerWrapRef} />
+        <EngagementOverlay e={engagement} lang={language} alignTo={playerWrapRef} keyboardOpen={keyboardOpen} />
+        {/* Typing a comment: the keyboard leaves no room, so only the comments
+            and the box sit above it; the player returns when it closes. */}
+        <div className={keyboardOpen && engagement.composerOpen ? "hidden" : "contents"}>
         <PlayerStatsFrame
           e={engagement}
           lang={language}
@@ -843,7 +860,50 @@ export function ImmersiveHomeClient({
             )}
           </div>
         </PlayerStatsFrame>
+        </div>
       </div>
     </div>
   );
+}
+
+/**
+ * Keeps the scene's controls inside the part of the screen that is actually
+ * visible: Safari's toolbars and the on-screen keyboard can cover the bottom of
+ * the fixed scene. Publishes the covered heights as --vv-top / --vv-bottom on
+ * the scene (plus the visible --vv-height) and returns whether the keyboard is up.
+ */
+function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const scene = sceneRef.current;
+    const vv = window.visualViewport;
+    if (!scene || !vv) return;
+    let frame = 0;
+    // Tallest visible height seen at this width — the keyboard shrinks it a lot.
+    let full = { width: 0, height: 0 };
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const r = scene.getBoundingClientRect();
+        const top = Math.max(0, Math.round(vv.offsetTop - r.top));
+        const bottom = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));
+        scene.style.setProperty("--vv-top", `${top}px`);
+        scene.style.setProperty("--vv-bottom", `${bottom}px`);
+        scene.style.setProperty("--vv-height", `${Math.round(vv.height)}px`);
+        if (vv.width !== full.width || vv.height > full.height) full = { width: vv.width, height: vv.height };
+        setKeyboardOpen(full.height - vv.height > 150);
+      });
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      cancelAnimationFrame(frame);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [sceneRef]);
+  return keyboardOpen;
 }

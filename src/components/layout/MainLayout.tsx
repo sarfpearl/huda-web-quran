@@ -20,9 +20,27 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     return () => root.classList.remove("screen-locked");
   }, [isHome]);
 
+  // iOS Safari ignores user-scalable=no, so block its pinch gestures directly.
+  useEffect(() => {
+    const block = (ev: Event) => ev.preventDefault();
+    const blockPinch = (ev: TouchEvent) => {
+      if (ev.touches.length > 1) ev.preventDefault();
+    };
+    document.addEventListener("gesturestart", block, { passive: false });
+    document.addEventListener("gesturechange", block, { passive: false });
+    document.addEventListener("touchmove", blockPinch, { passive: false });
+    return () => {
+      document.removeEventListener("gesturestart", block);
+      document.removeEventListener("gesturechange", block);
+      document.removeEventListener("touchmove", blockPinch);
+    };
+  }, []);
+
   if (isHome) {
     return (
-      <div className="fixed inset-0 overflow-hidden font-sans select-none bg-slate-950">
+      // 99% alpha, not opaque: iOS 26 Safari clips opaque fixed layers to the
+      // inner viewport, leaving bars above/below; translucent ones go edge to edge.
+      <div className="fixed inset-0 overflow-hidden font-sans select-none bg-slate-950/[0.99]">
         {/* Full-screen homepage content */}
         {children}
       </div>
