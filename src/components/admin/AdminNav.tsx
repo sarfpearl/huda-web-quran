@@ -8,6 +8,7 @@ import {
   CompassIcon,
   QueueIcon,
   MoonIcon,
+  CommentIcon,
 } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const LINKS = [
   { href: "/admin/categories", label: "Categories", Icon: GridIcon },
   { href: "/admin/speakers", label: "Speakers", Icon: CompassIcon },
   { href: "/admin/media", label: "Media", Icon: MoonIcon },
+  { href: "/admin/comments", label: "Comments", Icon: CommentIcon },
   { href: "/admin/settings", label: "Settings", Icon: GridIcon },
 ];
 
