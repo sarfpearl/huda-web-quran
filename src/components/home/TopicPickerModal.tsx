@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
-import { CloseIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
+import { CloseIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
@@ -19,8 +19,11 @@ import {
   resolveActiveReciter,
 } from "@/lib/data/service";
 import { ContentListCard } from "./ContentListCard";
+import { compactCount } from "./QuranEngagement";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getSessionId } from "@/lib/audio/session";
 
-type ModalTab = "surah" | "quran" | "bayan";
+type ModalTab = "surah" | "quran" | "favourite" | "bayan";
 
 // Bayan tab is hidden for now — flip to true to bring it back (code kept intact).
 const SHOW_BAYAN_TAB = false;
@@ -70,6 +73,63 @@ export function TopicPickerModal({
   const [activeTab, setActiveTab] = useState<ModalTab>("surah");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Listener counts per Surah / Juz for the list (one request per tab, while
+  // the browser is open). Stays null — icons only — without Supabase.
+  const [viewCounts, setViewCounts] = useState<Record<"surah" | "juz", Record<string, number> | null>>({
+    surah: null,
+    juz: null,
+  });
+  const countKinds: Array<"surah" | "juz"> =
+    activeTab === "surah" ? ["surah"] : activeTab === "quran" ? ["juz"] : activeTab === "favourite" ? ["surah", "juz"] : [];
+  const countKindsKey = countKinds.join(",");
+  useEffect(() => {
+    if (!isOpen || !countKindsKey) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    let cancelled = false;
+    for (const kind of countKindsKey.split(",") as Array<"surah" | "juz">) {
+      supabase.rpc("get_quran_view_counts", { p_kind: kind }).then(
+        ({ data, error }) => {
+          if (!cancelled && !error && data) setViewCounts((v) => ({ ...v, [kind]: data as Record<string, number> }));
+        },
+        () => {}
+      );
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, countKindsKey]);
+
+  // Favourite tab: the Surahs / Juz this browser liked (♥ in the player).
+  // Re-read every time the tab is shown so a new like appears straight away.
+  const [favourites, setFavourites] = useState<Array<{ kind: "surah" | "juz"; id: number }> | null>(null);
+  const [favouritesFailed, setFavouritesFailed] = useState(false);
+  useEffect(() => {
+    if (!isOpen || activeTab !== "favourite") return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      setFavouritesFailed(true);
+      return;
+    }
+    let cancelled = false;
+    setFavouritesFailed(false);
+    supabase.rpc("get_my_quran_likes", { p_viewer: getSessionId() }).then(
+      ({ data, error }) => {
+        if (cancelled) return;
+        if (error || !Array.isArray(data)) setFavouritesFailed(true);
+        else setFavourites(data as Array<{ kind: "surah" | "juz"; id: number }>);
+      },
+      () => !cancelled && setFavouritesFailed(true)
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, activeTab]);
+  const countFor = (kind: "surah" | "juz", id: number) => {
+    const map = viewCounts[kind];
+    return map ? map[String(id)] ?? 0 : null;
+  };
+
   const q = searchQuery.trim().toLowerCase();
 
   const filteredCategories = categories.filter((c) => {
@@ -100,6 +160,62 @@ export function TopicPickerModal({
       s.theme.toLowerCase().includes(q)
     );
   });
+
+  const renderSurahCard = (s: (typeof QURAN_SURAHS)[number]) => {
+    const isTrackCurrent = player.current?.id === `quran-surah-${s.number}`;
+    const surahImg = s.image || s.coverImageUrl || quranImageUrl("surah", s.number);
+    return (
+      <ContentListCard
+        key={`surah-${s.number}`}
+        number={s.number.toString().padStart(2, "0")}
+        imageSrc={surahImg}
+        title={s.name}
+        secondaryLabel={s.arabicName}
+        isArabicLabel={true}
+        subtitle={`${s.verses} Verses · ${s.revelation}`}
+        iconName="quran"
+        viewCount={countFor("surah", s.number)}
+        viewCountText={compactCount(countFor("surah", s.number) ?? 0)}
+        isActive={isTrackCurrent}
+        isPlaying={isTrackCurrent && player.isPlaying}
+        onClick={() => {
+          const activeReciter = resolveActiveReciter(player.current);
+          const activeSurahTracks = surahTracks || getSurahTracksForReciter(activeReciter);
+          player.playBayan(activeSurahTracks[s.number - 1], activeSurahTracks);
+          setIsOpen(false);
+        }}
+      />
+    );
+  };
+
+  const renderJuzCard = (j: (typeof QURAN_JUZ)[number]) => {
+    const isTrackCurrent = player.current?.id === `quran-juz-${j.id}`;
+    const juzImg = quranImageUrl("juz", j.id);
+    return (
+      <ContentListCard
+        key={`juz-${j.id}`}
+        number={j.id.toString().padStart(2, "0")}
+        imageSrc={juzImg}
+        title={j.title}
+        secondaryLabel={j.label}
+        isArabicLabel={false}
+        subtitle={j.subtitle}
+        iconName="quran"
+        viewCount={countFor("juz", j.id)}
+        viewCountText={compactCount(countFor("juz", j.id) ?? 0)}
+        isActive={isTrackCurrent}
+        isPlaying={isTrackCurrent && player.isPlaying}
+        onClick={() => {
+          if (onSelectJuz) {
+            onSelectJuz(j.id);
+          } else {
+            player.playBayan(QURAN_TRACKS[j.id - 1], QURAN_TRACKS);
+          }
+          setIsOpen(false);
+        }}
+      />
+    );
+  };
 
   return (
     <>
@@ -159,7 +275,7 @@ export function TopicPickerModal({
                 </button>
               </div>
 
-              {/* 2. Segmented Navigation Tabs (Surah | Quran | Bayan) */}
+              {/* 2. Segmented Navigation Tabs (Surah | Juz | Favourite | Bayan) */}
               <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
                 <button
                   type="button"
@@ -185,6 +301,20 @@ export function TopicPickerModal({
                   )}
                 >
                   Juz
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("favourite")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
+                    activeTab === "favourite"
+                      ? "bg-emerald-600 text-white shadow-md"
+                      : "text-sand-200/60 hover:text-white"
+                  )}
+                >
+                  <FavouriteIcon filled={activeTab === "favourite"} className="text-[13px]" />
+                  Favourite
                 </button>
 
                 {SHOW_BAYAN_TAB && (
@@ -213,6 +343,8 @@ export function TopicPickerModal({
                       ? "Search Surah..."
                       : activeTab === "quran"
                       ? "Search Juz / Para..."
+                      : activeTab === "favourite"
+                      ? "Search favourites..."
                       : "Search Bayan categories..."
                   }
                   value={searchQuery}
@@ -224,62 +356,35 @@ export function TopicPickerModal({
               {/* 4. Scrollable List Content using ContentListCard */}
               <div className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
                 {/* A. SURAH TAB (114 Surahs) */}
-                {activeTab === "surah" &&
-                  filteredSurah.map((s) => {
-                    const isTrackCurrent = player.current?.id === `quran-surah-${s.number}`;
-                    const surahImg = s.image || s.coverImageUrl || quranImageUrl("surah", s.number);
-                    return (
-                      <ContentListCard
-                        key={s.number}
-                        number={s.number.toString().padStart(2, "0")}
-                        imageSrc={surahImg}
-                        title={s.name}
-                        secondaryLabel={s.arabicName}
-                        isArabicLabel={true}
-                        subtitle={`${s.verses} Verses · ${s.revelation}`}
-                        iconName="book"
-                        isActive={isTrackCurrent}
-                        isPlaying={isTrackCurrent && player.isPlaying}
-                        onClick={() => {
-                          const activeReciter = resolveActiveReciter(player.current);
-                          const activeSurahTracks = surahTracks || getSurahTracksForReciter(activeReciter);
-                          player.playBayan(activeSurahTracks[s.number - 1], activeSurahTracks);
-                          setIsOpen(false);
-                        }}
-                      />
-                    );
-                  })}
+                {activeTab === "surah" && filteredSurah.map(renderSurahCard)}
 
                 {/* B. QURAN TAB (30 Juz) */}
-                {activeTab === "quran" &&
-                  filteredJuz.map((j) => {
-                    const isTrackCurrent = player.current?.id === `quran-juz-${j.id}`;
-                    const juzImg = quranImageUrl("juz", j.id);
-                    return (
-                      <ContentListCard
-                        key={j.id}
-                        number={j.id.toString().padStart(2, "0")}
-                        imageSrc={juzImg}
-                        title={j.title}
-                        secondaryLabel={j.label}
-                        isArabicLabel={false}
-                        subtitle={j.subtitle}
-                        iconName="book"
-                        isActive={isTrackCurrent}
-                        isPlaying={isTrackCurrent && player.isPlaying}
-                        onClick={() => {
-                          if (onSelectJuz) {
-                            onSelectJuz(j.id);
-                          } else {
-                            player.playBayan(QURAN_TRACKS[j.id - 1], QURAN_TRACKS);
-                          }
-                          setIsOpen(false);
-                        }}
-                      />
-                    );
-                  })}
+                {activeTab === "quran" && filteredJuz.map(renderJuzCard)}
 
-                {/* C. BAYAN TAB (Categories) */}
+                {/* C. FAVOURITE TAB (liked Surahs & Juz, newest first) */}
+                {activeTab === "favourite" &&
+                  (favouritesFailed ? (
+                    <p className="px-2 py-8 text-center text-xs text-sand-200/60">Favourites aren&apos;t available right now.</p>
+                  ) : favourites === null ? (
+                    <div className="h-16 animate-pulse rounded-2xl bg-white/5" aria-busy="true" />
+                  ) : favourites.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                      <FavouriteIcon className="text-2xl text-emerald-400/70" />
+                      <p className="text-xs text-sand-200/70">No favourites yet.</p>
+                      <p className="text-[11px] text-sand-200/50">Tap ♥ in the player to add the Surah or Juz you&apos;re listening to.</p>
+                    </div>
+                  ) : (
+                    favourites.map((f) => {
+                      if (f.kind === "surah") {
+                        const sura = filteredSurah.find((x) => x.number === f.id);
+                        return sura ? renderSurahCard(sura) : null;
+                      }
+                      const juz = filteredJuz.find((x) => x.id === f.id);
+                      return juz ? renderJuzCard(juz) : null;
+                    })
+                  ))}
+
+                {/* D. BAYAN TAB (Categories) */}
                 {activeTab === "bayan" &&
                   filteredCategories.map((c, index) => {
                     const isCatActive = c.slug === activeCategorySlug;

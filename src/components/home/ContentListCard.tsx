@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { CategoryIcon } from "@/components/ui/Icon";
+import { CategoryIcon, ViewCountIcon } from "@/components/ui/Icon";
 
 export interface ContentListCardProps {
   /** Padded index number string e.g. "01", "02", ... "114" */
@@ -24,6 +24,11 @@ export interface ContentListCardProps {
   isActive?: boolean;
   /** Whether audio is actively playing for this item (displays 3-bar equalizer) */
   isPlaying?: boolean;
+  /** Listener count (Surah / Juz). A number shows the view-count pill; null or
+   *  undefined keeps the trailing icon. */
+  viewCount?: number | null;
+  /** Formatted count, e.g. "2.0K" (defaults to the raw number). */
+  viewCountText?: string;
   /** Click handler */
   onClick: () => void;
   /** Custom extra classes */
@@ -47,9 +52,12 @@ export function ContentListCard({
   iconName = "book",
   isActive = false,
   isPlaying = false,
+  viewCount,
+  viewCountText,
   onClick,
   className,
 }: ContentListCardProps) {
+  const showCount = typeof viewCount === "number";
   const [imgSrc, setImgSrc] = React.useState(imageSrc);
 
   React.useEffect(() => {
@@ -120,8 +128,10 @@ export function ContentListCard({
 
       {/* 4. Trailing Action Button / Icon / Equalizer */}
       <div
+        title={showCount ? `${viewCount} listeners` : undefined}
         className={cn(
-          "grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm transition-all",
+          "flex h-8 shrink-0 items-center justify-center gap-1 rounded-full text-sm transition-all",
+          showCount ? "min-w-8 px-2.5" : "w-8",
           isActive
             ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
             : "bg-white/5 text-sand-200/50 group-hover:bg-white/10 group-hover:text-sand-200/80"
@@ -133,6 +143,11 @@ export function ContentListCard({
             <span className="h-4 w-0.5 animate-[equalizer_0.8s_ease-in-out_infinite] bg-emerald-300" />
             <span className="h-2.5 w-0.5 animate-[equalizer_0.5s_ease-in-out_infinite] bg-emerald-300" />
           </span>
+        ) : showCount ? (
+          <>
+            <ViewCountIcon className="text-xs" />
+            <span className="text-[11px] font-bold tabular-nums">{viewCountText ?? viewCount}</span>
+          </>
         ) : (
           <CategoryIcon name={iconName} />
         )}

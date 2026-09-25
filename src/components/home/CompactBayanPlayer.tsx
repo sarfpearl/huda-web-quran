@@ -11,7 +11,6 @@ import {
   PauseIcon,
   NextIcon,
   PrevIcon,
-  HeartIcon,
   PlaylistAddIcon,
   ShareIcon,
   ShuffleIcon,
@@ -43,6 +42,7 @@ import {
 import type { QuranSurah } from "@/lib/data/quran";
 import { haptic } from "@/lib/haptics";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
+import { HoverTooltips } from "@/components/player/HoverTooltips";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
@@ -60,6 +60,8 @@ interface CompactBayanPlayerProps {
   showTranslation?: boolean;
   onToggleShowTranslation?: () => void;
   onSeekToVerse?: (verseIndex: number, totalVerses: number) => void;
+  /** Rendered at the top of the right-hand action stack (view count). */
+  viewSlot?: React.ReactNode;
   /** Ayah step controls (« ») — shown between track prev/next when provided */
   onPrevVerse?: () => void;
   onNextVerse?: () => void;
@@ -88,6 +90,7 @@ export function CompactBayanPlayer({
   showTranslation = true,
   onToggleShowTranslation,
   onSeekToVerse,
+  viewSlot,
   onPrevVerse,
   onNextVerse,
   trackKind = null,
@@ -118,6 +121,7 @@ export function CompactBayanPlayer({
   // glass shell resizes (CSS transition to the measured size of the active view),
   // so nothing reflows mid-animation.
   const fullRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const compactRef = useRef<HTMLDivElement>(null);
   const [shellSize, setShellSize] = useState<{ w: number; h: number } | null>(null);
   const [animate, setAnimate] = useState(false);
@@ -358,11 +362,13 @@ export function CompactBayanPlayer({
 
   const ringPct = dragPct ?? Math.min(Math.max(juzProgressPct, 0), 100);
   const thumbAngle = (ringPct / 100) * 2 * Math.PI;
+  // Below 900px the compact pill is as wide as the full card, so the Comments /
+  // View count row above the player keeps the same edges when toggling.
   const compactView = (
       <div
         ref={compactRef}
         aria-hidden={!collapsed}
-        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] items-center gap-1 sm:gap-2 p-1.5 sm:p-2`}
+        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] justify-between min-[900px]:w-max min-[900px]:max-w-[calc(100vw-2rem)] min-[900px]:justify-start items-center gap-0 sm:gap-2 p-1.5 px-4 sm:p-2 sm:px-8 min-[900px]:px-2`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
@@ -612,19 +618,14 @@ export function CompactBayanPlayer({
         </div>
 
         {/* Right Vertical Action Stack */}
-        <div className="flex flex-col gap-2 shrink-0">
-          {/* 1. Favorite Button */}
-          <button
-            type="button"
-            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 text-emerald-400 border border-white/10 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-            aria-label="Favorite"
-          >
-            <HeartIcon className="text-xs sm:text-sm" />
-          </button>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {/* 1. View count of the Surah / Juz playing (replaced the ♥ button) */}
+          {viewSlot}
 
           {/* 2. Shuffle Button (Moved from bottom left per red arrow) */}
           <button
             type="button"
+            data-tooltip="Shuffle"
             onClick={handleShuffle}
             title={
               isSurahTrackId(bayan.id)
@@ -653,8 +654,8 @@ export function CompactBayanPlayer({
               const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
               player.setPlaybackRate?.(rates[nextIdx]);
             }}
-            title="Playback Speed"
             aria-label="Playback Speed"
+            data-tooltip={`Playback speed · ${player.playbackRate}x`}
             className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
             {player.playbackRate}x
@@ -724,14 +725,15 @@ export function CompactBayanPlayer({
         </div>
       </div>
 
-      {/* Bottom Transport Controls Bar — Centered Primary Controls */}
-      <div className="mt-4 flex items-center justify-center gap-1 sm:gap-2 sm:px-2">
+      {/* Bottom Transport Controls Bar — spread edge to edge below 900px (like the
+          compact pill), centred on larger screens */}
+      <div className="mt-4 flex items-center justify-between min-[900px]:justify-center gap-0 sm:gap-2 sm:px-2">
         <VolumeControl active={!collapsed} />
 
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label={prevTrackLabel}
           title={prevTrackLabel}
         >
@@ -756,7 +758,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
-          className="grid h-14 w-14 sm:h-15 sm:w-15 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isLoading ? (
@@ -785,7 +787,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label={nextTrackLabel}
           title={nextTrackLabel}
         >
@@ -795,7 +797,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => toggleCollapsed(true)}
-          className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label="Minimize player"
           title="Minimize player"
         >
@@ -809,6 +811,7 @@ export function CompactBayanPlayer({
   const radius = collapsed && shellSize ? (shellSize.h + 2) / 2 : undefined;
   return (
     <div
+      ref={shellRef}
       className={`relative overflow-hidden rounded-[28px] sm:rounded-[40px] bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] select-none motion-reduce:transition-none ${
         animate ? "transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" : ""
       } ${shellSize ? "" : "invisible"}`}
@@ -820,6 +823,8 @@ export function CompactBayanPlayer({
     >
       {fullView}
       {compactView}
+      {/* Hover / focus tooltips for every control (portal — not clipped) */}
+      <HoverTooltips container={shellRef} />
       {flight &&
         createPortal(
           <CoverFlight key={flight.id} {...flight} src={coverSrc} onDone={() => setFlight(null)} />,
@@ -936,7 +941,7 @@ function VolumeControl({
 }
 
 const volumeBtn =
-  "grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** The flying cover copy. Sits at the destination rect and animates in from the
  *  source on three layers (X, Y, scale) with separate easings, so the path curves:
@@ -1022,7 +1027,7 @@ const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
 const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
 
 const compactBtn =
-  "grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 const ayahStepBtn =
-  "grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";

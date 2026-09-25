@@ -7,6 +7,7 @@ import { Header } from "@/components/navigation/Header";
 import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import { GlobalAudioPlayer } from "@/components/player/GlobalAudioPlayer";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { SurahListenCounter } from "@/components/player/SurahListenCounter";
 
 
 export const metadata: Metadata = {
@@ -85,6 +86,7 @@ export default function RootLayout({
               Skip to content
             </a>
             <MainLayout>{children}</MainLayout>
+            <SurahListenCounter />
           </AudioPlayerProvider>
         </ThemeProvider>
       </body>

@@ -15,3 +15,21 @@ export function createSupabaseBrowserClient() {
   }
   return createBrowserClient(url, anonKey);
 }
+
+let browserClient: ReturnType<typeof createBrowserClient> | null | undefined;
+
+/**
+ * Shared browser client for optional features (auth, Quran analytics), or
+ * null when Supabase isn't configured — callers degrade gracefully instead of
+ * throwing, so the site keeps working in seed mode.
+ */
+export function getSupabaseBrowserClient() {
+  if (typeof window === "undefined") return null;
+  if (browserClient !== undefined) return browserClient;
+  try {
+    browserClient = createSupabaseBrowserClient();
+  } catch {
+    browserClient = null;
+  }
+  return browserClient;
+}

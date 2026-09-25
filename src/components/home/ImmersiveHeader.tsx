@@ -14,6 +14,7 @@ import {
   ImamQuranIcon,
   VideoCameraIcon,
   ImageIcon,
+  TranslateIcon,
 } from "@/components/ui/Icon";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { ReciterPickerModal } from "./ReciterPickerModal";
@@ -34,6 +35,8 @@ interface ImmersiveHeaderProps {
   isJuz?: boolean;
   /** Optional leading control rendered before the language toggle (e.g. QA HUD). */
   qaHud?: React.ReactNode;
+  /** Control rendered right after the image/video toggle (Comments). */
+  afterVisualToggle?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -50,6 +53,7 @@ export function ImmersiveHeader({
   isQuranActive = true,
   isJuz = false,
   qaHud,
+  afterVisualToggle,
   children,
 }: ImmersiveHeaderProps) {
   const player = useAudioPlayer();
@@ -100,7 +104,7 @@ export function ImmersiveHeader({
         {qaHudControlled}
 
         {/* Language Switcher (First — only for Word Sync reciters that show text) */}
-        {/* Hidden while the meaning is off — there's no translation to switch */}
+        {/* Hidden while the translation is off — there's nothing to switch */}
         {onToggleLanguage && showLanguageToggle && showMeaning && (
           <button
             type="button"
@@ -122,30 +126,26 @@ export function ImmersiveHeader({
           </button>
         )}
 
-        {/* Ayah Meaning show/hide (only when verse text is on screen) */}
+        {/* Ayah translation show/hide (only when verse text is on screen) */}
         {onToggleMeaning && showLanguageToggle && (
           <button
             type="button"
             onClick={onToggleMeaning}
             aria-pressed={showMeaning}
-            aria-label={showMeaning ? "Hide Ayah meaning" : "Show Ayah meaning"}
+            aria-label={showMeaning ? "Hide translation" : "Show translation"}
             title={
               language === "ta"
-                ? showMeaning ? "அர்த்தத்தை மறை" : "அர்த்தத்தைக் காட்டு"
-                : showMeaning ? "Hide meaning" : "Show meaning"
+                ? showMeaning ? "மொழிபெயர்ப்பை மறை" : "மொழிபெயர்ப்பைக் காட்டு"
+                : showMeaning ? "Hide translation of the meaning" : "Show translation of the meaning"
             }
             className={`pointer-events-auto flex items-center gap-1 justify-center h-9 px-2.5 sm:h-11 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
-            {/* Open book icon; slashed when the meaning is hidden */}
-            <svg className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 5.5C4.5 4 8 4 12 6c4-2 7.5-2 10-.5V19c-2.5-1.5-6-1.5-10 .5-4-2-7.5-2-10-.5Z" />
-              <path d="M12 6v13.5" />
-              {!showMeaning && <path d="M3 3l18 18" />}
-            </svg>
+            {/* Translate icon; slashed when the translation is hidden */}
+            <TranslateIcon slashed={!showMeaning} className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]" />
             <span className={`hidden sm:inline text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>
-              {language === "ta" ? "அர்த்தம்" : "Meaning"}
+              {language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
             </span>
           </button>
         )}
@@ -231,6 +231,9 @@ export function ImmersiveHeader({
             )}
           </button>
         )}
+
+        {/* Comments (next to the image/video toggle) */}
+        {afterVisualToggle}
 
         {/* Category Picker Menu (Menu.svg) */}
         {children}

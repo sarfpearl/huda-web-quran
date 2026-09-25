@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
@@ -45,6 +45,14 @@ import {
 } from "@/lib/data/quranVerses";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
+import {
+  useQuranEngagement,
+  quranContentOf,
+  CommentsHeaderButton,
+  EngagementOverlay,
+  PlayerStatsFrame,
+  PlayerLikeButton,
+} from "./QuranEngagement";
 
 interface ImmersiveHomeClientProps {
   categories: Category[];
@@ -402,6 +410,72 @@ export function ImmersiveHomeClient({
       .catch(() => start());
   };
 
+  // Keyboard shortcuts (home player):
+  //   Space        play / pause
+  //   ← / →        previous / next ayah
+  //   Shift+← / →  previous / next Surah (or Juz)
+  //   M            mute / unmute
+  // Presses the player's own visible buttons, so every shortcut behaves exactly
+  // like clicking. Works even while a player button has focus (after a click):
+  // Space is intercepted there so the focused button isn't pressed as well.
+  // Ignored while typing, inside dialogs, on the seek ring (it has its own
+  // keys), and with Ctrl / Cmd / Alt held.
+  const toggleMuteRef = useRef(player.toggleMute);
+  toggleMuteRef.current = player.toggleMute;
+  useEffect(() => {
+    const target = (e: KeyboardEvent): string[] | "mute" | null => {
+      if (e.key === " " || e.code === "Space") return e.shiftKey ? null : ["Play", "Pause"];
+      if (e.key === "ArrowRight") return e.shiftKey ? ["Next Surah", "Next Juz", "Next"] : ["Next Ayah"];
+      if (e.key === "ArrowLeft") return e.shiftKey ? ["Previous Surah", "Previous Juz", "Previous"] : ["Previous Ayah"];
+      if ((e.key === "m" || e.key === "M") && !e.shiftKey) return "mute";
+      return null;
+    };
+    const blocked = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return true;
+      const t = e.target as HTMLElement | null;
+      return Boolean(
+        t && (t.isContentEditable || t.closest("input, textarea, select, [role=slider], [role=dialog]"))
+      );
+    };
+    let swallowSpaceUp = false;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const wanted = target(e);
+      if (!wanted || blocked(e)) return;
+      if (wanted === "mute") {
+        e.preventDefault();
+        if (!e.repeat) toggleMuteRef.current();
+        return;
+      }
+      const btn = [...document.querySelectorAll<HTMLButtonElement>("[data-player-dock] button")].find(
+        (b) => wanted.includes(b.getAttribute("aria-label") ?? "") && !b.closest('[aria-hidden="true"]') && !b.disabled
+      );
+      if (!btn) return;
+      e.preventDefault();
+      if (wanted[0] === "Play") {
+        // A focused button would also fire on Space's keyup — swallow it.
+        swallowSpaceUp = true;
+        if (e.repeat) return;
+      }
+      btn.click();
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (swallowSpaceUp && (e.key === " " || e.code === "Space")) {
+        swallowSpaceUp = false;
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+    };
+  }, []);
+
+  // Player container — the Comments / View count row aligns to the card's edges.
+  const playerWrapRef = useRef<HTMLDivElement>(null);
+  // View count / live / comments for the Surah or Juz on screen.
+  const engagement = useQuranEngagement(quranContentOf(activeBayan?.id));
   const isJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
   // Voice Sync QA HUD is a developer tool — hidden for end users. Open the
   // app with ?qa=1 in the URL to show it.
@@ -655,6 +729,7 @@ export function ImmersiveHomeClient({
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
         isJuz={isJuz}
+        afterVisualToggle={<CommentsHeaderButton e={engagement} lang={language} />}
         qaHud={
           showQaHud && !isJuz && (
             <SyncQADebugHUD
@@ -703,47 +778,52 @@ export function ImmersiveHomeClient({
             <span className={language === "ta" ? "font-tamil" : ""}>{notice.text}</span>
           </div>
         )}
-        <div className="pointer-events-auto w-full max-w-[680px] flex justify-center">
-          {/* Compact Integrated Glassmorphism Player with Ayah Controls */}
-          {activeBayan && (
-            <CompactBayanPlayer
-              bayan={activeBayan}
-              categoryList={categoryBayans}
-              surahTracks={surahTracksForCurrentReciter}
-              onShuffleCategory={handleShuffle}
-              activeSurah={activeSurah}
-              currentVerse={isJuz ? null : currentVerse}
-              currentSegment={isJuz ? null : currentSegment}
-              segments={isJuz ? [] : segments}
-              totalVerses={isJuz ? 1 : (activeSurah?.verses ?? verses.length)}
-              activeVerseIndex={isJuz ? 0 : activeIndex}
-              language={language}
-              onToggleLanguage={handleToggleLanguage}
-              showTranslation={showTranslation}
-              onToggleShowTranslation={handleToggleMeaning}
-              onPrevVerse={
-                isJuz
-                  ? player.ayahSequence
-                    ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) - 1)
-                    : undefined
-                  : verses.length > 1 ? handlePrevVerse : undefined
-              }
-              onNextVerse={
-                isJuz
-                  ? player.ayahSequence
-                    ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) + 1)
-                    : undefined
-                  : verses.length > 1 ? handleNextVerse : undefined
-              }
-              trackKind={isJuz ? "Juz" : activeSurah ? "Surah" : null}
-              juzTiming={isJuz ? juzTiming : null}
-              // Juz: |< / >| move between Juz (1 ↔ 30 wraps), not between ayahs.
-              onPrevTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id <= 1 ? 30 : activeJuz.id - 1) : undefined}
-              onNextTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1) : undefined}
-              onSeekToVerse={jumpToVerse}
-            />
-          )}
-        </div>
+        {/* Live comments + composer (the Live / view count strip frames the player below) */}
+        <EngagementOverlay e={engagement} lang={language} alignTo={playerWrapRef} />
+        <PlayerStatsFrame e={engagement} lang={language} playerRef={playerWrapRef}>
+          <div ref={playerWrapRef} className="pointer-events-auto flex max-w-[calc(100vw-2rem)] justify-center">
+            {/* Compact Integrated Glassmorphism Player with Ayah Controls */}
+            {activeBayan && (
+              <CompactBayanPlayer
+                bayan={activeBayan}
+                categoryList={categoryBayans}
+                surahTracks={surahTracksForCurrentReciter}
+                onShuffleCategory={handleShuffle}
+                activeSurah={activeSurah}
+                currentVerse={isJuz ? null : currentVerse}
+                currentSegment={isJuz ? null : currentSegment}
+                segments={isJuz ? [] : segments}
+                totalVerses={isJuz ? 1 : (activeSurah?.verses ?? verses.length)}
+                activeVerseIndex={isJuz ? 0 : activeIndex}
+                language={language}
+                onToggleLanguage={handleToggleLanguage}
+                showTranslation={showTranslation}
+                onToggleShowTranslation={handleToggleMeaning}
+                onPrevVerse={
+                  isJuz
+                    ? player.ayahSequence
+                      ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) - 1)
+                      : undefined
+                    : verses.length > 1 ? handlePrevVerse : undefined
+                }
+                onNextVerse={
+                  isJuz
+                    ? player.ayahSequence
+                      ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) + 1)
+                      : undefined
+                    : verses.length > 1 ? handleNextVerse : undefined
+                }
+                trackKind={isJuz ? "Juz" : activeSurah ? "Surah" : null}
+                juzTiming={isJuz ? juzTiming : null}
+                // Juz: |< / >| move between Juz (1 ↔ 30 wraps), not between ayahs.
+                onPrevTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id <= 1 ? 30 : activeJuz.id - 1) : undefined}
+                onNextTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1) : undefined}
+                onSeekToVerse={jumpToVerse}
+                viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
+              />
+            )}
+          </div>
+        </PlayerStatsFrame>
       </div>
     </div>
   );
