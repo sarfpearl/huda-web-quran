@@ -10,6 +10,7 @@ import { ImmersiveHeader } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
+import { InstallGuide } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon } from "@/components/ui/Icon";
 import {
@@ -862,6 +863,9 @@ export function ImmersiveHomeClient({
         </PlayerStatsFrame>
         </div>
       </div>
+
+      {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
+      <InstallGuide />
     </div>
   );
 }

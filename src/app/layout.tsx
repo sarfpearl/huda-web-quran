@@ -22,7 +22,8 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: siteConfig.name,
-    statusBarStyle: "default",
+    // Home-screen app: let the scene run under the status bar (no black band).
+    statusBarStyle: "black-translucent",
   },
   openGraph: {
     type: "website",
