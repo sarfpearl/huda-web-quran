@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { LogoIcon } from "@/components/ui/Icon";
-import { isWriteEnabled } from "@/lib/data/service";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -16,12 +15,6 @@ export default function AdminLayout({
 }) {
   return (
     <div className="min-h-screen">
-      {!isWriteEnabled ? (
-        <div className="border-b border-gold-400/40 bg-gold-400/10 px-4 py-2 text-center text-sm text-gold-600 dark:text-gold-300">
-          Bayan content (Bayan, Categories, Speakers, Media) is in demo mode and
-          read-only. Quran views, likes and comments are live.
-        </div>
-      ) : null}
 
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:flex-row">
         <aside className="md:w-56 md:shrink-0">

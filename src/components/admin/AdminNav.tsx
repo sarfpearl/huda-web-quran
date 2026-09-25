@@ -2,24 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  GridIcon,
-  HomeIcon,
-  CompassIcon,
-  QueueIcon,
-  MoonIcon,
-  CommentIcon,
-} from "@/components/ui/Icon";
+import { CommentIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "/admin", label: "Dashboard", Icon: HomeIcon, exact: true },
-  { href: "/admin/bayan", label: "Bayan", Icon: QueueIcon },
-  { href: "/admin/categories", label: "Categories", Icon: GridIcon },
-  { href: "/admin/speakers", label: "Speakers", Icon: CompassIcon },
-  { href: "/admin/media", label: "Media", Icon: MoonIcon },
+// Only live (Supabase-backed) tools are listed. The demo Bayan pages
+// (Dashboard, Bayan, Categories, Speakers, Media, Settings) are hidden until
+// their content moves to Supabase — add them back here then.
+const LINKS: { href: string; label: string; Icon: (p: { className?: string }) => JSX.Element; exact?: boolean }[] = [
   { href: "/admin/comments", label: "Comments", Icon: CommentIcon },
-  { href: "/admin/settings", label: "Settings", Icon: GridIcon },
 ];
 
 export function AdminNav() {
