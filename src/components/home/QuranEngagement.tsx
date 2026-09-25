@@ -18,10 +18,9 @@ import { cn } from "@/lib/utils";
 /*
  * View count, live listeners and comments for the Surah / Juz on screen.
  *  - useQuranEngagement()   shared state (polls Supabase, posts/deletes).
- *  - CommentsHeaderButton   header control that opens the comment box.
  *  - EngagementOverlay      above the player: live comments + composer.
  *  - PlayerStatsFrame       glass frame around the player whose top strip
- *                           shows Live (left) and Overall view count (right).
+ *                           shows Live (left) and view count + comments (right).
  *  - PlayerLikeButton       ♥ like (with count) inside the expanded player.
  * Every number comes from Supabase (supabase/migrations/…_quran_views_comments.sql).
  */
@@ -294,35 +293,6 @@ const LiveDot = ({ on }: { on: boolean }) => (
     )}
   />
 );
-
-// ── Header button ───────────────────────────────────────────────────────────
-
-export function CommentsHeaderButton({ e, lang = "en" }: { e: QuranEngagement; lang?: Lang }) {
-  if (!e.content) return null;
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        e.setComposerOpen((o) => !o);
-        e.setViewsOpen(false);
-      }}
-      aria-pressed={e.composerOpen}
-      aria-label={T.comment[lang]}
-      title={T.comment[lang]}
-      className={cn(
-        "pointer-events-auto relative grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border shadow-lg transition-all active:scale-90 cursor-pointer hover:bg-black/20",
-        e.composerOpen ? "border-emerald-400/60 text-emerald-300" : "border-white/15 text-sand-200 hover:text-white hover:border-white/30"
-      )}
-    >
-      <CommentIcon className="text-base sm:text-xl" />
-      {e.comments.length > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold text-slate-950">
-          {e.comments.length > 99 ? "99+" : e.comments.length}
-        </span>
-      )}
-    </button>
-  );
-}
 
 // ── In-player view count (replaces the old ♥ button) ────────────────────────
 
@@ -645,7 +615,7 @@ export function PlayerStatsFrame({
   children: React.ReactNode;
 }) {
   const geo = usePlayerGeometry(playerRef);
-  const { stats, viewsOpen, setViewsOpen, setComposerOpen } = e;
+  const { stats, viewsOpen, setViewsOpen, composerOpen, setComposerOpen } = e;
   // Not a Quran track: no strip, no frame. The element tree stays the same
   // either way so the player never remounts.
   const show = Boolean(e.content);
@@ -741,16 +711,33 @@ export function PlayerStatsFrame({
           <span>{T.live[lang]}</span>
           <span>{stats ? compactCount(stats.content.live) : "–"}</span>
         </button>
-        <button
-          type="button"
-          onClick={toggleViews}
-          aria-expanded={viewsOpen}
-          aria-label={`${T.overall[lang]}: ${stats?.content.users ?? 0}`}
-          className={cn(stat, viewsOpen && "text-emerald-300")}
-        >
-          <ViewCountIcon className="text-xs sm:text-sm" />
-          <span>{stats ? compactCount(stats.content.users) : "–"}</span>
-        </button>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            type="button"
+            onClick={toggleViews}
+            aria-expanded={viewsOpen}
+            aria-label={`${T.overall[lang]}: ${stats?.content.users ?? 0}`}
+            className={cn(stat, viewsOpen && "text-emerald-300")}
+          >
+            <ViewCountIcon className="text-xs sm:text-sm" />
+            <span>{stats ? compactCount(stats.content.users) : "–"}</span>
+          </button>
+          {/* Comments (moved here from the header): opens the comment box */}
+          <button
+            type="button"
+            onClick={() => {
+              setComposerOpen((o) => !o);
+              setViewsOpen(false);
+            }}
+            aria-pressed={composerOpen}
+            aria-label={`${T.comment[lang]}: ${e.comments.length}`}
+            data-tooltip={T.comment[lang]}
+            className={cn(stat, composerOpen && "text-emerald-300")}
+          >
+            <CommentIcon className="text-xs sm:text-sm" />
+            <span>{e.comments.length > 99 ? "99+" : e.comments.length}</span>
+          </button>
+        </div>
       </div>
       {/* The card overlaps the frame's border so sides/bottom read as one line */}
       <div className={show ? "-mx-px -mb-px" : undefined}>{children}</div>

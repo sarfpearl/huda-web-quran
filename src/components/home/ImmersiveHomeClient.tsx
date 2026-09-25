@@ -48,7 +48,6 @@ import { SyncQADebugHUD } from "./SyncQADebugHUD";
 import {
   useQuranEngagement,
   quranContentOf,
-  CommentsHeaderButton,
   EngagementOverlay,
   PlayerStatsFrame,
   PlayerLikeButton,
@@ -729,7 +728,6 @@ export function ImmersiveHomeClient({
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
         isJuz={isJuz}
-        afterVisualToggle={<CommentsHeaderButton e={engagement} lang={language} />}
         qaHud={
           showQaHud && !isJuz && (
             <SyncQADebugHUD
