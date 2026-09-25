@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 
 const DISMISSED_KEY = "huda-install-dismissed";
 // After "Not now", ask again in two weeks.
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
 // Let the first recitation screen settle before asking.
 const SHOW_DELAY_MS = 4000;
-
-type Platform = "ios" | "android";
+// How long each animated step stays on screen.
+const STEP_MS = 3200;
+// Fired by InstallGuideButton to bring the guide back after "Got it".
+const OPEN_EVENT = "huda:install-guide";
 
 // Chrome / Edge / Samsung Internet fire this before offering their own install.
 interface BeforeInstallPromptEvent extends Event {
@@ -17,19 +20,261 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+/*
+ * The browser's install prompt, captured once for the whole page as early as
+ * possible (it can fire before the home scene mounts) and shared by the guide
+ * and the strip icon. It can be shown only once, so it is dropped after use.
+ */
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+const promptListeners = new Set<() => void>();
+const notifyPrompt = () => promptListeners.forEach((fn) => fn());
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (ev) => {
+    ev.preventDefault(); // our icon / sheet replaces Chrome's mini-infobar
+    deferredPrompt = ev as BeforeInstallPromptEvent;
+    notifyPrompt();
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    notifyPrompt();
+  });
+}
+
+function useInstallPrompt() {
+  return useSyncExternalStore(
+    (fn) => {
+      promptListeners.add(fn);
+      return () => promptListeners.delete(fn);
+    },
+    () => deferredPrompt,
+    () => null,
+  );
+}
+
+/** Opens the browser's own Install dialog; resolves true when the user accepts. */
+async function promptInstall(): Promise<boolean> {
+  const ev = deferredPrompt;
+  if (!ev) return false;
+  deferredPrompt = null;
+  notifyPrompt();
+  await ev.prompt();
+  const { outcome } = await ev.userChoice;
+  return outcome === "accepted";
+}
+
+/** The browser toolbar drawn in the phone mockup — each puts its menu button somewhere else. */
+type Chrome =
+  | "safari26" // iOS 26 Safari: floating bar, ••• at the bottom right
+  | "safari" // older Safari: toolbar with Share in the middle
+  | "chromeIOS" // Share in the address bar
+  | "firefoxIOS" // ☰ at the bottom right
+  | "edge" // ••• in the middle of the bottom bar
+  | "chromeAndroid" // ⋮ at the top right
+  | "samsung" // ≡ at the bottom right
+  | "inapp"; // Instagram / Facebook / … webview: ⋯ at the top right
+
+type Scene =
+  | { kind: "tap" } // tap the toolbar button
+  | { kind: "menu"; at: "top" | "bottom" | "sheet"; items: string[]; hi: number }
+  | { kind: "confirm"; style: "ios" | "iosWebApp" | "android" }
+  | { kind: "done" };
+
+interface Step {
+  scene: Scene;
+  en: string;
+  ta: string;
+}
+
+interface Env {
+  device: string; // "iPhone" | "iPad" | "Android"
+  browser: string; // shown to the user, e.g. "Safari"
+  chrome: Chrome;
+  steps: Step[];
+}
+
+const DONE: Step = {
+  scene: { kind: "done" },
+  en: "Done! Open HuDa from your Home Screen",
+  ta: "முடிந்தது! முகப்புத் திரையிலிருந்து HuDa-வைத் திறக்கவும்",
+};
+
+const IOS_SHARE_SHEET: Step = {
+  scene: { kind: "menu", at: "sheet", items: ["Copy", "Add to Bookmarks", "Add to Favorites", "Add to Home Screen"], hi: 3 },
+  en: "Tap “Add to Home Screen” — scroll or tap View More if needed",
+  ta: "“Add to Home Screen” ஐத் தொடவும் — தேவையெனில் கீழே நகர்த்தவும் / View More",
+};
+
+const IOS_ADD: Step = {
+  scene: { kind: "confirm", style: "ios" },
+  en: "Tap Add at the top right",
+  ta: "மேலே வலதுபுறம் உள்ள Add ஐத் தொடவும்",
+};
+
+const ANDROID_ADD: Step = {
+  scene: { kind: "confirm", style: "android" },
+  en: "Tap Install / Add to confirm",
+  ta: "Install / Add ஐத் தொட்டு உறுதிசெய்யவும்",
+};
+
+const IN_APP = /FBAN|FBAV|FB_IAB|Instagram|Line\/|LinkedInApp|Snapchat|musical_ly|BytedanceWebview|Twitter/i;
+
+function detectEnv(): Env | null {
+  const ua = navigator.userAgent;
+  // iPadOS reports itself as a Mac; touch points give it away.
+  const ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const ios = ipad || /iPhone|iPod/.test(ua);
+  const android = /Android/.test(ua);
+  if (!ios && !android) return null;
+  const device = ios ? (ipad ? "iPad" : "iPhone") : "Android";
+  const home = ios ? "Safari" : "Chrome";
+
+  if (IN_APP.test(ua)) {
+    const app = ua.match(/Instagram|Snapchat|LinkedIn|Line|Twitter/i)?.[0] ?? "Facebook";
+    return {
+      device,
+      browser: `${app} app`,
+      chrome: "inapp",
+      steps: [
+        {
+          scene: { kind: "tap" },
+          en: `Apps can't be added from inside ${app}. Tap ⋯ at the top right`,
+          ta: `${app}-க்குள் இருந்து சேர்க்க முடியாது. மேலே வலதுபுறம் உள்ள ⋯ ஐத் தொடவும்`,
+        },
+        {
+          scene: { kind: "menu", at: "top", items: ["Copy link", `Open in ${home}`, "Report"], hi: 1 },
+          en: `Tap “Open in ${home}” — this guide shows there`,
+          ta: `“Open in ${home}” ஐத் தொடவும் — அங்கே இந்த வழிகாட்டி வரும்`,
+        },
+      ],
+    };
+  }
+
+  if (ios) {
+    if (/CriOS/.test(ua)) {
+      return {
+        device,
+        browser: "Chrome",
+        chrome: "chromeIOS",
+        steps: [
+          { scene: { kind: "tap" }, en: "Tap the Share button in the address bar", ta: "முகவரிப் பட்டையில் உள்ள Share பொத்தானைத் தொடவும்" },
+          IOS_SHARE_SHEET,
+          IOS_ADD,
+          DONE,
+        ],
+      };
+    }
+    if (/FxiOS/.test(ua)) {
+      return {
+        device,
+        browser: "Firefox",
+        chrome: "firefoxIOS",
+        steps: [
+          { scene: { kind: "tap" }, en: "Tap the ☰ menu at the bottom right", ta: "கீழே வலதுபுறம் உள்ள ☰ மெனுவைத் தொடவும்" },
+          { scene: { kind: "menu", at: "bottom", items: ["Bookmarks", "History", "Share"], hi: 2 }, en: "Tap Share", ta: "Share ஐத் தொடவும்" },
+          IOS_SHARE_SHEET,
+          IOS_ADD,
+          DONE,
+        ],
+      };
+    }
+    if (/EdgiOS/.test(ua)) {
+      return {
+        device,
+        browser: "Edge",
+        chrome: "edge",
+        steps: [
+          { scene: { kind: "tap" }, en: "Tap ••• in the middle of the bottom bar", ta: "கீழ்ப் பட்டையின் நடுவில் உள்ள ••• ஐத் தொடவும்" },
+          { scene: { kind: "menu", at: "sheet", items: ["Add to favorites", "Share", "Settings"], hi: 1 }, en: "Tap Share", ta: "Share ஐத் தொடவும்" },
+          IOS_SHARE_SHEET,
+          IOS_ADD,
+          DONE,
+        ],
+      };
+    }
+    // Safari. iOS 26 freezes the OS version in the UA; Safari's own Version/ still moves.
+    const safariMajor = Number(ua.match(/Version\/(\d+)/)?.[1] ?? 0);
+    if (safariMajor >= 26) {
+      return {
+        device,
+        browser: "Safari",
+        chrome: "safari26",
+        steps: [
+          { scene: { kind: "tap" }, en: "Tap ••• at the bottom right", ta: "கீழே வலதுபுறம் உள்ள ••• ஐத் தொடவும்" },
+          { scene: { kind: "menu", at: "bottom", items: ["Translate", "Share", "Add to Bookmarks", "Find on Page"], hi: 1 }, en: "Tap Share", ta: "Share ஐத் தொடவும்" },
+          IOS_SHARE_SHEET,
+          {
+            scene: { kind: "confirm", style: "iosWebApp" },
+            en: "Keep “Open as Web App” on, then tap Add",
+            ta: "“Open as Web App” இயக்கத்தில் இருக்கட்டும், பின் Add ஐத் தொடவும்",
+          },
+          DONE,
+        ],
+      };
+    }
+    return {
+      device,
+      browser: "Safari",
+      chrome: "safari",
+      steps: [
+        { scene: { kind: "tap" }, en: "Tap the Share button at the bottom", ta: "கீழே உள்ள Share பொத்தானைத் தொடவும்" },
+        IOS_SHARE_SHEET,
+        IOS_ADD,
+        DONE,
+      ],
+    };
+  }
+
+  // Android
+  if (/SamsungBrowser/.test(ua)) {
+    return {
+      device,
+      browser: "Samsung Internet",
+      chrome: "samsung",
+      steps: [
+        { scene: { kind: "tap" }, en: "Tap ≡ at the bottom right", ta: "கீழே வலதுபுறம் உள்ள ≡ ஐத் தொடவும்" },
+        { scene: { kind: "menu", at: "sheet", items: ["Bookmarks", "Add page to", "Settings"], hi: 1 }, en: "Tap “Add page to”", ta: "“Add page to” ஐத் தொடவும்" },
+        { scene: { kind: "menu", at: "sheet", items: ["Bookmarks", "Quick access", "Home screen"], hi: 2 }, en: "Choose “Home screen”", ta: "“Home screen” ஐத் தேர்ந்தெடுக்கவும்" },
+        ANDROID_ADD,
+        DONE,
+      ],
+    };
+  }
+  if (/EdgA/.test(ua)) {
+    return {
+      device,
+      browser: "Edge",
+      chrome: "edge",
+      steps: [
+        { scene: { kind: "tap" }, en: "Tap ••• in the middle of the bottom bar", ta: "கீழ்ப் பட்டையின் நடுவில் உள்ள ••• ஐத் தொடவும்" },
+        { scene: { kind: "menu", at: "sheet", items: ["Add to favorites", "Add to phone", "Share"], hi: 1 }, en: "Tap “Add to phone”", ta: "“Add to phone” ஐத் தொடவும்" },
+        ANDROID_ADD,
+        DONE,
+      ],
+    };
+  }
+  const firefox = /Firefox/.test(ua);
+  return {
+    device,
+    browser: firefox ? "Firefox" : "Chrome",
+    chrome: "chromeAndroid",
+    steps: [
+      { scene: { kind: "tap" }, en: "Tap ⋮ at the top right", ta: "மேலே வலதுபுறம் உள்ள ⋮ ஐத் தொடவும்" },
+      {
+        scene: { kind: "menu", at: "top", items: ["New tab", "History", "Bookmarks", firefox ? "Add to Home screen" : "Add to home screen"], hi: 3 },
+        en: "Tap “Add to home screen” (or “Install app”)",
+        ta: "“Add to home screen” (அல்லது “Install app”) ஐத் தொடவும்",
+      },
+      ANDROID_ADD,
+      DONE,
+    ],
+  };
+}
+
 function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true
   );
-}
-
-function detectPlatform(): Platform | null {
-  const ua = navigator.userAgent;
-  // iPadOS reports itself as a Mac; touch points give it away.
-  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "ios";
-  if (/Android/.test(ua)) return "android";
-  return null;
 }
 
 function snoozed() {
@@ -43,35 +288,45 @@ function snoozed() {
 
 /**
  * Bottom sheet teaching phone users to add HuDa to their Home Screen, so it
- * opens full-screen like an app. iOS gets the Share → Add to Home Screen steps
- * (Safari has no install API); Android gets the browser's own install prompt
- * when available, otherwise the ⋮ menu steps. Never shown inside the installed app.
+ * opens full-screen like an app. It detects the device and browser and plays
+ * an animated phone mockup of that browser, pointing at each button to tap.
+ * Android browsers that offer their own install prompt get a single Install
+ * button instead. Never shown inside the installed app.
  */
 export function InstallGuide() {
-  const [platform, setPlatform] = useState<Platform | null>(null);
+  const [env, setEnv] = useState<Env | null>(null);
   const [open, setOpen] = useState(false);
-  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [step, setStep] = useState(0);
+  const installEvent = useInstallPrompt();
 
   useEffect(() => {
-    if (isStandalone() || snoozed()) return;
-    const p = detectPlatform();
-    if (!p) return;
-    setPlatform(p);
+    if (isStandalone()) return;
+    const detected = detectEnv();
+    if (!detected) return;
+    setEnv(detected);
 
-    const onPrompt = (ev: Event) => {
-      ev.preventDefault();
-      setInstallEvent(ev as BeforeInstallPromptEvent);
+    const onOpen = () => {
+      setStep(0);
+      setOpen(true);
     };
     const onInstalled = () => setOpen(false);
-    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener(OPEN_EVENT, onOpen);
     window.addEventListener("appinstalled", onInstalled);
-    const timer = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
+    const timer = snoozed() ? 0 : window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener(OPEN_EVENT, onOpen);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
+
+  // Auto-play the steps in a loop; picking a dot restarts the clock from there.
+  const stepCount = env?.steps.length ?? 0;
+  useEffect(() => {
+    if (!open || !stepCount || installEvent) return;
+    const t = window.setTimeout(() => setStep((s) => (s + 1) % stepCount), STEP_MS);
+    return () => window.clearTimeout(t);
+  }, [open, step, stepCount, installEvent]);
 
   const dismiss = () => {
     setOpen(false);
@@ -81,58 +336,19 @@ export function InstallGuide() {
   };
 
   const install = async () => {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    const { outcome } = await installEvent.userChoice;
-    setInstallEvent(null);
-    if (outcome === "accepted") setOpen(false);
+    if (await promptInstall()) setOpen(false);
     else dismiss();
   };
 
-  const steps =
-    platform === "ios"
-      ? [
-          {
-            icon: <DotsIcon />,
-            en: "Tap ••• at the bottom (or the Share button), then Share",
-            ta: "கீழே உள்ள ••• (அல்லது Share பொத்தான்) ஐத் தொட்டு, பின் Share ஐத் தொடவும்",
-          },
-          {
-            icon: <PlusSquareIcon />,
-            en: "Tap “Add to Home Screen” — it may be under View More",
-            ta: "“Add to Home Screen” ஐத் தொடவும் — View More-இல் இருக்கலாம்",
-          },
-          {
-            icon: <ToggleIcon />,
-            en: "Keep “Open as Web App” on, then tap Add",
-            ta: "“Open as Web App” இயக்கத்தில் இருக்கட்டும், பின் Add ஐத் தொடவும்",
-          },
-        ]
-      : [
-          {
-            icon: <KebabIcon />,
-            en: "Tap the ⋮ menu at the top right",
-            ta: "மேலே வலதுபுறம் உள்ள ⋮ மெனுவைத் தொடவும்",
-          },
-          {
-            icon: <PlusSquareIcon />,
-            en: "Tap “Add to Home screen” or “Install app”",
-            ta: "“Add to Home screen” அல்லது “Install app” ஐத் தொடவும்",
-          },
-          {
-            icon: <CheckIcon />,
-            en: "Confirm with Install / Add",
-            ta: "Install / Add ஐத் தொட்டு உறுதிசெய்யவும்",
-          },
-        ];
+  const current = env?.steps[step];
 
   return (
     <AnimatePresence>
-      {open && platform && (
+      {open && env && current && (
         <>
           <motion.div
             key="install-scrim"
-            className="absolute inset-0 z-[60] bg-black/50"
+            className="absolute inset-0 z-[60] bg-black/55"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -150,18 +366,17 @@ export function InstallGuide() {
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 320 }}
           >
-            <div className="rounded-3xl border border-white/10 bg-slate-950/90 backdrop-blur-xl p-5 text-sand-50 shadow-[0_-12px_40px_rgba(0,0,0,0.6)]">
-              <div className="flex items-start gap-3.5">
-                <img src="/icon.svg" alt="" className="h-14 w-14 shrink-0 rounded-2xl" />
+            <div className={`rounded-[28px] ${PLAYER_GLASS} p-4 text-sand-50`}>
+              <div className="flex items-start gap-3">
+                <img src="/icon-192.png" alt="" className="h-12 w-12 shrink-0 rounded-2xl" />
                 <div className="min-w-0 flex-1">
-                  <h2 id="install-guide-title" className="text-base font-semibold leading-snug">
+                  <h2 id="install-guide-title" className="text-[15px] font-semibold leading-snug">
                     Add HuDa to your Home Screen
                   </h2>
-                  <p className="font-tamil text-sm text-sand-200/90 leading-snug">
-                    HuDa-வை முகப்புத் திரையில் சேர்க்கவும்
-                  </p>
-                  <p className="mt-1 text-xs text-sand-300/80 leading-snug">
-                    Opens full-screen like an app — one tap to listen.
+                  <p className="font-tamil text-[13px] text-sand-200/90 leading-snug">HuDa-வை முகப்புத் திரையில் சேர்க்கவும்</p>
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] px-2.5 py-0.5 text-[11px] text-sand-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                    {env.device} · {env.browser}
                   </p>
                 </div>
                 <button
@@ -177,40 +392,57 @@ export function InstallGuide() {
               </div>
 
               {installEvent ? (
-                <button
-                  type="button"
-                  onClick={install}
-                  className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-500 font-semibold text-slate-950 hover:bg-emerald-400"
-                >
-                  <PlusSquareIcon />
-                  Install app · <span className="font-tamil">நிறுவவும்</span>
-                </button>
+                <>
+                  <p className="mt-4 text-sm text-sand-200">Opens full-screen like an app — one tap to listen.</p>
+                  <p className="font-tamil text-xs text-sand-300/85">ஒரே தொடுதலில், முழுத் திரையில் ஆப் போலத் திறக்கும்.</p>
+                  <button
+                    type="button"
+                    onClick={install}
+                    className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-500 font-semibold text-slate-950 hover:bg-emerald-400"
+                  >
+                    Install app · <span className="font-tamil">நிறுவவும்</span>
+                  </button>
+                </>
               ) : (
-                <ol className="mt-5 space-y-3">
-                  {steps.map((s, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-emerald-400">
-                        {s.icon}
+                <>
+                  <div className="mt-3 flex justify-center">
+                    <PhoneDemo chrome={env.chrome} scene={current.scene} sceneKey={step} />
+                  </div>
+
+                  <div className="mt-3 min-h-[64px]" aria-live="polite">
+                    <p className="text-sm leading-snug">
+                      <span className="mr-1.5 font-semibold text-emerald-400">
+                        {step + 1}/{env.steps.length}
                       </span>
-                      <div className="min-w-0">
-                        <p className="text-sm leading-snug">
-                          <span className="mr-1.5 text-emerald-400 font-semibold">{i + 1}.</span>
-                          {s.en}
-                        </p>
-                        <p className="font-tamil text-xs text-sand-300/85 leading-snug">{s.ta}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+                      {current.en}
+                    </p>
+                    <p className="font-tamil mt-0.5 text-xs text-sand-300/85 leading-snug">{current.ta}</p>
+                  </div>
+
+                  <div className="mt-1 flex justify-center gap-1" role="tablist" aria-label="Steps">
+                    {env.steps.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        role="tab"
+                        aria-selected={i === step}
+                        aria-label={`Step ${i + 1}`}
+                        onClick={() => setStep(i)}
+                        className="flex h-6 w-6 items-center justify-center"
+                      >
+                        <span className={`block h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-emerald-400" : "w-1.5 bg-white/30"}`} />
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
 
               <button
                 type="button"
                 onClick={dismiss}
-                className="mt-4 h-11 w-full rounded-full border border-white/15 text-sm text-sand-100 hover:bg-white/10"
+                className="mt-2 h-11 w-full rounded-full border border-white/15 text-sm text-sand-100 hover:bg-white/10"
               >
-                {installEvent ? "Not now" : "Got it"} ·{" "}
-                <span className="font-tamil">{installEvent ? "பிறகு" : "சரி"}</span>
+                {installEvent ? "Not now" : "Got it"} · <span className="font-tamil">{installEvent ? "பிறகு" : "சரி"}</span>
               </button>
             </div>
           </motion.div>
@@ -220,59 +452,357 @@ export function InstallGuide() {
   );
 }
 
-const iconProps = {
-  className: "h-5 w-5",
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  "aria-hidden": true,
-};
-
-function DotsIcon() {
+/**
+ * Strip icon: installs in one tap where the browser allows it, otherwise
+ * reopens the guide. Renders nothing where neither applies: desktop, or
+ * already running as the installed app.
+ */
+export function InstallGuideButton({ className = "" }: { className?: string }) {
+  const [show, setShow] = useState(false);
+  const [installed, setInstalled] = useState(false);
+  const installEvent = useInstallPrompt();
+  useEffect(() => {
+    setShow(!isStandalone() && detectEnv() !== null);
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
+  }, []);
+  if (!show || installed) return null;
+  // Where the browser allows it (Chrome / Edge / Samsung on Android) one tap
+  // opens its own Install dialog; everywhere else (all of iOS) the guide opens.
+  const onClick = () => {
+    if (installEvent) void promptInstall();
+    else window.dispatchEvent(new Event(OPEN_EVENT));
+  };
   return (
-    <svg {...iconProps}>
-      <circle cx="5" cy="12" r="1" fill="currentColor" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" />
-      <circle cx="19" cy="12" r="1" fill="currentColor" />
-    </svg>
+    <button
+      type="button"
+      onClick={onClick}
+      data-tooltip="Add to Home Screen"
+      aria-label="How to add HuDa to your Home Screen"
+      className={className}
+    >
+      <svg className="h-[1.1em] w-[1.1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="6" y="2" width="12" height="20" rx="3" />
+        <path d="M12 8v6M9 11l3 3 3-3M10.5 18.5h3" />
+      </svg>
+    </button>
   );
 }
 
-function KebabIcon() {
+/* ------------------------------------------------------------------ */
+/* Animated phone mockup                                               */
+/* ------------------------------------------------------------------ */
+
+/** Pulsing tap marker drawn over whatever should be tapped. */
+function Tap({ className = "" }: { className?: string }) {
+  const reduce = useReducedMotion();
   return (
-    <svg {...iconProps}>
-      <circle cx="12" cy="5" r="1" fill="currentColor" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" />
-      <circle cx="12" cy="19" r="1" fill="currentColor" />
-    </svg>
+    <span className={`pointer-events-none absolute z-20 h-7 w-7 -translate-x-1/2 -translate-y-1/2 ${className}`} aria-hidden="true">
+      {!reduce && (
+        <motion.span
+          className="absolute inset-0 rounded-full border-2 border-emerald-300"
+          initial={{ scale: 0.6, opacity: 1 }}
+          animate={{ scale: 1.8, opacity: 0 }}
+          transition={{ duration: 1.1, repeat: Infinity, ease: "easeOut" }}
+        />
+      )}
+      <motion.span
+        className="absolute inset-[9px] rounded-full bg-emerald-300/60 shadow-[0_0_10px_rgba(110,231,183,0.8)]"
+        initial={reduce ? false : { scale: 1.4, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.35, duration: 0.3 }}
+      />
+    </span>
   );
 }
 
-function PlusSquareIcon() {
+/** A toolbar button; `hot` marks the one to tap. */
+function Btn({ children, hot }: { children: ReactNode; hot?: boolean }) {
   return (
-    <svg {...iconProps}>
-      <rect x="3" y="3" width="18" height="18" rx="4" />
-      <path d="M12 8v8M8 12h8" />
-    </svg>
+    <span
+      className={`relative flex h-5 w-5 items-center justify-center rounded-full text-[10px] leading-none ${
+        hot ? "bg-emerald-400/25 text-emerald-200" : "text-white/60"
+      }`}
+    >
+      {children}
+      {hot && <Tap className="left-1/2 top-1/2" />}
+    </span>
   );
 }
 
-function ToggleIcon() {
+const SHARE = (
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+  </svg>
+);
+
+function UrlPill({ children }: { children?: ReactNode }) {
   return (
-    <svg {...iconProps}>
-      <rect x="2" y="7" width="20" height="10" rx="5" />
-      <circle cx="17" cy="12" r="2.5" fill="currentColor" />
-    </svg>
+    <span className="flex h-5 min-w-0 flex-1 items-center gap-1 rounded-full bg-white/10 px-2 text-[8px] text-white/60">
+      <span className="truncate">huda-web-quran.vercel.app</span>
+      {children}
+    </span>
   );
 }
 
-function CheckIcon() {
+/** The browser's top and bottom bars; the menu button is `hot` on the tap step. */
+function Toolbars({ chrome, hot }: { chrome: Chrome; hot: boolean }) {
+  const top = "absolute inset-x-0 top-5 z-10 flex items-center gap-1 bg-[#1c1c1e] px-2 py-1.5";
+  const bottom = "absolute inset-x-0 bottom-0 z-10 flex items-center justify-around bg-[#1c1c1e] px-2 pb-3 pt-1.5";
+  switch (chrome) {
+    case "safari26":
+      return (
+        <div className="absolute inset-x-2 bottom-3 z-10 flex items-center gap-1.5">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[10px] text-white/70">‹</span>
+          <span className="flex h-6 min-w-0 flex-1 items-center rounded-full bg-white/15 px-2 text-[8px] text-white/70">
+            <span className="truncate">huda-web-quran.vercel.app</span>
+          </span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
+            <Btn hot={hot}>•••</Btn>
+          </span>
+        </div>
+      );
+    case "safari":
+      return (
+        <div className="absolute inset-x-0 bottom-0 z-10 bg-[#1c1c1e] px-2 pb-3 pt-1.5">
+          <UrlPill />
+          <div className="mt-1.5 flex items-center justify-around">
+            <Btn>‹</Btn>
+            <Btn>›</Btn>
+            <Btn hot={hot}>{SHARE}</Btn>
+            <Btn>▯</Btn>
+            <Btn>⧉</Btn>
+          </div>
+        </div>
+      );
+    case "chromeIOS":
+      return (
+        <>
+          <div className={top}>
+            <UrlPill>
+              <span className="ml-auto">
+                <Btn hot={hot}>{SHARE}</Btn>
+              </span>
+            </UrlPill>
+          </div>
+          <div className={bottom}>
+            <Btn>‹</Btn>
+            <Btn>›</Btn>
+            <Btn>+</Btn>
+            <Btn>⧉</Btn>
+            <Btn>•••</Btn>
+          </div>
+        </>
+      );
+    case "firefoxIOS":
+      return (
+        <>
+          <div className={top}>
+            <UrlPill />
+          </div>
+          <div className={bottom}>
+            <Btn>‹</Btn>
+            <Btn>›</Btn>
+            <Btn>+</Btn>
+            <Btn>⧉</Btn>
+            <Btn hot={hot}>☰</Btn>
+          </div>
+        </>
+      );
+    case "edge":
+      return (
+        <>
+          <div className={top}>
+            <UrlPill />
+          </div>
+          <div className={bottom}>
+            <Btn>‹</Btn>
+            <Btn>›</Btn>
+            <Btn hot={hot}>•••</Btn>
+            <Btn>⧉</Btn>
+            <Btn>☰</Btn>
+          </div>
+        </>
+      );
+    case "samsung":
+      return (
+        <>
+          <div className={top}>
+            <UrlPill />
+          </div>
+          <div className={bottom}>
+            <Btn>‹</Btn>
+            <Btn>›</Btn>
+            <Btn>⌂</Btn>
+            <Btn>⧉</Btn>
+            <Btn hot={hot}>≡</Btn>
+          </div>
+        </>
+      );
+    case "chromeAndroid":
+      return (
+        <div className={top}>
+          <Btn>⌂</Btn>
+          <UrlPill />
+          <Btn>⧉</Btn>
+          <Btn hot={hot}>⋮</Btn>
+        </div>
+      );
+    case "inapp":
+      return (
+        <div className={top}>
+          <Btn>✕</Btn>
+          <span className="min-w-0 flex-1 truncate text-center text-[8px] text-white/70">HuDa Web Quran</span>
+          <Btn hot={hot}>⋯</Btn>
+        </div>
+      );
+  }
+}
+
+function MenuPanel({ at, items, hi }: { at: "top" | "bottom" | "sheet"; items: string[]; hi: number }) {
+  const place =
+    at === "top"
+      ? "right-1.5 top-12 w-[70%] rounded-xl"
+      : at === "bottom"
+        ? "right-1.5 bottom-12 w-[70%] rounded-xl"
+        : "inset-x-0 bottom-0 rounded-t-2xl pb-3 pt-2";
   return (
-    <svg {...iconProps}>
-      <path d="M5 12l5 5L20 7" />
-    </svg>
+    <motion.div
+      className={`absolute z-30 overflow-hidden bg-[#2c2c2e] shadow-2xl ${place}`}
+      initial={{ opacity: 0, y: at === "top" ? -12 : 16, scale: at === "sheet" ? 1 : 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", damping: 24, stiffness: 300 }}
+      style={{ transformOrigin: at === "top" ? "top right" : "bottom right" }}
+    >
+      {at === "sheet" && <div className="mx-auto mb-1.5 h-1 w-6 rounded-full bg-white/25" />}
+      {items.map((label, i) => (
+        <div
+          key={label}
+          className={`relative flex items-center justify-between border-b border-white/5 px-2.5 py-[7px] text-[9px] last:border-0 ${
+            i === hi ? "bg-emerald-400/20 font-semibold text-emerald-100" : "text-white/75"
+          }`}
+        >
+          <span className="truncate">{label}</span>
+          {i === hi && <Tap className="right-2 top-1/2 translate-x-1/2" />}
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+function ConfirmPanel({ style }: { style: "ios" | "iosWebApp" | "android" }) {
+  if (style === "android") {
+    return (
+      <motion.div
+        className="absolute inset-x-3 top-1/2 z-30 -translate-y-1/2 rounded-2xl bg-[#2c2c2e] p-3 shadow-2xl"
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", damping: 22, stiffness: 300 }}
+      >
+        <p className="text-[10px] font-semibold text-white">Add to home screen</p>
+        <div className="mt-2 flex items-center gap-2">
+          <img src="/icon-192.png" alt="" className="h-6 w-6 rounded-md" />
+          <span className="border-b border-emerald-400 text-[9px] text-white/80">HuDa</span>
+        </div>
+        <div className="mt-3 flex justify-end gap-3 text-[9px] font-semibold">
+          <span className="text-white/50">Cancel</span>
+          <span className="relative text-emerald-300">
+            Install
+            <Tap className="left-1/2 top-1/2" />
+          </span>
+        </div>
+      </motion.div>
+    );
+  }
+  return (
+    <motion.div
+      className="absolute inset-x-0 bottom-0 top-8 z-30 rounded-t-2xl bg-[#1c1c1e] px-2.5 pt-2.5 shadow-2xl"
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", damping: 26, stiffness: 280 }}
+    >
+      <div className="flex items-center justify-between gap-1 whitespace-nowrap text-[7.5px]">
+        <span className="text-white/50">Cancel</span>
+        <span className="min-w-0 flex-1 truncate text-center font-semibold text-white">Add to Home Screen</span>
+        <span className="relative shrink-0 rounded-full bg-sky-500 px-2 py-0.5 font-semibold text-white">
+          Add
+          <Tap className="left-1/2 top-1/2" />
+        </span>
+      </div>
+      <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/[0.06] p-2">
+        <img src="/icon-192.png" alt="" className="h-6 w-6 rounded-md" />
+        <span className="text-[9px] text-white/85">HuDa</span>
+      </div>
+      {style === "iosWebApp" && (
+        <div className="mt-2 flex items-center justify-between rounded-lg bg-white/[0.06] p-2 text-[9px] text-white/85">
+          Open as Web App
+          <span className="relative h-3.5 w-6 rounded-full bg-emerald-500">
+            <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-white" />
+          </span>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function HomeScreenDone() {
+  return (
+    <div className="absolute inset-0 z-30 bg-gradient-to-b from-[#3a3f55] via-[#6b5a70] to-[#b58a6a] px-3 pt-9">
+      <div className="grid grid-cols-4 gap-x-2 gap-y-3">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="flex flex-col items-center gap-0.5">
+            <span className="h-6 w-6 rounded-md bg-white/25" />
+            <span className="h-1 w-4 rounded bg-white/25" />
+          </div>
+        ))}
+        <motion.div
+          className="flex flex-col items-center gap-0.5"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.35, type: "spring", damping: 12, stiffness: 260 }}
+        >
+          <img src="/icon-192.png" alt="" className="h-6 w-6 rounded-md ring-2 ring-emerald-300/80" />
+          <span className="text-[7px] font-semibold text-white">HuDa</span>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function PhoneDemo({ chrome, scene, sceneKey }: { chrome: Chrome; scene: Scene; sceneKey: number }) {
+  return (
+    <div
+      className="relative h-[250px] w-[136px] overflow-hidden rounded-[26px] border-[3px] border-white/15 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+      aria-hidden="true"
+    >
+      {/* The HuDa page behind the browser bars */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#2b2a22] via-[#4a3f25] to-[#1b1a14]">
+        <div className="absolute inset-x-0 top-[38%] flex flex-col items-center gap-1.5">
+          <span className="h-1.5 w-16 rounded-full bg-amber-200/50" />
+          <span className="h-1.5 w-10 rounded-full bg-amber-200/35" />
+        </div>
+        <div className="absolute inset-x-3 bottom-14 h-9 rounded-xl border border-white/10 bg-black/30" />
+      </div>
+      {/* Status bar / dynamic island */}
+      <div className="absolute left-1/2 top-1.5 z-40 h-3 w-10 -translate-x-1/2 rounded-full bg-black" />
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={sceneKey}
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {scene.kind !== "done" && <Toolbars chrome={chrome} hot={scene.kind === "tap"} />}
+          {(scene.kind === "menu" || scene.kind === "confirm") && <div className="absolute inset-0 z-20 bg-black/40" />}
+          {scene.kind === "menu" && <MenuPanel at={scene.at} items={scene.items} hi={scene.hi} />}
+          {scene.kind === "confirm" && <ConfirmPanel style={scene.style} />}
+          {scene.kind === "done" && <HomeScreenDone />}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

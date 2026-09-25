@@ -14,6 +14,7 @@ import {
 } from "@/lib/data/quran";
 import { CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { ActionSheet, useIsMobile } from "@/components/ui/ActionSheet";
 
 /*
  * View count, live listeners and comments for the Surah / Juz on screen.
@@ -659,6 +660,56 @@ export function PlayerStatsFrame({
     setViewsOpen((v) => !v);
     setComposerOpen(false);
   };
+  // Popover on larger screens, bottom action sheet on phones.
+  const isMobile = useIsMobile();
+  const viewsBody = (
+    <>
+    <div className="mb-3 flex items-center justify-between">
+      <h3 className={cn("text-sm font-bold text-white", lang === "ta" && "font-tamil")}>{T.views[lang]}</h3>
+      <button
+        type="button"
+        onClick={() => setViewsOpen(false)}
+        className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white"
+        aria-label="Close"
+      >
+        <CloseIcon className="text-sm" />
+      </button>
+    </div>
+    {stats ? (
+      <div className="space-y-3">
+        <div>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{contentLabel(e.content)}</p>
+          <div className="grid grid-cols-3 gap-2">
+            <Metric label={T.users[lang]} value={compactCount(stats.content.users)} />
+            <Metric label={T.liveNow[lang]} value={compactCount(stats.content.live)} live />
+            <Metric label={T.hours[lang]} value={formatHours(stats.content.seconds)} />
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{T.allSite[lang]}</p>
+          <div className="grid grid-cols-3 gap-2">
+            <Metric label={T.users[lang]} value={compactCount(stats.site.users)} />
+            <Metric label={T.liveNow[lang]} value={compactCount(stats.site.live)} live />
+            <Metric label={T.hours[lang]} value={formatHours(stats.site.seconds)} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between rounded-xl bg-amber-300/10 border border-amber-300/25 px-3 py-2.5">
+          <div>
+            <div className="text-[11px] text-amber-200/80">{T.top[lang]}</div>
+            <div className="text-sm font-semibold text-white">{surahName(stats.site.top_surah)}</div>
+          </div>
+          {stats.site.top_surah_users != null && (
+            <div className="text-right text-xs text-sand-200/80 tabular-nums">
+              {compactCount(stats.site.top_surah_users)} {T.users[lang].toLowerCase()}
+            </div>
+          )}
+        </div>
+      </div>
+    ) : (
+      <p className="text-sm text-sand-200/70">{e.statsFailed ? T.unavailable[lang] : "…"}</p>
+    )}
+    </>
+  );
   const stat =
     "flex items-center gap-1.5 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
 
@@ -667,7 +718,7 @@ export function PlayerStatsFrame({
       {/* View count details — outside the frame: a backdrop-filter inside another
           backdrop-filter can't blur what lies behind the outer one. */}
       <AnimatePresence>
-        {viewsOpen && (
+        {viewsOpen && !isMobile && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -678,53 +729,14 @@ export function PlayerStatsFrame({
             aria-label={T.views[lang]}
             className="pointer-events-auto absolute bottom-full right-0 z-20 mb-2 max-h-[60vh] w-full max-w-[380px] overflow-y-auto rounded-[28px] sm:rounded-[32px] bg-black/[0.08] backdrop-blur-[6px] border border-white/15 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
           >
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className={cn("text-sm font-bold text-white", lang === "ta" && "font-tamil")}>{T.views[lang]}</h3>
-              <button
-                type="button"
-                onClick={() => setViewsOpen(false)}
-                className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white"
-                aria-label="Close"
-              >
-                <CloseIcon className="text-sm" />
-              </button>
-            </div>
-            {stats ? (
-              <div className="space-y-3">
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{contentLabel(e.content)}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Metric label={T.users[lang]} value={compactCount(stats.content.users)} />
-                    <Metric label={T.liveNow[lang]} value={compactCount(stats.content.live)} live />
-                    <Metric label={T.hours[lang]} value={formatHours(stats.content.seconds)} />
-                  </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{T.allSite[lang]}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Metric label={T.users[lang]} value={compactCount(stats.site.users)} />
-                    <Metric label={T.liveNow[lang]} value={compactCount(stats.site.live)} live />
-                    <Metric label={T.hours[lang]} value={formatHours(stats.site.seconds)} />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-amber-300/10 border border-amber-300/25 px-3 py-2.5">
-                  <div>
-                    <div className="text-[11px] text-amber-200/80">{T.top[lang]}</div>
-                    <div className="text-sm font-semibold text-white">{surahName(stats.site.top_surah)}</div>
-                  </div>
-                  {stats.site.top_surah_users != null && (
-                    <div className="text-right text-xs text-sand-200/80 tabular-nums">
-                      {compactCount(stats.site.top_surah_users)} {T.users[lang].toLowerCase()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-sand-200/70">{e.statsFailed ? T.unavailable[lang] : "…"}</p>
-            )}
+            {viewsBody}
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Phones: the same details as a bottom action sheet */}
+      <ActionSheet open={viewsOpen && isMobile} onClose={() => setViewsOpen(false)} label={T.views[lang]} keepAttr="data-engagement-keep">
+        <div className="overflow-y-auto">{viewsBody}</div>
+      </ActionSheet>
     <div
       className={cn(
         "pointer-events-auto relative flex max-w-full flex-col",

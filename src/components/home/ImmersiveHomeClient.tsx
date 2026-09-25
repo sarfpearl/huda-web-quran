@@ -10,7 +10,7 @@ import { ImmersiveHeader } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
-import { InstallGuide } from "./InstallGuide";
+import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon } from "@/components/ui/Icon";
 import {
@@ -803,6 +803,7 @@ export function ImmersiveHomeClient({
           lang={language}
           playerRef={playerWrapRef}
           leading={
+            <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={handleToggleVisualMode}
@@ -816,6 +817,9 @@ export function ImmersiveHomeClient({
                 <ImageIcon className="text-base sm:text-lg" />
               )}
             </button>
+            {/* Reopens the Add to Home Screen guide after it was dismissed */}
+            <InstallGuideButton className="relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
+            </div>
           }
         >
           <div ref={playerWrapRef} className="pointer-events-auto flex max-w-[calc(100vw-2rem)] justify-center">

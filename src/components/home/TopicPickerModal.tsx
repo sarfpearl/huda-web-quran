@@ -8,6 +8,7 @@ import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
 import { CloseIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -240,16 +241,17 @@ export function TopicPickerModal({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="pointer-events-auto fixed inset-0 z-50 bg-black/70 backdrop-blur-sm cursor-pointer"
+              className="pointer-events-auto fixed inset-0 z-50 bg-black/40 cursor-pointer"
             />
 
             {/* Right Slide-Over Panel */}
             <motion.div
-              initial={{ x: "100%" }}
+              initial={{ x: "calc(100% + 1rem)" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              exit={{ x: "calc(100% + 1rem)" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="pointer-events-auto fixed inset-y-0 right-0 z-50 flex h-full w-[88vw] max-w-md flex-col bg-black/[0.08] border-l border-white/15 p-4 md:p-6 shadow-2xl backdrop-blur-[14px]"
+              // Floating card in the player's glass, inset from the screen edges
+              className={`pointer-events-auto fixed top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-3 md:top-4 md:bottom-4 md:right-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6`}
             >
               {/* 1. Shared Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/10">

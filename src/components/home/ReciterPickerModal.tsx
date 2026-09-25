@@ -8,6 +8,7 @@ import {
   type QuranReciter,
 } from "@/lib/data/quranReciters";
 import { ImamQuranIcon } from "@/components/ui/Icon";
+import { ActionSheet, PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
 
 interface ReciterPickerModalProps {
   isOpen: boolean;
@@ -35,6 +36,8 @@ export function ReciterPickerModal({
   );
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const panelRef = useRef<HTMLDivElement>(null);
+  // Phones get a bottom action sheet; larger screens keep the dropdown panel.
+  const isMobile = useIsMobile();
   const selectedItemRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
 
@@ -67,8 +70,9 @@ export function ReciterPickerModal({
   }, [isOpen, onClose]);
 
   // Close on outside click, but ignore clicks on the trigger button to prevent toggle race flicker
+  // (the phone sheet closes from its own scrim instead)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isMobile) return;
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       if (triggerRef?.current && triggerRef.current.contains(e.target as Node)) {
         return; // Button's own click listener handles toggle cleanly
@@ -83,9 +87,7 @@ export function ReciterPickerModal({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("touchstart", handlePointerDown);
     };
-  }, [isOpen, onClose, triggerRef]);
-
-  if (!isOpen) return null;
+  }, [isOpen, isMobile, onClose, triggerRef]);
 
   const query = searchQuery.trim().toLowerCase();
   const filteredReciters = QURAN_RECITERS.filter((r) => {
@@ -102,14 +104,8 @@ export function ReciterPickerModal({
     );
   });
 
-  return (
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Quran Reciter Selection"
-      className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-14 sm:right-0 sm:w-96 z-50 rounded-3xl bg-black/[0.08] backdrop-blur-[14px] border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 sm:p-5 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200"
-    >
+  const body = (
+    <>
 
       {/* Header with Title and Close Button */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
@@ -238,7 +234,7 @@ export function ReciterPickerModal({
       </div>
 
       {/* Reciter List */}
-      <div className="max-h-[50vh] sm:max-h-[55vh] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+      <div className={`${isMobile ? "min-h-0 flex-1" : "max-h-[55vh]"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
         {filteredReciters.length === 0 ? (
           <div className="py-8 text-center text-xs text-sand-300/60">
             {searchQuery.trim()
@@ -339,6 +335,30 @@ export function ReciterPickerModal({
           </svg>
         </a>
       </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <ActionSheet open={isOpen} onClose={onClose} label="Quran Reciter Selection">
+        <div ref={panelRef} className="flex min-h-0 flex-1 flex-col select-none">
+          {body}
+        </div>
+      </ActionSheet>
+    );
+  }
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Quran Reciter Selection"
+      className={`absolute top-14 right-0 w-96 z-50 rounded-3xl ${PLAYER_GLASS} p-5 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200`}
+    >
+      {body}
     </div>
   );
 }

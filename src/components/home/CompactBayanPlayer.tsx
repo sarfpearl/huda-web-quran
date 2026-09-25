@@ -525,7 +525,7 @@ export function CompactBayanPlayer({
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
-      <div className="relative flex items-center justify-between gap-3 sm:gap-5">
+      <div className="relative flex items-start justify-between gap-3 sm:gap-5">
         {/* Cover Artwork */}
         <div
           ref={fullCoverRef}
