@@ -18,9 +18,8 @@ export default function AdminLayout({
     <div className="min-h-screen">
       {!isWriteEnabled ? (
         <div className="border-b border-gold-400/40 bg-gold-400/10 px-4 py-2 text-center text-sm text-gold-600 dark:text-gold-300">
-          Demo mode — content is read-only. Connect Supabase
-          (<code className="font-mono">NEXT_PUBLIC_DATA_SOURCE=supabase</code>) to
-          enable saving, uploads and auth.
+          Bayan content (Bayan, Categories, Speakers, Media) is in demo mode and
+          read-only. Quran views, likes and comments are live.
         </div>
       ) : null}
 
