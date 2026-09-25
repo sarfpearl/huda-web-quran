@@ -94,12 +94,12 @@ export function ImmersiveHeader({
       : qaHud;
 
   return (
-    <header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 pointer-events-none box-border">
+    <header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 pointer-events-none box-border">
       {/* Top Left Time & Location */}
       <TimeLocationWidget />
 
       {/* Top Right Header Controls */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* QA HUD pill (leading, before the language toggle) */}
         {qaHudControlled}
 
@@ -109,7 +109,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={onToggleLanguage}
-            className="pointer-events-auto flex items-center gap-1 justify-center h-9 px-2.5 sm:h-11 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
+            className="pointer-events-auto flex items-center gap-1 justify-center h-11 sm:h-12 px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
             title={
               language === "ta"
                 ? "தற்போது: தமிழ் (Click to switch to English)"
@@ -118,7 +118,7 @@ export function ImmersiveHeader({
             aria-label="Toggle Quran translation language between English and Tamil"
           >
             {/* Globe / translate icon */}
-            <svg className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg className="h-[1.15rem] w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z" />
             </svg>
@@ -138,12 +138,12 @@ export function ImmersiveHeader({
                 ? showMeaning ? "மொழிபெயர்ப்பை மறை" : "மொழிபெயர்ப்பைக் காட்டு"
                 : showMeaning ? "Hide translation of the meaning" : "Show translation of the meaning"
             }
-            className={`pointer-events-auto flex items-center gap-1 justify-center h-9 px-2.5 sm:h-11 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+            className={`pointer-events-auto flex items-center gap-1 justify-center h-11 sm:h-12 px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
             {/* Translate icon; slashed when the translation is hidden */}
-            <TranslateIcon slashed={!showMeaning} className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]" />
+            <TranslateIcon slashed={!showMeaning} className="h-[1.15rem] w-[1.15rem]" />
             <span className={`hidden sm:inline text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>
               {language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
             </span>
@@ -156,7 +156,7 @@ export function ImmersiveHeader({
             ref={reciterTriggerRef}
             type="button"
             onClick={handleToggleReciterSelector}
-            className="pointer-events-auto relative grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
+            className="pointer-events-auto relative grid h-11 w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
             title={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
             aria-label={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
             aria-expanded={isReciterSelectorOpen}
@@ -164,7 +164,7 @@ export function ImmersiveHeader({
           >
             <div className="relative h-full w-full p-0.5 rounded-full overflow-hidden">
               <div className="absolute inset-0 grid place-items-center text-sand-200">
-                <ImamQuranIcon className="text-lg sm:text-2xl" />
+                <ImamQuranIcon className="text-2xl" />
               </div>
               {selectedReciter.photoUrl && !headerAvatarError && (
                 <Image
@@ -212,7 +212,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={onToggleVisualMode}
-            className="pointer-events-auto grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+            className="pointer-events-auto grid h-11 w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
             title={
               visualMode === "video"
                 ? "Video Mode Active (Click to switch to Image Mode)"
@@ -225,9 +225,9 @@ export function ImmersiveHeader({
             }
           >
             {visualMode === "video" ? (
-              <VideoCameraIcon className="text-base sm:text-xl text-sand-200" />
+              <VideoCameraIcon className="text-xl text-sand-200" />
             ) : (
-              <ImageIcon className="text-base sm:text-xl text-sand-200" />
+              <ImageIcon className="text-xl text-sand-200" />
             )}
           </button>
         )}

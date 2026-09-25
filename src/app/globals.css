@@ -83,6 +83,20 @@
     overflow-x: hidden;
   }
 
+  /* Immersive home: fixed screen, no document scroll or overscroll bounce */
+  html.screen-locked,
+  html.screen-locked body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  html.screen-locked body {
+    position: fixed;
+    inset: 0;
+    min-height: 0;
+  }
+
   body {
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));

@@ -362,13 +362,12 @@ export function CompactBayanPlayer({
 
   const ringPct = dragPct ?? Math.min(Math.max(juzProgressPct, 0), 100);
   const thumbAngle = (ringPct / 100) * 2 * Math.PI;
-  // Below 900px the compact pill is as wide as the full card, so the Comments /
-  // View count row above the player keeps the same edges when toggling.
+  // Compact pill hugs its controls, spaced like the full card's transport row.
   const compactView = (
       <div
         ref={compactRef}
         aria-hidden={!collapsed}
-        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] justify-between min-[900px]:w-max min-[900px]:max-w-[calc(100vw-2rem)] min-[900px]:justify-start items-center gap-0 sm:gap-2 p-1.5 px-4 sm:p-2 sm:px-8 min-[900px]:px-2`}
+        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 p-2 px-3 sm:px-4`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
@@ -379,22 +378,9 @@ export function CompactBayanPlayer({
           aria-label={prevTrackLabel}
           title={prevTrackLabel}
         >
-          <PrevIcon className="text-xs sm:text-sm" />
+          <PrevIcon className="text-lg" />
         </button>
 
-        {onPrevVerse && (
-          <button
-            type="button"
-            onClick={() => { haptic(); onPrevVerse(); }}
-            className={compactBtn}
-            aria-label="Previous Ayah"
-            title="Previous Ayah"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
-            </svg>
-          </button>
-        )}
 
         {/* Cover = play button, ringed by the seek bar — tap to play / pause, drag the ring to seek */}
         <div
@@ -415,7 +401,7 @@ export function CompactBayanPlayer({
           onPointerMove={onRingPointerMove}
           onPointerUp={endScrub}
           onPointerCancel={endScrub}
-          className="group relative mx-0.5 sm:mx-1 h-14 w-14 sm:h-15 sm:w-15 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+          className="group relative h-16 w-16 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
         >
           <button
             type="button"
@@ -450,9 +436,9 @@ export function CompactBayanPlayer({
               {isLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
               ) : isPlaying ? (
-                <PauseIcon className="text-base sm:text-xl" />
+                <PauseIcon className="text-2xl" />
               ) : (
-                <PlayIcon className="text-base sm:text-xl ml-0.5" />
+                <PlayIcon className="text-2xl ml-0.5" />
               )}
             </span>
           </button>
@@ -485,19 +471,6 @@ export function CompactBayanPlayer({
         </div>
 
 
-        {onNextVerse && (
-          <button
-            type="button"
-            onClick={() => { haptic(); onNextVerse(); }}
-            className={compactBtn}
-            aria-label="Next Ayah"
-            title="Next Ayah"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-            </svg>
-          </button>
-        )}
 
         <button
           type="button"
@@ -506,7 +479,7 @@ export function CompactBayanPlayer({
           aria-label={nextTrackLabel}
           title={nextTrackLabel}
         >
-          <NextIcon className="text-xs sm:text-sm" />
+          <NextIcon className="text-lg" />
         </button>
 
         <button
@@ -516,7 +489,7 @@ export function CompactBayanPlayer({
           aria-label="Expand player"
           title="Expand player"
         >
-          <ChevronDownIcon className="text-sm rotate-180" />
+          <ChevronDownIcon className="text-xl rotate-180" />
         </button>
       </div>
   );
@@ -525,7 +498,7 @@ export function CompactBayanPlayer({
     <div
       ref={fullRef}
       aria-hidden={collapsed}
-      className={`${viewBase} ${collapsed ? viewHidden : viewShown} w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-10 sm:py-6`}
+      className={`${viewBase} ${collapsed ? viewHidden : viewShown} w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-6 sm:py-6`}
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
@@ -590,8 +563,23 @@ export function CompactBayanPlayer({
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
           {(isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse)) ? (
-            <div className="mt-2 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 w-fit rounded-full bg-black/40 border border-white/15 text-xs select-none">
-              <span className="text-sand-300/80 font-normal tabular-nums">
+            <div className="mt-2 inline-flex h-9 items-center w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
+              {onPrevVerse ? (
+                <button
+                  type="button"
+                  onClick={() => { haptic(); onPrevVerse(); }}
+                  className={pillStepBtn}
+                  aria-label="Previous Ayah"
+                  title="Previous Ayah"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+                  </svg>
+                </button>
+              ) : (
+                <span className="w-3" />
+              )}
+              <span className="text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
                 {isAyahSeq && ayahSeq ? (
                   ayahSeq.preType === "istiadhah" ? (
                     "Isti'adhah"
@@ -608,6 +596,21 @@ export function CompactBayanPlayer({
                   <>Ayat {currentSegment?.type === "ayah" && currentSegment.ayahNumber ? currentSegment.ayahNumber : (currentVerse?.ayahNumber && currentVerse.ayahNumber > 0 ? currentVerse.ayahNumber : 1)}/{activeSurah?.verses || totalVerses || 1}</>
                 )}
               </span>
+              {onNextVerse ? (
+                <button
+                  type="button"
+                  onClick={() => { haptic(); onNextVerse(); }}
+                  className={pillStepBtn}
+                  aria-label="Next Ayah"
+                  title="Next Ayah"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+                  </svg>
+                </button>
+              ) : (
+                <span className="w-3" />
+              )}
             </div>
           ) : null}
           {errorMsg && (
@@ -634,7 +637,7 @@ export function CompactBayanPlayer({
                 ? "Play a random Juz"
                 : "Random Category / Shuffle"
             }
-            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
+            className="grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
             aria-label={
               isSurahTrackId(bayan.id)
                 ? "Shuffle Surah"
@@ -656,7 +659,7 @@ export function CompactBayanPlayer({
             }}
             aria-label="Playback Speed"
             data-tooltip={`Playback speed · ${player.playbackRate}x`}
-            className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+            className="grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
             {player.playbackRate}x
           </button>
@@ -668,7 +671,7 @@ export function CompactBayanPlayer({
         <div className="group relative flex items-center h-5">
           {/* Track · played fill · knob (Quran = gold, Bayan = emerald). The native
               thumb is hidden; the knob below mirrors the same progress. */}
-          <div className="absolute inset-x-0 h-2 rounded-full bg-black/55 overflow-hidden pointer-events-none">
+          <div className="absolute inset-x-0 h-2 rounded-full bg-white/20 ring-1 ring-inset ring-white/10 overflow-hidden pointer-events-none">
             <div
               className={`absolute inset-y-0 left-0 rounded-full ${isQuran ? "bg-amber-400" : "bg-emerald-500"} transition-[width] duration-100 ease-linear`}
               style={{ width: `${barPct}%` }}
@@ -727,81 +730,53 @@ export function CompactBayanPlayer({
 
       {/* Bottom Transport Controls Bar — spread edge to edge below 900px (like the
           compact pill), centred on larger screens */}
-      <div className="mt-4 flex items-center justify-between min-[900px]:justify-center gap-0 sm:gap-2 sm:px-2">
+      <div className="mt-4 flex items-center justify-center gap-2 sm:gap-3">
         <VolumeControl active={!collapsed} />
 
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label={prevTrackLabel}
           title={prevTrackLabel}
         >
-          <PrevIcon className="text-sm" />
+          <PrevIcon className="text-lg" />
         </button>
-
-        {onPrevVerse && (
-          <button
-            type="button"
-            onClick={() => { haptic(); onPrevVerse(); }}
-            className={ayahStepBtn}
-            aria-label="Previous Ayah"
-            title="Previous Ayah"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
-            </svg>
-          </button>
-        )}
 
         {/* Glowing Emerald Play Button */}
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
-          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isLoading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
           ) : isPlaying ? (
-            <PauseIcon className="text-lg" />
+            <PauseIcon className="text-2xl" />
           ) : (
-            <PlayIcon className="text-lg ml-0.5" />
+            <PlayIcon className="text-2xl ml-0.5" />
           )}
         </button>
-
-        {onNextVerse && (
-          <button
-            type="button"
-            onClick={() => { haptic(); onNextVerse(); }}
-            className={ayahStepBtn}
-            aria-label="Next Ayah"
-            title="Next Ayah"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-            </svg>
-          </button>
-        )}
 
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label={nextTrackLabel}
           title={nextTrackLabel}
         >
-          <NextIcon className="text-sm" />
+          <NextIcon className="text-lg" />
         </button>
 
         <button
           type="button"
           onClick={() => toggleCollapsed(true)}
-          className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           aria-label="Minimize player"
           title="Minimize player"
         >
-          <ChevronDownIcon className="text-sm" />
+          <ChevronDownIcon className="text-xl" />
         </button>
       </div>
     </div>
@@ -933,7 +908,7 @@ function VolumeControl({
         aria-expanded={open}
         title={silent ? "Muted" : `Volume ${Math.round(volume * 100)}%`}
       >
-        {silent ? <MuteIcon className="text-sm" /> : <VolumeIcon className="text-sm" />}
+        {silent ? <MuteIcon className="text-xl" /> : <VolumeIcon className="text-xl" />}
       </button>
       {mounted && createPortal(popover, document.body)}
     </>
@@ -941,7 +916,7 @@ function VolumeControl({
 }
 
 const volumeBtn =
-  "grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** The flying cover copy. Sits at the destination rect and animates in from the
  *  source on three layers (X, Y, scale) with separate easings, so the path curves:
@@ -1027,7 +1002,8 @@ const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
 const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
 
 const compactBtn =
-  "grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
-const ayahStepBtn =
-  "grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+/** « » ayah steps inside the Ayat pill — full pill height (36px). */
+const pillStepBtn =
+  "grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer";

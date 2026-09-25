@@ -90,7 +90,7 @@ export function GlobalAudioPlayer() {
       <button
         type="button"
         onClick={player.togglePlay}
-        className="grid h-12 w-12 place-items-center rounded-full bg-primary-700 text-xl text-sand-50 shadow-soft transition-transform active:scale-95 hover:bg-primary-600"
+        className="grid h-14 w-14 place-items-center rounded-full bg-primary-700 text-2xl text-sand-50 shadow-soft transition-transform active:scale-95 hover:bg-primary-600"
         aria-label={player.isPlaying ? "Pause" : "Play"}
       >
         {player.isPlaying ? <PauseIcon /> : <PlayIcon />}

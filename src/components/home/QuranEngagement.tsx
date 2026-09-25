@@ -334,7 +334,7 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
       aria-label={count > 0 ? `${tip} · ${count}` : tip}
       data-tooltip={tip}
       className={cn(
-        "flex h-8 sm:h-9 min-w-8 sm:min-w-9 items-center justify-center gap-1 rounded-full bg-black/40 border border-white/10 text-[11px] font-bold tabular-nums transition-all cursor-pointer hover:bg-black/60 active:scale-90 disabled:cursor-default disabled:active:scale-100",
+        "flex h-9 min-w-9 items-center justify-center gap-1 rounded-full bg-black/40 border border-white/10 text-[11px] font-bold tabular-nums transition-all cursor-pointer hover:bg-black/60 active:scale-90 disabled:cursor-default disabled:active:scale-100",
         count > 0 && "px-2.5",
         liked ? "text-emerald-400" : "text-sand-200/80 hover:text-emerald-300"
       )}
@@ -631,12 +631,15 @@ export function PlayerStatsFrame({
   e,
   lang = "en",
   playerRef,
+  leading,
   children,
 }: {
   e: QuranEngagement;
   lang?: Lang;
   /** The player container passed as children's ref — measured for alignment. */
   playerRef: RefObject<HTMLElement>;
+  /** Control at the strip's left edge (the image/video toggle). */
+  leading?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const geo = usePlayerGeometry(playerRef);
@@ -725,20 +728,22 @@ export function PlayerStatsFrame({
     >
       <div
         className={cn("relative items-center justify-between", show ? "flex h-7 sm:h-8" : "hidden")}
-        style={{ paddingLeft: geo?.left ?? 24, paddingRight: geo?.right ?? 24 }}
+        // Minimum insets so the icons clear the rounded corners (compact pill is tight).
+        style={{ paddingLeft: Math.max(geo?.left ?? 16, 16), paddingRight: Math.max(geo?.right ?? 24, 24) }}
       >
-        <button
-          type="button"
-          data-engagement-keep
-          onClick={toggleViews}
-          aria-label={`${T.liveNow[lang]}: ${stats?.content.live ?? 0}`}
-          className={stat}
-        >
-          <LiveDot on={Boolean(stats && stats.content.live > 0)} />
-          <span>{T.live[lang]}</span>
-          <span>{stats ? compactCount(stats.content.live) : "–"}</span>
-        </button>
+        {leading ?? <span />}
         <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            type="button"
+            data-engagement-keep
+            onClick={toggleViews}
+            aria-label={`${T.liveNow[lang]}: ${stats?.content.live ?? 0}`}
+            className={stat}
+          >
+            <LiveDot on={Boolean(stats && stats.content.live > 0)} />
+            <span>{T.live[lang]}</span>
+            <span>{stats ? compactCount(stats.content.live) : "–"}</span>
+          </button>
           <button
             type="button"
             data-engagement-keep

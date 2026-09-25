@@ -70,9 +70,9 @@ export function TimeLocationWidget({
   if (!mounted) {
     return (
       <div
-        className={`pointer-events-auto flex flex-col items-center justify-center rounded-full bg-black/[0.08] px-4 sm:px-[2rem] py-1.5 sm:py-2 border border-white/15 backdrop-blur-[6px] shadow-md text-center min-w-[70px] sm:min-w-[135px] min-h-[40px] sm:min-h-[52px] ${className}`}
+        className={`pointer-events-auto flex flex-col items-center justify-center shrink-0 rounded-full bg-black/[0.08] px-4 sm:px-[2rem] py-1.5 sm:py-2 border border-white/15 backdrop-blur-[6px] shadow-md text-center min-w-[70px] sm:min-w-[135px] min-h-11 sm:min-h-12 ${className}`}
       >
-        <span className="text-sm sm:text-lg font-extrabold text-white tracking-tight leading-none">
+        <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-none">
           --:--
         </span>
         <span className="text-[9px] sm:text-xs font-medium text-slate-300 tracking-wide mt-0.5 sm:mt-1 leading-none truncate max-w-[70px] sm:max-w-none">
@@ -84,9 +84,9 @@ export function TimeLocationWidget({
 
   return (
     <div
-      className={`pointer-events-auto flex flex-col items-center justify-center rounded-full bg-black/[0.08] px-4 sm:px-[2rem] py-1.5 sm:py-2 border border-white/15 backdrop-blur-[6px] shadow-lg text-center min-w-[70px] sm:min-w-[135px] min-h-[40px] sm:min-h-[52px] ${className}`}
+      className={`pointer-events-auto flex flex-col items-center justify-center shrink-0 rounded-full bg-black/[0.08] px-4 sm:px-[2rem] py-1.5 sm:py-2 border border-white/15 backdrop-blur-[6px] shadow-lg text-center min-w-[70px] sm:min-w-[135px] min-h-11 sm:min-h-12 ${className}`}
     >
-      <span className="text-sm sm:text-lg font-extrabold text-white tracking-tight leading-tight drop-shadow-sm font-sans">
+      <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-tight drop-shadow-sm font-sans">
         {timeStr}
       </span>
       <span className="text-[9px] sm:text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 truncate max-w-[70px] sm:max-w-none">

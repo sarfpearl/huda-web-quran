@@ -11,6 +11,7 @@ import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { VideoCameraIcon, ImageIcon } from "@/components/ui/Icon";
 import {
   isQuranTrack,
   isQuranTrackId,
@@ -719,7 +720,8 @@ export function ImmersiveHomeClient({
       <ImmersiveHeader
         onShuffle={handleShuffle}
         visualMode={visualMode}
-        onToggleVisualMode={handleToggleVisualMode}
+        // The image/video toggle lives in the player strip whenever it shows.
+        onToggleVisualMode={engagement.content ? undefined : handleToggleVisualMode}
         language={language}
         onToggleLanguage={handleToggleLanguage}
         showMeaning={showTranslation}
@@ -778,7 +780,26 @@ export function ImmersiveHomeClient({
         )}
         {/* Live comments + composer (the Live / view count strip frames the player below) */}
         <EngagementOverlay e={engagement} lang={language} alignTo={playerWrapRef} />
-        <PlayerStatsFrame e={engagement} lang={language} playerRef={playerWrapRef}>
+        <PlayerStatsFrame
+          e={engagement}
+          lang={language}
+          playerRef={playerWrapRef}
+          leading={
+            <button
+              type="button"
+              onClick={handleToggleVisualMode}
+              data-tooltip={visualMode === "video" ? "Image mode" : "Video mode"}
+              aria-label={visualMode === "video" ? "Switch to Image Mode" : "Switch to Video Mode"}
+              className="relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']"
+            >
+              {visualMode === "video" ? (
+                <VideoCameraIcon className="text-base sm:text-lg" />
+              ) : (
+                <ImageIcon className="text-base sm:text-lg" />
+              )}
+            </button>
+          }
+        >
           <div ref={playerWrapRef} className="pointer-events-auto flex max-w-[calc(100vw-2rem)] justify-center">
             {/* Compact Integrated Glassmorphism Player with Ayah Controls */}
             {activeBayan && (
