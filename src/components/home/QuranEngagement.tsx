@@ -18,7 +18,8 @@ import { cn } from "@/lib/utils";
 /*
  * View count, live listeners and comments for the Surah / Juz on screen.
  *  - useQuranEngagement()   shared state (polls Supabase, posts/deletes).
- *  - EngagementOverlay      above the player: live comments + composer.
+ *  - EngagementOverlay      above the player: the general comments + composer
+ *                           (shown while 💬 is open; outside press closes).
  *  - PlayerStatsFrame       glass frame around the player whose top strip
  *                           shows Live (left) and view count + comments (right).
  *  - PlayerLikeButton       ♥ like (with count) inside the expanded player.
@@ -70,6 +71,8 @@ const T = {
 } as const;
 
 const NAME_KEY = "huda-comment-name";
+/** Comments are one general stream for everyone (not per Surah / Juz). */
+const GENERAL = { kind: "general", ref: 0 } as const;
 const COMMENTS_POLL_MS = 10_000;
 const STATS_POLL_MS = 30_000;
 
@@ -87,8 +90,8 @@ export function quranContentOf(trackId: string | null | undefined): QuranContent
   return null;
 }
 
-export const contentLabel = (c: QuranContent | null) =>
-  !c ? "—" : c.kind === "juz" ? `Juz ${c.id}${QURAN_JUZ[c.id - 1] ? ` · ${QURAN_JUZ[c.id - 1].title}` : ""}` : QURAN_SURAHS[c.id - 1]?.name ?? `Surah ${c.id}`;
+export const contentLabel = (c: { kind: QuranKind | "general"; id: number } | null) =>
+  !c ? "—" : c.kind === "general" ? "General" : c.kind === "juz" ? `Juz ${c.id}${QURAN_JUZ[c.id - 1] ? ` · ${QURAN_JUZ[c.id - 1].title}` : ""}` : QURAN_SURAHS[c.id - 1]?.name ?? `Surah ${c.id}`;
 
 const surahName = (n: number | null | undefined) => (n ? QURAN_SURAHS[n - 1]?.name ?? `Surah ${n}` : "—");
 export const compactCount = (n: number) =>
@@ -125,6 +128,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   const kind = content?.kind ?? null;
   const ref = content?.id ?? null;
   const [comments, setComments] = useState<QuranComment[]>([]);
+  const [commentsTotal, setCommentsTotal] = useState(0);
   const [stats, setStats] = useState<ViewStats | null>(null);
   const [statsFailed, setStatsFailed] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -143,7 +147,6 @@ export function useQuranEngagement(content: QuranContent | null) {
   }, []);
 
   useEffect(() => {
-    setComments([]);
     setStats(null);
     setLikes(null);
   }, [kind, ref]);
@@ -160,13 +163,15 @@ export function useQuranEngagement(content: QuranContent | null) {
 
   const loadComments = useCallback(() => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase || !kind || !ref) return;
+    if (!supabase) return;
     supabase
-      .rpc("get_quran_comments", { p_kind: kind, p_ref: ref, p_limit: 50, p_viewer: getSessionId() })
+      .rpc("get_quran_comments", { p_kind: GENERAL.kind, p_ref: GENERAL.ref, p_limit: 50, p_viewer: getSessionId() })
       .then(({ data, error }) => {
-        if (!error && data) setComments(((data.comments ?? []) as QuranComment[]).slice().reverse());
+        if (error || !data) return;
+        setComments(((data.comments ?? []) as QuranComment[]).slice().reverse());
+        setCommentsTotal(data.total ?? 0);
       }, () => {});
-  }, [kind, ref]);
+  }, []);
 
   const loadStats = useCallback(() => {
     const supabase = getSupabaseBrowserClient();
@@ -192,6 +197,20 @@ export function useQuranEngagement(content: QuranContent | null) {
         if (!error && data) setLikes(data as { count: number; liked: boolean });
       }, () => {});
   }, [kind, ref]);
+
+  // Comments & View count close on any press outside them (another control
+  // included). Their own panels and toggles carry data-engagement-keep.
+  useEffect(() => {
+    if (!composerOpen && !viewsOpen) return;
+    const onDown = (ev: PointerEvent) => {
+      const t = ev.target as Element | null;
+      if (t?.closest?.("[data-engagement-keep]")) return;
+      setComposerOpen(false);
+      setViewsOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [composerOpen, viewsOpen]);
 
   usePolling(loadComments, COMMENTS_POLL_MS);
   usePolling(loadStats, STATS_POLL_MS);
@@ -224,23 +243,24 @@ export function useQuranEngagement(content: QuranContent | null) {
   const post = useCallback(
     async (body: string): Promise<"rate" | "failed" | null> => {
       const supabase = getSupabaseBrowserClient();
-      if (!supabase || !kind || !ref) return "failed";
+      if (!supabase) return "failed";
       try {
         const { data, error } = await supabase.rpc("add_quran_comment", {
           p_viewer: getSessionId(),
-          p_kind: kind,
-          p_ref: ref,
+          p_kind: GENERAL.kind,
+          p_ref: GENERAL.ref,
           p_name: name,
           p_body: body,
         });
         if (error || !data?.ok) return data?.error === "rate_limited" ? "rate" : "failed";
         setComments((c) => [...c, data.comment as QuranComment]);
+        setCommentsTotal((n) => n + 1);
         return null;
       } catch {
         return "failed";
       }
     },
-    [kind, ref, name]
+    [name]
   );
 
   const remove = useCallback(async (id: string) => {
@@ -253,12 +273,14 @@ export function useQuranEngagement(content: QuranContent | null) {
     });
     const { data, error } = await supabase.rpc("delete_quran_comment", { p_viewer: getSessionId(), p_id: id });
     if (error || data !== true) setComments(before);
+    else setCommentsTotal((n) => Math.max(0, n - 1));
   }, []);
 
   return {
     content,
     configured,
     comments,
+    commentsTotal,
     stats,
     statsFailed,
     composerOpen,
@@ -485,7 +507,7 @@ export function EngagementOverlay({
   useLayoutEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [e.comments.length]);
+  }, [e.comments.length, composerOpen]);
 
   useEffect(() => {
     if (composerOpen) inputRef.current?.focus();
@@ -529,9 +551,11 @@ export function EngagementOverlay({
       style={playerWidth ? { width: playerWidth, maxWidth: "100%" } : undefined}
       className="pointer-events-none relative mb-2 flex w-full max-w-[680px] flex-col"
     >
-      {/* Always-visible live comments (newest at the bottom) */}
-      {e.comments.length > 0 && (
+      {/* Comments (one general stream, newest at the bottom) — shown with the
+          comment box while 💬 is open */}
+      {composerOpen && e.comments.length > 0 && (
         <ul
+          data-engagement-keep
           ref={listRef}
           aria-label={T.comment[lang]}
           className="no-scrollbar pointer-events-auto mb-2 flex max-h-[28vh] w-[85%] flex-col items-start gap-1.5 overflow-y-auto pt-6 [mask-image:linear-gradient(to_bottom,transparent,black_28px)]"
@@ -547,6 +571,7 @@ export function EngagementOverlay({
       {/* Composer (opened from the header's comment button) */}
       {composerOpen && (
         <form
+          data-engagement-keep
           onSubmit={submit}
           className="pointer-events-auto mb-2 flex h-12 w-full min-w-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-2 pr-1.5 shadow-lg"
         >
@@ -639,6 +664,7 @@ export function PlayerStatsFrame({
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.18 }}
             role="dialog"
+            data-engagement-keep
             aria-label={T.views[lang]}
             className="pointer-events-auto absolute bottom-full right-0 z-20 mb-2 max-h-[60vh] w-full max-w-[380px] overflow-y-auto rounded-[28px] sm:rounded-[32px] bg-black/[0.08] backdrop-blur-[6px] border border-white/15 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
           >
@@ -703,6 +729,7 @@ export function PlayerStatsFrame({
       >
         <button
           type="button"
+          data-engagement-keep
           onClick={toggleViews}
           aria-label={`${T.liveNow[lang]}: ${stats?.content.live ?? 0}`}
           className={stat}
@@ -714,6 +741,7 @@ export function PlayerStatsFrame({
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             type="button"
+            data-engagement-keep
             onClick={toggleViews}
             aria-expanded={viewsOpen}
             aria-label={`${T.overall[lang]}: ${stats?.content.users ?? 0}`}
@@ -725,17 +753,18 @@ export function PlayerStatsFrame({
           {/* Comments (moved here from the header): opens the comment box */}
           <button
             type="button"
+            data-engagement-keep
             onClick={() => {
               setComposerOpen((o) => !o);
               setViewsOpen(false);
             }}
             aria-pressed={composerOpen}
-            aria-label={`${T.comment[lang]}: ${e.comments.length}`}
+            aria-label={`${T.comment[lang]}: ${e.commentsTotal}`}
             data-tooltip={T.comment[lang]}
             className={cn(stat, composerOpen && "text-emerald-300")}
           >
             <CommentIcon className="text-xs sm:text-sm" />
-            <span>{e.comments.length > 99 ? "99+" : e.comments.length}</span>
+            <span>{e.commentsTotal > 99 ? "99+" : e.commentsTotal}</span>
           </button>
         </div>
       </div>

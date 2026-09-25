@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 interface AdminComment {
   id: string;
-  kind: QuranKind;
+  kind: QuranKind | "general";
   ref: number;
   name: string;
   body: string;
@@ -122,7 +122,7 @@ export function CommentsModeration() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Comments</h1>
-          <p className="text-muted text-sm">Hide, restore or delete comments on Surahs and Juz.</p>
+          <p className="text-muted text-sm">Hide, restore or delete comments.</p>
         </div>
         {key && (
           <button type="button" onClick={lock} className="text-muted text-xs hover:underline">
