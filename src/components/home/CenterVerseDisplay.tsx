@@ -24,6 +24,45 @@ interface CenterVerseDisplayProps {
   reciterWordSync?: boolean;
   /** When a 30 Juz track is playing, hide center verses to focus purely on the 8K artwork */
   isJuz?: boolean;
+  /** Before the first play, greet the visitor instead of showing the ayah. */
+  showGreeting?: boolean;
+}
+
+const GREETING = {
+  en: { line: "As-salamu alaykum", meaning: "Peace be upon you" },
+  ta: { line: "அஸ்ஸலாமு அலைக்கும்", meaning: "உங்கள் மீது சாந்தி உண்டாவதாக" },
+} as const;
+
+function Greeting({ language, bottomInset }: { language: "en" | "ta"; bottomInset: number | null }) {
+  const g = GREETING[language];
+  return (
+    <div
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
+      style={bottomInset != null ? { paddingBottom: bottomInset } : undefined}
+    >
+      <div className="flex flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500">
+        <h2
+          dir="rtl"
+          lang="ar"
+          className="font-arabic font-normal text-amber-300 leading-[1.6] quran-arabic-shadow [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl"
+        >
+          السَّلَامُ عَلَيْكُمْ
+        </h2>
+        <p
+          lang={language}
+          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-white text-2xl sm:text-3xl md:text-4xl tracking-wide quran-translation-shadow`}
+        >
+          {g.line}
+        </p>
+        <p
+          lang={language}
+          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-sand-50/75 text-base sm:text-lg md:text-xl tracking-wide quran-translation-shadow`}
+        >
+          {g.meaning}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -63,6 +102,7 @@ export function CenterVerseDisplay({
   hasWordTiming: propHasWordTiming,
   reciterWordSync = true,
   isJuz = false,
+  showGreeting = false,
 }: CenterVerseDisplayProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -247,6 +287,8 @@ export function CenterVerseDisplay({
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
   // here (its current ayah) — so we no longer blanket-hide on isJuz; we render
   // whenever there's an active verse. Maher's full-Juz file passes none.
+  if (showGreeting) return <Greeting language={language} bottomInset={bottomInset} />;
+
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
 

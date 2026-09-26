@@ -145,7 +145,7 @@ export function CompactBayanPlayer({
   // full player's cover to the compact play button (and back).
   const fullCoverRef = useRef<HTMLDivElement>(null);
   const compactCoverRef = useRef<HTMLButtonElement>(null);
-  const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; expand: boolean; id: number } | null>(null);
+  const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; fromRadius: number; toRadius: number; expand: boolean; id: number } | null>(null);
 
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
@@ -157,7 +157,15 @@ export function CompactBayanPlayer({
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (src && dst && !reduceMotion) {
       // Both views stay mounted (untransformed), so the destination rect is final already.
-      setFlight({ from: src.getBoundingClientRect(), to: dst.getBoundingClientRect(), expand: !next, id: Date.now() });
+      const radius = (el: Element) => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+      setFlight({
+        from: src.getBoundingClientRect(),
+        to: dst.getBoundingClientRect(),
+        fromRadius: radius(src),
+        toRadius: radius(dst),
+        expand: !next,
+        id: Date.now(),
+      });
     }
     setAnimate(true);
     setCollapsed(next);
@@ -187,15 +195,14 @@ export function CompactBayanPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showTranslation]);
 
-  // Small screens: the full player shows until playback starts, then it shrinks
-  // to the compact pill so a long ayah has the screen. Not remembered, and a
-  // manual expand stays until the next play.
+  // Every screen size: the full player shows until playback starts, then it
+  // shrinks to the compact pill so the ayah has the screen. Not remembered,
+  // and a manual expand stays until the next play.
   const wasPlayingRef = useRef(isPlaying);
   useEffect(() => {
     const was = wasPlayingRef.current;
     wasPlayingRef.current = isPlaying;
     if (!isPlaying || was || collapsed) return;
-    if (!window.matchMedia(SMALL_SCREEN).matches) return;
     toggleCollapsed(true, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying]);
@@ -557,7 +564,7 @@ export function CompactBayanPlayer({
         {/* Cover Artwork */}
         <div
           ref={fullCoverRef}
-          className={`${flight ? "invisible" : ""} relative h-20 w-20 sm:h-36 sm:w-36 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 shadow-md border border-emerald-500/30`}
+          className={`${flight ? "invisible" : ""} relative w-[clamp(5.5rem,20vw,8rem)] aspect-[5/7] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
         >
           {coverSrc ? (
             <Image
@@ -971,6 +978,11 @@ function VolumeControl({
 const volumeBtn =
   "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
+/** A corner radius capped at half the short side (rounded-full reports 9999px). */
+function radiusOf(r: DOMRect, radius: number) {
+  return Math.min(radius, Math.min(r.width, r.height) / 2);
+}
+
 /** The flying cover copy. Sits at the destination rect and animates in from the
  *  source on three layers (X, Y, scale) with separate easings, so the path curves:
  *    collapse → sideways first, then drops into the play button;
@@ -978,12 +990,16 @@ const volumeBtn =
 function CoverFlight({
   from,
   to,
+  fromRadius,
+  toRadius,
   src,
   expand,
   onDone,
 }: {
   from: DOMRect;
   to: DOMRect;
+  fromRadius: number;
+  toRadius: number;
   src: string | null;
   expand: boolean;
   onDone: () => void;
@@ -995,7 +1011,6 @@ function CoverFlight({
   useLayoutEffect(() => {
     const dx = from.left + from.width / 2 - (to.left + to.width / 2);
     const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-    const k = from.width / to.width;
     const duration = expand ? 620 : 560;
     const fast = "cubic-bezier(0.2, 0.75, 0.3, 1)"; // leads the motion
     const slow = "cubic-bezier(0.55, 0, 0.3, 1)"; // follows
@@ -1008,8 +1023,13 @@ function CoverFlight({
         [{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }],
         { duration, easing: expand ? fast : slow },
       ),
+      // The full cover is a rounded rectangle, the compact one a circle — morph
+      // size and corners together.
       sRef.current!.animate(
-        [{ transform: `scale(${k})` }, { transform: "scale(1)" }],
+        [
+          { width: `${from.width}px`, height: `${from.height}px`, borderRadius: `${radiusOf(from, fromRadius)}px` },
+          { width: `${to.width}px`, height: `${to.height}px`, borderRadius: `${radiusOf(to, toRadius)}px` },
+        ],
         { duration, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
       ),
     ];
@@ -1031,10 +1051,11 @@ function CoverFlight({
       className="pointer-events-none fixed z-[70] will-change-transform"
       style={{ left: to.left, top: to.top, width: to.width, height: to.height }}
     >
-      <div ref={yRef} className="h-full w-full will-change-transform">
+      <div ref={yRef} className="relative h-full w-full will-change-transform">
         <div
           ref={sRef}
-          className="h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-500/30 shadow-[0_12px_30px_rgba(0,0,0,0.6)] will-change-transform"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_12px_30px_rgba(0,0,0,0.6)]"
+          style={{ width: to.width, height: to.height, borderRadius: radiusOf(to, toRadius) }}
         >
           {src && (
             // eslint-disable-next-line @next/next/no-img-element

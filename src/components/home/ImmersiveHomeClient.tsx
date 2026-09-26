@@ -82,6 +82,11 @@ export function ImmersiveHomeClient({
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
   const [language, setLanguage] = useState<"en" | "ta">("en");
+  // Greet the visitor on open; the ayah takes over once playback first starts.
+  const [hasPlayed, setHasPlayed] = useState(false);
+  useEffect(() => {
+    if (player.isPlaying) setHasPlayed(true);
+  }, [player.isPlaying]);
   const [selectedReciter, setSelectedReciter] = useState<QuranReciter>(getDefaultReciter);
 
   // Memoize surah tracks for the selected reciter
@@ -723,6 +728,7 @@ export function ImmersiveHomeClient({
         hasWordTiming={isJuz ? !juzPreSegment && juzWordSync.hasWordTiming : hasWordTiming}
         reciterWordSync={reciterHasWordTiming(selectedReciter)}
         isJuz={isJuz}
+        showGreeting={!hasPlayed}
       />
 
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}

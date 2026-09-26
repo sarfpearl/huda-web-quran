@@ -284,6 +284,50 @@ function detectEnv(): Env | null {
   };
 }
 
+/** Desktop browsers: how to install HuDa as an app on this computer. */
+interface DesktopEnv {
+  browser: string;
+  steps: { en: string; ta: string }[];
+}
+
+function detectDesktop(): DesktopEnv {
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua)) {
+    return {
+      browser: "Edge",
+      steps: [
+        { en: "Click ••• at the top right", ta: "மேலே வலதுபுறம் உள்ள ••• ஐ அழுத்தவும்" },
+        { en: "Choose Apps → Install HuDa", ta: "Apps → Install HuDa ஐத் தேர்ந்தெடுக்கவும்" },
+      ],
+    };
+  }
+  if (/Chrome\//.test(ua)) {
+    return {
+      browser: "Chrome",
+      steps: [
+        { en: "Click the install icon at the right of the address bar", ta: "முகவரிப் பட்டியின் வலதுபுறம் உள்ள install icon ஐ அழுத்தவும்" },
+        { en: "Or ⋮ → Cast, save and share → Install page as app", ta: "அல்லது ⋮ → Cast, save and share → Install page as app" },
+      ],
+    };
+  }
+  if (/Safari\//.test(ua) && !/Firefox\//.test(ua)) {
+    return {
+      browser: "Safari",
+      steps: [
+        { en: "In the menu bar, choose File → Add to Dock", ta: "மெனு பட்டியில் File → Add to Dock ஐத் தேர்ந்தெடுக்கவும்" },
+        { en: "Click Add — HuDa opens from the Dock like an app", ta: "Add ஐ அழுத்தவும் — Dock-இலிருந்து ஆப் போலத் திறக்கும்" },
+      ],
+    };
+  }
+  return {
+    browser: "this browser",
+    steps: [
+      { en: "This browser can't install web apps — open HuDa in Chrome, Edge or Safari", ta: "இந்த browser-இல் நிறுவ முடியாது — Chrome, Edge அல்லது Safari-இல் HuDa-வைத் திறக்கவும்" },
+      { en: "Or open it on your phone and add it to the Home Screen", ta: "அல்லது உங்கள் phone-இல் திறந்து முகப்புத் திரையில் சேர்க்கவும்" },
+    ],
+  };
+}
+
 function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -309,6 +353,7 @@ function snoozed() {
  */
 export function InstallGuide() {
   const [env, setEnv] = useState<Env | null>(null);
+  const [desk, setDesk] = useState<DesktopEnv | null>(null);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const installEvent = useInstallPrompt();
@@ -316,8 +361,9 @@ export function InstallGuide() {
   useEffect(() => {
     if (isStandalone()) return;
     const detected = detectEnv();
-    if (!detected) return;
-    setEnv(detected);
+    // Desktop: only opened from the strip icon, never popped up by itself.
+    if (detected) setEnv(detected);
+    else setDesk(detectDesktop());
 
     const onOpen = () => {
       setStep(0);
@@ -326,7 +372,7 @@ export function InstallGuide() {
     const onInstalled = () => setOpen(false);
     window.addEventListener(OPEN_EVENT, onOpen);
     window.addEventListener("appinstalled", onInstalled);
-    const timer = snoozed() ? 0 : window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
+    const timer = !detected || snoozed() ? 0 : window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener(OPEN_EVENT, onOpen);
@@ -358,7 +404,7 @@ export function InstallGuide() {
 
   return (
     <AnimatePresence>
-      {open && env && current && (
+      {open && ((env && current) || desk) && (
         <>
           <motion.div
             key="install-scrim"
@@ -385,12 +431,14 @@ export function InstallGuide() {
                 <img src="/icon-192.png" alt="" className="h-12 w-12 shrink-0 rounded-2xl" />
                 <div className="min-w-0 flex-1">
                   <h2 id="install-guide-title" className="text-[15px] font-semibold leading-snug">
-                    Add HuDa to your Home Screen
+                    {env ? "Add HuDa to your Home Screen" : "Install HuDa on this computer"}
                   </h2>
-                  <p className="font-tamil text-[13px] text-sand-200/90 leading-snug">HuDa-வை முகப்புத் திரையில் சேர்க்கவும்</p>
+                  <p className="font-tamil text-[13px] text-sand-200/90 leading-snug">
+                    {env ? "HuDa-வை முகப்புத் திரையில் சேர்க்கவும்" : "HuDa-வை இந்தக் கணினியில் நிறுவவும்"}
+                  </p>
                   <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] px-2.5 py-0.5 text-[11px] text-sand-200">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-                    {env.device} · {env.browser}
+                    {env ? `${env.device} · ${env.browser}` : `Desktop · ${desk?.browser}`}
                   </p>
                 </div>
                 <button
@@ -417,6 +465,20 @@ export function InstallGuide() {
                     Install app · <span className="font-tamil">நிறுவவும்</span>
                   </button>
                 </>
+              ) : !env || !current ? (
+                <ol className="mt-4 space-y-3">
+                  {desk?.steps.map((st, i) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-400">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm leading-snug">{st.en}</p>
+                        <p className="font-tamil mt-0.5 text-xs text-sand-300/85 leading-snug">{st.ta}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               ) : (
                 <>
                   <div className="mt-3 flex justify-center">
@@ -468,15 +530,15 @@ export function InstallGuide() {
 
 /**
  * Strip icon: installs in one tap where the browser allows it, otherwise
- * reopens the guide. Renders nothing where neither applies: desktop, or
- * already running as the installed app.
+ * opens the guide (phone steps, or desktop steps on a computer). Renders
+ * nothing when already running as the installed app.
  */
 export function InstallGuideButton({ className = "" }: { className?: string }) {
   const [show, setShow] = useState(false);
   const [installed, setInstalled] = useState(false);
   const installEvent = useInstallPrompt();
   useEffect(() => {
-    setShow(!isStandalone() && detectEnv() !== null);
+    setShow(!isStandalone());
     const onInstalled = () => setInstalled(true);
     window.addEventListener("appinstalled", onInstalled);
     return () => window.removeEventListener("appinstalled", onInstalled);
@@ -496,9 +558,13 @@ export function InstallGuideButton({ className = "" }: { className?: string }) {
       aria-label="How to add HuDa to your Home Screen"
       className={className}
     >
-      <svg className="h-[1.1em] w-[1.1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="6" y="2" width="12" height="20" rx="3" />
-        <path d="M12 8v6M9 11l3 3 3-3M10.5 18.5h3" />
+      <svg className="h-[1.1em] w-[1.1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 11C3 7.25 3 5.375 3.955 4.061a4.5 4.5 0 0 1 1.106-1.106C6.375 2 8.25 2 12 2s5.625 0 6.939.955a4.5 4.5 0 0 1 1.106 1.106C21 5.375 21 7.25 21 11v2c0 3.75 0 5.625-.955 6.939a4.5 4.5 0 0 1-1.106 1.106C17.625 22 15.75 22 12 22s-5.625 0-6.939-.955a4.5 4.5 0 0 1-1.106-1.106C3 18.625 3 16.75 3 13v-2Z" />
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M12.25 15.6c.21 0 .45 0 .65.03.22.03.5.1.73.34.24.23.31.52.34.73.03.2.03.44.03.65v.5c0 .21 0 .45-.03.65-.03.22-.1.5-.34.73-.23.24-.51.31-.73.34-.2.03-.44.03-.65.03h-.5c-.21 0-.45 0-.65-.03-.22-.03-.5-.1-.73-.34-.24-.23-.31-.51-.34-.73-.03-.2-.03-.44-.03-.65v-.5c0-.21 0-.45.03-.65.03-.22.1-.5.34-.73.23-.24.51-.31.73-.34.2-.03.44-.03.65-.03h.5ZM12 5c.41 0 .75.34.75.75v5.21l1.72-1.69a.75.75 0 0 1 1.06 1.07l-3 2.95a.75.75 0 0 1-1.05 0l-3-2.95a.75.75 0 0 1 1.05-1.07l1.72 1.69V5.75c0-.41.34-.75.75-.75Z"
+        />
       </svg>
     </button>
   );

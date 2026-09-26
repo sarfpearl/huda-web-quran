@@ -75,7 +75,7 @@ export function TimeLocationWidget({
         <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-none">
           --:--
         </span>
-        <span className="text-[9px] sm:text-xs font-medium text-slate-300 tracking-wide mt-0.5 sm:mt-1 leading-none truncate max-w-[70px] sm:max-w-none">
+        <span className="text-[9px] sm:text-xs font-medium text-slate-300 tracking-wide mt-0.5 sm:mt-1 leading-none whitespace-nowrap">
           {defaultLocation}
         </span>
       </div>
@@ -89,7 +89,7 @@ export function TimeLocationWidget({
       <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-tight drop-shadow-sm font-sans">
         {timeStr}
       </span>
-      <span className="text-[9px] sm:text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 truncate max-w-[70px] sm:max-w-none">
+      <span className="text-[9px] sm:text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 whitespace-nowrap">
         {location}
       </span>
     </div>
