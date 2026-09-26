@@ -77,6 +77,14 @@
     font-family: var(--font-poppins), 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
+  /* The rule above pins Poppins on every span/div, so children of a
+     .font-arabic block (e.g. per-word spans in the verse display) would lose
+     Uthmanic Hafs and fall back to the system Arabic font — which stacks the
+     kasra under the shaddah instead of below the letter. Keep them inheriting. */
+  .font-arabic :where(span, div, p) {
+    font-family: inherit;
+  }
+
   html,
   body {
     max-width: 100vw;
@@ -267,6 +275,20 @@
     /* Crisp, tight contrast for the fine Uthmanic strokes — legible on the video
        background without a heavy glow that thickens/blurs the calligraphy. */
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.55);
+  }
+  /* Current word: gold letters with a soft gold glow (no background). Glyph
+     words get their gold from the font palette (quranGlyphs.ts), which keeps
+     the Tajweed colours; the glow is a text-shadow, so nothing reflows. */
+  .quran-word {
+    transition: text-shadow 150ms ease-out;
+  }
+  .quran-word-glow {
+    text-shadow: 0 0 18px rgba(251, 191, 36, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9);
+  }
+  /* Glyph words carry their colours in the font palette, so an upcoming word
+     is dimmed by opacity. */
+  .quran-word--glyph.quran-word--dim > [aria-hidden] {
+    opacity: 0.6;
   }
   .quran-translation-shadow {
     /* Tight shadow only — a wide blur merged into a dark box behind dense lines. */

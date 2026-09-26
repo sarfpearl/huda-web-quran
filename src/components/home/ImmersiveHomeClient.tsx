@@ -690,6 +690,46 @@ export function ImmersiveHomeClient({
     preludeDuration: player.preludeDuration,
   });
 
+  // Tap a word → jump the recitation to its start. Surah timings share the
+  // player clock; a per-ayah Juz file is ayah-relative and scaled (as above).
+  const handleSeekToWord = (_idx: number, word: { startTime: number }) => {
+    if (player.isPrelude) return;
+    if (!isJuz) {
+      // A first word can start a few ms before the ayah window the verse sync
+      // uses (e.g. 1:6 word 1 at 27.585s, ayah from 27.66s); seeking there would
+      // show the previous ayah, so land just inside the current ayah.
+      const ayahStart = currentSegment?.startTime ?? currentVerse?.timestampFrom ?? 0;
+      player.seek(Math.max(word.startTime, ayahStart + 0.02));
+      return;
+    }
+    const words = juzAyahVerse?.words;
+    if (!words?.length || juzPreSegment) return;
+    const ayahStart = words[0].startTime ?? 0;
+    const qdcDur = (words[words.length - 1].endTime ?? ayahStart) - ayahStart;
+    const scale = qdcDur > 0 && player.duration > 0 ? player.duration / qdcDur : 1;
+    player.seek(Math.max(0, (word.startTime - ayahStart) * scale));
+  };
+
+  // Tajweed colours: off by default; remembered per browser.
+  const [showTajweed, setShowTajweed] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("huda:tajweed") === "1") setShowTajweed(true);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+  const handleToggleTajweed = () => {
+    setShowTajweed((prev) => {
+      try {
+        localStorage.setItem("huda:tajweed", prev ? "0" : "1");
+      } catch {
+        /* storage unavailable */
+      }
+      return !prev;
+    });
+  };
+
   // Ayah meaning (translation) is OFF on every page load; the toggle only
   // applies to the current session.
   const handleToggleMeaning = () => {
@@ -744,6 +784,8 @@ export function ImmersiveHomeClient({
         reciterWordSync={reciterHasWordTiming(selectedReciter)}
         isJuz={isJuz}
         showGreeting={!hasPlayed}
+        onSeekToWord={handleSeekToWord}
+        tajweed={showTajweed}
       />
       </div>
 
@@ -757,6 +799,8 @@ export function ImmersiveHomeClient({
         onToggleLanguage={handleToggleLanguage}
         showMeaning={showTranslation}
         onToggleMeaning={handleToggleMeaning}
+        showTajweed={showTajweed}
+        onToggleTajweed={handleToggleTajweed}
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
@@ -818,7 +862,7 @@ export function ImmersiveHomeClient({
           </div>
         )}
         {/* Live comments + composer (the Live / view count strip frames the player below) */}
-        <EngagementOverlay e={engagement} lang={language} alignTo={playerWrapRef} keyboardOpen={keyboardOpen} />
+        <EngagementOverlay e={engagement} lang={language} />
         {/* Typing a comment: the keyboard leaves no room, so only the comments
             and the box sit above it; the player returns when it closes. */}
         <div className={keyboardOpen && engagement.composerOpen ? "hidden" : "contents"}>

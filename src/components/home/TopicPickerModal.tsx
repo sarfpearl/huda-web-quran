@@ -224,7 +224,7 @@ export function TopicPickerModal({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="pointer-events-auto grid h-11 w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+        className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
         aria-label="Open Content Browser"
         title="Content Browser"
       >

@@ -26,6 +26,31 @@ export function useIsMobile() {
 }
 
 /**
+ * Room the on-screen keyboard takes at the bottom of the layout viewport, and
+ * the visible height. iOS leaves fixed elements behind the keyboard, so a sheet
+ * with a text field lifts itself by this much.
+ */
+function useKeyboardInset(active: boolean) {
+  const [inset, setInset] = useState({ bottom: 0, height: 0 });
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!active || !vv) return;
+    const update = () => {
+      const bottom = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+      setInset({ bottom: bottom > 80 ? bottom : 0, height: vv.height });
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [active]);
+  return inset;
+}
+
+/**
  * Phone / tablet action sheet: slides up from the bottom over a dimmed scene, closes on
  * a scrim tap, Escape, or a swipe down on its handle. Portalled to <body> so a
  * transformed ancestor can't pin it to the wrong box.
@@ -49,6 +74,7 @@ export function ActionSheet({
   keepAttr?: string;
 }) {
   const drag = useDragControls();
+  const kb = useKeyboardInset(open);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -89,6 +115,12 @@ export function ActionSheet({
               PLAYER_GLASS,
               className,
             )}
+            // Keyboard up: sit on top of it and fit the visible area.
+            style={
+              kb.bottom > 0
+                ? { bottom: kb.bottom, maxHeight: Math.round(kb.height * 0.92), height: "auto" }
+                : undefined
+            }
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -108,7 +140,15 @@ export function ActionSheet({
             >
               <span className="h-1 w-10 rounded-full bg-white/30" />
             </div>
-            <div className="flex min-h-0 flex-1 flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">{children}</div>
+            <div
+              className={cn(
+                "flex min-h-0 flex-1 flex-col px-4",
+                // The keyboard covers the home indicator, so no safe-area pad then.
+                kb.bottom > 0 ? "pb-3" : "pb-[calc(env(safe-area-inset-bottom)+1rem)]",
+              )}
+            >
+              {children}
+            </div>
           </motion.div>
         </>
       )}

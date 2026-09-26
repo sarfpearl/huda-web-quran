@@ -44,6 +44,10 @@ interface QuranComment {
   body: string;
   created_at: string;
   mine: boolean;
+  /** Top-level comment this replies to (null / absent = top-level). */
+  parent_id?: string | null;
+  likes?: number;
+  liked?: boolean;
 }
 
 type Lang = "en" | "ta";
@@ -69,6 +73,10 @@ const T = {
   failed: { en: "Couldn't post. Try again.", ta: "பதிவிட முடியவில்லை." },
   comment: { en: "Comments", ta: "கருத்துகள்" },
   change: { en: "Change name", ta: "பெயரை மாற்று" },
+  reply: { en: "Reply", ta: "பதில்" },
+  remove: { en: "Delete", ta: "நீக்கு" },
+  replyingTo: { en: "Replying to", ta: "பதில் அளிப்பது:" },
+  replyTo: { en: "Reply to", ta: "பதில்:" },
 } as const;
 
 const NAME_KEY = "huda-comment-name";
@@ -242,7 +250,7 @@ export function useQuranEngagement(content: QuranContent | null) {
 
   /** Returns an error message, or null on success. */
   const post = useCallback(
-    async (body: string): Promise<"rate" | "failed" | null> => {
+    async (body: string, parentId?: string | null): Promise<"rate" | "failed" | null> => {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) return "failed";
       try {
@@ -252,6 +260,8 @@ export function useQuranEngagement(content: QuranContent | null) {
           p_ref: GENERAL.ref,
           p_name: name,
           p_body: body,
+          // Only sent for replies, so posting works before the replies migration.
+          ...(parentId ? { p_parent: parentId } : {}),
         });
         if (error || !data?.ok) return data?.error === "rate_limited" ? "rate" : "failed";
         setComments((c) => [...c, data.comment as QuranComment]);
@@ -270,11 +280,34 @@ export function useQuranEngagement(content: QuranContent | null) {
     let before: QuranComment[] = [];
     setComments((c) => {
       before = c;
-      return c.filter((x) => x.id !== id);
+      // A top-level comment takes its replies with it (the server cascades too).
+      return c.filter((x) => x.id !== id && x.parent_id !== id);
     });
     const { data, error } = await supabase.rpc("delete_quran_comment", { p_viewer: getSessionId(), p_id: id });
     if (error || data !== true) setComments(before);
     else setCommentsTotal((n) => Math.max(0, n - 1));
+  }, []);
+
+  /** Like / un-like a comment (optimistic; reverts if the server says no). */
+  const toggleCommentLike = useCallback(async (id: string) => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    let before: QuranComment | undefined;
+    const patch = (fn: (c: QuranComment) => QuranComment) =>
+      setComments((list) => list.map((c) => (c.id === id ? fn(c) : c)));
+    patch((c) => {
+      before = c;
+      const liked = Boolean(c.liked);
+      return { ...c, liked: !liked, likes: Math.max(0, (c.likes ?? 0) + (liked ? -1 : 1)) };
+    });
+    const revert = () => before && patch(() => before as QuranComment);
+    try {
+      const { data, error } = await supabase.rpc("toggle_quran_comment_like", { p_viewer: getSessionId(), p_id: id });
+      if (error || !data?.ok) revert();
+      else patch((c) => ({ ...c, liked: data.liked, likes: data.count }));
+    } catch {
+      revert();
+    }
   }, []);
 
   return {
@@ -292,6 +325,7 @@ export function useQuranEngagement(content: QuranContent | null) {
     setName,
     post,
     remove,
+    toggleCommentLike,
     likes,
     toggleLike,
   };
@@ -347,36 +381,6 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
 }
 
 // ── Above the player ────────────────────────────────────────────────────────
-
-/** Live width of the player card (the container's first child). */
-function usePlayerWidth(container: RefObject<HTMLElement> | undefined): number | null {
-  const [width, setWidth] = useState<number | null>(null);
-  useEffect(() => {
-    const wrap = container?.current;
-    if (!wrap || typeof ResizeObserver === "undefined") return;
-    let observed: Element | null = null;
-    const ro = new ResizeObserver(() => {
-      const w = observed?.getBoundingClientRect().width ?? 0;
-      setWidth(w > 0 ? Math.round(w) : null);
-    });
-    const attach = () => {
-      const el = wrap.firstElementChild;
-      if (el === observed) return;
-      if (observed) ro.unobserve(observed);
-      observed = el;
-      if (el) ro.observe(el);
-      else setWidth(null);
-    };
-    attach();
-    const mo = new MutationObserver(attach);
-    mo.observe(wrap, { childList: true });
-    return () => {
-      ro.disconnect();
-      mo.disconnect();
-    };
-  }, [container]);
-  return width;
-}
 
 /**
  * Live geometry of the player card (the container's first child): its width
@@ -444,13 +448,141 @@ function Metric({ label, value, live }: { label: string; value: string; live?: b
   );
 }
 
-function CommentBubble({ c, lang, onDelete }: { c: QuranComment; lang: Lang; onDelete: (id: string) => void }) {
+/** Latin and Tamil initials → the Arabic letter with the closest sound. */
+const ARABIC_INITIAL: Record<string, string> = {
+  a: "ا", b: "ب", c: "ك", d: "د", e: "ا", f: "ف", g: "غ", h: "ه", i: "ا", j: "ج", k: "ك", l: "ل", m: "م",
+  n: "ن", o: "ا", p: "ب", q: "ق", r: "ر", s: "س", t: "ت", u: "ا", v: "ف", w: "و", x: "ك", y: "ي", z: "ز",
+  அ: "ا", ஆ: "ا", இ: "ا", ஈ: "ا", உ: "ا", ஊ: "ا", எ: "ا", ஏ: "ا", ஐ: "ا", ஒ: "ا", ஓ: "ا", ஔ: "ا",
+  க: "ك", ங: "ن", ச: "س", ஞ: "ن", ட: "ت", ண: "ن", த: "ت", ந: "ن", ப: "ب", ம: "م", ய: "ي", ர: "ر",
+  ல: "ل", வ: "و", ழ: "ل", ள: "ل", ற: "ر", ன: "ن", ஜ: "ج", ஷ: "ش", ஸ: "س", ஹ: "ه",
+};
+const ARABIC_LETTERS = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+
+function nameHash(name: string) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
+  return h;
+}
+
+/** Avatar letter: the name's own Arabic initial, else its mapped sound. */
+function arabicInitial(name: string): string {
+  const first = [...name.trim()][0] ?? "";
+  if (/[\u0621-\u064A]/.test(first)) return first;
+  return ARABIC_INITIAL[first.toLowerCase()] ?? ARABIC_LETTERS[nameHash(name) % ARABIC_LETTERS.length];
+}
+
+/** Ink box of a letter in the avatar font, measured once per letter. */
+const inkCache = new Map<string, { x: number; y: number }>();
+const AVATAR_BOX = 100; // SVG units
+const AVATAR_FONT = 56; // SVG units (≈ 18px in the 32px avatar)
+
+/**
+ * Where to put the glyph origin so its ink (not its line box) is centred.
+ * Arabic letters sit very differently on the baseline (غ rises, س and ي
+ * drop), so CSS centring leaves each one off by a different amount.
+ */
+function inkOrigin(letter: string, font: string): { x: number; y: number } | null {
+  const key = `${font}|${letter}`;
+  const hit = inkCache.get(key);
+  if (hit) return hit;
+  const ctx = document.createElement("canvas").getContext("2d");
+  if (!ctx) return null;
+  ctx.font = font;
+  ctx.direction = "ltr";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  const m = ctx.measureText(letter);
+  const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+  const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+  if (!(w > 0 && h > 0)) return null;
+  const c = AVATAR_BOX / 2;
+  const o = {
+    x: c - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2,
+    y: c + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2,
+  };
+  inkCache.set(key, o);
+  return o;
+}
+
+/** Round "profile picture": Arabic initial on a colour picked from the name. */
+function CommentAvatar({ name, small = false }: { name: string; small?: boolean }) {
+  const hue = nameHash(name.trim().toLowerCase()) % 360;
+  const initial = arabicInitial(name);
+  // Isolated ه is a tiny loop; its joined form هـ reads at avatar size.
+  const letter = initial === "ه" ? "هـ" : initial;
+  const ref = useRef<HTMLSpanElement>(null);
+  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let cancelled = false;
+    const measure = () => {
+      if (cancelled) return;
+      const cs = getComputedStyle(el);
+      setOrigin(inkOrigin(letter, `${cs.fontWeight} ${AVATAR_FONT}px ${cs.fontFamily}`));
+    };
+    measure();
+    // Re-measure once the Arabic web font has loaded (metrics change).
+    document.fonts?.ready.then(() => {
+      if (!cancelled) {
+        inkCache.clear();
+        measure();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [letter]);
+
+  return (
+    <span
+      ref={ref}
+      aria-hidden="true"
+      lang="ar"
+      className={cn(
+        "block shrink-0 overflow-hidden rounded-full border border-white/15 font-arabic font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
+        small ? "h-6 w-6" : "h-8 w-8"
+      )}
+      style={{ background: `linear-gradient(135deg, hsl(${hue} 55% 42%), hsl(${(hue + 40) % 360} 60% 28%))` }}
+    >
+      <svg viewBox={`0 0 ${AVATAR_BOX} ${AVATAR_BOX}`} className="h-full w-full">
+        {origin ? (
+          <text x={origin.x} y={origin.y} fontSize={AVATAR_FONT} fill="currentColor" direction="ltr">
+            {letter}
+          </text>
+        ) : (
+          // Before measuring (first paint): approximate centring.
+          <text x="50%" y="50%" fontSize={AVATAR_FONT} fill="currentColor" textAnchor="middle" dominantBaseline="central">
+            {letter}
+          </text>
+        )}
+      </svg>
+    </span>
+  );
+}
+
+function CommentBubble({
+  c,
+  lang,
+  onDelete,
+  onLike,
+  onReply,
+  isReply = false,
+}: {
+  c: QuranComment;
+  lang: Lang;
+  onDelete: (id: string) => void;
+  onLike: (id: string) => void;
+  onReply: (c: QuranComment) => void;
+  isReply?: boolean;
+}) {
   const [confirm, setConfirm] = useState(false);
   useEffect(() => {
     if (!confirm) return;
     const t = window.setTimeout(() => setConfirm(false), 3000);
     return () => window.clearTimeout(t);
   }, [confirm]);
+  const likes = c.likes ?? 0;
 
   return (
     <motion.li
@@ -458,60 +590,95 @@ function CommentBubble({ c, lang, onDelete }: { c: QuranComment; lang: Lang; onD
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -12 }}
-      className="flex max-w-full items-start gap-2 rounded-2xl bg-black/35 backdrop-blur-[8px] px-3 py-1.5 text-xs leading-snug shadow-[0_4px_14px_rgba(0,0,0,0.35)]"
+      className={cn("flex max-w-full items-start gap-2", isReply && "ml-10")}
     >
-      <p className="min-w-0 break-words text-sand-50">
-        <span className="mr-1.5 font-bold text-emerald-300">{c.name}</span>
-        {c.body}
-      </p>
-      {c.mine &&
-        (confirm ? (
-          <button
-            type="button"
-            onClick={() => onDelete(c.id)}
-            className="shrink-0 rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-red-500"
-          >
-            {T.del[lang]}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirm(true)}
-            aria-label="Delete my comment"
-            className="mt-px shrink-0 rounded-full p-0.5 text-sand-200/60 hover:bg-white/15 hover:text-white"
-          >
-            <CloseIcon className="text-[11px]" />
-          </button>
-        ))}
+      <CommentAvatar name={c.name} small={isReply} />
+      <div className="flex min-w-0 flex-col items-start">
+      {/* Same bubble for everyone (min-h = avatar height, so a one-line
+          comment lines up with it); delete lives in the action row. */}
+      <div className="flex min-h-8 max-w-full items-center rounded-2xl bg-black/35 backdrop-blur-[8px] px-3 py-1.5 text-xs leading-snug shadow-[0_4px_14px_rgba(0,0,0,0.35)]">
+        <p className="min-w-0 break-words text-sand-50">
+          <span className="mr-1.5 font-bold text-emerald-300">{c.name}</span>
+          {c.body}
+        </p>
+      </div>
+      {/* ♥ like · Reply */}
+      <div className="mt-0.5 flex items-center gap-3 pl-3 text-[11px] font-semibold text-sand-200/60">
+        <button
+          type="button"
+          onClick={() => onLike(c.id)}
+          aria-pressed={Boolean(c.liked)}
+          aria-label={`${c.liked ? T.unlike[lang] : T.like[lang]}${likes ? `: ${likes}` : ""}`}
+          className={cn(
+            "flex items-center gap-1 py-0.5 transition-colors active:scale-90",
+            c.liked ? "text-emerald-400" : "hover:text-white"
+          )}
+        >
+          <FavouriteIcon filled={Boolean(c.liked)} className="text-[11px]" />
+          {likes > 0 && <span className="tabular-nums">{compactCount(likes)}</span>}
+        </button>
+        <button
+          type="button"
+          onClick={() => onReply(c)}
+          className={cn("py-0.5 hover:text-white", lang === "ta" && "font-tamil")}
+        >
+          {T.reply[lang]}
+        </button>
+        {/* Own comments: Delete → Delete? (confirm within 3 s) */}
+        {c.mine &&
+          (confirm ? (
+            <button
+              type="button"
+              onClick={() => onDelete(c.id)}
+              className={cn("rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-red-500", lang === "ta" && "font-tamil")}
+            >
+              {T.del[lang]}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirm(true)}
+              aria-label="Delete my comment"
+              className={cn("py-0.5 hover:text-red-300", lang === "ta" && "font-tamil")}
+            >
+              {T.remove[lang]}
+            </button>
+          ))}
+      </div>
+      </div>
     </motion.li>
   );
 }
 
-export function EngagementOverlay({
-  e,
-  lang = "en",
-  alignTo,
-  keyboardOpen = false,
-}: {
-  e: QuranEngagement;
-  lang?: Lang;
-  /** Container of the player card; the overlay matches the card's edges. */
-  alignTo?: RefObject<HTMLElement>;
-  /** On-screen keyboard is up: the player is hidden and the list gets the room. */
-  keyboardOpen?: boolean;
-}) {
-  const playerWidth = usePlayerWidth(alignTo);
+/** Comments: a bottom action sheet at every screen size (list + composer). */
+export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang?: Lang }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { composerOpen, setComposerOpen, viewsOpen, setViewsOpen, name, setName } = e;
+  // Replying to this comment (its name is shown above the box).
+  const [replyTo, setReplyTo] = useState<QuranComment | null>(null);
 
+  // Threads: top-level comments oldest → newest, each followed by its replies.
+  const tops = e.comments.filter((c) => !c.parent_id);
+  const repliesOf = (id: string) => e.comments.filter((c) => c.parent_id === id);
+
+  // Stick to the newest top-level comment (a reply lands in its thread instead).
   useLayoutEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [e.comments.length, composerOpen, keyboardOpen]);
+  }, [tops.length, composerOpen]);
+
+  useEffect(() => {
+    if (!composerOpen) setReplyTo(null);
+  }, [composerOpen]);
+
+  const startReply = (c: QuranComment) => {
+    setReplyTo(c);
+    inputRef.current?.focus();
+  };
 
   useEffect(() => {
     if (composerOpen) inputRef.current?.focus();
@@ -544,89 +711,145 @@ export function EngagementOverlay({
     }
     setBusy(true);
     setMessage(null);
-    const err = await e.post(value);
+    const err = await e.post(value, replyTo?.id);
     setBusy(false);
     if (err) setMessage(err === "rate" ? T.rate[lang] : T.failed[lang]);
-    else setText("");
+    else {
+      setText("");
+      setReplyTo(null);
+    }
   };
 
-  return (
-    <div
-      style={playerWidth && !keyboardOpen ? { width: playerWidth, maxWidth: "100%" } : undefined}
-      className="pointer-events-none relative mb-2 flex w-full max-w-[680px] flex-col"
+  const bubble = (c: QuranComment, isReply = false) => (
+    <CommentBubble
+      key={c.id}
+      c={c}
+      lang={lang}
+      isReply={isReply}
+      onDelete={e.remove}
+      onLike={e.toggleCommentLike}
+      onReply={startReply}
+    />
+  );
+  const commentItems = (
+    <AnimatePresence initial={false}>
+      {tops.flatMap((c) => [bubble(c), ...repliesOf(c.id).map((r) => bubble(r, true))])}
+    </AnimatePresence>
+  );
+  const composer = (
+    <form
+      data-engagement-keep
+      onSubmit={submit}
+      className="pointer-events-auto flex h-12 w-full min-w-0 shrink-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-2 pr-1.5 shadow-lg"
     >
-      {/* Comments (one general stream, newest at the bottom) — shown with the
-          comment box while 💬 is open */}
-      {composerOpen && e.comments.length > 0 && (
-        <ul
-          data-engagement-keep
-          ref={listRef}
-          aria-label={T.comment[lang]}
-          className={cn(
-            "no-scrollbar pointer-events-auto mb-2 flex w-[85%] flex-col items-start gap-1.5 overflow-y-auto pt-6 [mask-image:linear-gradient(to_bottom,transparent,black_28px)]",
-            // Keyboard up: the list fills the room between the header and the box.
-            keyboardOpen ? "max-h-[calc(var(--vv-height,60vh)-11rem)]" : "max-h-[28vh]"
-          )}
+      <button
+        type="button"
+        onClick={() => setComposerOpen(false)}
+        aria-label="Close comment box"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sand-200/70 hover:bg-white/10 hover:text-white"
+      >
+        <CloseIcon className="text-sm" />
+      </button>
+      {name && (
+        <button
+          type="button"
+          onClick={() => setName("")}
+          title={T.change[lang]}
+          className="max-w-[28%] shrink-0 truncate text-xs font-bold text-emerald-300 hover:underline"
         >
-          <AnimatePresence initial={false}>
-            {e.comments.map((c) => (
-              <CommentBubble key={c.id} c={c} lang={lang} onDelete={e.remove} />
-            ))}
-          </AnimatePresence>
-        </ul>
+          {name}
+        </button>
       )}
+      <input
+        ref={inputRef}
+        value={text}
+        onChange={(ev) => setText(ev.target.value)}
+        maxLength={name ? 500 : 40}
+        disabled={!e.configured}
+        placeholder={
+          !e.configured
+            ? T.unavailable[lang]
+            : !name
+              ? T.yourName[lang]
+              : replyTo
+                ? `${T.replyTo[lang]} ${replyTo.name}…`
+                : T.say[lang]
+        }
+        aria-label={name ? T.say[lang] : T.yourName[lang]}
+        className={cn(
+          "min-w-0 flex-1 bg-transparent text-base sm:text-sm text-white placeholder:text-sand-200/45 focus:outline-none",
+          lang === "ta" && "font-tamil"
+        )}
+      />
+      <button
+        type="submit"
+        disabled={busy || !text.trim() || !e.configured}
+        aria-label="Send"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 disabled:opacity-40"
+      >
+        <SendIcon className="text-base" />
+      </button>
+    </form>
+  );
+  const errorLine = message && composerOpen && (
+    <p className="mt-1 pl-4 text-xs text-amber-300" role="alert">{message}</p>
+  );
 
-      {/* Composer (opened from the header's comment button) */}
-      {composerOpen && (
-        <form
-          data-engagement-keep
-          onSubmit={submit}
-          className="pointer-events-auto mb-2 flex h-12 w-full min-w-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-2 pr-1.5 shadow-lg"
-        >
+  return (
+    <ActionSheet
+      open={composerOpen}
+      onClose={() => setComposerOpen(false)}
+      label={T.comment[lang]}
+      keepAttr="data-engagement-keep"
+      className="h-[70dvh]"
+    >
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Header: "Comments (17)" · close (same button as the reciter sheet) */}
+        <div className="flex shrink-0 items-center justify-between gap-3 px-1 pb-2">
+          <h2 className={cn("text-base font-bold text-white", lang === "ta" && "font-tamil")}>
+            {T.comment[lang]} <span className="tabular-nums">({e.commentsTotal})</span>
+          </h2>
           <button
             type="button"
             onClick={() => setComposerOpen(false)}
-            aria-label="Close comment box"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sand-200/70 hover:bg-white/10 hover:text-white"
+            aria-label="Close comments"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
           >
             <CloseIcon className="text-sm" />
           </button>
-          {name && (
+        </div>
+        <ul
+          ref={listRef}
+          aria-label={T.comment[lang]}
+          // Soft fade under the header and above the box instead of a hard cut;
+          // the padding keeps the first / last comment clear of the fade.
+          className="no-scrollbar -mx-1 flex min-h-0 flex-1 flex-col items-start gap-1.5 overflow-y-auto overscroll-contain px-1 pt-5 pb-5 [mask-image:linear-gradient(to_bottom,transparent,black_28px,black_calc(100%-24px),transparent)]"
+        >
+          {e.comments.length > 0 ? (
+            commentItems
+          ) : (
+            <li className="m-auto text-sm text-sand-200/50">…</li>
+          )}
+        </ul>
+        {replyTo && (
+          <div className="mb-1.5 flex shrink-0 items-center justify-between gap-2 px-3 text-xs text-sand-200/70">
+            <span className={cn("min-w-0 truncate", lang === "ta" && "font-tamil")}>
+              {T.replyingTo[lang]} <span className="font-bold text-emerald-300">{replyTo.name}</span>
+            </span>
             <button
               type="button"
-              onClick={() => setName("")}
-              title={T.change[lang]}
-              className="max-w-[28%] shrink-0 truncate text-xs font-bold text-emerald-300 hover:underline"
+              onClick={() => setReplyTo(null)}
+              aria-label="Cancel reply"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full hover:bg-white/10 hover:text-white"
             >
-              {name}
+              <CloseIcon className="text-[11px]" />
             </button>
-          )}
-          <input
-            ref={inputRef}
-            value={text}
-            onChange={(ev) => setText(ev.target.value)}
-            maxLength={name ? 500 : 40}
-            disabled={!e.configured}
-            placeholder={!e.configured ? T.unavailable[lang] : name ? T.say[lang] : T.yourName[lang]}
-            aria-label={name ? T.say[lang] : T.yourName[lang]}
-            className={cn(
-              "min-w-0 flex-1 bg-transparent text-base sm:text-sm text-white placeholder:text-sand-200/45 focus:outline-none",
-              lang === "ta" && "font-tamil"
-            )}
-          />
-          <button
-            type="submit"
-            disabled={busy || !text.trim() || !e.configured}
-            aria-label="Send"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 disabled:opacity-40"
-          >
-            <SendIcon className="text-base" />
-          </button>
-        </form>
-      )}
-      {message && composerOpen && <p className="-mt-1 mb-2 pl-4 text-xs text-amber-300" role="alert">{message}</p>}
-
-    </div>
+          </div>
+        )}
+        {composer}
+        {errorLine}
+      </div>
+    </ActionSheet>
   );
 }
 

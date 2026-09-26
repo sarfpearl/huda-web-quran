@@ -155,7 +155,7 @@ export function CompactBayanPlayer({
   // full player's cover to the compact play button (and back).
   const fullCoverRef = useRef<HTMLDivElement>(null);
   const compactCoverRef = useRef<HTMLButtonElement>(null);
-  const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; fromRadius: number; toRadius: number; expand: boolean; id: number } | null>(null);
+  const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; target: HTMLElement; fromRadius: number; toRadius: number; expand: boolean; id: number } | null>(null);
 
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
@@ -166,11 +166,14 @@ export function CompactBayanPlayer({
     const dst = next ? compactCoverRef.current : fullCoverRef.current;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (src && dst && !reduceMotion) {
-      // Both views stay mounted (untransformed), so the destination rect is final already.
+      // Both views stay mounted (untransformed), but the frame around the card
+      // still moves (its bottom strip opens / folds), so the flight follows the
+      // destination's live position rather than this starting rect.
       const radius = (el: Element) => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
       setFlight({
         from: src.getBoundingClientRect(),
         to: dst.getBoundingClientRect(),
+        target: dst,
         fromRadius: radius(src),
         toRadius: radius(dst),
         expand: !next,
@@ -631,11 +634,15 @@ export function CompactBayanPlayer({
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
-      <div className="relative flex items-start justify-between gap-3 sm:gap-5">
+      {/* One row height at every size: the cover is fixed at the action stack's
+          height (3 × 36px + 2 × 8px = 124px) and the track info spreads over it,
+          so NOW PLAYING lines up with the cover's top and the Ayat pill with
+          its bottom. */}
+      <div className="relative flex items-stretch justify-between gap-3 sm:gap-5">
         {/* Cover Artwork */}
         <div
           ref={fullCoverRef}
-          className={`${flight ? "invisible" : ""} relative w-[clamp(5.5rem,20vw,8rem)] aspect-[5/7] md:aspect-square shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
+          className={`${flight ? "invisible" : ""} relative h-[7.75rem] aspect-[3/4] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
         >
           {coverSrc ? (
             <Image
@@ -669,7 +676,7 @@ export function CompactBayanPlayer({
         </div>
 
         {/* Track Info — NOW PLAYING · Title · Arabic Name · Reciter/Speaker · Category */}
-        <div className="min-w-0 flex-1 flex flex-col justify-center">
+        <div className={`min-w-0 flex-1 flex flex-col ${hasAyahPill ? "justify-between" : "justify-center"}`}>
           <span className="text-[10px] sm:text-xs font-semibold text-sand-300/50 uppercase tracking-widest">
             Now Playing
           </span>
@@ -704,7 +711,7 @@ export function CompactBayanPlayer({
         </div>
 
         {/* Right Vertical Action Stack */}
-        <div className="flex flex-col items-end gap-2 shrink-0">
+        <div className="flex flex-col items-end self-start gap-2 shrink-0">
           {/* 1. View count of the Surah / Juz playing (replaced the ♥ button) */}
           {viewSlot}
 
@@ -1035,6 +1042,7 @@ function radiusOf(r: DOMRect, radius: number) {
 function CoverFlight({
   from,
   to,
+  target,
   fromRadius,
   toRadius,
   src,
@@ -1043,6 +1051,8 @@ function CoverFlight({
 }: {
   from: DOMRect;
   to: DOMRect;
+  /** Destination element — tracked each frame, as the layout can still shift. */
+  target: HTMLElement;
   fromRadius: number;
   toRadius: number;
   src: string | null;
@@ -1078,12 +1088,27 @@ function CoverFlight({
         { duration, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
       ),
     ];
+    // Keep the flight anchored to where the destination is now (the frame's
+    // bottom strip moves the card for ~500ms after the switch). The x/y
+    // animations are offsets from this anchor, so the landing stays exact.
+    let raf = 0;
+    const follow = () => {
+      const r = target.getBoundingClientRect();
+      const el = xRef.current;
+      if (el && r.width > 0) {
+        el.style.left = `${r.left + r.width / 2 - to.width / 2}px`;
+        el.style.top = `${r.top + r.height / 2 - to.height / 2}px`;
+      }
+      raf = requestAnimationFrame(follow);
+    };
+    raf = requestAnimationFrame(follow);
     let cancelled = false;
     Promise.all(anims.map((an) => an.finished))
       .then(() => !cancelled && onDone())
       .catch(() => undefined);
     return () => {
       cancelled = true;
+      cancelAnimationFrame(raf);
       anims.forEach((an) => an.cancel());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

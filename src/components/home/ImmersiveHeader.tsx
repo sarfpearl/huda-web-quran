@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/Icon";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { ReciterPickerModal } from "./ReciterPickerModal";
+import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 
 interface ImmersiveHeaderProps {
   onShuffle?: () => void;
@@ -28,6 +29,9 @@ interface ImmersiveHeaderProps {
   /** Ayah meaning (translation) visibility + toggle */
   showMeaning?: boolean;
   onToggleMeaning?: () => void;
+  /** Tajweed colouring of the verse text + toggle */
+  showTajweed?: boolean;
+  onToggleTajweed?: () => void;
   selectedReciter?: QuranReciter;
   onSelectReciter?: (reciter: QuranReciter) => void;
   isQuranActive?: boolean;
@@ -48,6 +52,8 @@ export function ImmersiveHeader({
   onToggleLanguage,
   showMeaning = true,
   onToggleMeaning,
+  showTajweed = false,
+  onToggleTajweed,
   selectedReciter = getDefaultReciter(),
   onSelectReciter,
   isQuranActive = true,
@@ -59,7 +65,22 @@ export function ImmersiveHeader({
   const player = useAudioPlayer();
   const bayan = player.current;
   // Only one header popover open at a time.
-  const [activePopover, setActivePopover] = useState<"reciter" | "qa" | null>(null);
+  const [activePopover, setActivePopover] = useState<"reciter" | "qa" | "tajweed" | null>(null);
+  // The Tajweed panel closes on any press outside it, or Escape.
+  const tajweedRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (activePopover !== "tajweed") return;
+    const onDown = (ev: PointerEvent) => {
+      if (!tajweedRef.current?.contains(ev.target as Node)) setActivePopover(null);
+    };
+    const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setActivePopover(null);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [activePopover]);
   const isReciterSelectorOpen = activePopover === "reciter";
   const [headerAvatarError, setHeaderAvatarError] = useState(false);
   const reciterTriggerRef = useRef<HTMLButtonElement>(null);
@@ -109,7 +130,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={onToggleLanguage}
-            className="pointer-events-auto flex items-center gap-1 justify-center h-11 sm:h-12 px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
+            className="pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
             title={
               language === "ta"
                 ? "தற்போது: தமிழ் (Click to switch to English)"
@@ -138,7 +159,7 @@ export function ImmersiveHeader({
                 ? showMeaning ? "மொழிபெயர்ப்பை மறை" : "மொழிபெயர்ப்பைக் காட்டு"
                 : showMeaning ? "Hide translation of the meaning" : "Show translation of the meaning"
             }
-            className={`pointer-events-auto flex items-center gap-1 justify-center h-11 sm:h-12 px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+            className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
@@ -150,13 +171,72 @@ export function ImmersiveHeader({
           </button>
         )}
 
+        {/* Tajweed: opens a panel with the on/off switch and the colour legend
+            (only when verse text is on screen). The panel is positioned against
+            the header, so it stays on screen on narrow phones. */}
+        {onToggleTajweed && showLanguageToggle && (
+          <div ref={tajweedRef}>
+            <button
+              type="button"
+              onClick={() => setActivePopover((prev) => (prev === "tajweed" ? null : "tajweed"))}
+              aria-expanded={activePopover === "tajweed"}
+              aria-haspopup="dialog"
+              aria-label={language === "ta" ? "தஜ்வீத்" : "Tajweed"}
+              title={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
+              className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+                showTajweed ? "text-amber-300" : "text-white/60"
+              }`}
+            >
+              <TajweedIcon on={showTajweed} className="h-[1.15rem] w-[1.15rem]" />
+              <span className={`hidden sm:inline text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>
+                {language === "ta" ? "தஜ்வீத்" : "Tajweed"}
+              </span>
+            </button>
+            {activePopover === "tajweed" && (
+              <div
+                role="dialog"
+                aria-label={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
+                className="pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150"
+              >
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={showTajweed}
+                  onClick={onToggleTajweed}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 hover:bg-white/5 cursor-pointer"
+                >
+                  <span className={`text-sm font-semibold ${language === "ta" ? "font-tamil" : ""}`}>
+                    {language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${showTajweed ? "bg-amber-400/90" : "bg-white/20"}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${showTajweed ? "left-[1.375rem]" : "left-0.5"}`}
+                    />
+                  </span>
+                </button>
+                <ul className={`mt-1 grid gap-1.5 px-2 pb-1 pt-2 border-t border-white/10 ${showTajweed ? "" : "opacity-50"}`}>
+                  {TAJWEED_LEGEND.map((r) => (
+                    <li key={r.color} className="flex items-center gap-2.5 text-xs text-sand-100/90">
+                      <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
+                      <span className={language === "ta" ? "font-tamil" : ""}>{language === "ta" ? r.ta : r.en}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Quran Voice / Reciter Selector Control */}
         <div className="relative">
           <button
             ref={reciterTriggerRef}
             type="button"
             onClick={handleToggleReciterSelector}
-            className="pointer-events-auto relative grid h-11 w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
+            className="pointer-events-auto relative grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
             title={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
             aria-label={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
             aria-expanded={isReciterSelectorOpen}
@@ -212,7 +292,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={onToggleVisualMode}
-            className="pointer-events-auto grid h-11 w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+            className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
             title={
               visualMode === "video"
                 ? "Video Mode Active (Click to switch to Image Mode)"
@@ -239,5 +319,29 @@ export function ImmersiveHeader({
         {children}
       </div>
     </header>
+  );
+}
+
+/** Three rule-coloured dots (Tajweed on) or muted outlines (off). */
+function TajweedIcon({ on, className }: { on: boolean; className?: string }) {
+  const dots: [number, number, string][] = [
+    [7, 8, "#ff8e3b"],
+    [17, 8, "#3c84d5"],
+    [12, 16.5, "#26b55d"],
+  ];
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      {dots.map(([cx, cy, c]) => (
+        <circle
+          key={c}
+          cx={cx}
+          cy={cy}
+          r={3.6}
+          fill={on ? c : "none"}
+          stroke={on ? "none" : "currentColor"}
+          strokeWidth={1.8}
+        />
+      ))}
+    </svg>
   );
 }

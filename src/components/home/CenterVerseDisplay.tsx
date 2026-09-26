@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
   toArabicNumerals,
   type AyahVerse,
+  type QuranWordTiming,
   type RecitationSegment,
 } from "@/lib/data/quranVerses";
+import { fetchSurahGlyphs, glyphInkPadding, glyphStyle, loadPageFont, type GlyphVerse } from "@/lib/data/quranGlyphs";
 
 interface CenterVerseDisplayProps {
   currentVerse: AyahVerse | null;
@@ -26,6 +28,10 @@ interface CenterVerseDisplayProps {
   isJuz?: boolean;
   /** Before the first play, greet the visitor instead of showing the ayah. */
   showGreeting?: boolean;
+  /** Tap a word to jump the recitation to it (word-timed reciters only). */
+  onSeekToWord?: (index: number, word: QuranWordTiming) => void;
+  /** Tajweed mode: draw each word as its Mushaf Tajweed colour-font glyph. */
+  tajweed?: boolean;
 }
 
 const GREETING = {
@@ -95,6 +101,78 @@ function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSS
   );
 }
 
+type WordState = "active" | "past" | "future" | "ayah";
+
+const WORD_TONE: Record<WordState, string> = {
+  // The recited word glows gold (glyph words: gold palette, see glyphStyle).
+  active: "text-amber-300 quran-word-glow",
+  past: "text-white/95",
+  future: "text-white/60",
+  // No word timing: the whole ayah glows (verse-level fallback).
+  ayah: "text-amber-300 [text-shadow:0_0_18px_rgba(251,191,36,0.75),0_1px_3px_rgba(0,0,0,0.9)]",
+};
+
+/**
+ * One Quran word. Memoised on its state, so a word change re-renders only the
+ * word that gains and the word that loses the highlight — not the whole ayah on
+ * every audio tick. The recited word turns gold with a soft glow: glyph words
+ * via their font's gold palette (Tajweed colours kept), text words via colour.
+ */
+const QuranWord = memo(function QuranWord({
+  id,
+  idx,
+  text,
+  state,
+  glyphCode,
+  glyphPage,
+  tajweed = true,
+  onSelect,
+}: {
+  id: string;
+  idx: number;
+  text: string;
+  state: WordState;
+  /** Tajweed mode: glyph code + Mushaf page, drawn from that page's colour font. */
+  glyphCode?: string;
+  glyphPage?: number;
+  /** Glyph palette: Tajweed colours, or plain white. */
+  tajweed?: boolean;
+  onSelect?: (idx: number) => void;
+}) {
+  const active = state === "active";
+  return (
+    <span
+      data-word-id={id}
+      data-word-idx={idx}
+      aria-current={active ? "true" : undefined}
+      onClick={
+        onSelect
+          ? () => {
+              // Leave a text selection alone (drag-selecting across words).
+              if (window.getSelection()?.toString()) return;
+              onSelect(idx);
+            }
+          : undefined
+      }
+      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} inline-block transition-[color,text-shadow] duration-150 ${
+        onSelect ? "cursor-pointer" : ""
+      } ${WORD_TONE[state]}`}
+    >
+      {glyphCode && glyphPage ? (
+        <>
+          {/* The glyph is a private-use character: screen readers get the real text. */}
+          <span aria-hidden="true" style={{ ...glyphStyle(glyphPage, tajweed, active), ...glyphInkPadding(glyphCode, glyphPage) }}>
+            {glyphCode}
+          </span>
+          <span className="sr-only">{text}</span>
+        </>
+      ) : (
+        text
+      )}
+    </span>
+  );
+});
+
 /**
  * Authentic Madinah-mushaf end-of-ayah marker. The Uthmanic Hafs font's own
  * Arabic-Indic digit glyphs ARE the ornamental ayah rosette — rendering the
@@ -133,6 +211,8 @@ export function CenterVerseDisplay({
   reciterWordSync = true,
   isJuz = false,
   showGreeting = false,
+  onSeekToWord,
+  tajweed = false,
 }: CenterVerseDisplayProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -332,6 +412,63 @@ export function CenterVerseDisplay({
     }
   }, [propWordIndex, fitKey]);
 
+  // The ayah's Madinah-Mushaf glyph words, in both modes (as Quran.com): Tajweed
+  // on = the fonts' Tajweed palette, off = plain white. The Uthmani text is only
+  // the fallback while fonts load — the old Hafs font draws U+06DF / U+06ED as
+  // dotted-circle placeholders. The Bismillah prelude uses 1:1; the Isti'adhah
+  // is not an ayah and stays text. Shown once every page font it needs loaded.
+  const tjRef = (() => {
+    const it = activeItemForFit;
+    if (!it) return null;
+    const type = "type" in it ? it.type : undefined;
+    if (type === "istiadhah") return null;
+    if (type === "bismillah") return { surah: 1, ayah: 1 };
+    const surah = it.surahNumber ?? currentVerse?.surahNumber;
+    const ayah = it.ayahNumber ?? currentVerse?.ayahNumber;
+    return surah && ayah && ayah > 0 ? { surah, ayah } : null;
+  })();
+  const tjKey = tjRef ? `${tjRef.surah}:${tjRef.ayah}` : "";
+  const [glyphVerse, setGlyphVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
+  useEffect(() => {
+    if (!tjRef) return;
+    let cancelled = false;
+    const { surah, ayah } = tjRef;
+    fetchSurahGlyphs(surah).then(async (verses) => {
+      const verse = verses?.find((v) => v.a === ayah);
+      if (!verse || cancelled) return;
+      const pages = [...new Set([...verse.w.map((w) => w[1]), ...(verse.e ? [verse.e[1]] : [])])];
+      const ok = await Promise.all(pages.map(loadPageFont));
+      if (!cancelled && ok.every(Boolean)) setGlyphVerse({ key: tjKey, verse });
+      // Warm the next page's font: recitation runs forward.
+      loadPageFont(Math.min(604, Math.max(...pages) + 1));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tjKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const glyphs = tjRef && glyphVerse?.key === tjKey ? glyphVerse.verse : null;
+
+  // A tapped word shows as current straight away (before the seek lands, or on
+  // its own when it can't seek); the audio-driven word takes over once it moves.
+  const [tappedWord, setTappedWord] = useState<{ key: string; idx: number; from: number } | null>(null);
+  const wordsRef = useRef<QuranWordTiming[]>([]);
+  const seekRef = useRef(onSeekToWord);
+  seekRef.current = onSeekToWord;
+  const audioIdxRef = useRef(-1);
+  const fitKeyRef = useRef(fitKey);
+  fitKeyRef.current = fitKey;
+  const handleWordSelect = useCallback((idx: number) => {
+    setTappedWord({ key: fitKeyRef.current, idx, from: audioIdxRef.current });
+    const w = wordsRef.current[idx];
+    if (w && (w.endTime ?? 0) > (w.startTime ?? 0)) seekRef.current?.(idx, w);
+  }, []);
+  // The tap only bridges the moment before the seek lands: once the audio's word
+  // (or the ayah) moves, drop it for good — otherwise the recitation returning
+  // to the word it was on at the tap would bring the tapped word back.
+  useEffect(() => {
+    setTappedWord((t) => (t && (t.from !== propWordIndex || t.key !== fitKey) ? null : t));
+  }, [propWordIndex, fitKey]);
+
   // During 30 Juz playback, display pure 8K artwork without mismatched verse overlay
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
   // here (its current ayah) — so we no longer blanket-hide on isJuz; we render
@@ -395,6 +532,24 @@ export function CenterVerseDisplay({
       : rawWords.map((w) => ({ word: w, startTime: 0, endTime: 0 }));
 
   const itemKey = fitKey;
+  // Tajweed mode renders the Mushaf glyph words (same word positions as the
+  // timings); otherwise the text words. Timing (endTime) always comes from the
+  // timed words at the same position.
+  const displayWords: { word: string; endTime?: number; glyph?: [string, number] }[] = glyphs
+    ? glyphs.w.map(([code, page, text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime, glyph: [code, page] }))
+    : wordsToRender;
+  wordsRef.current = wordsToRender;
+  audioIdxRef.current = activeWordIndex;
+  // Only ONE word is current: the tapped one until the audio moves off the word
+  // it was on at the tap, then the audio's own.
+  const shownWordIndex =
+    tappedWord && tappedWord.key === fitKey && tappedWord.from === activeWordIndex
+      ? tappedWord.idx
+      : activeWordIndex;
+  // Stable per-word id: surah:ayah:word (prelude segments use their own id).
+  const surahNum = activeItem.surahNumber ?? currentVerse?.surahNumber;
+  const wordIdPrefix =
+    !isPrelude && surahNum && ayahNum > 0 ? `${surahNum}:${ayahNum}` : "id" in activeItem ? activeItem.id : fitKey;
 
   return (
     <div
@@ -450,52 +605,51 @@ export function CenterVerseDisplay({
             data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] tracking-wide quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
           >
-            {wordsToRender.length > 0 ? (
+            {displayWords.length > 0 ? (
               <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">
-                {wordsToRender.map((w, idx) => {
-                  let wordEl: JSX.Element;
-                  // If word-level timing does NOT exist: Fallback highlights the complete active Ayah in amber/gold
-                  if (!hasWordTiming) {
-                    wordEl = (
-                      <span
-                        key={`${idx}-${w.word}`}
-                        data-word-idx={idx}
-                        className="relative inline-block text-amber-300 [text-shadow:0_0_18px_rgba(251,191,36,0.75),0_1px_3px_rgba(0,0,0,0.9)] transition-[color,text-shadow,transform] duration-150"
-                      >
-                        {w.word}
-                      </span>
-                    );
-                  } else {
-                    const isActive = idx === activeWordIndex;
-                    const isPast =
-                      activeWordIndex !== -1
-                        ? idx < activeWordIndex
-                        : typeof currentTime === "number" && currentTime >= (w.endTime ?? 0);
-                    wordEl = (
-                      <span
-                        key={`${idx}-${w.word}`}
-                        data-word-idx={idx}
-                        className={`relative inline-block transition-[color,text-shadow,transform] duration-150 ${
-                          isActive
-                            ? "text-amber-300 [text-shadow:0_0_18px_rgba(251,191,36,0.85),0_1px_3px_rgba(0,0,0,0.9)] scale-[1.04]"
-                            : isPast
-                            ? "text-white/95"
-                            : "text-white/60"
-                        }`}
-                      >
-                        {w.word}
-                      </span>
-                    );
-                  }
+                {displayWords.map((w, idx) => {
+                  const wordId = `${wordIdPrefix}:${idx + 1}`;
+                  const state: WordState = !hasWordTiming
+                    ? "ayah"
+                    : idx === shownWordIndex
+                    ? "active"
+                    : (shownWordIndex !== -1
+                        ? idx < shownWordIndex
+                        : typeof currentTime === "number" && currentTime >= (w.endTime ?? 0))
+                    ? "past"
+                    : "future";
+                  const wordEl = (
+                    <QuranWord
+                      key={`${idx}-${w.word}`}
+                      id={wordId}
+                      idx={idx}
+                      text={w.word}
+                      state={state}
+                      glyphCode={w.glyph?.[0]}
+                      glyphPage={w.glyph?.[1]}
+                      tajweed={tajweed}
+                      onSelect={hasWordTiming ? handleWordSelect : undefined}
+                    />
+                  );
                   // Keep the ayah-end ornament glued to the LAST word so it never
                   // wraps onto a line of its own.
-                  if (idx === wordsToRender.length - 1 && showOrnament) {
+                  if (idx === displayWords.length - 1 && showOrnament) {
                     return (
                       <span key={`${idx}-${w.word}-end`} className="inline-flex items-center whitespace-nowrap">
                         {wordEl}
-                        <AyahOrnament n={ayahNum} />
+                        {glyphs?.e ? (
+                          <span
+                            aria-label={`Ayah ${ayahNum}`}
+                            className="select-none mx-1.5"
+                            style={glyphStyle(glyphs.e[1], tajweed)}
+                          >
+                            {glyphs.e[0]}
+                          </span>
+                        ) : (
+                          <AyahOrnament n={ayahNum} />
+                        )}
                       </span>
                     );
                   }
