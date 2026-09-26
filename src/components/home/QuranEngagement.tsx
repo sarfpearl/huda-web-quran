@@ -635,11 +635,16 @@ export function EngagementOverlay({
  * view count (right), lined up with the player's content edges; the player
  * card sits inside, sharing the frame's sides and bottom.
  */
+/** Top and bottom strips of the player frame share one height. */
+const STRIP_H = "h-8 sm:h-9";
+
 export function PlayerStatsFrame({
   e,
   lang = "en",
   playerRef,
   leading,
+  footerRef,
+  footerOpen = false,
   children,
 }: {
   e: QuranEngagement;
@@ -648,6 +653,10 @@ export function PlayerStatsFrame({
   playerRef: RefObject<HTMLElement>;
   /** Control at the strip's left edge (the image/video toggle). */
   leading?: React.ReactNode;
+  /** Bottom strip (same look as the top one); the player portals into it. */
+  footerRef?: (el: HTMLDivElement | null) => void;
+  /** Show the bottom strip (compact player). */
+  footerOpen?: boolean;
   children: React.ReactNode;
 }) {
   const geo = usePlayerGeometry(playerRef);
@@ -655,6 +664,21 @@ export function PlayerStatsFrame({
   // Not a Quran track: no strip, no frame. The element tree stays the same
   // either way so the player never remounts.
   const show = Boolean(e.content);
+  const withFooter = show && footerOpen;
+  // Folded strip: keep its Ayat buttons out of the tab order (React 18 has no
+  // `inert` prop, so set it on the node like the player's hidden view).
+  const footerWrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (footerWrapRef.current) footerWrapRef.current.inert = !withFooter;
+  }, [withFooter]);
+  // Minimum insets so the strip contents clear the rounded corners (compact pill is tight).
+  // With the bottom strip the card floats inside the frame, inset by CARD_INSET.
+  const CARD_INSET = 10;
+  const inset = withFooter ? CARD_INSET : 0;
+  const stripInsets = {
+    paddingLeft: Math.max(geo?.left ?? 16, 16) + inset,
+    paddingRight: Math.max(geo?.right ?? 24, 24) + inset,
+  };
 
   const toggleViews = () => {
     setViewsOpen((v) => !v);
@@ -739,16 +763,17 @@ export function PlayerStatsFrame({
       </ActionSheet>
     <div
       className={cn(
-        "pointer-events-auto relative flex max-w-full flex-col",
+        "pointer-events-auto relative flex max-w-full flex-col transition-[border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
         show &&
           "rounded-[28px] sm:rounded-[40px] border border-white/15 bg-black/[0.08] backdrop-blur-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
       )}
-      style={show && geo ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
+      // No bottom strip: the card is the frame's bottom edge, so the corners
+      // follow it. With the strip, the frame keeps its own rounded corners.
+      style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative items-center justify-between", show ? "flex h-7 sm:h-8" : "hidden")}
-        // Minimum insets so the icons clear the rounded corners (compact pill is tight).
-        style={{ paddingLeft: Math.max(geo?.left ?? 16, 16), paddingRight: Math.max(geo?.right ?? 24, 24) }}
+        className={cn("relative items-center justify-between transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
+        style={stripInsets}
       >
         {leading ?? <span />}
         <div className="flex items-center gap-3 sm:gap-4">
@@ -792,8 +817,30 @@ export function PlayerStatsFrame({
           </button>
         </div>
       </div>
-      {/* The card overlaps the frame's border so sides/bottom read as one line */}
-      <div className={show ? "-mx-px -mb-px" : undefined}>{children}</div>
+      {/* The card overlaps the frame's border so sides/bottom read as one line;
+          with the bottom strip open it eases inward by CARD_INSET. */}
+      <div
+        className={cn(show && "-mx-px", show && !withFooter && "-mb-px", "transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none")}
+        style={{ paddingLeft: inset, paddingRight: inset }}
+      >
+        {children}
+      </div>
+      {/* Bottom strip: Surah / Juz name + Ayat steps, portalled in by the player.
+          Always mounted; it grows open (0fr → 1fr) in step with the player
+          shrinking to its pill, and folds away when the player expands. */}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
+          show ? "" : "hidden",
+          withFooter ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
+        )}
+        aria-hidden={!withFooter}
+        ref={footerWrapRef}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div ref={footerRef} className={cn("relative flex items-center", STRIP_H)} style={stripInsets} />
+        </div>
+      </div>
     </div>
     </div>
   );

@@ -33,18 +33,48 @@ const GREETING = {
   ta: { line: "அஸ்ஸலாமு அலைக்கும்", meaning: "உங்கள் மீது சாந்தி உண்டாவதாக" },
 } as const;
 
-function Greeting({ language, bottomInset }: { language: "en" | "ta"; bottomInset: number | null }) {
+function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSSProperties }) {
   const g = GREETING[language];
+  // Fit: shrink the whole greeting to the room between the header and the
+  // player (short landscape phones, tall players); hide it when there is
+  // effectively none.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const body = bodyRef.current;
+    if (!stage || !body) return;
+    const fit = () => {
+      const cs = getComputedStyle(stage);
+      const room = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const need = body.offsetHeight;
+      setScale(need > 0 ? Math.min(1, Math.max(0, room) / need) : 1);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(stage);
+    ro.observe(body);
+    return () => ro.disconnect();
+  }, []);
   return (
     <div
+      ref={stageRef}
       className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
-      style={bottomInset != null ? { paddingBottom: bottomInset } : undefined}
+      style={style}
     >
-      <div className="flex flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500">
+      <div
+        ref={bodyRef}
+        className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500"
+        style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
+      >
+        {/* Leading repeated per breakpoint: sm:/md:/lg:text-* each carry their own
+            line-height (1 from 6xl up), which would drop the tails of م / ك into
+            the English line below. */}
         <h2
           dir="rtl"
           lang="ar"
-          className="font-arabic font-normal text-amber-300 leading-[1.6] quran-arabic-shadow [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl"
+          className="font-arabic font-normal text-amber-300 leading-[1.6] sm:leading-[1.6] md:leading-[1.6] lg:leading-[1.6] quran-arabic-shadow [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl"
         >
           السَّلَامُ عَلَيْكُمْ
         </h2>
@@ -109,27 +139,44 @@ export function CenterVerseDisplay({
     setMounted(true);
   }, []);
 
-  // Reserve exactly the space the floating player occupies (its height varies
-  // with viewport), so the verse stage never runs underneath it.
+  // Reserve exactly the space the floating player and the header occupy (both
+  // vary with viewport, safe area and the iOS home-screen status bar), so the
+  // verse stage never runs underneath either of them.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
+  const [topInset, setTopInset] = useState<number | null>(null);
   useEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
-    if (!dock) return;
+    const header = document.querySelector<HTMLElement>("[data-scene-header]");
+    if (!dock && !header) return;
     const measure = () => {
-      const top = dock.getBoundingClientRect().top;
       // Measured against the full-screen scene (it can run under Safari's bars).
-      const bottom = dock.parentElement?.getBoundingClientRect().bottom ?? window.innerHeight;
-      setBottomInset(Math.max(0, bottom - top) + 12);
+      if (dock) {
+        const scene = dock.parentElement?.getBoundingClientRect();
+        const top = dock.getBoundingClientRect().top;
+        setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - top) + 4);
+      }
+      if (header) {
+        const scene = header.parentElement?.getBoundingClientRect();
+        // The header's own pb-4 (16px) is the gap below its pills.
+        setTopInset(Math.max(0, header.getBoundingClientRect().bottom - (scene?.top ?? 0)));
+      }
     };
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(dock);
+    // border-box: the header grows through its safe-area padding, not content.
+    if (dock) ro.observe(dock, { box: "border-box" });
+    if (header) ro.observe(header, { box: "border-box" });
     window.addEventListener("resize", measure);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
   }, []);
+
+  const stageInsets = {
+    ...(bottomInset != null ? { paddingBottom: bottomInset } : {}),
+    ...(topInset != null ? { paddingTop: topInset } : {}),
+  };
 
   // Fit-to-stage: long ayahs (e.g. 2:102, 2:282) are shrunk until the Arabic
   // and meaning panes fit between the header and the player. With the meaning
@@ -198,9 +245,9 @@ export function CenterVerseDisplay({
       // add phantom overflow that would block growth.
       const blockH = (pn: HTMLElement) => (pn.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
       const textsIn = (el: HTMLElement) => Array.from(el.querySelectorAll<HTMLElement>("[data-fit-text]"));
-      // Fit inside the stage minus its faded top/bottom strips (28px + 32px) —
+      // Fit inside the stage minus its faded top/bottom strips (20px + 20px) —
       // the panes carry that as padding, so text that fits is never faded.
-      const avail = Math.max(0, content.clientHeight - 60);
+      const avail = Math.max(0, content.clientHeight - 40);
       const cs = getComputedStyle(content);
       // Arabic has priority: it is sized first, and the meaning is capped at
       // MEANING_RATIO of the Arabic size (Arabic clearly larger than the meaning).
@@ -234,7 +281,7 @@ export function CenterVerseDisplay({
         pn.scrollTop = 0;
         const mask =
           overflows(pn)
-            ? "linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 28px), transparent 100%)"
+            ? "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)"
             : "";
         pn.style.maskImage = mask;
         pn.style.webkitMaskImage = mask;
@@ -254,7 +301,9 @@ export function CenterVerseDisplay({
       cancelled = true;
       ro.disconnect();
     };
-  }, [fitKey, showTranslation, language, reciterWordSync, Boolean(activeItemForFit)]);
+    // showGreeting: the first item (e.g. the Isti'adhah) can arrive while the
+    // greeting is still up, so the stage mounts later with the same fitKey.
+  }, [fitKey, showTranslation, language, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
 
   // Auto-scroll: the Arabic pane keeps the active word in view; the meaning
   // pane tracks recitation progress through the ayah.
@@ -287,7 +336,7 @@ export function CenterVerseDisplay({
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
   // here (its current ayah) — so we no longer blanket-hide on isJuz; we render
   // whenever there's an active verse. Maher's full-Juz file passes none.
-  if (showGreeting) return <Greeting language={language} bottomInset={bottomInset} />;
+  if (showGreeting) return <Greeting language={language} style={stageInsets} />;
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
@@ -350,7 +399,7 @@ export function CenterVerseDisplay({
   return (
     <div
       className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
-      style={bottomInset != null ? { paddingBottom: bottomInset } : undefined}
+      style={stageInsets}
     >
       <div
         className={`pointer-events-auto relative w-full h-full min-h-0 mx-auto flex flex-col items-center justify-center select-none group ${
@@ -366,8 +415,8 @@ export function CenterVerseDisplay({
           // Soft fade on the stage's top/bottom edges (below the header, above the
           // player): only text that actually reaches an edge fades out.
           style={{
-            maskImage: "linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 32px), transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 32px), transparent 100%)",
+            maskImage: "linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%)",
           }}
           className={`flex flex-col w-full h-full min-h-0 justify-center text-center px-2 animate-in fade-in duration-200 ${
             showTranslation
@@ -380,11 +429,11 @@ export function CenterVerseDisplay({
             className={`flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar ${
               // Stacked (mobile): Arabic keeps its fitted height (≤ 68%) and never
               // shrinks — the meaning pane below takes the rest and scrolls.
-              // Padding equals the stage's fade strips (28px top / 32px bottom), so
+              // Padding equals the stage's fade strips (20px top / 20px bottom), so
               // a pane scrolled fully to an edge still shows that line clearly.
               showTranslation
-                ? "shrink-0 max-h-[68%] pt-[28px] md:pb-[32px] md:max-h-full md:shrink md:flex-[1.35] md:basis-0 md:min-w-0"
-                : "w-full pt-[28px] pb-[32px]"
+                ? "shrink-0 max-h-[68%] pt-[20px] md:pb-[20px] md:max-h-full md:shrink md:flex-[1.35] md:basis-0 md:min-w-0"
+                : "w-full pt-[20px] pb-[20px]"
             }`}
           >
           {/* Leading is repeated at md/lg: md:text-* / lg:text-* carry a fixed px
@@ -468,7 +517,7 @@ export function CenterVerseDisplay({
           {showTranslation && (
             <div
               ref={meaningPaneRef}
-              className="flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar pb-[32px] md:pt-[28px] md:flex-1 md:basis-0 md:min-w-0 md:border-r md:border-white/15 md:pr-6 lg:pr-10"
+              className="flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar pb-[20px] md:pt-[20px] md:flex-1 md:basis-0 md:min-w-0 md:border-r md:border-white/15 md:pr-6 lg:pr-10"
             >
             <p
               data-fit-text

@@ -72,6 +72,11 @@ interface CompactBayanPlayerProps {
   /** Override |< / >| (e.g. a per-ayah Juz steps to the previous / next Juz). */
   onPrevTrack?: () => void;
   onNextTrack?: () => void;
+  /** Element below the card (the stats frame's bottom strip). While compact,
+   *  the Surah / Juz name and the Ayat steps are portalled into it. */
+  footerSlot?: HTMLElement | null;
+  /** Reports compact (true) / full (false) so the frame can open its strip. */
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 export function CompactBayanPlayer({
@@ -97,6 +102,8 @@ export function CompactBayanPlayer({
   juzTiming = null,
   onPrevTrack,
   onNextTrack,
+  footerSlot = null,
+  onCollapsedChange,
 }: CompactBayanPlayerProps) {
   const prevTrackLabel = trackKind ? `Previous ${trackKind}` : "Previous";
   const nextTrackLabel = trackKind ? `Next ${trackKind}` : "Next";
@@ -119,6 +126,9 @@ export function CompactBayanPlayer({
       setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
     } catch {}
   }, []);
+  useEffect(() => {
+    onCollapsedChange?.(collapsed);
+  }, [collapsed, onCollapsedChange]);
   // Both views stay mounted at their natural size and crossfade; only the empty
   // glass shell resizes (CSS transition to the measured size of the active view),
   // so nothing reflows mid-animation.
@@ -268,6 +278,64 @@ export function CompactBayanPlayer({
     : (totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0);
 
   const barPct = Math.min(Math.max(juzProgressPct, 0), 100);
+
+  // « Ayat x/y » — in the full card's pill and in the compact footer strip.
+  const hasAyahPill = Boolean(
+    (isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse))
+  );
+  const ayahSteps = (btnClass: string, iconClass: string) => (
+    <>
+      {onPrevVerse ? (
+        <button
+          type="button"
+          onClick={() => { haptic(); onPrevVerse(); }}
+          disabled={atFirstAyah}
+          className={btnClass}
+          aria-label="Previous Ayah"
+          title="Previous Ayah"
+        >
+          <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+          </svg>
+        </button>
+      ) : (
+        <span className="w-3" />
+      )}
+      <span className="px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
+        {isAyahSeq && ayahSeq ? (
+          ayahSeq.preType === "istiadhah" ? (
+            "Isti'adhah"
+          ) : ayahSeq.preType === "bismillah" ? (
+            "Bismillah"
+          ) : (
+            <>Ayat {ayahSeq.index + 1}/{ayahSeq.total}</>
+          )
+        ) : currentSegment?.type === "istiadhah" ? (
+          "Isti'adhah"
+        ) : currentSegment?.type === "bismillah" ? (
+          "Bismillah"
+        ) : (
+          <>Ayat {surahAyah}/{surahAyahTotal}</>
+        )}
+      </span>
+      {onNextVerse ? (
+        <button
+          type="button"
+          onClick={() => { haptic(); onNextVerse(); }}
+          disabled={atLastAyah}
+          className={btnClass}
+          aria-label="Next Ayah"
+          title="Next Ayah"
+        >
+          <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+          </svg>
+        </button>
+      ) : (
+        <span className="w-3" />
+      )}
+    </>
+  );
 
   const handlePlayToggle = () => {
     if (isCurrentTrack) {
@@ -473,7 +541,10 @@ export function CompactBayanPlayer({
               handlePlayToggle();
             }}
             ref={compactCoverRef}
-            className={`${flight ? "invisible" : ""} absolute inset-[5px] sm:inset-[6px] overflow-hidden rounded-full bg-gradient-to-br from-emerald-950 to-slate-900 cursor-pointer active:scale-95 transition-transform`}
+            // clip-path as well as overflow-hidden: a filtered / transformed child
+            // gets its own layer, which border-radius clipping alone misses
+            // (its square corners showed around the circle).
+            className={`${flight ? "invisible" : ""} absolute inset-[5px] sm:inset-[6px] overflow-hidden rounded-full [clip-path:circle(50%)] bg-gradient-to-br from-emerald-950 to-slate-900 cursor-pointer active:scale-95 transition-transform`}
             aria-label={isPlaying ? "Pause" : "Play"}
             title={bayan.title}
           >
@@ -490,7 +561,7 @@ export function CompactBayanPlayer({
             ) : (
               <CoverArt seed={bayan.slug} icon={bayan.category.icon} rounded="rounded-full" className="h-full w-full" />
             )}
-            <span className="absolute inset-0 grid place-items-center bg-black/20 text-emerald-400 [filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]">
+            <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-emerald-400 [&>*]:[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]">
               {isLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
               ) : isPlaying ? (
@@ -564,7 +635,7 @@ export function CompactBayanPlayer({
         {/* Cover Artwork */}
         <div
           ref={fullCoverRef}
-          className={`${flight ? "invisible" : ""} relative w-[clamp(5.5rem,20vw,8rem)] aspect-[5/7] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
+          className={`${flight ? "invisible" : ""} relative w-[clamp(5.5rem,20vw,8rem)] aspect-[5/7] md:aspect-square shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
         >
           {coverSrc ? (
             <Image
@@ -620,59 +691,11 @@ export function CompactBayanPlayer({
             {categoryLine}
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
-          {(isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse)) ? (
+          {hasAyahPill && (
             <div className="mt-2 inline-flex h-9 items-center gap-1.5 w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
-              {onPrevVerse ? (
-                <button
-                  type="button"
-                  onClick={() => { haptic(); onPrevVerse(); }}
-                  disabled={atFirstAyah}
-                  className={pillStepBtn}
-                  aria-label="Previous Ayah"
-                  title="Previous Ayah"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
-                  </svg>
-                </button>
-              ) : (
-                <span className="w-3" />
-              )}
-              <span className="px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
-                {isAyahSeq && ayahSeq ? (
-                  ayahSeq.preType === "istiadhah" ? (
-                    "Isti'adhah"
-                  ) : ayahSeq.preType === "bismillah" ? (
-                    "Bismillah"
-                  ) : (
-                    <>Ayat {ayahSeq.index + 1}/{ayahSeq.total}</>
-                  )
-                ) : currentSegment?.type === "istiadhah" ? (
-                  "Isti'adhah"
-                ) : currentSegment?.type === "bismillah" ? (
-                  "Bismillah"
-                ) : (
-                  <>Ayat {surahAyah}/{surahAyahTotal}</>
-                )}
-              </span>
-              {onNextVerse ? (
-                <button
-                  type="button"
-                  onClick={() => { haptic(); onNextVerse(); }}
-                  disabled={atLastAyah}
-                  className={pillStepBtn}
-                  aria-label="Next Ayah"
-                  title="Next Ayah"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-                  </svg>
-                </button>
-              ) : (
-                <span className="w-3" />
-              )}
+              {ayahSteps(pillStepBtn, "h-4 w-4")}
             </div>
-          ) : null}
+          )}
           {errorMsg && (
             <span className="truncate text-[11px] font-medium text-red-400 mt-1" role="alert">
               {errorMsg}
@@ -842,6 +865,26 @@ export function CompactBayanPlayer({
     </div>
   );
 
+  // Compact: the frame's bottom strip carries the name (left) and the Ayat
+  // steps (right) that the full card shows beside its cover.
+  const footerStrip = (
+    <div className="flex w-full min-w-0 items-center justify-between gap-3 text-[11px] sm:text-xs font-medium text-white">
+      <div className="flex min-w-0 items-baseline gap-1.5">
+        <span className="truncate font-semibold">{bayan.title}</span>
+        {surah?.arabicName && (
+          <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xs sm:text-sm text-emerald-300">
+            {surah.arabicName}
+          </span>
+        )}
+      </div>
+      {hasAyahPill && (
+        <div className="flex h-full shrink-0 items-center gap-0.5 select-none">
+          {ayahSteps(footerStepBtn, "h-3.5 w-3.5")}
+        </div>
+      )}
+    </div>
+  );
+
   // Pill radius = half its height; full card keeps its class corners.
   const radius = collapsed && shellSize ? (shellSize.h + 2) / 2 : undefined;
   return (
@@ -858,6 +901,8 @@ export function CompactBayanPlayer({
     >
       {fullView}
       {compactView}
+      {/* Always rendered: the frame folds the strip open / shut around it */}
+      {footerSlot && createPortal(footerStrip, footerSlot)}
       {/* Hover / focus tooltips for every control (portal — not clipped) */}
       <HoverTooltips container={shellRef} />
       {flight &&
@@ -1082,3 +1127,7 @@ const compactBtn =
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 const pillStepBtn =
   "grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";
+
+/** « » ayah steps in the compact footer strip — strip height, tighter. */
+const footerStepBtn =
+  "relative grid h-7 w-7 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none before:absolute before:-inset-1 before:content-['']";

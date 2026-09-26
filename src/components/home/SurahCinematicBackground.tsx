@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
+import { quranImageUrl } from "@/lib/data/quran";
 
 interface SurahCinematicBackgroundProps {
   surahNumber: number;
@@ -158,7 +159,17 @@ export function SurahCinematicBackground({
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-950">
-      {/* Video-First Layer: No static image backdrop, no poster, direct cinematic video display */}
+      {/* 1. Surah artwork backdrop: the clips are large (~20 MB) and stay hidden
+          until they can play, so without this the scene is black for seconds on
+          first open. The video fades in over it once buffered. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={quranImageUrl("surah", surahNumber)}
+        alt=""
+        decoding="async"
+        fetchPriority="high"
+        className="absolute inset-0 z-0 h-full w-full object-cover object-center"
+      />
 
       {/* 2. Video Slot A */}
       {slotA.src && (

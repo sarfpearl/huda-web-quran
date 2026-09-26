@@ -9,11 +9,14 @@ import { cn } from "@/lib/utils";
 export const PLAYER_GLASS =
   "bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)]";
 
-/** True below the md breakpoint (phones), where panels become bottom sheets. */
+/**
+ * True on phones and tablets, where panels become bottom sheets: anything
+ * below the lg breakpoint, plus touch-first screens up to iPad Pro landscape.
+ */
 export function useIsMobile() {
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
+    const mq = window.matchMedia("(max-width: 1023px), (pointer: coarse) and (max-width: 1366px)");
     const update = () => setMobile(mq.matches);
     update();
     mq.addEventListener("change", update);
@@ -23,7 +26,7 @@ export function useIsMobile() {
 }
 
 /**
- * Phone action sheet: slides up from the bottom over a dimmed scene, closes on
+ * Phone / tablet action sheet: slides up from the bottom over a dimmed scene, closes on
  * a scrim tap, Escape, or a swipe down on its handle. Portalled to <body> so a
  * transformed ancestor can't pin it to the wrong box.
  */

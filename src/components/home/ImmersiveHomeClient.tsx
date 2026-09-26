@@ -47,6 +47,7 @@ import {
 } from "@/lib/data/quranVerses";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
+import { useIsMobile } from "@/components/ui/ActionSheet";
 import {
   useQuranEngagement,
   quranContentOf,
@@ -484,6 +485,11 @@ export function ImmersiveHomeClient({
   const keyboardOpen = useVisibleArea(sceneRef);
   // View count / live / comments for the Surah or Juz on screen.
   const engagement = useQuranEngagement(quranContentOf(activeBayan?.id));
+  // Phones and tablets (same breakpoint the action sheets use).
+  const compactScreen = useIsMobile();
+  // Compact player → the frame's bottom strip (name + Ayat steps) opens.
+  const [playerCollapsed, setPlayerCollapsed] = useState(false);
+  const [playerFooter, setPlayerFooter] = useState<HTMLDivElement | null>(null);
   const isJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
   // Voice Sync QA HUD is a developer tool — hidden for end users. Open the
   // app with ?qa=1 in the URL to show it.
@@ -716,7 +722,16 @@ export function ImmersiveHomeClient({
       {/* 20% black scrim over every background so the verse text stays legible */}
       <div className="absolute inset-0 z-[1] bg-black/20 pointer-events-none" aria-hidden="true" />
 
-      {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation) */}
+      {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation).
+          Phones / tablets: the open comments panel (and the keyboard) take the
+          room the verse needs, so the verse fades out instead of spilling over
+          the list and under the header. Kept mounted so its fit stays current. */}
+      <div
+        className={`absolute inset-0 z-20 pointer-events-none transition-opacity duration-300 ${
+          compactScreen && engagement.composerOpen ? "invisible opacity-0" : "opacity-100"
+        }`}
+        aria-hidden={compactScreen && engagement.composerOpen ? true : undefined}
+      >
       <CenterVerseDisplay
         currentVerse={isJuz ? (juzPreSegment ? null : juzAyahVerse) : currentVerse}
         currentSegment={isJuz ? juzPreSegment : currentSegment}
@@ -730,6 +745,7 @@ export function ImmersiveHomeClient({
         isJuz={isJuz}
         showGreeting={!hasPlayed}
       />
+      </div>
 
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
       <ImmersiveHeader
@@ -810,6 +826,8 @@ export function ImmersiveHomeClient({
           e={engagement}
           lang={language}
           playerRef={playerWrapRef}
+          footerRef={setPlayerFooter}
+          footerOpen={playerCollapsed}
           leading={
             <div className="flex items-center gap-3">
             <button
@@ -869,6 +887,8 @@ export function ImmersiveHomeClient({
                 onNextTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1) : undefined}
                 onSeekToVerse={jumpToVerse}
                 viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
+                footerSlot={playerFooter}
+                onCollapsedChange={setPlayerCollapsed}
               />
             )}
           </div>
