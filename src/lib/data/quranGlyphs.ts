@@ -100,7 +100,9 @@ export function loadPageFont(page: number): Promise<boolean> {
   if (!p) {
     p = (async () => {
       try {
-        const face = new FontFace(fontFamily(page), `url(/fonts/qpc-v4/p${page}.woff2) format("woff2")`, {
+        // ?v: bump when the font files change (v2: stray box layers removed by
+        // scripts/generation/strip_qpc_v4_boxes.py) so cached copies refresh.
+        const face = new FontFace(fontFamily(page), `url(/fonts/qpc-v4/p${page}.woff2?v=2) format("woff2")`, {
           display: "block",
         });
         await face.load();
