@@ -9,7 +9,14 @@ import {
   type QuranWordTiming,
   type RecitationSegment,
 } from "@/lib/data/quranVerses";
-import { fetchSurahGlyphs, glyphInkPadding, glyphStyle, loadPageFont, type GlyphVerse } from "@/lib/data/quranGlyphs";
+import {
+  fetchSurahGlyphs,
+  glyphFontsSupported,
+  glyphInkPadding,
+  glyphStyle,
+  loadPageFont,
+  type GlyphVerse,
+} from "@/lib/data/quranGlyphs";
 
 interface CenterVerseDisplayProps {
   currentVerse: AyahVerse | null;
@@ -430,7 +437,8 @@ export function CenterVerseDisplay({
   const tjKey = tjRef ? `${tjRef.surah}:${tjRef.ayah}` : "";
   const [glyphVerse, setGlyphVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
   useEffect(() => {
-    if (!tjRef) return;
+    // No page fonts on WebKit (see glyphFontsSupported): the text stays.
+    if (!tjRef || !glyphFontsSupported()) return;
     let cancelled = false;
     const { surah, ayah } = tjRef;
     fetchSurahGlyphs(surah).then(async (verses) => {

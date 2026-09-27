@@ -22,6 +22,23 @@ export interface GlyphVerse {
   e?: [code: string, page: number];
 }
 
+/**
+ * Whether this browser may use the page fonts. WebKit (Safari, and every iOS
+ * browser — CriOS / FxiOS / EdgiOS are WebKit too) is excluded: COLR page fonts
+ * loaded through FontFace with @font-palette-values palettes crash its web
+ * content process ("A problem repeatedly occurred" on iPhone). There the ayah
+ * stays in the Uthmani text font and the Tajweed toggle is hidden.
+ * Client-only: false during server rendering.
+ */
+export function glyphFontsSupported(): boolean {
+  if (typeof navigator === "undefined" || typeof FontFace === "undefined") return false;
+  const ua = navigator.userAgent;
+  // iPadOS reports a Mac UA; touch points tell it apart.
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const webkit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Android/.test(ua);
+  return !ios && !webkit;
+}
+
 const fontFamily = (page: number) => `qpc-v4-p${page}`;
 const paletteName = (page: number, tajweed: boolean, active = false) =>
   `--huda-${tajweed ? "tj" : "plain"}${active ? "-on" : ""}-p${page}`;
@@ -96,6 +113,7 @@ let paletteSheet: HTMLStyleElement | null = null;
 
 /** Load one page font (once) and register its dark palette. Resolves false on failure. */
 export function loadPageFont(page: number): Promise<boolean> {
+  if (!glyphFontsSupported()) return Promise.resolve(false);
   let p = fontCache.get(page);
   if (!p) {
     p = (async () => {
