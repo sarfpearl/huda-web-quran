@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Category } from "@/types/category";
@@ -24,7 +25,7 @@ import { compactCount } from "./QuranEngagement";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSessionId } from "@/lib/audio/session";
 
-type ModalTab = "surah" | "quran" | "favourite" | "bayan";
+type ModalTab = "surah" | "quran" | "bayan";
 
 // Bayan tab is hidden for now — flip to true to bring it back (code kept intact).
 const SHOW_BAYAN_TAB = false;
@@ -41,6 +42,15 @@ interface TopicPickerModalProps {
   /** Play a Juz in the currently-selected reciter's voice (per-ayah). */
   onSelectJuz?: (juzId: number) => void;
   onShuffle?: () => void;
+  /** Bump to open the browser from outside (the player's Surah / Juz name). */
+  openRequest?: number;
+  /** Trigger button classes (default: the round header button). */
+  triggerClassName?: string;
+  /**
+   * "browser" (default): the ☰ content browser (Surah | Juz).
+   * "favourites": the home ♥ button — only the Surahs / Juz this browser liked.
+   */
+  variant?: "browser" | "favourites";
 }
 
 const SCENE_THUMBNAILS: Record<string, string> = {
@@ -68,11 +78,41 @@ export function TopicPickerModal({
   surahTracks,
   onSelectCategory,
   onSelectJuz,
+  triggerClassName,
+  openRequest = 0,
+  variant = "browser",
 }: TopicPickerModalProps) {
+  const isFavourites = variant === "favourites";
   const player = useAudioPlayer();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ModalTab>("surah");
   const [searchQuery, setSearchQuery] = useState("");
+  // The panel is portalled to <body>: the ♥ trigger sits inside the player's
+  // blurred frame, which would otherwise trap the fixed panel inside it.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Opened from the player's name: show the tab of what's playing.
+  useEffect(() => {
+    if (!openRequest) return;
+    setSearchQuery("");
+    if (player.current?.id.startsWith("quran-juz-")) setActiveTab("quran");
+    else if (player.current?.id.startsWith("quran-surah-")) setActiveTab("surah");
+    setIsOpen(true);
+  }, [openRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Every open: bring the playing Surah / Juz card to the middle of the list
+  // (once the panel has slid in and the list has rendered).
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const t = setTimeout(() => {
+      listRef.current
+        ?.querySelector<HTMLElement>('[aria-current="true"]')
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [isOpen, activeTab]);
 
   // Listener counts per Surah / Juz for the list (one request per tab, while
   // the browser is open). Stays null — icons only — without Supabase.
@@ -81,7 +121,7 @@ export function TopicPickerModal({
     juz: null,
   });
   const countKinds: Array<"surah" | "juz"> =
-    activeTab === "surah" ? ["surah"] : activeTab === "quran" ? ["juz"] : activeTab === "favourite" ? ["surah", "juz"] : [];
+    isFavourites ? ["surah", "juz"] : activeTab === "surah" ? ["surah"] : activeTab === "quran" ? ["juz"] : [];
   const countKindsKey = countKinds.join(",");
   useEffect(() => {
     if (!isOpen || !countKindsKey) return;
@@ -101,12 +141,12 @@ export function TopicPickerModal({
     };
   }, [isOpen, countKindsKey]);
 
-  // Favourite tab: the Surahs / Juz this browser liked (♥ in the player).
-  // Re-read every time the tab is shown so a new like appears straight away.
+  // Favourites panel: the Surahs / Juz this browser liked (♥ in the player).
+  // Re-read every time the panel opens so a new like appears straight away.
   const [favourites, setFavourites] = useState<Array<{ kind: "surah" | "juz"; id: number }> | null>(null);
   const [favouritesFailed, setFavouritesFailed] = useState(false);
   useEffect(() => {
-    if (!isOpen || activeTab !== "favourite") return;
+    if (!isOpen || !isFavourites) return;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
       setFavouritesFailed(true);
@@ -125,7 +165,7 @@ export function TopicPickerModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, activeTab]);
+  }, [isOpen, isFavourites]);
   const countFor = (kind: "surah" | "juz", id: number) => {
     const map = viewCounts[kind];
     return map ? map[String(id)] ?? 0 : null;
@@ -180,10 +220,10 @@ export function TopicPickerModal({
         isActive={isTrackCurrent}
         isPlaying={isTrackCurrent && player.isPlaying}
         onClick={() => {
+          setIsOpen(false);
           const activeReciter = resolveActiveReciter(player.current);
           const activeSurahTracks = surahTracks || getSurahTracksForReciter(activeReciter);
           player.playBayan(activeSurahTracks[s.number - 1], activeSurahTracks);
-          setIsOpen(false);
         }}
       />
     );
@@ -220,18 +260,27 @@ export function TopicPickerModal({
 
   return (
     <>
-      {/* Top Right Header Menu SVG Icon Trigger Button */}
+      {/* Top Right Header Trigger Button (☰ content browser, or ♥ favourites) */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
-        aria-label="Open Content Browser"
-        title="Content Browser"
+        className={
+          triggerClassName ??
+          "pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+        }
+        data-tooltip={triggerClassName ? (isFavourites ? "Favourites" : "Content Browser") : undefined}
+        aria-label={isFavourites ? "Open Favourites" : "Open Content Browser"}
+        title={triggerClassName ? undefined : isFavourites ? "Favourites" : "Content Browser"}
       >
-        <TvMenuIcon className="text-xl" />
+        {isFavourites ? (
+          <FavouriteIcon className={triggerClassName ? "text-base sm:text-lg" : "text-xl"} />
+        ) : (
+          <TvMenuIcon className="text-xl" />
+        )}
       </button>
 
       {/* Mac Control Center Style Right Slide-Over Panel */}
+      {mounted && createPortal(
       <AnimatePresence>
         {isOpen && (
           <>
@@ -257,10 +306,10 @@ export function TopicPickerModal({
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
-                    Islamic Atmospheres
+                    {isFavourites ? "Your Library" : "Islamic Atmospheres"}
                   </span>
                   <h3 className="text-xl font-black text-white tracking-tight">
-                    Pick your category
+                    {isFavourites ? "Favourites" : "Pick your category"}
                   </h3>
                 </div>
 
@@ -277,7 +326,8 @@ export function TopicPickerModal({
                 </button>
               </div>
 
-              {/* 2. Segmented Navigation Tabs (Surah | Juz | Favourite | Bayan) */}
+              {/* 2. Segmented Navigation Tabs (Surah | Juz | Bayan) */}
+              {!isFavourites && (
               <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
                 <button
                   type="button"
@@ -305,19 +355,6 @@ export function TopicPickerModal({
                   Juz
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("favourite")}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                    activeTab === "favourite"
-                      ? "bg-emerald-600 text-white shadow-md"
-                      : "text-sand-200/60 hover:text-white"
-                  )}
-                >
-                  <FavouriteIcon filled={activeTab === "favourite"} className="text-[13px]" />
-                  Favourite
-                </button>
 
                 {SHOW_BAYAN_TAB && (
                 <button
@@ -334,6 +371,7 @@ export function TopicPickerModal({
                 </button>
                 )}
               </div>
+              )}
 
               {/* 3. Search Input Box */}
               <div className="relative mb-3">
@@ -341,12 +379,12 @@ export function TopicPickerModal({
                 <input
                   type="text"
                   placeholder={
-                    activeTab === "surah"
+                    isFavourites
+                      ? "Search favourites..."
+                      : activeTab === "surah"
                       ? "Search Surah..."
                       : activeTab === "quran"
                       ? "Search Juz / Para..."
-                      : activeTab === "favourite"
-                      ? "Search favourites..."
                       : "Search Bayan categories..."
                   }
                   value={searchQuery}
@@ -356,15 +394,16 @@ export function TopicPickerModal({
               </div>
 
               {/* 4. Scrollable List Content using ContentListCard */}
-              <div className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
+              <div ref={listRef} className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
                 {/* A. SURAH TAB (114 Surahs) */}
-                {activeTab === "surah" && filteredSurah.map(renderSurahCard)}
+                {!isFavourites && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
 
                 {/* B. QURAN TAB (30 Juz) */}
-                {activeTab === "quran" && filteredJuz.map(renderJuzCard)}
+                {!isFavourites && activeTab === "quran" && filteredJuz.map(renderJuzCard)}
 
-                {/* C. FAVOURITE TAB (liked Surahs & Juz, newest first) */}
-                {activeTab === "favourite" &&
+
+                {/* FAVOURITES PANEL (liked Surahs & Juz, newest first) */}
+                {isFavourites &&
                   (favouritesFailed ? (
                     <p className="px-2 py-8 text-center text-xs text-sand-200/60">Favourites aren&apos;t available right now.</p>
                   ) : favourites === null ? (
@@ -373,7 +412,7 @@ export function TopicPickerModal({
                     <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
                       <FavouriteIcon className="text-2xl text-emerald-400/70" />
                       <p className="text-xs text-sand-200/70">No favourites yet.</p>
-                      <p className="text-[11px] text-sand-200/50">Tap ♥ in the player to add the Surah or Juz you&apos;re listening to.</p>
+                      <p className="text-[11px] text-sand-200/50">Like the Surah or Juz you&apos;re listening to (♥ beside the cover) to keep it here.</p>
                     </div>
                   ) : (
                     favourites.map((f) => {
@@ -387,7 +426,7 @@ export function TopicPickerModal({
                   ))}
 
                 {/* D. BAYAN TAB (Categories) */}
-                {activeTab === "bayan" &&
+                {!isFavourites && activeTab === "bayan" &&
                   filteredCategories.map((c, index) => {
                     const isCatActive = c.slug === activeCategorySlug;
                     const thumb = SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg";
@@ -414,7 +453,9 @@ export function TopicPickerModal({
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
     </>
   );
 }

@@ -10,9 +10,12 @@ import { ImmersiveHeader } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
+import { ReadingView, type ReadingRange } from "./ReadingView";
+import { MushafPagePicker } from "./MushafPagePicker";
+import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { VideoCameraIcon, ImageIcon } from "@/components/ui/Icon";
+import { VideoCameraIcon, ImageIcon, BookOpenIcon } from "@/components/ui/Icon";
 import {
   isQuranTrack,
   isQuranTrackId,
@@ -734,6 +737,132 @@ export function ImmersiveHomeClient({
     });
   };
 
+  // Reading mode (header 📖): the playing Surah's / Juz's full text as Mushaf
+  // pages on the scene instead of the single ayah, the player shrunk to its
+  // compact pill.
+  const [readingMode, setReadingMode] = useState(false);
+  const readingJuz = readingMode && isJuz ? activeJuz ?? null : null;
+  const readingSurah = readingMode && !isJuz ? activeSurah?.number ?? null : null;
+  const readingActive = readingSurah !== null || readingJuz !== null;
+  const readingKey = readingJuz ? `juz-${readingJuz.id}` : readingSurah !== null ? `surah-${readingSurah}` : null;
+  // A Juz's ayahs, and the Surah-by-Surah ranges the reader shows.
+  const juzPairs = useMemo(() => (readingJuz ? getJuzAyahPairs(readingJuz.id) : []), [readingJuz]);
+  const readingRanges = useMemo<ReadingRange[]>(() => {
+    if (readingSurah !== null) {
+      const n = QURAN_SURAHS.find((x) => x.number === readingSurah)?.verses ?? 1;
+      return [{ surah: readingSurah, from: 1, to: n }];
+    }
+    const out: ReadingRange[] = [];
+    for (const [surah, ayah] of juzPairs) {
+      const last = out[out.length - 1];
+      if (last?.surah === surah) last.to = ayah;
+      else out.push({ surah, from: ayah, to: ayah });
+    }
+    return out;
+  }, [readingSurah, juzPairs]);
+  // The recited ayah. Juz: only a per-ayah Juz knows it (Maher's full-Juz file doesn't).
+  const readingAyah = readingSurah !== null
+    ? player.isPrelude || !currentVerse ? null : { surah: readingSurah, ayah: currentVerse.ayahNumber }
+    : player.ayahSequence && !player.ayahSequence.preType && juzPairs[player.ayahSequence.index]
+    ? { surah: juzPairs[player.ayahSequence.index][0], ayah: juzPairs[player.ayahSequence.index][1] }
+    : null;
+  const readingWordIndex = readingSurah !== null
+    ? hasWordTiming && !player.isPrelude ? activeWordIndex : -1
+    : !juzPreSegment ? juzWordSync.activeWordIndex : -1;
+  const juzIndexOf = (surah: number, ayah: number) => juzPairs.findIndex(([s, a]) => s === surah && a === ayah);
+
+  const handleReadSeek = (ayahNumber: number) => {
+    const idx = segments.findIndex((sg) => sg.type === "ayah" && sg.ayahNumber === ayahNumber);
+    if (idx >= 0) jumpToVerse(idx);
+  };
+  // Tap an ayah / word in the reader. Surah: seek (a word lands inside its
+  // ayah — a first word can start a few ms before the ayah window, see
+  // handleSeekToWord; a tap during the prelude ends it, player.seek does).
+  // Per-ayah Juz: jump to that ayah's file. Paused (reading in one's own
+  // voice): a tapped word starts the recitation.
+  const handleReaderSeekAyah = (surah: number, ayah: number) => {
+    if (readingSurah !== null) handleReadSeek(ayah);
+    else if (player.ayahSequence) {
+      const i = juzIndexOf(surah, ayah);
+      if (i >= 0) player.jumpToAyah(i);
+    }
+  };
+  const handleReaderSeekWord = (surah: number, ayah: number, startTime: number) => {
+    if (readingSurah !== null) {
+      const seg = segments.find((sg) => sg.type === "ayah" && sg.ayahNumber === ayah);
+      player.seek(Math.max(startTime, (seg?.startTime ?? 0) + 0.02));
+    } else {
+      handleReaderSeekAyah(surah, ayah);
+    }
+    if (!player.isPlaying) player.resume();
+  };
+
+  // Reading mode's « Page N »: the page on screen. « » and the page picker
+  // start the recitation at the first ayah beginning on a page — for a Surah,
+  // in another Surah when the page belongs to one; a Juz keeps to its own
+  // pages (and without per-ayah audio only scrolls there).
+  const [pagePickerOpen, setPagePickerOpen] = useState(false);
+  // Player's Surah / Juz name → open the content browser at it.
+  const [browserOpenRequest, setBrowserOpenRequest] = useState(0);
+  // The page on screen follows the reader's scrolling (ReadingView reports it);
+  // before the first report, the recited ayah's page.
+  const [visiblePage, setVisiblePage] = useState<number | null>(null);
+  useEffect(() => setVisiblePage(null), [readingKey]);
+  const [scrollToPage, setScrollToPage] = useState<{ page: number; n: number } | null>(null);
+  const juzPageRange: [number, number] | null = juzPairs.length
+    ? [mushafPageOf(juzPairs[0][0], juzPairs[0][1]), mushafPageOf(...juzPairs[juzPairs.length - 1])]
+    : null;
+  const readingPage = !readingActive
+    ? 1
+    : visiblePage ??
+      (readingAyah
+        ? mushafPageOf(readingAyah.surah, readingAyah.ayah)
+        : readingRanges[0]
+        ? mushafPageOf(readingRanges[0].surah, readingRanges[0].from)
+        : 1);
+  const readingFirstPage = juzPageRange?.[0] ?? 1;
+  const readingLastPage = juzPageRange?.[1] ?? MUSHAF_PAGE_COUNT;
+  const handleGoToPage = (page: number) => {
+    const p = Math.min(readingLastPage, Math.max(readingFirstPage, page));
+    if (readingJuz) {
+      const [ps, pa] = MUSHAF_PAGE_STARTS[p - 1];
+      // First Juz ayah on or after the page's start.
+      const i = juzPairs.findIndex(([s, a]) => s > ps || (s === ps && a >= pa));
+      if (player.ayahSequence && i >= 0) player.jumpToAyah(i);
+      else setScrollToPage((prev) => ({ page: p, n: (prev?.n ?? 0) + 1 }));
+      return;
+    }
+    const [surahNum, ayah] = MUSHAF_PAGE_STARTS[p - 1];
+    if (surahNum === activeSurah?.number) {
+      handleReadSeek(ayah);
+      return;
+    }
+    const track = surahTracksForCurrentReciter[surahNum - 1];
+    if (!track) return;
+    const wasPlaying = player.isPlaying;
+    const start = (startAt?: (dur: number) => number) => {
+      const opts = startAt ? { startAt } : undefined;
+      if (wasPlaying) player.playBayan(track, surahTracksForCurrentReciter, opts);
+      else player.cueBayan(track, surahTracksForCurrentReciter, opts);
+    };
+    if (ayah <= 1) {
+      start();
+      return;
+    }
+    // Resolve the ayah's start in this reciter's own timeline (as a reciter
+    // switch does); +50ms lands inside it, not on the previous ayah's end.
+    fetchSurahVerses(surahNum, selectedReciter.id)
+      .then((v) =>
+        start((dur) => {
+          const seg = getRecitationTimeline(surahNum, v, false, dur, selectedReciter).find(
+            (sg) => sg.type === "ayah" && sg.ayahNumber === ayah
+          );
+          return seg ? seg.startTime + 0.05 : 0;
+        })
+      )
+      .catch(() => start());
+  };
+
   // Ayah meaning (translation) is OFF on every page load; the toggle only
   // applies to the current session.
   const handleToggleMeaning = () => {
@@ -772,9 +901,9 @@ export function ImmersiveHomeClient({
           the list and under the header. Kept mounted so its fit stays current. */}
       <div
         className={`absolute inset-0 z-20 pointer-events-none transition-opacity duration-300 ${
-          compactScreen && engagement.composerOpen ? "invisible opacity-0" : "opacity-100"
+          readingActive || (compactScreen && engagement.composerOpen) ? "invisible opacity-0" : "opacity-100"
         }`}
-        aria-hidden={compactScreen && engagement.composerOpen ? true : undefined}
+        aria-hidden={readingActive || (compactScreen && engagement.composerOpen) ? true : undefined}
       >
       <CenterVerseDisplay
         currentVerse={isJuz ? (juzPreSegment ? null : juzAyahVerse) : currentVerse}
@@ -802,7 +931,8 @@ export function ImmersiveHomeClient({
         language={language}
         onToggleLanguage={handleToggleLanguage}
         showMeaning={showTranslation}
-        onToggleMeaning={handleToggleMeaning}
+        // Reading mode is Arabic only: no translation to choose there.
+        onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         showTajweed={showTajweed}
         onToggleTajweed={handleToggleTajweed}
         selectedReciter={selectedReciter}
@@ -827,7 +957,23 @@ export function ImmersiveHomeClient({
           )
         }
       >
+        {/* Reading mode toggle: the whole Surah's / Juz's text */}
+        {((activeSurah && !isJuz) || (isJuz && activeJuz)) && (
+          <button
+            type="button"
+            onClick={() => setReadingMode((on) => !on)}
+            aria-pressed={readingMode}
+            aria-label={readingMode ? "Exit reading mode" : "Reading mode"}
+            title={readingMode ? "Exit reading mode" : "Reading mode"}
+            className={`pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer ${
+              readingMode ? "border-amber-300/50 text-amber-300" : "border-white/15 text-sand-100"
+            }`}
+          >
+            <BookOpenIcon className="text-xl" />
+          </button>
+        )}
         <TopicPickerModal
+          openRequest={browserOpenRequest}
           categories={categories}
           speakers={speakers}
           allBayan={allBayan}
@@ -845,6 +991,25 @@ export function ImmersiveHomeClient({
       {keyboardOpen && engagement.composerOpen && (
         <div className="absolute inset-0 z-[35] bg-black/50 pointer-events-none" aria-hidden="true" />
       )}
+
+      {/* Reading mode: the whole Surah over the scene, recited ayah lit */}
+      <AnimatePresence>
+        {readingActive && readingKey && !(compactScreen && engagement.composerOpen) && (
+          <ReadingView
+            key={readingKey}
+            ranges={readingRanges}
+            label={readingJuz ? `Juz ${readingJuz.id}` : activeSurah?.name ?? ""}
+            reciterId={selectedReciter.id}
+            active={readingAyah}
+            onSeekAyah={handleReaderSeekAyah}
+            tajweed={showTajweed}
+            activeWordIndex={readingWordIndex}
+            onSeekWord={handleReaderSeekWord}
+            onVisiblePageChange={setVisiblePage}
+            scrollToPage={scrollToPage}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Bottom Floating Player */}
       <div
@@ -893,6 +1058,16 @@ export function ImmersiveHomeClient({
             </button>
             {/* Reopens the Add to Home Screen guide after it was dismissed */}
             <InstallGuideButton className="relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
+            {/* Favourites (♥) — the Surahs / Juz this browser liked */}
+            <TopicPickerModal
+              variant="favourites"
+              triggerClassName="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
+              categories={categories}
+              surahTracks={surahTracksForCurrentReciter}
+              activeCategorySlug={activeCategory.slug}
+              onSelectCategory={handleSelectCategory}
+              onSelectJuz={handleSelectJuz}
+            />
             </div>
           }
         >
@@ -937,12 +1112,34 @@ export function ImmersiveHomeClient({
                 viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
                 footerSlot={playerFooter}
                 onCollapsedChange={setPlayerCollapsed}
+                forceCompact={readingActive}
+                onTitleClick={() => setBrowserOpenRequest((n) => n + 1)}
+                pageNav={
+                  readingActive
+                    ? {
+                        page: readingPage,
+                        first: readingFirstPage,
+                        last: readingLastPage,
+                        onStep: (d) => handleGoToPage(readingPage + d),
+                        onOpenPicker: () => setPagePickerOpen(true),
+                      }
+                    : null
+                }
               />
             )}
           </div>
         </PlayerStatsFrame>
         </div>
       </div>
+
+      {/* Reading mode → « Page N »: choose a Mushaf page */}
+      <MushafPagePicker
+        open={pagePickerOpen && readingActive}
+        currentPage={readingPage}
+        range={[readingFirstPage, readingLastPage]}
+        onPick={handleGoToPage}
+        onClose={() => setPagePickerOpen(false)}
+      />
 
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />

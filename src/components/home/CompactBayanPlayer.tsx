@@ -77,6 +77,20 @@ interface CompactBayanPlayerProps {
   footerSlot?: HTMLElement | null;
   /** Reports compact (true) / full (false) so the frame can open its strip. */
   onCollapsedChange?: (collapsed: boolean) => void;
+  /** Reading mode: shrink to the compact pill while on (restored after, not remembered). */
+  forceCompact?: boolean;
+  /** Reading mode: the Ayat steps become « Page N » — « » step a Mushaf page,
+   *  the label opens the page picker. */
+  /** Tap the Surah / Juz name → open the content browser at it. */
+  onTitleClick?: () => void;
+  pageNav?: {
+    page: number;
+    /** First / last page that can be stepped to (a Juz keeps to its own). */
+    first: number;
+    last: number;
+    onStep: (delta: -1 | 1) => void;
+    onOpenPicker: () => void;
+  } | null;
 }
 
 export function CompactBayanPlayer({
@@ -104,6 +118,9 @@ export function CompactBayanPlayer({
   onNextTrack,
   footerSlot = null,
   onCollapsedChange,
+  forceCompact = false,
+  pageNav = null,
+  onTitleClick,
 }: CompactBayanPlayerProps) {
   const prevTrackLabel = trackKind ? `Previous ${trackKind}` : "Previous";
   const nextTrackLabel = trackKind ? `Next ${trackKind}` : "Next";
@@ -208,6 +225,20 @@ export function CompactBayanPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showTranslation]);
 
+  // Reading mode: the Surah text needs the screen, so shrink to the compact
+  // pill while it's on and restore the full player after (only if it was us).
+  const readingCollapsedRef = useRef(false);
+  useEffect(() => {
+    if (forceCompact && !collapsed) {
+      toggleCollapsed(true, false);
+      readingCollapsedRef.current = true;
+    } else if (!forceCompact && readingCollapsedRef.current) {
+      readingCollapsedRef.current = false;
+      if (collapsed) toggleCollapsed(false, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceCompact]);
+
   // Every screen size: the full player shows until playback starts, then it
   // shrinks to the compact pill so the ayah has the screen. Not remembered,
   // and a manual expand stays until the next play.
@@ -286,7 +317,44 @@ export function CompactBayanPlayer({
   const hasAyahPill = Boolean(
     (isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse))
   );
-  const ayahSteps = (btnClass: string, iconClass: string) => (
+  const pageSteps = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string) => (
+    <>
+      <button
+        type="button"
+        onClick={() => { haptic(); nav.onStep(-1); }}
+        disabled={nav.page <= nav.first}
+        className={btnClass}
+        aria-label="Previous Page"
+        title="Previous Page"
+      >
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => { haptic(); nav.onOpenPicker(); }}
+        className="rounded-full px-2 py-0.5 text-sand-300/80 font-normal tabular-nums whitespace-nowrap transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+        aria-label={`Page ${nav.page} — choose a page`}
+        title="Choose a page"
+      >
+        Page {nav.page}
+      </button>
+      <button
+        type="button"
+        onClick={() => { haptic(); nav.onStep(1); }}
+        disabled={nav.page >= nav.last}
+        className={btnClass}
+        aria-label="Next Page"
+        title="Next Page"
+      >
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+        </svg>
+      </button>
+    </>
+  );
+  const ayahSteps = (btnClass: string, iconClass: string) => pageNav ? pageSteps(pageNav, btnClass, iconClass) : (
     <>
       {onPrevVerse ? (
         <button
@@ -680,7 +748,10 @@ export function CompactBayanPlayer({
           <span className="text-[10px] sm:text-xs font-semibold text-sand-300/50 uppercase tracking-widest">
             Now Playing
           </span>
-          <div className="flex items-baseline gap-2 mt-1 min-w-0">
+          <div
+            className={`flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
+            {...(onTitleClick ? titleButtonProps(onTitleClick) : {})}
+          >
             <h3 className="truncate font-sans text-base sm:text-lg md:text-xl font-bold text-white tracking-tight">
               {bayan.title}
             </h3>
@@ -876,7 +947,10 @@ export function CompactBayanPlayer({
   // steps (right) that the full card shows beside its cover.
   const footerStrip = (
     <div className="flex w-full min-w-0 items-center justify-between gap-3 text-[11px] sm:text-xs font-medium text-white">
-      <div className="flex min-w-0 items-baseline gap-1.5">
+      <div
+        className={`flex min-w-0 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
+        {...(onTitleClick ? titleButtonProps(onTitleClick) : {})}
+      >
         <span className="truncate font-semibold">{bayan.title}</span>
         {surah?.arabicName && (
           <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xs sm:text-sm text-emerald-300">
@@ -884,7 +958,7 @@ export function CompactBayanPlayer({
           </span>
         )}
       </div>
-      {hasAyahPill && (
+      {(hasAyahPill || pageNav) && (
         <div className="flex h-full shrink-0 items-center gap-0.5 select-none">
           {ayahSteps(footerStepBtn, "h-3.5 w-3.5")}
         </div>
@@ -1025,6 +1099,26 @@ function VolumeControl({
       {mounted && createPortal(popover, document.body)}
     </>
   );
+}
+
+/** The Surah / Juz name as a button (keeps its inline layout: a div with button semantics). */
+function titleButtonProps(onClick: () => void) {
+  return {
+    role: "button",
+    tabIndex: 0,
+    "aria-label": "Show in the Surah / Juz list",
+    "data-tooltip": "Show in list",
+    onClick: () => {
+      haptic();
+      onClick();
+    },
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onClick();
+      }
+    },
+  } as const;
 }
 
 const volumeBtn =

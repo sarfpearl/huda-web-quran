@@ -19,6 +19,8 @@ import {
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { ReciterPickerModal } from "./ReciterPickerModal";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
+import { ActionSheet } from "@/components/ui/ActionSheet";
+import { CheckIcon } from "@/components/ui/Icon";
 
 interface ImmersiveHeaderProps {
   onShuffle?: () => void;
@@ -82,6 +84,16 @@ export function ImmersiveHeader({
     };
   }, [activePopover]);
   const isReciterSelectorOpen = activePopover === "reciter";
+  const [translationSheetOpen, setTranslationSheetOpen] = useState(false);
+  // Off hides the meaning; a language shows it in that language.
+  const chooseTranslation = (id: (typeof TRANSLATION_CHOICES)[number]["id"]) => {
+    if (id === "off") {
+      if (showMeaning) onToggleMeaning?.();
+      return;
+    }
+    if (language !== id) onToggleLanguage?.();
+    if (!showMeaning) onToggleMeaning?.();
+  };
   const [headerAvatarError, setHeaderAvatarError] = useState(false);
   const reciterTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -124,52 +136,63 @@ export function ImmersiveHeader({
         {/* QA HUD pill (leading, before the language toggle) */}
         {qaHudControlled}
 
-        {/* Language Switcher (First — only for Word Sync reciters that show text) */}
-        {/* Hidden while the translation is off — there's nothing to switch */}
-        {onToggleLanguage && showLanguageToggle && showMeaning && (
-          <button
-            type="button"
-            onClick={onToggleLanguage}
-            className="pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
-            title={
-              language === "ta"
-                ? "தற்போது: தமிழ் (Click to switch to English)"
-                : "Current: English (தமிழ் மொழிபெயர்ப்புக்கு மாற்றவும்)"
-            }
-            aria-label="Toggle Quran translation language between English and Tamil"
-          >
-            {/* Globe / translate icon */}
-            <svg className="h-[1.15rem] w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z" />
-            </svg>
-            <span className={`text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>{language === "ta" ? "தமிழ்" : "EN"}</span>
-          </button>
-        )}
-
-        {/* Ayah translation show/hide (only when verse text is on screen) */}
+        {/* Ayah translation: opens a sheet to pick Off / English / Tamil
+            (only when verse text is on screen) */}
         {onToggleMeaning && showLanguageToggle && (
           <button
             type="button"
-            onClick={onToggleMeaning}
-            aria-pressed={showMeaning}
-            aria-label={showMeaning ? "Hide translation" : "Show translation"}
-            title={
-              language === "ta"
-                ? showMeaning ? "மொழிபெயர்ப்பை மறை" : "மொழிபெயர்ப்பைக் காட்டு"
-                : showMeaning ? "Hide translation of the meaning" : "Show translation of the meaning"
+            onClick={() => setTranslationSheetOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={
+              showMeaning
+                ? `Translation: ${language === "ta" ? "Tamil" : "English"} — change`
+                : "Translation: off — choose a language"
             }
+            title={language === "ta" ? "மொழிபெயர்ப்பு" : "Translation of the meaning"}
             className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
             {/* Translate icon; slashed when the translation is hidden */}
             <TranslateIcon slashed={!showMeaning} className="h-[1.15rem] w-[1.15rem]" />
-            <span className={`hidden sm:inline text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>
-              {language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
+            <span className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && language === "ta" ? "font-tamil" : ""}`}>
+              {!showMeaning ? "Translation" : language === "ta" ? "தமிழ்" : "English"}
             </span>
           </button>
         )}
+        <ActionSheet
+          open={translationSheetOpen}
+          onClose={() => setTranslationSheetOpen(false)}
+          label="Choose the translation language"
+        >
+          <h3 className="pb-3 text-lg font-black text-white tracking-tight">Translation</h3>
+          <div className="space-y-1" role="radiogroup" aria-label="Translation language">
+            {TRANSLATION_CHOICES.map((c) => {
+              const selected = c.id === "off" ? !showMeaning : showMeaning && language === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    chooseTranslation(c.id);
+                    setTranslationSheetOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                    selected ? "bg-emerald-600 text-white" : "text-sand-100 hover:bg-white/10"
+                  }`}
+                >
+                  <span className="flex flex-col">
+                    <span className={`text-sm font-bold ${c.id === "ta" ? "font-tamil" : ""}`}>{c.label}</span>
+                    <span className={`text-xs ${selected ? "text-white/80" : "text-sand-200/60"}`}>{c.hint}</span>
+                  </span>
+                  {selected && <CheckIcon className="text-base" />}
+                </button>
+              );
+            })}
+          </div>
+        </ActionSheet>
 
         {/* Tajweed: opens a panel with the on/off switch and the colour legend
             (only when verse text is on screen). The panel is positioned against
@@ -321,6 +344,12 @@ export function ImmersiveHeader({
     </header>
   );
 }
+
+const TRANSLATION_CHOICES = [
+  { id: "off", label: "Off", hint: "Arabic only" },
+  { id: "en", label: "English", hint: "Saheeh International" },
+  { id: "ta", label: "தமிழ்", hint: "Tamil" },
+] as const;
 
 /** Three rule-coloured dots (Tajweed on) or muted outlines (off). */
 function TajweedIcon({ on, className }: { on: boolean; className?: string }) {
