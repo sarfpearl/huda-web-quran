@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>HuDa Motion Promo</title>
+<!--
+  HuDa motion promo — one shape, never cut. 120 BPM, 7 bars, 28 beats, 14 s loop.
+
+  Rules (see README.md):
+  - Every style is computed from time inside seek(t). No CSS transitions, no timers,
+    no state carried between frames. Render any frame in any order.
+  - Springs are closed-form step responses. A value whose target changes many times
+    is the sum of one spring per change, evaluated over the previous two loops too,
+    so t = 0 and t = T are the same frame (position AND velocity).
+  - Colours are HuDa tokens only (tailwind.config.ts): sand canvas, white / charcoal
+    components, primary-700 as the single accent.
+  - Never put will-change on anything the camera scales (text goes blurry).
+-->
+<style>
+  @font-face { font-family: Poppins; font-weight: 400; font-display: block;
+    src: url(.cache/poppins-400.woff2) format("woff2"), url(https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJfecg.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 500; font-display: block;
+    src: url(.cache/poppins-500.woff2) format("woff2"), url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLGT9Z1xlFQ.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 600; font-display: block;
+    src: url(.cache/poppins-600.woff2) format("woff2"), url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFQ.woff2) format("woff2"); }
+  @font-face { font-family: "Uthmanic Hafs"; font-display: block;
+    src: url(../../../public/fonts/UthmanicHafs.otf) format("opentype"); }
+
+  :root {
+    --ink: #141716;      /* charcoal-900 */
+    --muted: #5a625e;    /* --foreground-muted */
+    --green: #1a5140;    /* primary-700, the one accent */
+    --sand50: #fbf9f4;
+    --sand100: #f5f1e8;
+    --sand200: #e9e2d3;
+    --sand300: #d8cdb8;
+  }
+  html, body { margin: 0; background: var(--sand100); }
+  #stage {
+    position: relative; width: 1440px; height: 1440px; overflow: hidden;
+    background: var(--sand100); color: var(--ink);
+    font-family: Poppins, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums;
+  }
+  #cam { position: absolute; left: 720px; top: 720px; width: 0; height: 0; transform-origin: 0 0; }
+  #shape { position: absolute; overflow: hidden; transform-origin: 50% 50%; }
+  .layer { position: absolute; }
+  .layer > * { position: absolute; white-space: nowrap; }
+  .c { transform: translate(-50%, -50%); }
+  .l { transform: translate(0, -50%); }
+  .r { transform: translate(-100%, -50%); }
+  svg { display: block; overflow: visible; }
+  #cursor { position: absolute; left: 0; top: 0; width: 44px; height: 44px; transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam"><div id="shape"></div></div>
+  <svg id="cursor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 3.2 L5 19.4 L9.2 15.6 L12 21.4 L14.6 20.2 L11.9 14.5 L17.6 14.5 Z"
+      fill="#141716" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"
+      style="filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.28))"/>
+  </svg>
+</div>
+
+<script>
+"use strict";
+
+/* ───────────────────────── Time grid ───────────────────────── */
+
+const BPM = 120, BEAT = 60 / BPM, BARS = 7;
+const T = BARS * 4 * BEAT;               // 14 s
+const beat = n => (n - 1) * BEAT;        // beat n (1-based) → seconds
+
+/* ───────────────────────── Springs ─────────────────────────── */
+
+// Closed-form unit step response of a damped spring. z = damping ratio, w = natural freq (rad/s).
+function step(tau, z, w) {
+  if (tau <= 0) return 0;
+  if (z >= 1) return 1 - Math.exp(-w * tau) * (1 + w * tau);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * tau) * (Math.cos(wd * tau) + (z * w / wd) * Math.sin(wd * tau));
+}
+
+const SP = {
+  shape:  { z: 0.86, w: 20 },   // ~0.6 % overshoot: "a tiny overshoot at most"
+  color:  { z: 1.0,  w: 34 },   // fast, so charcoal ↔ white never lingers in grey
+  cam:    { z: 1.0,  w: 12 },
+  cursor: { z: 0.95, w: 16 },
+  press:  { z: 0.8,  w: 34 },
+  lead:   { z: 0.8,  w: 26 },   // leading edge of the knob / tab indicator
+  trail:  { z: 0.92, w: 12 },   // trailing edge lags behind → liquid stretch
+  icon:   { z: 0.9,  w: 24 },
+  release:{ z: 0.72, w: 22 },
+};
+
+// Periodic sum of springs. keys: [[t, value, spring?], ...]; last value must equal v0.
+// Each change contributes Δ·step(t − tᵢ) for this loop and the previous two, so the
+// value is a pure function of t and wraps seamlessly at T.
+function track(v0, keys, sp = SP.shape) {
+  let prev = v0;
+  const parts = keys.map(([t, v, s]) => { const d = v - prev; prev = v; return { t, d, s: s || sp }; });
+  if (Math.abs(prev - v0) > 1e-9) throw new Error(`track does not loop: ${v0} → ${prev}`);
+  return t => {
+    let v = v0;
+    for (const p of parts) for (let k = 0; k < 3; k++) v += p.d * step(t + k * T - p.t, p.s.z, p.s.w);
+    return v;
+  };
+}
+
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function colorTrack(c0, keys, sp = SP.color) {
+  const ch = [0, 1, 2].map(i => track(hex(c0)[i], keys.map(([t, c, s]) => [t, hex(c)[i], s]), sp));
+  return t => `rgb(${ch.map(f => Math.round(Math.min(255, Math.max(0, f(t))))).join(",")})`;
+}
+
+/* ───────────────────────── Easing / utils ──────────────────── */
+
+const clamp01 = x => Math.min(1, Math.max(0, x));
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+const easeInOut = x => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+const lerp = (a, b, k) => a + (b - a) * k;
+const px = v => `${v.toFixed(2)}px`;
+
+// Content swap: exit blurs out fast, enter waits a beat-fraction then blurs in,
+// so text inside the morphing container never overlaps.
+const ENTER_DELAY = 0.09, ENTER = 0.2, EXIT = 0.1, BLUR = 6;
+function vis(t, tin, tout) {
+  let best = { o: 0, blur: BLUR, s: 0.97 };
+  for (const shift of [-T, 0, T]) {
+    const u = t + shift;
+    if (u < tin || u > tout + EXIT) continue;
+    const e = easeOut(clamp01((u - tin - ENTER_DELAY) / ENTER));
+    const x = easeInOut(clamp01((u - tout) / EXIT));
+    const o = e * (1 - x);
+    if (o >= best.o) best = { o, blur: BLUR * (1 - e) + BLUR * x, s: 0.97 + 0.03 * e };
+  }
+  return best;
+}
+function applyVis(node, v, extra = "") {
+  node.style.opacity = v.o.toFixed(3);
+  node.style.visibility = v.o < 0.002 ? "hidden" : "visible";
+  node.style.filter = v.blur > 0.02 && v.o > 0.002 ? `blur(${v.blur.toFixed(2)}px)` : "none";
+  node.style.transform = `scale(${v.s.toFixed(4)}) ${extra}`;
+}
+
+/* ───────────────────────── Palette ─────────────────────────── */
+
+const INK = "#141716", WHITE = "#ffffff", GREEN = "#1a5140",
+      SAND50 = "#fbf9f4", SAND100 = "#f5f1e8", SAND200 = "#e9e2d3", SAND300 = "#d8cdb8";
+
+/* ───────────────────────── The one shape ───────────────────── */
+
+// name, start, w, h, radius, fill, camera zoom
+const STATES = [
+  ["button",  0.0,  280,  88, 44, INK,   3.2],
+  ["loader",  1.0,   88,  88, 44, INK,   4.4],
+  ["check",   1.5,   88,  88, 44, GREEN, 4.4],
+  ["island",  2.0,  420,  72, 36, INK,   2.5],
+  ["player",  2.5,  560, 320, 40, WHITE, 1.9],
+  ["volume",  5.0,  560,  72, 36, WHITE, 1.75],
+  ["toggle",  7.0,  400, 112, 56, WHITE, 2.4],
+  ["tabs",    8.0,  560,  80, 40, WHITE, 1.9],
+  ["chart",   9.5,  560, 400, 40, WHITE, 1.75],
+  ["cmdk",   11.0,  560,  80, 24, WHITE, 1.9],
+  ["cmdk3",  11.5,  560, 288, 24, WHITE, 1.9],
+  ["cmdk1",  12.0,  560, 160, 24, WHITE, 1.9],
+  ["toast",  13.0,  440,  72, 36, INK,   2.3],
+  ["button", 13.5,  280,  88, 44, INK,   3.2],
+];
+const keysOf = col => STATES.slice(1).map(s => [s[1], s[col]]);
+const shapeW = track(STATES[0][2], keysOf(2), SP.shape);
+const shapeH = track(STATES[0][3], keysOf(3), SP.shape);
+const shapeR = track(STATES[0][4], keysOf(4), SP.shape);
+const shapeFill = colorTrack(STATES[0][5], keysOf(5));
+const camZoom = track(STATES[0][6], keysOf(6), SP.cam);
+const shapeShade = track(0, [[2.5, 1], [5.0, 1], [7.0, 1], [13.0, 0]], SP.color); // 1 = white surface
+const shapePress = track(1, [[0.5, 0.965, SP.press], [0.6, 1, SP.press], [2.5, 0.975, SP.press], [2.6, 1, SP.press]]);
+
+// Content windows: [tin, tout]. The button window wraps through the loop point.
+const WIN = {
+  button: [13.5, 15.0], loader: [1.0, 1.5], check: [1.5, 2.0], island: [2.0, 2.5],
+  player: [2.5, 5.0], volume: [5.0, 7.0], toggle: [7.0, 8.0], tabs: [8.0, 9.5],
+  knob: [7.0, 9.5], chart: [9.5, 11.0], cmdk: [11.0, 13.0], toast: [13.0, 13.5],
+};
+
+/* ───────────────────────── Cursor ──────────────────────────── */
+
+// World coordinates, origin = shape centre. Held intervals drive direct manipulation.
+const REST = [150, 190];
+const P0 = 1 / 7 - 0.02, RATE = 0.04;                  // player progress before the scrub
+const TRACK_L = -248, TRACK_W = 496, TRACK_Y = 8;      // player progress bar
+const VOL_L = -196, VOL_W = 432, VOL_R = VOL_L + VOL_W, VOL0 = 0.55;
+const knobAt4 = TRACK_L + TRACK_W * (P0 + RATE * 1.0);
+const CURSOR = [
+  [0.05,  40,  14],               // onto the button          → click 0.5
+  [0.80, 110, 120],
+  [2.02,  70,  10],               // onto the island          → click 2.5
+  [2.62,   0, 100],               // play button              → click 3.0
+  [3.20, knobAt4, TRACK_Y],       // progress knob            → grab 4.0
+  [4.04, TRACK_L + TRACK_W * 0.64, TRACK_Y + 6],  // scrub to ayah 5, release 4.8
+  [4.90, VOL_L + VOL_W * VOL0, 2],                // volume knob → grab 5.5
+  [5.54, 330, 6],                 // drag past max
+  [6.00, 372, 10],                // keep pulling             → release 6.5
+  [6.56, 250, 44],
+  [7.02, 124, 6],                 // toggle                   → click 7.5
+  [8.02,   0, 6],                 // Sudais tab               → click 8.5
+  [8.60, 180, 6],                 // Husary tab               → click 9.0
+  [9.60, 150, 120],
+  [10.05, 70, 34],                // hover Friday bar at 10.5
+  [11.05, 200, 172],              // out of the way while typing
+  [13.55, REST[0], REST[1]],
+];
+const cx = track(REST[0], CURSOR.map(([t, x]) => [t, x]), SP.cursor);
+const cy = track(REST[1], CURSOR.map(([t, , y]) => [t, y]), SP.cursor);
+const PRESSES = [[0.5, 0.6], [2.5, 2.6], [3.0, 3.1], [4.0, 4.8], [5.5, 6.5], [7.5, 7.6], [8.5, 8.6], [9.0, 9.1]];
+const cursorScale = track(1, PRESSES.flatMap(([d, u]) => [[d, 0.82], [u, 1]]), SP.press);
+
+/* ───────────────────────── Direct manipulation ─────────────── */
+
+function progress(t) {
+  if (t < 3.0) return P0;
+  if (t < 4.0) return P0 + RATE * (t - 3.0);
+  if (t < 4.8) return clamp01((cx(t) - TRACK_L) / TRACK_W);        // held: value = cursor
+  return clamp01((cx(4.8) - TRACK_L) / TRACK_W) + RATE * (t - 4.8);  // released: keeps playing
+}
+const ayah = p => Math.min(7, Math.floor(p * 7) + 1);
+
+const volume = t => t < 5.5 ? VOL0 : clamp01((cx(Math.min(t, 6.5)) - VOL_L) / VOL_W);
+const heldStretch = t => 80 * (1 - Math.exp(-Math.max(0, cx(t) - VOL_R) / 100));
+function stretch(t) {
+  if (t < 5.5) return 0;
+  if (t < 6.5) return heldStretch(t);                                   // held: rubber band
+  return heldStretch(6.5) * (1 - step(t - 6.5, SP.release.z, SP.release.w)); // springs back from where it was
+}
+
+/* ───────────────────────── Knob → tab indicator ─────────────── */
+
+// Edges in shape-local coords. Per change, the edge moving first rides the lead spring.
+const TAB_X = [-180, 0, 180], TAB_HW = 86;
+const kL = track(78, [[7.5, 122, SP.trail], [8.0, TAB_X[0] - TAB_HW, SP.lead], [8.5, TAB_X[1] - TAB_HW, SP.trail], [9.0, TAB_X[2] - TAB_HW, SP.trail], [12, 78]], SP.shape);
+const kR = track(126, [[7.5, 170, SP.lead], [8.0, TAB_X[0] + TAB_HW, SP.trail], [8.5, TAB_X[1] + TAB_HW, SP.lead], [9.0, TAB_X[2] + TAB_HW, SP.lead], [12, 126]], SP.shape);
+const kT = track(-24, [[8.0, -30], [12, -24]], SP.shape);
+const kB = track(24, [[8.0, 30], [12, 24]], SP.shape);
+const knobFill = colorTrack(WHITE, [[8.0, GREEN], [12, WHITE]]);
+const knobLift = track(1, [[8.0, 0], [12, 1]], SP.color);
+const toggleTrack = colorTrack(SAND200, [[7.5, GREEN], [12, SAND200]]);
+
+/* ───────────────────────── Chart ───────────────────────────── */
+
+const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const MINUTES = [18, 26, 12, 30, 42, 24, 34];           // Σ 186 min = 3h 06m
+const BAR_BASE = 128, BAR_MAX = 180, BAR_W = 44, HOVER = 4, HOVER_T = 10.5;
+const barX = i => -192 + 64 * i;
+const barFill = MINUTES.map((_, i) => colorTrack(INK, [[HOVER_T, i === HOVER ? GREEN : SAND300], [12.5, INK]]));
+
+/* ───────────────────────── ⌘K ──────────────────────────────── */
+
+const TYPED = [["y", 11.5], ["a", 12.0], ["s", 12.08], ["i", 12.16], ["n", 12.24]];
+const ROWS = [["36", "Ya-Sin", "83 ayahs"], ["12", "Yusuf", "111 ayahs"], ["10", "Yunus", "109 ayahs"]];
+const ENTER_T = 12.5;
+const rowFill = colorTrack(SAND100, [[ENTER_T, GREEN], [13.4, SAND100]]);
+const rowInk = colorTrack(INK, [[ENTER_T, WHITE], [13.4, INK]]);
+const rowPress = track(1, [[ENTER_T, 0.98, SP.press], [ENTER_T + 0.1, 1, SP.press]]);
+
+/* ───────────────────────── Icons ───────────────────────────── */
+// Filled family: media controls. Stroked family: 2px on a 24 grid, round caps/joins.
+
+const stroke = (d, color, w = 2) =>
+  `<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ICON = {
+  play: `<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M8 5.2v13.6L18.8 12z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  next: `<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M5.5 6.2 14.5 12l-9 5.8z M16.2 6h2.3v12h-2.3z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  prev: `<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M18.5 6.2 9.5 12l9 5.8z M7.8 6H5.5v12h2.3z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  search: c => stroke("M10.8 17.6a6.8 6.8 0 1 0 0-13.6 6.8 6.8 0 0 0 0 13.6z M20 20l-4.4-4.4", c),
+};
+
+/* ───────────────────────── DOM ─────────────────────────────── */
+
+const $shape = document.getElementById("shape");
+const $cam = document.getElementById("cam");
+const $cursor = document.getElementById("cursor");
+
+function layer(w, h, cls = "") {
+  const d = document.createElement("div");
+  d.className = "layer " + cls;
+  d.style.width = w + "px"; d.style.height = h + "px";
+  d.dataset.w = w; d.dataset.h = h;
+  $shape.appendChild(d);
+  return d;
+}
+// Child positioned in layer-local coords with origin at the layer centre.
+function put(parent, x, y, anchor, css, html) {
+  const e = document.createElement("div");
+  e.className = anchor;
+  e.style.cssText = `left:${+parent.dataset.w / 2 + x}px;top:${+parent.dataset.h / 2 + y}px;${css || ""}`;
+  if (html != null) e.innerHTML = html;
+  parent.appendChild(e);
+  return e;
+}
+
+// ① Button
+const L_button = layer(280, 88);
+put(L_button, -54, 0, "c", `width:26px;height:26px;color:${SAND50}`, ICON.play);
+put(L_button, -30, 1, "l", `font:500 28px/1 Poppins;color:${SAND50};letter-spacing:-.01em`, "Listen");
+
+// ② Loader
+const L_loader = layer(88, 88);
+const loaderSvg = put(L_loader, 0, 0, "c", "width:48px;height:48px",
+  `<svg viewBox="0 0 48 48" width="48" height="48"><circle id="arc" cx="24" cy="24" r="17" fill="none" stroke="${SAND50}" stroke-width="3.5" stroke-linecap="round"/></svg>`);
+const $arc = loaderSvg.querySelector("#arc");
+const ARC_C = 2 * Math.PI * 17;
+
+// ③ Check
+const L_check = layer(88, 88);
+const $check = put(L_check, 0, 0, "c", "width:48px;height:48px",
+  `<svg viewBox="0 0 48 48" width="48" height="48"><path d="M15.5 24.5l6 6L33 18.8" pathLength="1" fill="none" stroke="${SAND50}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 1"/></svg>`).querySelector("path");
+
+// ④ Surah island
+const L_island = layer(420, 72);
+put(L_island, -176, 0, "c", `width:44px;height:44px;border-radius:22px;background:${GREEN};color:${WHITE};font:600 17px/44px Poppins;text-align:center`, "1");
+put(L_island, -142, -10, "l", `font:600 19px/1 Poppins;color:${WHITE}`, "Al-Fatiha");
+put(L_island, -142, 14, "l", `font:400 14px/1 Poppins;color:#a5ada8`, "Mishary Alafasy");
+const waveBars = [0, 1, 2, 3, 4].map(i => put(L_island, 128 + i * 11, 0, "c", `width:4px;height:12px;border-radius:2px;background:#7dbd9d`));
+
+// ⑤–⑥ Player
+const L_player = layer(560, 320);
+put(L_player, -196, -76, "c", `width:104px;height:104px;border-radius:22px;background:${GREEN};color:${SAND50};font:28px/104px 'Uthmanic Hafs';text-align:center`, "الفاتحة");
+put(L_player, -120, -100, "l", `font:600 30px/1.1 Poppins;letter-spacing:-.015em`, "Al-Fatiha");
+put(L_player, -120, -62, "l", `font:400 17px/1 Poppins;color:var(--muted)`, "Mishary Alafasy");
+const $ayah = put(L_player, 248, -100, "r", `font:500 15px/1 Poppins;padding:8px 13px;border-radius:999px;background:${SAND100}`, "");
+const $trackBg = put(L_player, TRACK_L, TRACK_Y, "l", `width:${TRACK_W}px;height:6px;border-radius:3px;background:${SAND200}`);
+const $trackFill = put(L_player, TRACK_L, TRACK_Y, "l", `height:6px;border-radius:3px;background:${GREEN}`);
+const $pKnob = put(L_player, 0, TRACK_Y, "c", `width:18px;height:18px;border-radius:9px;background:${INK};box-shadow:0 0 0 3px ${WHITE},0 2px 6px rgba(20,40,30,.25)`);
+const $tNow = put(L_player, TRACK_L, 38, "l", `font:400 15px/1 Poppins;color:var(--muted)`, "");
+put(L_player, TRACK_L + TRACK_W, 38, "r", `font:400 15px/1 Poppins;color:var(--muted)`, "0:48");
+put(L_player, -88, 100, "c", `width:28px;height:28px;color:${INK}`, ICON.prev);
+put(L_player, 88, 100, "c", `width:28px;height:28px;color:${INK}`, ICON.next);
+const $playBtn = put(L_player, 0, 100, "c", `width:64px;height:64px;border-radius:32px;background:${INK};display:grid;place-items:center`,
+  `<svg viewBox="0 0 24 24" width="28" height="28"><path id="pa" fill="${WHITE}"/><path id="pb" fill="${WHITE}"/></svg>`);
+const $pa = $playBtn.querySelector("#pa"), $pb = $playBtn.querySelector("#pb");
+const PLAY = [[[8, 5.5], [13.5, 9], [13.5, 15], [8, 18.5]], [[13.5, 9], [19, 12], [19, 12], [13.5, 15]]];
+const PAUSE = [[[7, 5.5], [10.5, 5.5], [10.5, 18.5], [7, 18.5]], [[13.5, 5.5], [17, 5.5], [17, 18.5], [13.5, 18.5]]];
+const playPause = track(0, [[3.0, 1, SP.icon], [12, 0]]);
+const playPress = track(1, [[3.0, 0.9, SP.press], [3.1, 1, SP.press]]);
+const pKnobScale = track(1, [[4.0, 1.45, SP.press], [4.8, 1, SP.press]]);
+
+// ⑦ Volume
+const L_volume = layer(560, 72);
+const $spk = put(L_volume, -236, 0, "c", "width:28px;height:28px",
+  `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+     <path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path id="w1" d="M15 9.6a3.4 3.4 0 0 1 0 4.8"/><path id="w2" d="M17.8 7a7 7 0 0 1 0 10"/></svg>`);
+const $w1 = $spk.querySelector("#w1"), $w2 = $spk.querySelector("#w2");
+const $volBg = put(L_volume, VOL_L, 0, "l", `height:8px;border-radius:4px;background:${SAND200}`);
+const $volFill = put(L_volume, VOL_L, 0, "l", `height:8px;border-radius:4px;background:${GREEN}`);
+const $volKnob = put(L_volume, 0, 0, "c", `width:28px;height:28px;border-radius:14px;background:${WHITE};box-shadow:0 0 0 1px rgba(20,23,22,.08),0 2px 8px rgba(20,40,30,.18)`);
+const volKnobScale = track(1, [[5.5, 1.15, SP.press], [6.5, 1, SP.press]]);
+
+// ⑧ Toggle (track sits below the shared knob)
+const L_toggle = layer(400, 112);
+put(L_toggle, -168, -13, "l", `font:600 26px/1 Poppins;letter-spacing:-.01em`, "Tajweed");
+put(L_toggle, -168, 19, "l", `font:400 15px/1 Poppins;color:var(--muted)`, "Colour-coded recitation");
+const $togTrack = put(L_toggle, 124, 0, "c", `width:104px;height:60px;border-radius:30px`);
+
+// ⑨ Tabs: base labels · shared indicator · white labels clipped to the indicator
+const TABS = ["Mishary", "Sudais", "Husary"];
+const L_tabsBase = layer(560, 80);
+TABS.forEach((n, i) => put(L_tabsBase, TAB_X[i], 1, "c", `font:500 19px/1 Poppins;color:var(--muted)`, n));
+const $knob = document.createElement("div");
+$knob.style.cssText = "position:absolute";
+$shape.appendChild($knob);
+const L_tabsTop = layer(560, 80);
+TABS.forEach((n, i) => put(L_tabsTop, TAB_X[i], 1, "c", `font:500 19px/1 Poppins;color:${WHITE}`, n));
+
+// ⑩ Chart
+const L_chart = layer(560, 400);
+put(L_chart, -248, -160, "l", `font:500 15px/1 Poppins;color:var(--muted)`, "This week");
+put(L_chart, -248, -122, "l", `font:600 34px/1 Poppins;letter-spacing:-.02em`, "3h 06m");
+put(L_chart, 248, -160, "r", `font:500 15px/1 Poppins;color:${GREEN}`, "+18% vs last week");
+put(L_chart, 0, BAR_BASE + 1, "c", `width:496px;height:2px;border-radius:1px;background:${SAND200}`);
+const $bars = MINUTES.map((_, i) => put(L_chart, barX(i), BAR_BASE, "", `width:${BAR_W}px;border-radius:10px;transform:translate(-50%,-100%)`));
+DAYS.forEach((d, i) => put(L_chart, barX(i), BAR_BASE + 26, "c", `font:500 14px/1 Poppins;color:var(--muted)`, d));
+const $tip = put(L_chart, barX(HOVER), 0, "c", `font:500 15px/1 Poppins;color:${WHITE};background:${INK};padding:9px 13px;border-radius:999px`, "Fri · 42 min");
+
+// ⑪ ⌘K (top-anchored: the list grows downward from the input row)
+const L_cmdk = layer(560, 288);
+put(L_cmdk, -252, -104, "c", "width:24px;height:24px", ICON.search(INK));
+const $placeholder = put(L_cmdk, -224, -103, "l", `font:400 22px/1 Poppins;color:#9aa19d`, "Search surah…");
+const $typed = put(L_cmdk, -224, -103, "l", `font:500 22px/1 Poppins;display:flex`);
+const $chars = TYPED.map(([ch]) => { const s = document.createElement("span"); s.textContent = ch; s.style.display = "inline-block"; $typed.appendChild(s); return s; });
+const $caret = put(L_cmdk, 0, -104, "c", `width:2px;height:26px;border-radius:1px;background:${GREEN}`);
+put(L_cmdk, 252, -104, "r", `font:500 14px/1 Poppins;color:var(--muted);background:${SAND100};padding:7px 9px;border-radius:8px`, "⌘K");
+const $divider = put(L_cmdk, 0, -64, "c", `width:560px;height:1px;background:${SAND200}`);
+const $rows = ROWS.map(([num, name, meta], i) => {
+  const r = put(L_cmdk, 0, -24 + 64 * i, "c", `width:528px;height:58px;border-radius:14px`);
+  r.innerHTML = `
+    <div style="position:absolute;left:12px;top:11px;width:36px;height:36px;border-radius:18px;background:${i ? SAND100 : WHITE};font:600 14px/36px Poppins;text-align:center;color:${INK}" class="num">${num}</div>
+    <div style="position:absolute;left:62px;top:0;line-height:58px;font:500 20px/58px Poppins" class="name">${name}</div>
+    <div style="position:absolute;right:${i ? 16 : 56}px;top:0;font:400 15px/58px Poppins;color:var(--muted)" class="meta">${meta}</div>
+    ${i ? "" : `<div class="kbd" style="position:absolute;right:14px;top:15px;width:28px;height:28px;border-radius:7px;background:${WHITE};font:500 15px/28px Poppins;text-align:center;color:var(--muted)">↵</div>`}`;
+  return r;
+});
+
+// ⑫ Toast
+const L_toast = layer(440, 72);
+const $toastCheck = put(L_toast, -178, 0, "c", `width:36px;height:36px;border-radius:18px;background:${GREEN}`,
+  `<svg viewBox="0 0 36 36" width="36" height="36"><path d="M11.5 18.5l4.5 4.5 8.5-9" pathLength="1" fill="none" stroke="${WHITE}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 1"/></svg>`).querySelector("path");
+put(L_toast, -146, 1, "l", `font:400 19px/1 Poppins;color:#c9cfcb`, `Now playing · <span style="font-weight:600;color:${WHITE}">Ya-Sin</span>`);
+
+/* ───────────────────────── seek(t) ─────────────────────────── */
+
+function placeLayer(node, w, h, dx = 0, top = null) {
+  node.style.left = px((w - +node.dataset.w) / 2 + dx);
+  node.style.top = px(top == null ? (h - +node.dataset.h) / 2 : top);
+}
+const poly = (a, b, k) => "M" + a.map((p, i) => `${lerp(p[0], b[i][0], k).toFixed(3)} ${lerp(p[1], b[i][1], k).toFixed(3)}`).join("L") + "Z";
+const mmss = s => `0:${String(Math.floor(s)).padStart(2, "0")}`;
+
+function seek(tIn) {
+  const t = ((tIn % T) + T) % T;
+
+  /* camera */
+  const z = camZoom(t);
+  $cam.style.transform = `scale(${z.toFixed(5)})`;
+
+  /* shape */
+  const s = stretch(t);
+  const w = shapeW(t) + s, h = shapeH(t) - 0.15 * s, dx = s / 2;
+  const shade = shapeShade(t);
+  $shape.style.width = px(w);
+  $shape.style.height = px(h);
+  $shape.style.left = px(-w / 2 + dx);
+  $shape.style.top = px(-h / 2);
+  $shape.style.borderRadius = px(Math.min(shapeR(t), h / 2, w / 2));
+  $shape.style.background = shapeFill(t);
+  $shape.style.transform = `scale(${shapePress(t).toFixed(4)})`;
+  $shape.style.boxShadow =
+    `inset 0 0 0 1px rgba(20,23,22,${(0.06 * shade).toFixed(3)}),` +
+    `0 2px 12px -2px rgba(20,40,30,.10), 0 22px 48px -18px rgba(20,40,30,${(0.22 - 0.06 * shade).toFixed(3)})`;
+
+  /* ① button */
+  placeLayer(L_button, w, h); applyVis(L_button, vis(t, ...WIN.button));
+
+  /* ② loader */
+  placeLayer(L_loader, w, h); applyVis(L_loader, vis(t, ...WIN.loader));
+  const frac = 0.22 + 0.74 * easeInOut(clamp01((t - 1.05) / 0.4));
+  $arc.setAttribute("stroke-dasharray", `${(frac * ARC_C).toFixed(2)} ${ARC_C.toFixed(2)}`);
+  $arc.setAttribute("transform", `rotate(${((t - 1.0) * 600 - 90).toFixed(2)} 24 24)`);
+
+  /* ③ check */
+  placeLayer(L_check, w, h); applyVis(L_check, vis(t, ...WIN.check));
+  $check.setAttribute("stroke-dashoffset", (1 - clamp01(step(t - 1.58, 1, 22))).toFixed(4));
+
+  /* ④ island */
+  placeLayer(L_island, w, h); applyVis(L_island, vis(t, ...WIN.island));
+  waveBars.forEach((b, i) => {
+    const a = Math.abs(Math.sin(t * Math.PI * 2 * BPM / 60 / 2 + i * 1.1)) * (0.6 + 0.4 * Math.sin(t * 7 + i));
+    b.style.height = px(6 + 18 * Math.abs(a));
+  });
+
+  /* ⑤–⑥ player */
+  placeLayer(L_player, w, h); applyVis(L_player, vis(t, ...WIN.player));
+  const p = progress(t);
+  $ayah.textContent = `Ayah ${ayah(p)} / 7`;
+  $trackFill.style.width = px(TRACK_W * p);
+  $pKnob.style.left = px(280 + TRACK_L + TRACK_W * p);
+  $pKnob.style.transform = `translate(-50%,-50%) scale(${pKnobScale(t).toFixed(4)})`;
+  $tNow.textContent = mmss(p * 48);
+  const pp = clamp01(playPause(t));
+  $pa.setAttribute("d", poly(PLAY[0], PAUSE[0], pp));
+  $pb.setAttribute("d", poly(PLAY[1], PAUSE[1], pp));
+  $playBtn.style.transform = `translate(-50%,-50%) scale(${playPress(t).toFixed(4)})`;
+
+  /* ⑦ volume */
+  placeLayer(L_volume, w, h, -dx); applyVis(L_volume, vis(t, ...WIN.volume));
+  const v = volume(t), vw = VOL_W + s;
+  $volBg.style.width = px(vw);
+  $volFill.style.width = px(vw * v);
+  $volKnob.style.left = px(280 + VOL_L + vw * v);
+  $volKnob.style.transform = `translate(-50%,-50%) scale(${volKnobScale(t).toFixed(4)})`;
+  $w1.style.opacity = clamp01((v - 0.15) / 0.2).toFixed(3);
+  $w2.style.opacity = clamp01((v - 0.6) / 0.2).toFixed(3);
+
+  /* ⑧ toggle */
+  placeLayer(L_toggle, w, h); applyVis(L_toggle, vis(t, ...WIN.toggle));
+  $togTrack.style.background = toggleTrack(t);
+
+  /* ⑨ tabs + shared knob */
+  placeLayer(L_tabsBase, w, h); placeLayer(L_tabsTop, w, h);
+  const tv = vis(t, ...WIN.tabs);
+  applyVis(L_tabsBase, tv); applyVis(L_tabsTop, tv);
+  const L = kL(t), R = kR(t), Tp = kT(t), B = kB(t), rad = (B - Tp) / 2;
+  const kv = vis(t, ...WIN.knob), lift = clamp01(knobLift(t));
+  $knob.style.left = px(w / 2 + L);
+  $knob.style.top = px(h / 2 + Tp);
+  $knob.style.width = px(Math.max(0, R - L));
+  $knob.style.height = px(B - Tp);
+  $knob.style.borderRadius = px(rad);
+  $knob.style.background = knobFill(t);
+  $knob.style.boxShadow = `0 2px 6px rgba(20,40,30,${(0.22 * lift).toFixed(3)})`;
+  $knob.style.opacity = kv.o.toFixed(3);
+  $knob.style.visibility = kv.o < 0.002 ? "hidden" : "visible";
+  L_tabsTop.style.clipPath = `inset(${px(Tp + 40)} ${px(280 - R)} ${px(40 - B)} ${px(L + 280)} round ${px(rad)})`;
+
+  /* ⑩ chart */
+  placeLayer(L_chart, w, h); applyVis(L_chart, vis(t, ...WIN.chart));
+  $bars.forEach((b, i) => {
+    const grow = step(t - (10.0 + 0.045 * i), SP.shape.z, 18);
+    b.style.height = px(Math.max(0, BAR_MAX * MINUTES[i] / 42 * grow));
+    b.style.background = barFill[i](t);
+  });
+  const tipIn = step(t - HOVER_T, SP.shape.z, 24);
+  const barTop = BAR_BASE - BAR_MAX;
+  $tip.style.opacity = clamp01(tipIn).toFixed(3);
+  $tip.style.top = px(200 + barTop - 30 + 8 * (1 - tipIn));
+
+  /* ⑪ ⌘K */
+  placeLayer(L_cmdk, w, h, 0, 0);
+  const cv = vis(t, ...WIN.cmdk);
+  applyVis(L_cmdk, cv);
+  let typedCount = 0;
+  $chars.forEach((c, i) => {
+    const k = clamp01((t - TYPED[i][1]) / 0.07);
+    if (t >= TYPED[i][1]) typedCount++;
+    c.style.opacity = k.toFixed(3);
+    c.style.filter = k < 1 ? `blur(${(3 * (1 - k)).toFixed(2)}px)` : "none";
+    c.style.display = t >= TYPED[i][1] ? "inline-block" : "none";
+  });
+  $placeholder.style.opacity = typedCount ? 0 : 1;
+  const lastKey = typedCount ? TYPED[typedCount - 1][1] : 11.0;
+  const blinkOn = (t - lastKey) < 0.4 || Math.floor((t - 11) * 4) % 2 === 0;
+  $caret.style.left = px(280 - 224 + (typedCount ? $typed.offsetWidth : 0) + 3);
+  $caret.style.opacity = blinkOn ? 1 : 0;
+  const listOpen = vis(t, 11.5, 13.0);
+  $divider.style.opacity = listOpen.o.toFixed(3);
+  $rows.forEach((r, i) => {
+    const rv = vis(t, 11.5 + 0.04 * i, i === 0 ? 13.0 : 12.0);
+    applyVis(r, rv, "");
+    r.style.transform = `translate(-50%,-50%) scale(${(rv.s * (i === 0 ? rowPress(t) : 1)).toFixed(4)})`;
+    if (i === 0) {
+      r.style.background = rowFill(t);
+      r.querySelector(".name").style.color = rowInk(t);
+      r.querySelector(".meta").style.color = t >= ENTER_T + 0.02 ? "#cfe3d8" : "var(--muted)";
+      r.querySelector(".num").style.color = INK;
+    }
+  });
+
+  /* ⑫ toast */
+  placeLayer(L_toast, w, h); applyVis(L_toast, vis(t, ...WIN.toast));
+  $toastCheck.setAttribute("stroke-dashoffset", (1 - clamp01(step(t - 13.1, 1, 22))).toFixed(4));
+
+  /* cursor: world → screen, constant on-screen size */
+  const sx = 720 + cx(t) * z, sy = 720 + cy(t) * z;
+  const k = cursorScale(t);
+  $cursor.style.transform = `translate(${px(sx - 9.2 * k)}, ${px(sy - 5.8 * k)}) scale(${k.toFixed(4)})`;
+}
+
+/* ───────────────────────── Sound cues ──────────────────────── */
+// Single source of truth for sounds.py: [time, kind, gain].
+
+function buildCues() {
+  const c = [
+    [0.5, "click", 1], [1.0, "whoosh", .7], [1.5, "confirm", .9], [2.0, "whoosh", .7],
+    [2.5, "click", 1], [3.0, "click", 1], [3.5, "tick", .6], [4.0, "tick", .8],
+    [4.8, "tick", .7], [5.0, "whoosh", .7], [5.5, "tick", .8], [6.5, "tick", .8],
+    [7.0, "whoosh", .7], [7.5, "click", 1], [8.0, "whoosh", .7], [8.5, "click", 1],
+    [9.0, "click", 1], [9.5, "whoosh", .7], [10.5, "tick", .7], [11.0, "whoosh", .7],
+    [ENTER_T, "click", 1], [13.0, "confirm", .9], [13.5, "whoosh", .7],
+  ];
+  // ayah ticks while scrubbing, placed where the value actually crosses a boundary
+  let last = ayah(progress(4.0));
+  for (let t = 4.0; t < 4.8; t += 1 / 480) { const a = ayah(progress(t)); if (a !== last) { c.push([+t.toFixed(4), "tick", .5]); last = a; } }
+  // stretch past max: soft ticks while the rubber band loads
+  c.push([5.9, "tick", .4], [6.1, "tick", .35]);
+  MINUTES.forEach((_, i) => c.push([+(10.0 + 0.045 * i).toFixed(4), "bar", 0.35 + 0.05 * i]));
+  TYPED.forEach(([, t]) => c.push([t, "type", .8]));
+  return c.sort((a, b) => a[0] - b[0]);
+}
+
+window.T = T;
+window.seek = seek;
+// Seam probe: every continuous value, so render.mjs can prove t→T meets t=0.
+window.probe = t => [cx, cy, camZoom, shapeW, shapeH, shapeR, kL, kR, cursorScale, shapePress].map(f => f(t));
+window.CUES = buildCues();
+window.ready = document.fonts.ready.then(() => { seek(0); return true; });
+
+/* Preview only: ?t=3.2 freezes a frame, otherwise it plays in real time. seek stays pure. */
+const q = new URLSearchParams(location.search);
+if (!q.has("render")) {
+  if (q.has("t")) window.ready.then(() => seek(+q.get("t")));
+  else { const t0 = performance.now(); const loop = n => { seek((n - t0) / 1000); requestAnimationFrame(loop); }; window.ready.then(() => requestAnimationFrame(loop)); }
+}
+</script>
+</body>
+</html>
