@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import {
@@ -14,7 +14,9 @@ import {
   glyphFontsFor,
   glyphInkPadding,
   glyphStyle,
+  isWebKit,
   loadPageFont,
+  unloadPageFont,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
@@ -138,41 +140,94 @@ export function ReadingView({
 
   // Madinah-Mushaf glyph words, like the main verse view: Tajweed palette when
   // on, plain white when off (WebKit: page fonts only while Tajweed is on, see
-  // isWebKit). Page fonts load one by one in reading order; each word switches
-  // from the Uthmani text to its glyph once its page font is in.
+  // isWebKit). A word shows as Uthmani text until its page font is in.
   const useGlyphs = glyphFontsFor(tajweed);
   const [glyphs, setGlyphs] = useState<Map<number, GlyphVerse[]> | null>(null);
-  const [loadedPages, setLoadedPages] = useState<ReadonlySet<number>>(new Set());
   useEffect(() => {
     setGlyphs(null);
     if (!useGlyphs) return;
     let cancelled = false;
-    const markLoaded = (page: number) =>
-      setLoadedPages((prev) => (prev.has(page) ? prev : new Set(prev).add(page)));
-    (async () => {
-      // Surah headers' Bismillah is 1:1's glyphs (Mushaf page 1).
-      const need = [...new Set([1, ...plan.surahs])];
-      const entries = await Promise.all(need.map((s) => fetchSurahGlyphs(s).then((g) => [s, g] as const)));
+    // Surah headers' Bismillah is 1:1's glyphs (Mushaf page 1).
+    const need = [...new Set([1, ...plan.surahs])];
+    Promise.all(need.map((s) => fetchSurahGlyphs(s).then((g) => [s, g] as const))).then((entries) => {
       if (cancelled) return;
       const map = new Map<number, GlyphVerse[]>();
       for (const [s, g] of entries) if (g) map.set(s, g);
       setGlyphs(map);
-      const pages = new Set<number>([1]);
-      for (const { ref, ctx } of plan.all) {
-        if (ctx !== "cur") continue;
-        const g = map.get(ref.surah)?.find((v) => v.a === ref.ayah);
-        g?.w.forEach((w) => pages.add(w[1]));
-        if (g?.e) pages.add(g.e[1]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [surahsKey, useGlyphs]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Page fonts. Chromium / Firefox: every page, one by one in reading order.
+  // WebKit: a whole Surah of COLR page fonts (Al-Baqarah: 49) crashed iPhone
+  // Safari ("A problem repeatedly occurred"), so only the page at the top of
+  // the view and the next one are drawn from fonts; pages scrolled away from
+  // are unloaded again and read as text until they come back.
+  const windowed = useMemo(() => isWebKit(), []);
+  const [viewPage, setViewPage] = useState<number | null>(null);
+  const [loadedPages, setLoadedPages] = useState<ReadonlySet<number>>(new Set());
+  const allPagesKey = useMemo(() => {
+    if (!glyphs) return "";
+    const pages = new Set<number>();
+    for (const { ref, ctx } of plan.all) {
+      const g = glyphs.get(ref.surah)?.find((v) => v.a === ref.ayah);
+      if (!g) continue;
+      // Neighbouring text sits only on the first / last page, which the
+      // Surah / Juz itself uses too.
+      if (ctx === "cur") {
+        g.w.forEach((w) => pages.add(w[1]));
+        if (g.e) pages.add(g.e[1]);
       }
-      for (const page of [...pages].sort((a, b) => a - b)) {
+    }
+    return [...pages].sort((a, b) => a - b).join(",");
+  }, [glyphs, plan]);
+  const wantedKey = useMemo(() => {
+    if (!allPagesKey) return "";
+    const all = allPagesKey.split(",").map(Number);
+    if (!windowed) return ["1", ...all].join(",");
+    const at = viewPage ?? all[0];
+    return [1, ...all.filter((p) => p === at || p === at + 1)].join(",");
+  }, [allPagesKey, windowed, viewPage]);
+  const ownedRef = useRef<Set<number>>(new Set()); // fonts this view loaded (WebKit unloads them)
+  useEffect(() => {
+    if (!wantedKey) return;
+    const wanted = new Set(wantedKey.split(",").map(Number));
+    let cancelled = false;
+    if (windowed) {
+      for (const page of [...ownedRef.current]) {
+        if (wanted.has(page)) continue;
+        unloadPageFont(page);
+        ownedRef.current.delete(page);
+      }
+    }
+    setLoadedPages((prev) => {
+      const next = new Set([...prev].filter((p) => wanted.has(p)));
+      return next.size === prev.size ? prev : next;
+    });
+    (async () => {
+      for (const page of wanted) {
         if (cancelled) return;
-        if (await loadPageFont(page)) markLoaded(page);
+        if (await loadPageFont(page)) {
+          if (cancelled) return;
+          if (windowed && page !== 1) ownedRef.current.add(page);
+          setLoadedPages((prev) => (prev.has(page) ? prev : new Set(prev).add(page)));
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [surahsKey, useGlyphs]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wantedKey, windowed]);
+  // Leaving reading mode on WebKit: drop its page fonts.
+  useEffect(
+    () => () => {
+      for (const page of ownedRef.current) unloadPageFont(page);
+      ownedRef.current.clear();
+    },
+    []
+  );
 
   const verseOf = (r: AyahRef) => verses?.get(r.surah)?.find((v) => v.ayahNumber === r.ayah) ?? null;
   const glyphOf = (r: AyahRef) => (useGlyphs ? glyphs?.get(r.surah)?.find((v) => v.a === r.ayah) ?? null : null);
@@ -236,6 +291,20 @@ export function ReadingView({
       ?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [scrollToPage?.n, pages]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A page switching between text and glyphs changes height; keep the page at
+  // the top of the view where it was so the reading doesn't jump.
+  const anchorRef = useRef<{ page: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const a = anchorRef.current;
+    if (!el || !a) return;
+    const node = el.querySelector<HTMLElement>(`[data-page="${a.page}"]`);
+    if (!node) return;
+    const delta = node.getBoundingClientRect().top - a.top;
+    if (Math.abs(delta) > 1) el.scrollTop += delta;
+    anchorRef.current = { page: a.page, top: node.getBoundingClientRect().top };
+  }, [loadedPages]);
+
   // Page shown in the player strip = the page still visible at the top of the
   // view (reading along in one's own voice, not the audio).
   const pageCbRef = useRef(onVisiblePageChange);
@@ -253,12 +322,15 @@ export function ReadingView({
         const top = el.getBoundingClientRect().top + 40;
         let page = pages[0].page;
         for (const node of el.querySelectorAll<HTMLElement>("[data-page]")) {
-          if (node.getBoundingClientRect().bottom > top) {
+          const b = node.getBoundingClientRect();
+          if (b.bottom > top) {
             page = Number(node.dataset.page);
+            anchorRef.current = { page, top: b.top };
             break;
           }
         }
         pageCbRef.current?.(page);
+        setViewPage(page);
       }, 80);
     };
     report();

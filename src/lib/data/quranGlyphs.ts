@@ -116,6 +116,8 @@ export function fetchSurahGlyphs(surahNumber: number): Promise<GlyphVerse[] | nu
 }
 
 const fontCache = new Map<number, Promise<boolean>>();
+const fontFaces = new Map<number, FontFace>();
+const palettesRegistered = new Set<number>();
 let paletteSheet: HTMLStyleElement | null = null;
 
 /** Load one page font (once) and register its dark palette. Resolves false on failure. */
@@ -131,6 +133,10 @@ export function loadPageFont(page: number): Promise<boolean> {
         });
         await face.load();
         document.fonts.add(face);
+        fontFaces.set(page, face);
+        // A page unloaded and loaded again keeps its palettes.
+        if (palettesRegistered.has(page)) return true;
+        palettesRegistered.add(page);
         if (!paletteSheet) {
           paletteSheet = document.createElement("style");
           paletteSheet.dataset.qpcPalettes = "";
@@ -166,6 +172,20 @@ export function loadPageFont(page: number): Promise<boolean> {
     fontCache.set(page, p);
   }
   return p;
+}
+
+/**
+ * Drop a page font again (WebKit reading mode keeps only the pages on screen:
+ * a whole Surah of page fonts crashed iPhone Safari). A later loadPageFont
+ * brings it back.
+ */
+export function unloadPageFont(page: number): void {
+  const face = fontFaces.get(page);
+  if (face) {
+    document.fonts.delete(face);
+    fontFaces.delete(page);
+  }
+  fontCache.delete(page);
 }
 
 /** Legend (Quran.com's grouping), colours = the fonts' dark palette. */

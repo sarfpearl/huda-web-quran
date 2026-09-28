@@ -906,6 +906,9 @@ export function ImmersiveHomeClient({
         aria-hidden={readingActive || (compactScreen && engagement.composerOpen) ? true : undefined}
       >
       <CenterVerseDisplay
+        // Remount on leaving reading mode: on WebKit the reader unloads the
+        // page fonts it used, which this view reloads on mount.
+        key={readingActive ? "reading" : "scene"}
         currentVerse={isJuz ? (juzPreSegment ? null : juzAyahVerse) : currentVerse}
         currentSegment={isJuz ? juzPreSegment : currentSegment}
         currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
