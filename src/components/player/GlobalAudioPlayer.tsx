@@ -66,6 +66,14 @@ const swap = {
   },
 } as const;
 
+// Track change: the new artwork fades in on top, the old one is held
+// underneath until it is covered, so the cover never dips to the surface.
+const artSwap = {
+  initial: { opacity: 0, zIndex: 1 },
+  animate: { opacity: 1, zIndex: 1, transition: { duration: 0.24, ease: "easeOut" } },
+  exit: { opacity: 1, zIndex: 0, transition: { duration: 0, delay: 0.24 } },
+} as const;
+
 // Drag-to-dismiss: past either threshold on release closes, otherwise the
 // sheet springs back from wherever the finger left it.
 const DISMISS_OFFSET = 140;
@@ -133,27 +141,33 @@ export function GlobalAudioPlayer() {
       className={cn("relative shrink-0 overflow-hidden", className)}
       style={{ borderRadius: radius }}
     >
-      {current.coverImageUrl ? (
-        <Image src={current.coverImageUrl} alt="" fill className="object-cover" />
-      ) : (
-        <>
-          <CoverArt seed={current.slug} rounded="rounded-none" className="h-full w-full" />
-          {current.category.icon ? (
-            // Same icon treatment as CoverArt's own
-            <motion.div
-              className="absolute inset-0 grid place-items-center"
-              initial={fadeIcon ? { opacity: 0 } : false}
-              animate={{ opacity: 1, transition: { delay: 0.2, duration: 0.18 } }}
-            >
-              <CategoryIcon
-                name={current.category.icon}
-                className="text-4xl text-gold-300/80"
-                strokeWidth={1.2}
-              />
-            </motion.div>
-          ) : null}
-        </>
-      )}
+      {/* The artwork is keyed by track inside the shared wrapper, so a track
+          change crossfades without breaking the layoutId morph. */}
+      <AnimatePresence initial={false}>
+        <motion.div key={current.id} {...artSwap} className="absolute inset-0">
+          {current.coverImageUrl ? (
+            <Image src={current.coverImageUrl} alt="" fill className="object-cover" />
+          ) : (
+            <>
+              <CoverArt seed={current.slug} rounded="rounded-none" className="h-full w-full" />
+              {current.category.icon ? (
+                // Same icon treatment as CoverArt's own
+                <motion.div
+                  className="absolute inset-0 grid place-items-center"
+                  initial={fadeIcon ? { opacity: 0 } : false}
+                  animate={{ opacity: 1, transition: { delay: 0.2, duration: 0.18 } }}
+                >
+                  <CategoryIcon
+                    name={current.category.icon}
+                    className="text-4xl text-gold-300/80"
+                    strokeWidth={1.2}
+                  />
+                </motion.div>
+              ) : null}
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </motion.div>
   );
 
@@ -236,13 +250,19 @@ export function GlobalAudioPlayer() {
                         aria-label="Expand player"
                       >
                         {renderCover("h-11 w-11 md:h-12 md:w-12", 8, shared("cover"), raised)}
-                        <motion.span {...swap} className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold">
-                            {current.title}
-                          </span>
-                          <span className="block truncate text-xs text-muted">
-                            {subtitleText}
-                          </span>
+                        <motion.span {...swap} className="relative min-w-0 flex-1">
+                          {/* Track change: same blur swap; popLayout takes the
+                              old title out of flow so the new one never jumps. */}
+                          <AnimatePresence initial={false} mode="popLayout">
+                            <motion.span key={current.id} {...swap} className="block">
+                              <span className="block truncate text-sm font-semibold">
+                                {current.title}
+                              </span>
+                              <span className="block truncate text-xs text-muted">
+                                {subtitleText}
+                              </span>
+                            </motion.span>
+                          </AnimatePresence>
                         </motion.span>
                       </button>
 
@@ -373,36 +393,40 @@ export function GlobalAudioPlayer() {
                       {renderCover("h-full w-full shadow-soft-lg", 28, shared("cover"))}
                     </div>
 
-                    <motion.div {...swap} className="text-center">
-                      {isQuran ? (
-                        <>
-                          <span className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
-                            Quran
-                          </span>
-                          <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
-                          <span className="text-sm text-muted">
-                            {quranSubtitle}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            href={`/category/${current.category.slug}`}
-                            onClick={() => setExpanded(false)}
-                            className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300"
-                          >
-                            {current.category.name}
-                          </Link>
-                          <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
-                          <Link
-                            href={`/speaker/${current.speaker.slug}`}
-                            onClick={() => setExpanded(false)}
-                            className="text-sm text-muted"
-                          >
-                            {current.speaker.name}
-                          </Link>
-                        </>
-                      )}
+                    <motion.div {...swap} className="relative text-center">
+                      <AnimatePresence initial={false} mode="popLayout">
+                        <motion.div key={current.id} {...swap}>
+                          {isQuran ? (
+                            <>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                                Quran
+                              </span>
+                              <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
+                              <span className="text-sm text-muted">
+                                {quranSubtitle}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                href={`/category/${current.category.slug}`}
+                                onClick={() => setExpanded(false)}
+                                className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300"
+                              >
+                                {current.category.name}
+                              </Link>
+                              <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
+                              <Link
+                                href={`/speaker/${current.speaker.slug}`}
+                                onClick={() => setExpanded(false)}
+                                className="text-sm text-muted"
+                              >
+                                {current.speaker.name}
+                              </Link>
+                            </>
+                          )}
+                        </motion.div>
+                      </AnimatePresence>
                     </motion.div>
 
                     {isYouTube ? (
