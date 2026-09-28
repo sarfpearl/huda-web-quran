@@ -23,20 +23,27 @@ export interface GlyphVerse {
 }
 
 /**
- * Whether this browser may use the page fonts. WebKit (Safari, and every iOS
- * browser — CriOS / FxiOS / EdgiOS are WebKit too) is excluded: COLR page fonts
- * loaded through FontFace with @font-palette-values palettes crash its web
- * content process ("A problem repeatedly occurred" on iPhone). There the ayah
- * stays in the Uthmani text font and the Tajweed toggle is hidden.
+ * WebKit: Safari, and every iOS / iPadOS browser (CriOS / FxiOS / EdgiOS are
+ * WebKit too). A real iPhone crashed its web content process ("A problem
+ * repeatedly occurred") with the page fonts loaded on every visit; the iOS
+ * Simulator renders them fine, so the cause is device-side. On WebKit the page
+ * fonts therefore load only while Tajweed is switched on (Tajweed off keeps
+ * the Uthmani text font), and Tajweed isn't remembered between visits, so a
+ * crash reloads into the safe text view instead of looping.
  * Client-only: false during server rendering.
  */
-export function glyphFontsSupported(): boolean {
-  if (typeof navigator === "undefined" || typeof FontFace === "undefined") return false;
+export function isWebKit(): boolean {
+  if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
   // iPadOS reports a Mac UA; touch points tell it apart.
   const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   const webkit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Android/.test(ua);
-  return !ios && !webkit;
+  return ios || webkit;
+}
+
+/** Whether to draw the ayah with the page fonts (see isWebKit). */
+export function glyphFontsFor(tajweed: boolean): boolean {
+  return typeof FontFace !== "undefined" && (tajweed || !isWebKit());
 }
 
 const fontFamily = (page: number) => `qpc-v4-p${page}`;
@@ -113,7 +120,6 @@ let paletteSheet: HTMLStyleElement | null = null;
 
 /** Load one page font (once) and register its dark palette. Resolves false on failure. */
 export function loadPageFont(page: number): Promise<boolean> {
-  if (!glyphFontsSupported()) return Promise.resolve(false);
   let p = fontCache.get(page);
   if (!p) {
     p = (async () => {

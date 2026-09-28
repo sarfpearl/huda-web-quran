@@ -11,7 +11,7 @@ import {
 } from "@/lib/data/quranVerses";
 import {
   fetchSurahGlyphs,
-  glyphFontsSupported,
+  glyphFontsFor,
   glyphInkPadding,
   glyphStyle,
   loadPageFont,
@@ -437,8 +437,8 @@ export function CenterVerseDisplay({
   const tjKey = tjRef ? `${tjRef.surah}:${tjRef.ayah}` : "";
   const [glyphVerse, setGlyphVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
   useEffect(() => {
-    // No page fonts on WebKit (see glyphFontsSupported): the text stays.
-    if (!tjRef || !glyphFontsSupported()) return;
+    // WebKit: page fonts only while Tajweed is on (see isWebKit).
+    if (!tjRef || !glyphFontsFor(tajweed)) return;
     let cancelled = false;
     const { surah, ayah } = tjRef;
     fetchSurahGlyphs(surah).then(async (verses) => {
@@ -453,8 +453,8 @@ export function CenterVerseDisplay({
     return () => {
       cancelled = true;
     };
-  }, [tjKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const glyphs = tjRef && glyphVerse?.key === tjKey ? glyphVerse.verse : null;
+  }, [tjKey, tajweed]); // eslint-disable-line react-hooks/exhaustive-deps
+  const glyphs = tjRef && glyphVerse?.key === tjKey && glyphFontsFor(tajweed) ? glyphVerse.verse : null;
 
   // A tapped word shows as current straight away (before the seek lands, or on
   // its own when it can't seek); the audio-driven word takes over once it moves.

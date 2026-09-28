@@ -46,7 +46,7 @@ import {
   type RecitationSegment,
 } from "@/lib/data/quranVerses";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
-import { glyphFontsSupported } from "@/lib/data/quranGlyphs";
+import { isWebKit } from "@/lib/data/quranGlyphs";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
 import { useIsMobile } from "@/components/ui/ActionSheet";
 import {
@@ -711,13 +711,12 @@ export function ImmersiveHomeClient({
     player.seek(Math.max(0, (word.startTime - ayahStart) * scale));
   };
 
-  // Tajweed colours: off by default; remembered per browser. Only where the
-  // page fonts can be used (not WebKit / iOS, see glyphFontsSupported).
+  // Tajweed colours: off by default; remembered per browser — except on
+  // WebKit (Safari / iOS), where every visit starts off so a device that
+  // can't draw the page fonts reloads into the text view (see isWebKit).
   const [showTajweed, setShowTajweed] = useState(false);
-  const [tajweedSupported, setTajweedSupported] = useState(false);
   useEffect(() => {
-    if (!glyphFontsSupported()) return;
-    setTajweedSupported(true);
+    if (isWebKit()) return;
     try {
       if (localStorage.getItem("huda:tajweed") === "1") setShowTajweed(true);
     } catch {
@@ -727,7 +726,7 @@ export function ImmersiveHomeClient({
   const handleToggleTajweed = () => {
     setShowTajweed((prev) => {
       try {
-        localStorage.setItem("huda:tajweed", prev ? "0" : "1");
+        if (!isWebKit()) localStorage.setItem("huda:tajweed", prev ? "0" : "1");
       } catch {
         /* storage unavailable */
       }
@@ -805,7 +804,7 @@ export function ImmersiveHomeClient({
         showMeaning={showTranslation}
         onToggleMeaning={handleToggleMeaning}
         showTajweed={showTajweed}
-        onToggleTajweed={tajweedSupported ? handleToggleTajweed : undefined}
+        onToggleTajweed={handleToggleTajweed}
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
