@@ -14,10 +14,16 @@ merge.**
 
 ## Setup
 
-1. Deploy the PR branch as a preview, or run `npm run build && npm run start` and open it over the LAN.
-2. Open `/explore` and tap **Play** on any audio (non-YouTube) bayan. The compact bar appears above the bottom nav.
-3. Test twice on iOS: once in a **Safari tab**, and once as a **home-screen app** (Share → Add to Home Screen).
-   The home-screen app has the largest safe-area insets.
+The live UI is unchanged. The new versions exist only as QA copies (`src/components/motion-qa/`) and
+are shown on the temporary **`/motion-qa`** page, next to the originals. That page works in development
+and on Vercel preview deploys, and returns 404 in production.
+
+1. Open the PR's Vercel preview on the device and go to `/motion-qa`. Or run `npm run dev` and open
+   it over the LAN.
+2. Choose **After (QA)** and tap **Load test track**. The QA player bar appears above the bottom nav.
+   Choose **Before (live)** at any point to compare with the original.
+3. Test twice on iOS: once in a **Safari tab**, and once as a **home-screen app** (Share → Add to Home Screen,
+   on the `/motion-qa?player=after` URL). The home-screen app has the largest safe-area insets.
 4. To read console errors:
    - **iOS:** Safari → Develop → [device] (Mac required).
    - **Android:** `chrome://inspect`.
@@ -138,4 +144,4 @@ Severity (blocker / high / medium / low):
 | 2 | Sheet on notched iPhones | High | With `viewport-fit=cover`, the full-screen sheet had no safe-area padding. The header sat under the status bar / Dynamic Island and the bottom row under the home indicator. | Safe-area padding on all four sides. |
 | 3 | Sheet on all phones | Medium | Nothing locked the page, so a swipe on the sheet scrolled the page behind it (about 290px). | `overflow: hidden` and `overscroll-behavior: none` on `<html>` while the sheet is open. |
 | 4 | Drag-to-dismiss | Medium | Offset (>140px) and velocity (>700px/s) were checked separately, so a quick short flick (120px at 685px/s) sprang back. | Project where the sheet would coast to, `offset + velocity × 0.2s`, and close if that passes 140px (as UIKit sheets do). |
-| 5 | Desktop bar at tablet width (iPad portrait, 810px) | High (regression in this PR) | Wrapping the range input for the scrub bubble removed its intrinsic ~129px minimum width, so the progress bar collapsed to 0. | `min-w-32` on the wrapper. |
+| 5 | Desktop bar at tablet width (iPad portrait, 810px) | Withdrawn | I first called the collapsed progress bar a regression. Measuring showed the live bar already squeezes it to 14px at 810px and 0px at 768px. My `min-w-32` "fix" then pushed the queue button off-screen (98px overflow). | The QA copy now uses `min-w-0`, which measures identical to the live bar at 768, 810 and 1024px. The squeeze predates this work and needs a tablet layout decision. |

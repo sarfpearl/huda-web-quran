@@ -91,8 +91,14 @@
     overflow-x: hidden;
   }
 
-  /* No pinch / double-tap zoom (scrolling still works) */
-  html {
+  /* No pinch / double-tap zoom (scrolling still works). On every element, not
+     just <html>: iOS Safari ignores user-scalable=no, and touch-action only
+     reaches down to the nearest scroll container — the fixed, overflow-hidden
+     scene is one, so a quick double tap on a player button (« ») zoomed the
+     page. Utilities (touch-none on the seek ring / sheet handle) still win. */
+  *,
+  *::before,
+  *::after {
     touch-action: pan-x pan-y;
   }
 
@@ -315,24 +321,6 @@
   background: rgb(var(--ring));
   border: 2px solid rgb(var(--surface));
   cursor: pointer;
-}
-/* Scrub feedback: the thumb grows while held and springs back on release.
-   The linear() curve is a sampled closed-form spring step response
-   (ζ 0.75, ω 22 rad/s, ~3 % overshoot); without linear() support the
-   cubic-bezier above it applies. */
-.player-range::-webkit-slider-thumb {
-  transition: transform 420ms cubic-bezier(0.34, 1.3, 0.64, 1);
-  transition-timing-function: linear(0, 0.061, 0.2, 0.366, 0.531, 0.675, 0.792, 0.881, 0.944, 0.986, 1.011, 1.024, 1.028, 1.028, 1.024, 1.02, 1.015, 1.011, 1.007, 1.004, 1.002, 1.001, 1, 0.999, 1);
-}
-.player-range::-moz-range-thumb {
-  transition: transform 420ms cubic-bezier(0.34, 1.3, 0.64, 1);
-  transition-timing-function: linear(0, 0.061, 0.2, 0.366, 0.531, 0.675, 0.792, 0.881, 0.944, 0.986, 1.011, 1.024, 1.028, 1.028, 1.024, 1.02, 1.015, 1.011, 1.007, 1.004, 1.002, 1.001, 1, 0.999, 1);
-}
-.player-range[data-scrubbing="true"]::-webkit-slider-thumb {
-  transform: scale(1.36);
-}
-.player-range[data-scrubbing="true"]::-moz-range-thumb {
-  transform: scale(1.36);
 }
 .neomorph-range::-webkit-slider-thumb {
   -webkit-appearance: none;

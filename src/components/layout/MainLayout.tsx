@@ -10,6 +10,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isAdmin = pathname?.startsWith("/admin");
+  // Temporary: /motion-qa mounts its own player (original or QA version) so the
+  // two can be compared; every other route is unchanged.
+  const isMotionQA = pathname?.startsWith("/motion-qa");
 
   // The immersive home is a fixed full-screen view — lock the document so
   // mobile browsers can't scroll or rubber-band it.
@@ -70,7 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <main id="main" className="app-shell mx-auto min-h-screen max-w-6xl px-4 sm:px-6">
         {children}
       </main>
-      <GlobalAudioPlayer />
+      {!isMotionQA && <GlobalAudioPlayer />}
       {!isAdmin && <MobileBottomNav />}
     </>
   );
