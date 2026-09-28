@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SurahCinematicBackground } from "./SurahCinematicBackground";
 import { JuzCinematicBackground } from "./JuzCinematicBackground";
 import { quranImageUrl } from "@/lib/data/service";
+import { refreshBackdrops } from "@/lib/refreshBackdrops";
 
 interface ImmersiveBackgroundProps {
   categorySlug: string;
@@ -35,6 +36,15 @@ export function ImmersiveBackground({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // iOS Safari: glass (backdrop-filter) over the scene can keep a backdrop
+  // captured before the scene painted — dark, flat panels until a repaint.
+  // Recapture after the scene (image, video or category art) settles; also on
+  // every change of scene or image/video mode. See refreshBackdrops.
+  useEffect(() => {
+    const t = [300, 1200, 2500].map((ms) => setTimeout(refreshBackdrops, ms));
+    return () => t.forEach(clearTimeout);
+  }, [categorySlug, activeSurahNumber, activeJuzNumber, visualMode]);
 
   // 1. If a Surah is active and in VIDEO mode: render cinematic video background
   if (activeSurahNumber && visualMode === "video") {

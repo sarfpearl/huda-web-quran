@@ -91,8 +91,14 @@
     overflow-x: hidden;
   }
 
-  /* No pinch / double-tap zoom (scrolling still works) */
-  html {
+  /* No pinch / double-tap zoom (scrolling still works). On every element, not
+     just <html>: iOS Safari ignores user-scalable=no, and touch-action only
+     reaches down to the nearest scroll container — the fixed, overflow-hidden
+     scene is one, so a quick double tap on a player button (« ») zoomed the
+     page. Utilities (touch-none on the seek ring / sheet handle) still win. */
+  *,
+  *::before,
+  *::after {
     touch-action: pan-x pan-y;
   }
 

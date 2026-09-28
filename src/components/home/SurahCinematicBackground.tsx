@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 import { quranImageUrl } from "@/lib/data/quran";
+import { refreshBackdrops } from "@/lib/refreshBackdrops";
 
 interface SurahCinematicBackgroundProps {
   surahNumber: number;
@@ -122,6 +123,20 @@ export function SurahCinematicBackground({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotA.src, slotA.loaded, slotB.src, slotB.loaded, activeSlot]);
 
+  // iOS Safari: the player's glass keeps a backdrop captured before this clip
+  // painted (dark, flat glass until a repaint). Recapture as the clip shows
+  // and once its 700ms crossfade has finished.
+  const activeLoaded = activeSlot === 0 ? slotA.loaded : slotB.loaded;
+  useEffect(() => {
+    if (!activeLoaded) return;
+    const a = setTimeout(refreshBackdrops, 150);
+    const b = setTimeout(refreshBackdrops, 850);
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
+  }, [activeSlot, activeLoaded]);
+
   // Once the incoming clip has faded in, pause the outgoing one so it stops
   // looping (and decoding) underneath.
   useEffect(() => {
@@ -168,6 +183,7 @@ export function SurahCinematicBackground({
         alt=""
         decoding="async"
         fetchPriority="high"
+        onLoad={refreshBackdrops}
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
       />
 
