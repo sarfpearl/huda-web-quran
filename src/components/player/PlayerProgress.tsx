@@ -56,7 +56,10 @@ export function PlayerProgress({
           {formatClock(shown)}
         </span>
       ) : null}
-      <div className="relative flex w-full items-center">
+      {/* min-w-32 keeps the old floor: a bare range input never shrank below its
+          intrinsic ~129px, but inside this wrapper it would collapse to 0 in a
+          crowded row (the desktop bar at tablet widths). */}
+      <div className="relative flex w-full min-w-32 items-center">
         <input
           type="range"
           min={0}

@@ -74,10 +74,12 @@ const artSwap = {
   exit: { opacity: 1, zIndex: 0, transition: { duration: 0, delay: 0.24 } },
 } as const;
 
-// Drag-to-dismiss: past either threshold on release closes, otherwise the
-// sheet springs back from wherever the finger left it.
+// Drag-to-dismiss: on release, project where the sheet would coast to
+// (offset + velocity × 0.2 s, as UIKit sheets do). Past the threshold it
+// closes; otherwise it springs back from wherever the finger left it. A quick
+// short flick and a slow long drag both close; a slow short drag does not.
 const DISMISS_OFFSET = 140;
-const DISMISS_VELOCITY = 700;
+const DISMISS_PROJECTION_S = 0.2;
 
 export function GlobalAudioPlayer() {
   const player = useAudioPlayer();
@@ -95,6 +97,20 @@ export function GlobalAudioPlayer() {
     return () => mq.removeEventListener("change", apply);
   }, []);
   const sheetOpen = isExpanded && isMobile;
+
+  // Lock the page behind the open sheet, so a swipe on the sheet never scrolls
+  // it (and pull-to-refresh / rubber-banding can't start underneath).
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const root = document.documentElement;
+    const prev = { overflow: root.style.overflow, overscroll: root.style.overscrollBehavior };
+    root.style.overflow = "hidden";
+    root.style.overscrollBehavior = "none";
+    return () => {
+      root.style.overflow = prev.overflow;
+      root.style.overscrollBehavior = prev.overscroll;
+    };
+  }, [sheetOpen]);
 
   // While collapsing, the bar's surface is the shape shrinking back, so it
   // must sit above the exiting sheet until that exit completes.
@@ -197,7 +213,8 @@ export function GlobalAudioPlayer() {
     );
 
   function onSheetDragEnd(_: unknown, info: PanInfo) {
-    if (info.offset.y > DISMISS_OFFSET || info.velocity.y > DISMISS_VELOCITY) {
+    const projected = info.offset.y + Math.max(0, info.velocity.y) * DISMISS_PROJECTION_S;
+    if (projected > DISMISS_OFFSET) {
       setExpanded(false);
     }
   }
@@ -350,7 +367,13 @@ export function GlobalAudioPlayer() {
                 className="absolute inset-0 overflow-hidden surface"
                 style={{ borderRadius: 0 }}
               >
-                <motion.div layout transition={{ layout: MORPH }} className="flex h-full flex-col">
+                {/* Safe areas: viewport-fit=cover puts the sheet under the notch /
+                    Dynamic Island and the home indicator, so pad all four sides. */}
+                <motion.div
+                  layout
+                  transition={{ layout: MORPH }}
+                  className="flex h-full flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]"
+                >
                   {/* Header doubles as the drag handle */}
                   <motion.div
                     {...swap}
@@ -384,105 +407,110 @@ export function GlobalAudioPlayer() {
                     </div>
                   </motion.div>
 
-                  <div className="flex flex-1 flex-col justify-center gap-6 px-6 pb-8">
+                  {/* The artwork takes whatever height is left (square, ≤ 20rem), so
+                      the controls always fit — down to an iPhone SE. Short landscape
+                      screens switch to two columns. */}
+                  <div className="flex min-h-0 flex-1 flex-col justify-center gap-5 px-6 pb-6 [@media(orientation:landscape)_and_(max-height:500px)]:flex-row [@media(orientation:landscape)_and_(max-height:500px)]:items-center [@media(orientation:landscape)_and_(max-height:500px)]:gap-8 [@media(orientation:landscape)_and_(max-height:500px)]:pb-3">
                     {/* The artwork is also a drag handle — the biggest target */}
                     <div
                       onPointerDown={startDrag}
-                      className="mx-auto aspect-square w-full max-w-xs touch-none"
+                      className="flex min-h-[88px] flex-1 touch-none items-center justify-center [container-type:size] [@media(orientation:landscape)_and_(max-height:500px)]:h-full [@media(orientation:landscape)_and_(max-height:500px)]:w-2/5 [@media(orientation:landscape)_and_(max-height:500px)]:flex-none"
                     >
-                      {renderCover("h-full w-full shadow-soft-lg", 28, shared("cover"))}
+                      {renderCover("h-[min(100cqmin,20rem)] w-[min(100cqmin,20rem)] shadow-soft-lg", 28, shared("cover"))}
                     </div>
 
-                    <motion.div {...swap} className="relative text-center">
-                      <AnimatePresence initial={false} mode="popLayout">
-                        <motion.div key={current.id} {...swap}>
-                          {isQuran ? (
-                            <>
-                              <span className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
-                                Quran
-                              </span>
-                              <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
-                              <span className="text-sm text-muted">
-                                {quranSubtitle}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Link
-                                href={`/category/${current.category.slug}`}
-                                onClick={() => setExpanded(false)}
-                                className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300"
-                              >
-                                {current.category.name}
-                              </Link>
-                              <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
-                              <Link
-                                href={`/speaker/${current.speaker.slug}`}
-                                onClick={() => setExpanded(false)}
-                                className="text-sm text-muted"
-                              >
-                                {current.speaker.name}
-                              </Link>
-                            </>
-                          )}
-                        </motion.div>
-                      </AnimatePresence>
-                    </motion.div>
-
-                    {isYouTube ? (
-                      <motion.div {...swap} className="text-center">
-                        <Link
-                          href={youtubeWatchUrl(current.youtubeVideoId ?? "")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex h-12 items-center gap-2 rounded-full bg-red-600 px-6 font-semibold text-white"
-                        >
-                          <YouTubeIcon className="text-xl" /> Watch on YouTube
-                        </Link>
+                    <div className="flex flex-col gap-5 [@media(orientation:landscape)_and_(max-height:500px)]:min-w-0 [@media(orientation:landscape)_and_(max-height:500px)]:flex-1 [@media(orientation:landscape)_and_(max-height:500px)]:gap-3">
+                      <motion.div {...swap} className="relative text-center">
+                        <AnimatePresence initial={false} mode="popLayout">
+                          <motion.div key={current.id} {...swap}>
+                            {isQuran ? (
+                              <>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                                  Quran
+                                </span>
+                                <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
+                                <span className="text-sm text-muted">
+                                  {quranSubtitle}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Link
+                                  href={`/category/${current.category.slug}`}
+                                  onClick={() => setExpanded(false)}
+                                  className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300"
+                                >
+                                  {current.category.name}
+                                </Link>
+                                <h2 className="mt-1 text-xl font-bold">{current.title}</h2>
+                                <Link
+                                  href={`/speaker/${current.speaker.slug}`}
+                                  onClick={() => setExpanded(false)}
+                                  className="text-sm text-muted"
+                                >
+                                  {current.speaker.name}
+                                </Link>
+                              </>
+                            )}
+                          </motion.div>
+                        </AnimatePresence>
                       </motion.div>
-                    ) : (
-                      <>
-                        <motion.div {...swap}>
-                          <PlayerProgress />
+
+                      {isYouTube ? (
+                        <motion.div {...swap} className="text-center">
+                          <Link
+                            href={youtubeWatchUrl(current.youtubeVideoId ?? "")}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex h-12 items-center gap-2 rounded-full bg-red-600 px-6 font-semibold text-white"
+                          >
+                            <YouTubeIcon className="text-xl" /> Watch on YouTube
+                          </Link>
                         </motion.div>
-                        <div className="flex items-center justify-center gap-6">
-                          <motion.button
-                            {...swap}
-                            type="button"
-                            onClick={player.previous}
-                            className="grid h-12 w-12 place-items-center rounded-full text-2xl text-muted"
-                            aria-label="Previous"
-                          >
-                            <PrevIcon />
-                          </motion.button>
-                          <motion.button
-                            layoutId={shared("play")}
-                            transition={{ layout: MORPH }}
-                            type="button"
-                            onClick={player.togglePlay}
-                            whileTap={{ scale: 0.95 }}
-                            className="grid h-16 w-16 place-items-center rounded-full bg-primary-700 text-3xl text-sand-50 shadow-soft-lg"
-                            style={{ borderRadius: 9999 }}
-                            aria-label={player.isPlaying ? "Pause" : "Play"}
-                          >
-                            {player.isPlaying ? <PauseIcon /> : <PlayIcon />}
-                          </motion.button>
-                          <motion.button
-                            {...swap}
-                            type="button"
-                            onClick={player.next}
-                            className="grid h-12 w-12 place-items-center rounded-full text-2xl text-muted"
-                            aria-label="Next"
-                          >
-                            <NextIcon />
-                          </motion.button>
-                        </div>
-                        <motion.div {...swap} className="flex items-center justify-between">
-                          <SpeedMenu />
-                          <VolumeControl wide />
-                        </motion.div>
-                      </>
-                    )}
+                      ) : (
+                        <>
+                          <motion.div {...swap}>
+                            <PlayerProgress />
+                          </motion.div>
+                          <div className="flex items-center justify-center gap-6">
+                            <motion.button
+                              {...swap}
+                              type="button"
+                              onClick={player.previous}
+                              className="grid h-12 w-12 place-items-center rounded-full text-2xl text-muted"
+                              aria-label="Previous"
+                            >
+                              <PrevIcon />
+                            </motion.button>
+                            <motion.button
+                              layoutId={shared("play")}
+                              transition={{ layout: MORPH }}
+                              type="button"
+                              onClick={player.togglePlay}
+                              whileTap={{ scale: 0.95 }}
+                              className="grid h-16 w-16 place-items-center rounded-full bg-primary-700 text-3xl text-sand-50 shadow-soft-lg"
+                              style={{ borderRadius: 9999 }}
+                              aria-label={player.isPlaying ? "Pause" : "Play"}
+                            >
+                              {player.isPlaying ? <PauseIcon /> : <PlayIcon />}
+                            </motion.button>
+                            <motion.button
+                              {...swap}
+                              type="button"
+                              onClick={player.next}
+                              className="grid h-12 w-12 place-items-center rounded-full text-2xl text-muted"
+                              aria-label="Next"
+                            >
+                              <NextIcon />
+                            </motion.button>
+                          </div>
+                          <motion.div {...swap} className="flex items-center justify-between">
+                            <SpeedMenu />
+                            <VolumeControl wide />
+                          </motion.div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               </motion.div>
