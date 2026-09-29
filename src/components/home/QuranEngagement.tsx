@@ -989,14 +989,16 @@ export function PlayerStatsFrame({
       className={cn(
         "pointer-events-auto relative flex max-w-full flex-col transition-[border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
         show &&
-          "rounded-[28px] sm:rounded-[40px] border border-white/15 bg-black/[0.08] backdrop-blur-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+          "rounded-[28px] border border-white/15 bg-black/[0.08] backdrop-blur-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.6)]",
+        // Compact player (bottom strip open): phone-sized corners at every size.
+        show && !withFooter && "sm:rounded-[40px]"
       )}
       // No bottom strip: the card is the frame's bottom edge, so the corners
       // follow it. With the strip, the frame keeps its own rounded corners.
       style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative items-center justify-between transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
+        className={cn("relative w-0 min-w-full items-center justify-between transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
         style={stripInsets}
       >
         {leading ?? <span />}
@@ -1062,7 +1064,10 @@ export function PlayerStatsFrame({
         ref={footerWrapRef}
       >
         <div className="min-h-0 overflow-hidden">
-          <div ref={footerRef} className={cn("relative flex items-center", STRIP_H)} style={stripInsets} />
+          {/* w-0 min-w-full: the strip takes the card's width and never widens
+              the frame (a long Tamil title truncates instead), so the player is
+              the same width in every language. */}
+          <div ref={footerRef} className={cn("relative flex w-0 min-w-full items-center", STRIP_H)} style={stripInsets} />
         </div>
       </div>
     </div>

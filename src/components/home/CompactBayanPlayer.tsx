@@ -96,9 +96,10 @@ interface CompactBayanPlayerProps {
     last: number;
     onStep: (delta: -1 | 1) => void;
     onOpenPicker: () => void;
-    /** Bookmark button after », filled when this page holds a bookmark. */
-    bookmark?: { on: boolean; onToggle: () => void };
   } | null;
+  /** 🔖 add / remove a bookmark (Surah / Juz): after » in the compact strip,
+   *  in the shuffle button's place on the full card. */
+  bookmark?: { on: boolean; onToggle: () => void } | null;
 }
 
 export function CompactBayanPlayer({
@@ -126,6 +127,7 @@ export function CompactBayanPlayer({
   onNextTrack,
   footerSlot = null,
   footerLeading = null,
+  bookmark = null,
   onCollapsedChange,
   forceCompact = false,
   pageNav = null,
@@ -332,20 +334,20 @@ export function CompactBayanPlayer({
   );
   // 🔖 add (bookmark +) / remove (filled) — after » in the compact strip,
   // in the shuffle button's place on the full card.
-  const bookmarkButton = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string) =>
-    nav.bookmark && (
+  const bookmarkButton = (btnClass: string, iconClass: string) =>
+    bookmark && (
       <button
         type="button"
-        onClick={() => { haptic(); nav.bookmark!.onToggle(); }}
-        aria-pressed={nav.bookmark.on}
-        className={`${btnClass} ${nav.bookmark.on ? "text-amber-300" : ""}`}
-        aria-label={nav.bookmark.on ? "Remove bookmark" : "Add bookmark"}
-        data-tooltip={nav.bookmark.on ? "Remove bookmark" : "Add bookmark"}
+        onClick={() => { haptic(); bookmark.onToggle(); }}
+        aria-pressed={bookmark.on}
+        className={`${btnClass} ${bookmark.on ? "text-amber-300" : ""}`}
+        aria-label={bookmark.on ? "Remove bookmark" : "Add bookmark"}
+        data-tooltip={bookmark.on ? "Remove bookmark" : "Add bookmark"}
       >
-        {nav.bookmark.on ? <BookmarkIcon filled className={iconClass} /> : <BookmarkAddIcon className={iconClass} />}
+        {bookmark.on ? <BookmarkIcon filled className={iconClass} /> : <BookmarkAddIcon className={iconClass} />}
       </button>
     );
-  const pageSteps = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string, withBookmark = true) => (
+  const pageSteps = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string) => (
     <>
       <button
         type="button"
@@ -380,10 +382,9 @@ export function CompactBayanPlayer({
           <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
         </svg>
       </button>
-      {withBookmark && bookmarkButton(nav, `${btnClass} ml-1`, iconClass)}
     </>
   );
-  const ayahSteps = (btnClass: string, iconClass: string, withBookmark = true) => pageNav ? pageSteps(pageNav, btnClass, iconClass, withBookmark) : (
+  const ayahSteps = (btnClass: string, iconClass: string) => pageNav ? pageSteps(pageNav, btnClass, iconClass) : (
     <>
       {onPrevVerse ? (
         <button
@@ -593,7 +594,7 @@ export function CompactBayanPlayer({
       <div
         ref={compactRef}
         aria-hidden={!collapsed}
-        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 p-2 px-3 sm:px-4`}
+        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
@@ -800,7 +801,7 @@ export function CompactBayanPlayer({
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
           {hasAyahPill && (
             <div className="mt-2 inline-flex h-9 items-center gap-1.5 w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
-              {ayahSteps(pillStepBtn, "h-4 w-4", false)}
+              {ayahSteps(pillStepBtn, "h-4 w-4")}
             </div>
           )}
           {errorMsg && (
@@ -816,10 +817,9 @@ export function CompactBayanPlayer({
           {viewSlot}
 
           {/* 2. Shuffle Button (Moved from bottom left per red arrow) —
-              reading mode: the bookmark button in its place */}
-          {pageNav?.bookmark ? (
+              Surah / Juz: the bookmark button in its place */}
+          {bookmark ? (
             bookmarkButton(
-              pageNav,
               "grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-amber-300 active:scale-90 transition-all cursor-pointer",
               "text-sm sm:text-base"
             )
@@ -999,20 +999,21 @@ export function CompactBayanPlayer({
         )}
       </div>
       </div>
-      {(hasAyahPill || pageNav) && (
+      {(hasAyahPill || pageNav || bookmark) && (
         <div className="flex h-full shrink-0 items-center gap-0.5 select-none">
-          {ayahSteps(footerStepBtn, "h-3.5 w-3.5")}
+          {(hasAyahPill || pageNav) && ayahSteps(footerStepBtn, "h-3.5 w-3.5")}
+          {bookmarkButton(`${footerStepBtn} ml-1`, "h-3.5 w-3.5")}
         </div>
       )}
     </div>
   );
 
-  // Compact or full: the stats frame's own 28 / 40px corners (PlayerStatsFrame),
-  // not a full pill.
+  // The stats frame's corners (PlayerStatsFrame): 28 / 40px full, 28px
+  // compact at every size (as on a phone), not a full pill.
   return (
     <div
       ref={shellRef}
-      className={`relative overflow-hidden rounded-[28px] sm:rounded-[40px] bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] select-none motion-reduce:transition-none ${
+      className={`relative overflow-hidden ${collapsed ? "rounded-[28px]" : "rounded-[28px] sm:rounded-[40px]"} bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] select-none motion-reduce:transition-none ${
         animate ? "transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" : ""
       } ${shellSize ? "" : "invisible"}`}
       style={{

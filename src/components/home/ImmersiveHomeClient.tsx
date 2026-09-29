@@ -842,11 +842,11 @@ export function ImmersiveHomeClient({
         : readingRanges[0]
         ? mushafPageOf(readingRanges[0].surah, readingRanges[0].from)
         : 1);
-  // Bookmarks: ayahs marked by hand in reading mode (🔖 after « Page N »),
-  // as Surah or Juz bookmarks by what's being read; listed in the player's
-  // Bookmarks panel. Tapping places one at the recited ayah while playing,
-  // else at the first ayah on screen; with bookmarks on screen, tapping
-  // takes them out.
+  // Bookmarks: ayahs marked by hand (the player's 🔖+), as Surah or Juz
+  // bookmarks by what's playing; listed in the player's Bookmarks panel.
+  // Reading mode: tapping places one at the recited ayah while playing, else
+  // at the first ayah on screen; with bookmarks on screen, tapping takes them
+  // out. Otherwise it marks / unmarks the ayah being recited.
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   useEffect(() => setBookmarks(loadBookmarks()), []);
   const updateBookmarks = (next: Bookmark[]) => {
@@ -862,7 +862,31 @@ export function ImmersiveHomeClient({
   const [bookmarksInView, setBookmarksInView] = useState<string[]>([]);
   const pageBookmarks = readingBookmarks.filter((b) => bookmarksInView.includes(`${b.surah}:${b.ayah}`));
   useEffect(() => setBookmarksInView([]), [readingKey]);
+  // The ayah on air outside reading mode (Juz: only a per-ayah Juz knows it).
+  const activeJuzPairs = useMemo(() => (activeJuz ? getJuzAyahPairs(activeJuz.id) : []), [activeJuz]);
+  const onAirAyah: { surah: number; ayah: number } | null = isJuz
+    ? player.ayahSequence && activeJuzPairs[player.ayahSequence.index]
+      ? { surah: activeJuzPairs[player.ayahSequence.index][0], ayah: activeJuzPairs[player.ayahSequence.index][1] }
+      : activeJuzPairs[0]
+      ? { surah: activeJuzPairs[0][0], ayah: activeJuzPairs[0][1] }
+      : null
+    : activeSurah
+    ? { surah: activeSurah.number, ayah: currentVerse?.ayahNumber || 1 }
+    : null;
+  const bookmarkFor = (at: { surah: number; ayah: number }): Bookmark =>
+    isJuz && activeJuz
+      ? { kind: "juz", juz: activeJuz.id, ...at, at: Date.now() }
+      : { kind: "surah", ...at, at: Date.now() };
+  const onAirBookmarked = Boolean(onAirAyah && bookmarks.some((b) => bookmarkId(b) === bookmarkId(bookmarkFor(onAirAyah))));
   const handleToggleBookmark = () => {
+    if (!readingActive) {
+      if (!onAirAyah) return;
+      const id = bookmarkId(bookmarkFor(onAirAyah));
+      updateBookmarks(
+        onAirBookmarked ? bookmarks.filter((b) => bookmarkId(b) !== id) : [bookmarkFor(onAirAyah), ...bookmarks]
+      );
+      return;
+    }
     if (pageBookmarks.length) {
       const drop = new Set(pageBookmarks.map(bookmarkId));
       updateBookmarks(bookmarks.filter((b) => !drop.has(bookmarkId(b))));
@@ -1213,6 +1237,11 @@ export function ImmersiveHomeClient({
                 viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
                 footerSlot={playerFooter}
                 footerLeading={installGuideButton}
+                bookmark={
+                  onAirAyah
+                    ? { on: readingActive ? pageBookmarks.length > 0 : onAirBookmarked, onToggle: handleToggleBookmark }
+                    : null
+                }
                 onCollapsedChange={setPlayerCollapsed}
                 forceCompact={readingActive}
                 onTitleClick={() => setBrowserOpenRequest((n) => n + 1)}
@@ -1224,7 +1253,6 @@ export function ImmersiveHomeClient({
                         last: readingLastPage,
                         onStep: (d) => handleGoToPage(readingPage + d),
                         onOpenPicker: () => setPagePickerOpen(true),
-                        bookmark: { on: pageBookmarks.length > 0, onToggle: handleToggleBookmark },
                       }
                     : null
                 }
