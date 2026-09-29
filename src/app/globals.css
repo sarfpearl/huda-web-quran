@@ -296,6 +296,15 @@
   .quran-word--glyph.quran-word--dim > [aria-hidden] {
     opacity: 0.6;
   }
+  /* WebKit (Safari / every iOS browser): a text-shadow on a COLR page-font
+     glyph is drawn as extra blurred copies of every colour layer, and with
+     the video and glass blur that pushed iPhone Safari's GPU process past its
+     memory limit ("A problem repeatedly occurred" — jetsam "highwater" kills
+     of com.apple.WebKit.GPU). Glyphs there go without shadows; the recited
+     word keeps its gold palette. Set by ImmersiveHomeClient on WebKit. */
+  html[data-wk-glyph-lite] [style*="qpc-v4"] {
+    text-shadow: none !important;
+  }
   .quran-translation-shadow {
     /* Tight shadow only — a wide blur merged into a dark box behind dense lines. */
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.5);

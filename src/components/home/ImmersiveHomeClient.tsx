@@ -719,6 +719,8 @@ export function ImmersiveHomeClient({
   // can't draw the page fonts reloads into the text view (see isWebKit).
   const [showTajweed, setShowTajweed] = useState(false);
   useEffect(() => {
+    // WebKit: page-font glyphs without text-shadows (see globals.css).
+    if (isWebKit()) document.documentElement.dataset.wkGlyphLite = "";
     if (isWebKit()) return;
     try {
       if (localStorage.getItem("huda:tajweed") === "1") setShowTajweed(true);

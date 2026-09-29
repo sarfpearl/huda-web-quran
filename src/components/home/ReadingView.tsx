@@ -274,14 +274,45 @@ export function ReadingView({
     return blocks;
   }, [verses, glyphs, glyphsPending, plan]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep the recited ayah in view.
+  // Follow the recitation: keep the gold word (or, without word timing, the
+  // ayah's start) in the upper-middle of the view — a long ayah otherwise
+  // ran on below the player until the next ayah began. Scrolling by hand
+  // (drag / wheel, not a tap) pauses following for a few seconds.
   const activeKey = active ? `${active.surah}:${active.ayah}` : null;
+  const userScrollAtRef = useRef(0);
   useEffect(() => {
-    if (!activeKey || !pages) return;
-    scrollRef.current
-      ?.querySelector<HTMLElement>(`[data-key="${activeKey}"]`)
-      ?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [activeKey, pages]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const mark = () => {
+      userScrollAtRef.current = Date.now();
+    };
+    el.addEventListener("touchmove", mark, { passive: true });
+    el.addEventListener("wheel", mark, { passive: true });
+    return () => {
+      el.removeEventListener("touchmove", mark);
+      el.removeEventListener("wheel", mark);
+    };
+  }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !activeKey || !pages) return;
+    if (Date.now() - userScrollAtRef.current < 4000) return;
+    const ayah = el.querySelector<HTMLElement>(`[data-key="${activeKey}"]`);
+    const target =
+      (activeWordIndex >= 0 &&
+        el.querySelector<HTMLElement>(`[data-key="${activeKey}"] [data-word-idx="${activeWordIndex}"]`)) ||
+      ayah;
+    if (!target) return;
+    const box = el.getBoundingClientRect();
+    const at = (target.getBoundingClientRect().top - box.top) / box.height;
+    // Inside the band: leave it (no scrolling on every word).
+    if (at >= 0.12 && at <= 0.62) return;
+    // A hidden tab doesn't animate smooth scrolls: jump there instead.
+    el.scrollBy({
+      top: target.getBoundingClientRect().top - box.top - box.height * 0.3,
+      behavior: document.hidden ? "auto" : "smooth",
+    });
+  }, [activeKey, activeWordIndex, pages]);
 
   // Page steps that can't move the audio scroll the page into view instead.
   useEffect(() => {
