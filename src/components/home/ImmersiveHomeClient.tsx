@@ -15,7 +15,7 @@ import { MushafPagePicker } from "./MushafPagePicker";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { VideoCameraIcon, ImageIcon, BookOpenIcon } from "@/components/ui/Icon";
+import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon } from "@/components/ui/Icon";
 import {
   isQuranTrack,
   isQuranTrackId,
@@ -995,11 +995,11 @@ export function ImmersiveHomeClient({
             aria-pressed={readingMode}
             aria-label={readingMode ? "Exit reading mode" : "Reading mode"}
             title={readingMode ? "Exit reading mode" : "Reading mode"}
-            className={`pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer ${
-              readingMode ? "border-amber-300/50 text-amber-300" : "border-white/15 text-sand-100"
-            }`}
+            // On: the filled book alone — no coloured ring (nor the focus ring
+            // a tap left on it).
+            className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 text-sand-100 shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none"
           >
-            <BookOpenIcon className="text-xl" />
+            {readingMode ? <BookOpenFilledIcon className="h-5 w-5" /> : <BookOpenIcon className="h-5 w-5" />}
           </button>
         )}
         <TopicPickerModal

@@ -37,8 +37,9 @@ export function followScroll(el: HTMLElement, target: () => number) {
     // Something else moved the view (a page's glyphs loading): move with it.
     if (Math.abs(el.scrollTop - f.set) > 2) f.pos += el.scrollTop - f.set;
     const d = clamp(f.target()) - f.pos;
-    // Critically damped spring: settles in ~1.2s and never overshoots.
-    const w = 3.5;
+    // Critically damped spring: keeps ~0.2s behind the target, settles in
+    // ~0.8s and never overshoots — the next line rises with the highlight.
+    const w = 5.5;
     f.v += (w * w * d - 2 * w * f.v) * dt;
     f.pos = clamp(f.pos + f.v * dt);
     // The fractional position is kept here: Safari rounds scrollTop, and a

@@ -20,6 +20,7 @@ import {
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
+import SurahBanner from "./SurahBanner";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 
 /** A run of ayahs inside one Surah (a whole Surah, or part of one in a Juz). */
@@ -308,10 +309,12 @@ export function ReadingView({
     if (!el || !activeKey || !pages) return;
     if (Date.now() - userScrollAtRef.current < 4000) return;
     const ayah = el.querySelector<HTMLElement>(`[data-key="${activeKey}"]`);
-    const word =
-      activeWordIndex >= 0
-        ? el.querySelector<HTMLElement>(`[data-key="${activeKey}"] [data-word-idx="${activeWordIndex}"]`)
-        : null;
+    // Before its first word (or without word timing) aim at the ayah's first
+    // word, not the ayah box: an ayah starting mid-line otherwise pulled the
+    // view back up a line between ayahs.
+    const word = el.querySelector<HTMLElement>(
+      `[data-key="${activeKey}"] [data-word-idx="${Math.max(0, activeWordIndex)}"]`
+    );
     const target = word || ayah;
     if (!target) return;
     const para = word?.closest("p");
@@ -473,18 +476,15 @@ export function ReadingView({
 
   const bismillahGlyphs = glyphs?.get(1)?.find((v) => v.a === 1) ?? null;
   const renderHead = (surah: number, ctx: Ctx, key: string) => {
-    const s = QURAN_SURAHS.find((x) => x.number === surah);
     return (
       <div
         key={key}
         aria-hidden={ctx === "cur" ? undefined : true}
-        className={`py-4 text-center ${ctx === "cur" ? "" : "opacity-35 select-none"}`}
+        className={`px-3 pt-8 pb-5 sm:px-4 text-center ${ctx === "cur" ? "" : "opacity-35 select-none"}`}
       >
-        <h2 lang="ar" dir="rtl" className="font-arabic text-4xl sm:text-5xl text-amber-300 quran-arabic-shadow">
-          {s?.arabicName}
-        </h2>
+        <SurahBanner surah={surah} />
         {hasBismillah(surah) && (
-          <p lang="ar" dir="rtl" className="font-arabic mt-4 text-2xl sm:text-3xl text-sand-50/90 quran-arabic-shadow">
+          <p lang="ar" dir="rtl" className="font-arabic mt-6 text-2xl sm:text-3xl text-sand-50/90 quran-arabic-shadow">
             {bismillahGlyphs
               ? bismillahGlyphs.w.map(([code, page, text], i) => (
                   <Fragment key={i}>

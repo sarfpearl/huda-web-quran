@@ -160,8 +160,8 @@ export function ImmersiveHeader({
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
-            {/* Translate icon; slashed when the translation is hidden */}
-            <TranslateIcon slashed={!showMeaning} className="h-[1.15rem] w-[1.15rem]" />
+            {/* Translate icon; dimmed (not slashed) when the translation is hidden */}
+            <TranslateIcon className="h-5 w-5" />
             <span className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && language === "ta" ? "font-tamil" : ""}`}>
               {!showMeaning ? "Translation" : language === "ta" ? "தமிழ்" : "English"}
             </span>
@@ -289,7 +289,7 @@ export function ImmersiveHeader({
                 showTajweed ? "text-amber-300" : "text-white/60"
               }`}
             >
-              <TajweedIcon on={showTajweed} className="h-[1.15rem] w-[1.15rem]" />
+              <TajweedIcon on={showTajweed} className="h-5 w-5" />
               <span className={`hidden sm:inline text-[10px] sm:text-xs ${language === "ta" ? "font-tamil" : ""}`}>
                 {language === "ta" ? "தஜ்வீத்" : "Tajweed"}
               </span>
@@ -407,9 +407,9 @@ export function ImmersiveHeader({
             }
           >
             {visualMode === "video" ? (
-              <VideoCameraIcon className="text-xl text-sand-200" />
+              <VideoCameraIcon className="h-5 w-5 text-sand-200" />
             ) : (
-              <ImageIcon className="text-xl text-sand-200" />
+              <ImageIcon className="h-5 w-5 text-sand-200" />
             )}
           </button>
         )}

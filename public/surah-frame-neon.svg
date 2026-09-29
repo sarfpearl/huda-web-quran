@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 260" width="1000" height="260">
+  <title>Surah header — neon frame (HuDa emerald and gold)</title>
+  <defs>
+    <!-- Neon glow filters -->
+    <filter id="glowGreen" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b2"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="b3"/>
+      <feMerge><feMergeNode in="b3"/><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowGold" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b2"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="b3"/>
+      <feMerge><feMergeNode in="b3"/><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="textGlow" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="t1"/>
+      <feMerge><feMergeNode in="t1"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="innerLight" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#D9B871" stop-opacity="0.14"/>
+      <stop offset="70%" stop-color="#2F8060" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#2F8060" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5EBD0"/>
+      <stop offset="50%" stop-color="#A97C33"/>
+      <stop offset="100%" stop-color="#E8D19A"/>
+    </linearGradient>
+  </defs>
+
+
+  <!-- Inner lit panel -->
+  <rect x="94" y="82" width="812" height="96" rx="8" fill="url(#innerLight)" stroke="#E8D19A" stroke-opacity="0.18"/>
+
+  <!-- Wires -->
+  <g fill="none" stroke="#2F8060" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round">
+    <path d="M110 58 C 80 60, 66 90, 64 130 C 62 170, 70 196, 100 206"/>
+    <path d="M500 50 C 600 44, 760 52, 890 56"/>
+    <path d="M500 210 C 620 214, 780 208, 900 204 C 930 200, 944 170, 942 130"/>
+  </g>
+
+  <!-- Outer emerald neon tube -->
+  <g filter="url(#glowGreen)" fill="none">
+    <rect id="tubeOuter" x="42" y="40" width="916" height="180" rx="26" stroke="#2FD39A" stroke-width="7"/>
+  </g>
+  <rect x="42" y="40" width="916" height="180" rx="26" fill="none" stroke="#D6F8EA" stroke-width="2.2"/>
+
+  <!-- Inner gold neon tube -->
+  <g filter="url(#glowGold)" fill="none">
+    <rect id="tubeInner" x="72" y="62" width="856" height="136" rx="20" stroke="#D9B871" stroke-width="6"/>
+  </g>
+  <rect x="72" y="62" width="856" height="136" rx="20" fill="none" stroke="#FBF3DC" stroke-width="2"/>
+
+  <!-- Electrode caps -->
+  <g fill="url(#metal)" stroke="#7A5A24" stroke-width="0.8">
+    <rect x="112" y="56" width="42" height="12" rx="3"/>
+    <rect x="846" y="56" width="42" height="12" rx="3"/>
+    <rect x="112" y="192" width="42" height="12" rx="3"/>
+    <rect x="846" y="192" width="42" height="12" rx="3"/>
+    <rect x="66" y="92" width="12" height="32" rx="3"/>
+    <rect x="922" y="92" width="12" height="32" rx="3"/>
+    <rect x="66" y="136" width="12" height="32" rx="3"/>
+    <rect x="922" y="136" width="12" height="32" rx="3"/>
+  </g>
+
+  <!-- Mounting clips -->
+  <g fill="#E8D19A" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="0.8">
+    <rect x="494" y="30" width="12" height="40" rx="4"/>
+    <rect x="494" y="190" width="12" height="40" rx="4"/>
+    <rect x="200" y="30" width="10" height="18" rx="3"/>
+    <rect x="790" y="30" width="10" height="18" rx="3"/>
+    <rect x="200" y="212" width="10" height="18" rx="3"/>
+    <rect x="790" y="212" width="10" height="18" rx="3"/>
+    <rect x="32" y="104" width="18" height="10" rx="3"/>
+    <rect x="950" y="104" width="18" height="10" rx="3"/>
+    <rect x="32" y="146" width="18" height="10" rx="3"/>
+    <rect x="950" y="146" width="18" height="10" rx="3"/>
+  </g>
+</svg>

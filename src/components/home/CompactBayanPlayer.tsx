@@ -26,6 +26,7 @@ import {
   isQuranTrackId,
   isSurahTrackId,
   getSurahByTrackId,
+  getQuranJuzByTrackId,
   quranContentLabel,
   QURAN_TRACKS,
   SURAH_TRACKS,
@@ -42,6 +43,7 @@ import {
 import type { QuranSurah } from "@/lib/data/quran";
 import { haptic } from "@/lib/haptics";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
+import { SURAH_NAMES } from "@/lib/data/surahNames";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
 
 interface CompactBayanPlayerProps {
@@ -122,6 +124,9 @@ export function CompactBayanPlayer({
   pageNav = null,
   onTitleClick,
 }: CompactBayanPlayerProps) {
+  // Visible labels follow the translation language (Tamil / English).
+  const ta = language === "ta";
+  const L = ta ? PLAYER_TA : PLAYER_EN;
   const prevTrackLabel = trackKind ? `Previous ${trackKind}` : "Previous";
   const nextTrackLabel = trackKind ? `Next ${trackKind}` : "Next";
   const player = useAudioPlayer();
@@ -270,11 +275,18 @@ export function CompactBayanPlayer({
   //   Bayan  → category name (e.g. "Iman & Taqwa")
   //   Surah  → "Quran • Surah 1 · 7 Verses · Meccan"
   //   Quran  → Para/Juz info
+  const juzOfTrack = isQuran && !surah ? getQuranJuzByTrackId(bayan.id) : undefined;
   const categoryLine = isQuran
     ? (surah
-        ? `Quran • Surah ${surah.number} · ${surah.verses} Verses · ${surah.revelation}`
-        : quranContentLabel(bayan.id, bayan.speaker?.name) ?? bayan.category.name)
+        ? `${L.quran} • ${L.surah} ${surah.number} · ${surah.verses} ${L.verses} · ${
+            surah.revelation === "Medinan" ? L.medinan : L.meccan
+          }`
+        : juzOfTrack && ta
+          ? `${L.quran} • ${L.juz} ${juzOfTrack.id} · ${bayan.speaker?.name || "Sheikh Maher Al-Muaiqly"}`
+          : quranContentLabel(bayan.id, bayan.speaker?.name) ?? bayan.category.name)
     : bayan.category.name;
+  // Surah names in Tamil script when Tamil is chosen.
+  const displayTitle = ta && surah ? SURAH_NAMES[surah.number - 1]?.[2] ?? bayan.title : bayan.title;
   const currentSurah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
   const currentTime = isCurrentTrack ? player.currentTime : 0;
   const totalDuration = isCurrentTrack && player.duration > 0
@@ -332,7 +344,7 @@ export function CompactBayanPlayer({
         aria-label={`Page ${nav.page} — choose a page`}
         title="Choose a page"
       >
-        Page {nav.page}
+        {L.page} {nav.page}
       </button>
       <button
         type="button"
@@ -369,18 +381,18 @@ export function CompactBayanPlayer({
       <span className="px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
         {isAyahSeq && ayahSeq ? (
           ayahSeq.preType === "istiadhah" ? (
-            "Isti'adhah"
+            L.istiadhah
           ) : ayahSeq.preType === "bismillah" ? (
-            "Bismillah"
+            L.bismillah
           ) : (
-            <>Ayat {ayahSeq.index + 1}/{ayahSeq.total}</>
+            <>{L.ayat} {ayahSeq.index + 1}/{ayahSeq.total}</>
           )
         ) : currentSegment?.type === "istiadhah" ? (
-          "Isti'adhah"
+          L.istiadhah
         ) : currentSegment?.type === "bismillah" ? (
-          "Bismillah"
+          L.bismillah
         ) : (
-          <>Ayat {surahAyah}/{surahAyahTotal}</>
+          <>{L.ayat} {surahAyah}/{surahAyahTotal}</>
         )}
       </span>
       {onNextVerse ? (
@@ -739,15 +751,15 @@ export function CompactBayanPlayer({
 
         {/* Track Info — NOW PLAYING · Title · Arabic Name · Reciter/Speaker · Category */}
         <div className={`min-w-0 flex-1 flex flex-col ${hasAyahPill ? "justify-between" : "justify-center"}`}>
-          <span className="text-[10px] sm:text-xs font-semibold text-sand-300/50 uppercase tracking-widest">
-            Now Playing
+          <span className={`text-[10px] sm:text-xs font-semibold text-sand-300/50 uppercase ${ta ? "font-tamil tracking-normal" : "tracking-widest"}`}>
+            {L.nowPlaying}
           </span>
           <div
             className={`flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
-            {...(onTitleClick ? titleButtonProps(onTitleClick) : {})}
+            {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
           >
-            <h3 className="truncate font-sans text-base sm:text-lg md:text-xl font-bold text-white tracking-tight">
-              {bayan.title}
+            <h3 className={`truncate font-bold text-white tracking-tight ${ta && surah ? "font-tamil text-sm sm:text-base md:text-lg" : "font-sans text-base sm:text-lg md:text-xl"}`}>
+              {displayTitle}
             </h3>
             {surah?.arabicName && (
               <span
@@ -759,7 +771,7 @@ export function CompactBayanPlayer({
               </span>
             )}
           </div>
-          <p className="truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5">
+          <p className={`truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5 ${ta ? "font-tamil" : ""}`}>
             {categoryLine}
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
@@ -783,7 +795,7 @@ export function CompactBayanPlayer({
           {/* 2. Shuffle Button (Moved from bottom left per red arrow) */}
           <button
             type="button"
-            data-tooltip="Shuffle"
+            data-tooltip={L.shuffle}
             onClick={handleShuffle}
             title={
               isSurahTrackId(bayan.id)
@@ -813,7 +825,7 @@ export function CompactBayanPlayer({
               player.setPlaybackRate?.(rates[nextIdx]);
             }}
             aria-label="Playback Speed"
-            data-tooltip={`Playback speed · ${player.playbackRate}x`}
+            data-tooltip={`${L.speed} · ${player.playbackRate}x`}
             className="grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
             {player.playbackRate}x
@@ -943,9 +955,9 @@ export function CompactBayanPlayer({
     <div className="flex w-full min-w-0 items-center justify-between gap-3 text-[11px] sm:text-xs font-medium text-white">
       <div
         className={`flex min-w-0 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
-        {...(onTitleClick ? titleButtonProps(onTitleClick) : {})}
+        {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
       >
-        <span className="truncate font-semibold">{bayan.title}</span>
+        <span className={`truncate font-semibold ${ta && surah ? "font-tamil" : ""}`}>{displayTitle}</span>
         {surah?.arabicName && (
           <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xs sm:text-sm text-emerald-300">
             {surah.arabicName}
@@ -1095,13 +1107,46 @@ function VolumeControl({
   );
 }
 
+const PLAYER_EN = {
+  nowPlaying: "Now Playing",
+  quran: "Quran",
+  surah: "Surah",
+  juz: "Juz",
+  verses: "Verses",
+  meccan: "Meccan",
+  medinan: "Medinan",
+  ayat: "Ayat",
+  page: "Page",
+  istiadhah: "Isti'adhah",
+  bismillah: "Bismillah",
+  showInList: "Show in list",
+  shuffle: "Shuffle",
+  speed: "Playback speed",
+};
+const PLAYER_TA: typeof PLAYER_EN = {
+  nowPlaying: "இப்போது ஒலிப்பது",
+  quran: "குர்ஆன்",
+  surah: "சூரா",
+  juz: "ஜுஸ்உ",
+  verses: "வசனங்கள்",
+  meccan: "மக்கீ",
+  medinan: "மதனீ",
+  ayat: "ஆயத்",
+  page: "பக்கம்",
+  istiadhah: "இஸ்திஆதா",
+  bismillah: "பிஸ்மில்லாஹ்",
+  showInList: "பட்டியலில் காட்டு",
+  shuffle: "கலக்கு",
+  speed: "ஒலி வேகம்",
+};
+
 /** The Surah / Juz name as a button (keeps its inline layout: a div with button semantics). */
-function titleButtonProps(onClick: () => void) {
+function titleButtonProps(onClick: () => void, tooltip: string) {
   return {
     role: "button",
     tabIndex: 0,
     "aria-label": "Show in the Surah / Juz list",
-    "data-tooltip": "Show in list",
+    "data-tooltip": tooltip,
     onClick: () => {
       haptic();
       onClick();

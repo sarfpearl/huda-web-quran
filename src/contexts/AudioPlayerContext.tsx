@@ -151,8 +151,21 @@ function writePosition(bayanId: string, seconds: number) {
   }
 }
 
+// A split second of silence: started inside a tap to unlock the standby
+// <audio> on iOS (see unlockStandby).
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
+
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
+  // The element in use. A per-ayah sequence alternates between A and B: the
+  // standby one holds the next clip loaded, so each ayah starts the moment
+  // the previous one ends instead of after a src swap + load on one element.
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioARef = useRef<HTMLAudioElement | null>(null);
+  const audioBRef = useRef<HTMLAudioElement | null>(null);
+  const standbyUrlRef = useRef<string | null>(null);
+  const standbyUnlockedRef = useRef(false);
+  const waitingTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const preludeAudioRef = useRef<HTMLAudioElement | null>(null);
   const ytPlayerRef = useRef<any>(null);
   const ytReadyRef = useRef<boolean>(false);
@@ -231,8 +244,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   // Sync volume, mute & playbackRate to HTML5 audio elements
   useEffect(() => {
-    const el = audioRef.current;
-    if (el) {
+    for (const el of [audioARef.current, audioBRef.current]) {
+      if (!el) continue;
       el.volume = volume;
       el.muted = isMuted;
       el.playbackRate = playbackRate;
@@ -361,6 +374,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Any normal load cancels an in-flight per-ayah Juz sequence.
       ayahSeqRef.current = null;
       setAyahSequence(null);
+      clearStandby();
       ayahBlobRef.current.forEach((b) => URL.revokeObjectURL(b));
       ayahBlobRef.current.clear();
       const playlistId = bayan.youtubePlaylistId || bayan.category?.youtubePlaylistId;
@@ -792,6 +806,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       retryCountRef.current = 0;
       setError(null);
 
+      standbyUrlRef.current = null;
+      unlockStandby();
       ayahSeqRef.current = { urls: ayahUrls, index: startIdx, pre: preludes, preStep: -1 };
       setQueue([displayTrack]);
       setCurrentIndex(0);
@@ -829,6 +845,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           // Only keep it if this ayah is still part of the active sequence.
           if (b && ayahSeqRef.current) {
             ayahBlobRef.current.set(url, URL.createObjectURL(b));
+            // The standby element may be streaming this clip: use the blob.
+            if (standbyUrlRef.current === url) primeStandby(true);
           }
         })
         .catch(() => {
@@ -839,6 +857,83 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const ayahSrc = (url: string) => ayahBlobRef.current.get(url) ?? url;
+
+  const standbyAudio = () =>
+    audioRef.current === audioBRef.current ? audioARef.current : audioBRef.current;
+
+  // The clip that follows the one now playing: the next prelude clip, the
+  // ayah after its preludes, or the next ayah (its first prelude, if any).
+  const nextClipUrl = (): string | null => {
+    const seq = ayahSeqRef.current;
+    if (!seq) return null;
+    if (seq.preStep >= 0) return seq.pre[seq.index]?.[seq.preStep + 1]?.url ?? seq.urls[seq.index];
+    const n = seq.index + 1;
+    if (n >= seq.urls.length) return null;
+    return seq.pre[n]?.[0]?.url ?? seq.urls[n];
+  };
+
+  // Load the next clip into the standby element (again with `force`, once
+  // its blob has arrived) so it can start without a network / decode wait.
+  const primeStandby = (force = false) => {
+    const sb = standbyAudio();
+    const url = nextClipUrl();
+    if (!sb || !url || (!force && standbyUrlRef.current === url)) return;
+    if (force && standbyUrlRef.current !== url) return;
+    standbyUrlRef.current = url;
+    sb.preload = "auto";
+    sb.src = ayahSrc(url);
+    sb.load();
+  };
+
+  const clearStandby = () => {
+    standbyUrlRef.current = null;
+    const sb = standbyAudio();
+    if (sb && sb.getAttribute("src")) {
+      sb.pause();
+      sb.removeAttribute("src");
+      sb.load();
+    }
+  };
+
+  // iOS only lets an element play without a tap once it has been started from
+  // one: start the standby element (muted, on a silent clip) inside the tap.
+  const unlockStandby = () => {
+    const sb = standbyAudio();
+    if (!sb || standbyUnlockedRef.current) return;
+    standbyUnlockedRef.current = true;
+    const muted = sb.muted;
+    sb.muted = true;
+    sb.src = SILENT_WAV;
+    sb.play().then(() => sb.pause()).catch(() => {}).finally(() => { sb.muted = muted; });
+  };
+
+  // Start one clip of the sequence: hand over to the standby element when it
+  // already holds this clip, else load it on the current element.
+  const playClip = (url: string) => {
+    const cur = audioRef.current;
+    const sb = standbyAudio();
+    if (cur && sb && standbyUrlRef.current === url && sb.getAttribute("src") && !sb.error) {
+      audioRef.current = sb; // before pausing, so cur's events are ignored
+      standbyUrlRef.current = null;
+      cur.pause();
+      sb.volume = cur.volume;
+      sb.muted = cur.muted;
+      sb.playbackRate = cur.playbackRate;
+      try { sb.currentTime = 0; } catch { /* ignore */ }
+      setDuration(Number.isFinite(sb.duration) ? sb.duration : 0);
+      sb.play().catch(() => {});
+    } else if (cur) {
+      cur.src = ayahSrc(url);
+      cur.currentTime = 0;
+      cur.load();
+      setDuration(0);
+      cur.play().catch(() => {});
+    }
+    // The previous clip's time must not be read against the new ayah's words
+    // (it flashed the new ayah's last word and jerked the scroll).
+    setCurrentTime(0);
+    primeStandby();
+  };
 
   // Load a specific ayah of the active sequence (keeps ayahSequence state in
   // sync). With `withPre`, that ayah's prelude clips (Isti'adhah / Bismillah)
@@ -851,14 +946,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const pre = withPre ? seq.pre[idx] ?? [] : [];
     seq.preStep = pre.length > 0 ? 0 : -1;
     setAyahSequence({ index: idx, total: seq.urls.length, preType: pre[0]?.type ?? null });
-    const el = audioRef.current;
     prefetchAyahsAround(seq.urls, idx);
-    if (el) {
-      el.src = ayahSrc(pre.length > 0 ? pre[0].url : seq.urls[idx]);
-      el.currentTime = 0;
-      el.load();
-      el.play().catch(() => {});
-    }
+    playClip(pre.length > 0 ? pre[0].url : seq.urls[idx]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefetchAyahsAround]);
 
@@ -870,16 +959,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (seq.preStep >= 0) {
       const pre = seq.pre[seq.index] ?? [];
       const nextStep = seq.preStep + 1;
-      const el = audioRef.current;
       if (nextStep < pre.length) {
         seq.preStep = nextStep;
         setAyahSequence({ index: seq.index, total: seq.urls.length, preType: pre[nextStep].type });
-        if (el) {
-          el.src = ayahSrc(pre[nextStep].url);
-          el.currentTime = 0;
-          el.load();
-          el.play().catch(() => {});
-        }
+        playClip(pre[nextStep].url);
         return true;
       }
       loadAyahAt(seq.index, false); // preludes done → the ayah itself
@@ -1357,6 +1440,54 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     ]
   );
 
+  // Events of the standby <audio> (per-ayah double buffer) are ignored.
+  const fromActive =
+    <E extends React.SyntheticEvent<HTMLAudioElement>>(fn: (e: E) => void) =>
+    (e: E) => {
+      if (e.currentTarget === audioRef.current) fn(e);
+    };
+  const mainAudioEvents = {
+    onPlay: fromActive(() => {
+      if (!isPreludeRef.current) setIsPlaying(true);
+    }),
+    onPause: fromActive((e) => {
+      // An ayah clip reaching its end pauses too, right before the next one
+      // starts: keep the pause icon instead of flashing play for a frame.
+      if (ayahSeqRef.current && e.currentTarget.ended) return;
+      if (!isPreludeRef.current) setIsPlaying(false);
+    }),
+    onPlaying: fromActive(() => {
+      if (!isPreludeRef.current) {
+        clearTimeout(waitingTimerRef.current);
+        setIsPlaying(true);
+        setIsLoading(false);
+        setError(null);
+      }
+    }),
+    onWaiting: fromActive(() => {
+      // Only a real stall shows the spinner — each ayah clip reports a
+      // few-ms "waiting" as it starts, which flashed it at every ayah.
+      if (isPreludeRef.current) return;
+      clearTimeout(waitingTimerRef.current);
+      waitingTimerRef.current = setTimeout(() => {
+        const el = audioRef.current;
+        if (el && !el.paused && el.readyState < 3) setIsLoading(true);
+      }, 300);
+    }),
+    onTimeUpdate: fromActive(onTimeUpdate),
+    onSeeked: fromActive(onTimeUpdate),
+    onDurationChange: fromActive((e) => {
+      // A pending forced start applies duration + time together on
+      // loadedmetadata; updating duration alone first flashed a wrong ayah.
+      if (forcedSeekPendingRef.current) return;
+      const rawDur = e.currentTarget.duration || 0;
+      const offset = currentTrimOffsetRef.current;
+      setDuration(Math.max(0, rawDur - offset));
+    }),
+    onEnded: fromActive(onEnded),
+    onError: fromActive(onError),
+  };
+
   return (
     <AudioPlayerContext.Provider value={value}>
       {/* Dedicated HTML5 audio element for custom prelude (Isti'adhah & Bismillah) */}
@@ -1371,39 +1502,20 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         onError={onPreludeError}
       />
 
-      {/* Persistent HTML5 audio element for direct local MP3 audio */}
-      <audio
-        ref={audioRef}
-        preload="none"
-        onPlay={() => {
-          if (!isPreludeRef.current) setIsPlaying(true);
-        }}
-        onPause={() => {
-          if (!isPreludeRef.current) setIsPlaying(false);
-        }}
-        onPlaying={() => {
-          if (!isPreludeRef.current) {
-            setIsPlaying(true);
-            setIsLoading(false);
-            setError(null);
-          }
-        }}
-        onWaiting={() => {
-          if (!isPreludeRef.current) setIsLoading(true);
-        }}
-        onTimeUpdate={onTimeUpdate}
-        onSeeked={onTimeUpdate}
-        onDurationChange={(e) => {
-          // A pending forced start applies duration + time together on
-          // loadedmetadata; updating duration alone first flashed a wrong ayah.
-          if (forcedSeekPendingRef.current) return;
-          const rawDur = e.currentTarget.duration || 0;
-          const offset = currentTrimOffsetRef.current;
-          setDuration(Math.max(0, rawDur - offset));
-        }}
-        onEnded={onEnded}
-        onError={onError}
-      />
+      {/* Persistent HTML5 audio elements for direct local MP3 audio (A is the
+          default; B is the standby for gapless per-ayah playback). Events of
+          the element not in use are ignored. */}
+      {[audioARef, audioBRef].map((r, n) => (
+        <audio
+          key={n}
+          ref={(node) => {
+            r.current = node;
+            if (n === 0 && node && !audioRef.current) audioRef.current = node;
+          }}
+          preload="none"
+          {...mainAudioEvents}
+        />
+      ))}
 
       {/* Singleton target container for official YouTube IFrame Player API */}
       <div className="pointer-events-none fixed -left-[9999px] -top-[9999px] h-1 w-1 opacity-0 overflow-hidden">

@@ -273,9 +273,9 @@ export function TopicPickerModal({
         title={triggerClassName ? undefined : isFavourites ? "Favourites" : "Content Browser"}
       >
         {isFavourites ? (
-          <FavouriteIcon className={triggerClassName ? "text-base sm:text-lg" : "text-xl"} />
+          <FavouriteIcon className={triggerClassName ? "text-base sm:text-lg" : "h-5 w-5"} />
         ) : (
-          <TvMenuIcon className="text-xl" />
+          <TvMenuIcon className="h-5 w-5" />
         )}
       </button>
 
