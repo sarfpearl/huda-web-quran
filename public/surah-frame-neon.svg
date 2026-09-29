@@ -32,7 +32,7 @@
 
 
   <!-- Inner lit panel -->
-  <rect x="94" y="82" width="812" height="96" rx="8" fill="url(#innerLight)" stroke="#E8D19A" stroke-opacity="0.18"/>
+  <rect x="94" y="82" width="812" height="96" rx="28" fill="url(#innerLight)" stroke="#E8D19A" stroke-opacity="0.18"/>
 
   <!-- Wires -->
   <g fill="none" stroke="#2F8060" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round">
@@ -43,22 +43,22 @@
 
   <!-- Outer emerald neon tube -->
   <g filter="url(#glowGreen)" fill="none">
-    <rect id="tubeOuter" x="42" y="40" width="916" height="180" rx="26" stroke="#2FD39A" stroke-width="7"/>
+    <rect id="tubeOuter" x="42" y="40" width="916" height="180" rx="64" stroke="#2FD39A" stroke-width="7"/>
   </g>
-  <rect x="42" y="40" width="916" height="180" rx="26" fill="none" stroke="#D6F8EA" stroke-width="2.2"/>
+  <rect x="42" y="40" width="916" height="180" rx="64" fill="none" stroke="#D6F8EA" stroke-width="2.2"/>
 
   <!-- Inner gold neon tube -->
   <g filter="url(#glowGold)" fill="none">
-    <rect id="tubeInner" x="72" y="62" width="856" height="136" rx="20" stroke="#D9B871" stroke-width="6"/>
+    <rect id="tubeInner" x="72" y="62" width="856" height="136" rx="46" stroke="#D9B871" stroke-width="6"/>
   </g>
-  <rect x="72" y="62" width="856" height="136" rx="20" fill="none" stroke="#FBF3DC" stroke-width="2"/>
+  <rect x="72" y="62" width="856" height="136" rx="46" fill="none" stroke="#FBF3DC" stroke-width="2"/>
 
   <!-- Electrode caps -->
   <g fill="url(#metal)" stroke="#7A5A24" stroke-width="0.8">
-    <rect x="112" y="56" width="42" height="12" rx="3"/>
-    <rect x="846" y="56" width="42" height="12" rx="3"/>
-    <rect x="112" y="192" width="42" height="12" rx="3"/>
-    <rect x="846" y="192" width="42" height="12" rx="3"/>
+    <rect x="136" y="56" width="42" height="12" rx="3"/>
+    <rect x="822" y="56" width="42" height="12" rx="3"/>
+    <rect x="136" y="192" width="42" height="12" rx="3"/>
+    <rect x="822" y="192" width="42" height="12" rx="3"/>
     <rect x="66" y="92" width="12" height="32" rx="3"/>
     <rect x="922" y="92" width="12" height="32" rx="3"/>
     <rect x="66" y="136" width="12" height="32" rx="3"/>

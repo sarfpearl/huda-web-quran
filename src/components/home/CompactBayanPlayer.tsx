@@ -19,6 +19,8 @@ import {
   ChevronDownIcon,
   VolumeIcon,
   MuteIcon,
+  BookmarkIcon,
+  BookmarkAddIcon,
 } from "@/components/ui/Icon";
 import { formatClock } from "@/lib/utils";
 import {
@@ -77,6 +79,8 @@ interface CompactBayanPlayerProps {
   /** Element below the card (the stats frame's bottom strip). While compact,
    *  the Surah / Juz name and the Ayat steps are portalled into it. */
   footerSlot?: HTMLElement | null;
+  /** Leads the compact footer strip, before the Surah / Juz name. */
+  footerLeading?: React.ReactNode;
   /** Reports compact (true) / full (false) so the frame can open its strip. */
   onCollapsedChange?: (collapsed: boolean) => void;
   /** Reading mode: shrink to the compact pill while on (restored after, not remembered). */
@@ -92,6 +96,8 @@ interface CompactBayanPlayerProps {
     last: number;
     onStep: (delta: -1 | 1) => void;
     onOpenPicker: () => void;
+    /** Bookmark button after », filled when this page holds a bookmark. */
+    bookmark?: { on: boolean; onToggle: () => void };
   } | null;
 }
 
@@ -119,6 +125,7 @@ export function CompactBayanPlayer({
   onPrevTrack,
   onNextTrack,
   footerSlot = null,
+  footerLeading = null,
   onCollapsedChange,
   forceCompact = false,
   pageNav = null,
@@ -323,7 +330,22 @@ export function CompactBayanPlayer({
   const hasAyahPill = Boolean(
     (isAyahSeq && ayahSeq) || (isSurahTrackId(bayan.id) && (currentSegment || currentVerse))
   );
-  const pageSteps = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string) => (
+  // 🔖 add (bookmark +) / remove (filled) — after » in the compact strip,
+  // in the shuffle button's place on the full card.
+  const bookmarkButton = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string) =>
+    nav.bookmark && (
+      <button
+        type="button"
+        onClick={() => { haptic(); nav.bookmark!.onToggle(); }}
+        aria-pressed={nav.bookmark.on}
+        className={`${btnClass} ${nav.bookmark.on ? "text-amber-300" : ""}`}
+        aria-label={nav.bookmark.on ? "Remove bookmark" : "Add bookmark"}
+        data-tooltip={nav.bookmark.on ? "Remove bookmark" : "Add bookmark"}
+      >
+        {nav.bookmark.on ? <BookmarkIcon filled className={iconClass} /> : <BookmarkAddIcon className={iconClass} />}
+      </button>
+    );
+  const pageSteps = (nav: NonNullable<typeof pageNav>, btnClass: string, iconClass: string, withBookmark = true) => (
     <>
       <button
         type="button"
@@ -358,9 +380,10 @@ export function CompactBayanPlayer({
           <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
         </svg>
       </button>
+      {withBookmark && bookmarkButton(nav, `${btnClass} ml-1`, iconClass)}
     </>
   );
-  const ayahSteps = (btnClass: string, iconClass: string) => pageNav ? pageSteps(pageNav, btnClass, iconClass) : (
+  const ayahSteps = (btnClass: string, iconClass: string, withBookmark = true) => pageNav ? pageSteps(pageNav, btnClass, iconClass, withBookmark) : (
     <>
       {onPrevVerse ? (
         <button
@@ -777,7 +800,7 @@ export function CompactBayanPlayer({
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
           {hasAyahPill && (
             <div className="mt-2 inline-flex h-9 items-center gap-1.5 w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
-              {ayahSteps(pillStepBtn, "h-4 w-4")}
+              {ayahSteps(pillStepBtn, "h-4 w-4", false)}
             </div>
           )}
           {errorMsg && (
@@ -792,7 +815,15 @@ export function CompactBayanPlayer({
           {/* 1. View count of the Surah / Juz playing (replaced the ♥ button) */}
           {viewSlot}
 
-          {/* 2. Shuffle Button (Moved from bottom left per red arrow) */}
+          {/* 2. Shuffle Button (Moved from bottom left per red arrow) —
+              reading mode: the bookmark button in its place */}
+          {pageNav?.bookmark ? (
+            bookmarkButton(
+              pageNav,
+              "grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-amber-300 active:scale-90 transition-all cursor-pointer",
+              "text-sm sm:text-base"
+            )
+          ) : (
           <button
             type="button"
             data-tooltip={L.shuffle}
@@ -815,6 +846,7 @@ export function CompactBayanPlayer({
           >
             <ShuffleIcon className="text-xs sm:text-sm" />
           </button>
+          )}
 
           {/* 3. Playback Speed Button (Moved from bottom right per red arrow) */}
           <button
@@ -953,6 +985,8 @@ export function CompactBayanPlayer({
   // steps (right) that the full card shows beside its cover.
   const footerStrip = (
     <div className="flex w-full min-w-0 items-center justify-between gap-3 text-[11px] sm:text-xs font-medium text-white">
+      <div className="flex min-w-0 items-center gap-2.5">
+      {footerLeading}
       <div
         className={`flex min-w-0 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
         {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
@@ -964,6 +998,7 @@ export function CompactBayanPlayer({
           </span>
         )}
       </div>
+      </div>
       {(hasAyahPill || pageNav) && (
         <div className="flex h-full shrink-0 items-center gap-0.5 select-none">
           {ayahSteps(footerStepBtn, "h-3.5 w-3.5")}
@@ -972,8 +1007,8 @@ export function CompactBayanPlayer({
     </div>
   );
 
-  // Pill radius = half its height; full card keeps its class corners.
-  const radius = collapsed && shellSize ? (shellSize.h + 2) / 2 : undefined;
+  // Compact or full: the stats frame's own 28 / 40px corners (PlayerStatsFrame),
+  // not a full pill.
   return (
     <div
       ref={shellRef}
@@ -983,7 +1018,6 @@ export function CompactBayanPlayer({
       style={{
         width: shellSize ? shellSize.w + 2 : undefined,
         height: shellSize ? shellSize.h + 2 : undefined,
-        borderRadius: radius,
       }}
     >
       {fullView}

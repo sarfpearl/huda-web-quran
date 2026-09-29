@@ -21,6 +21,9 @@ import {
 } from "@/lib/data/quranGlyphs";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import SurahBanner from "./SurahBanner";
+import { BookmarkIcon, CloseIcon } from "@/components/ui/Icon";
+import { isSajdahWord } from "@/lib/data/sajdah";
+import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 
 /** A run of ayahs inside one Surah (a whole Surah, or part of one in a Juz). */
@@ -54,6 +57,16 @@ interface ReadingViewProps {
   scrollToPage?: { page: number; n: number } | null;
   /** Ayah text size, × the default (the reader's text-size setting). */
   textScale?: number;
+  /** Recitation running (the recited ayah then counts as read). */
+  playing?: boolean;
+  /** « Continue reading » at a last read ayah outside what's shown. */
+  onOpenAyah?: (surah: number, ayah: number) => void;
+  /** Bookmarked ayahs (marked in the text). */
+  bookmarks?: AyahRef[];
+  /** First ayah still showing at the top of the view, as the reader scrolls. */
+  onVisibleAyahChange?: (r: AyahRef) => void;
+  /** Bookmarked ayahs ("surah:ayah") whose mark is on screen. */
+  onBookmarksInViewChange?: (keys: string[]) => void;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -100,6 +113,11 @@ export function ReadingView({
   onVisiblePageChange,
   scrollToPage = null,
   textScale = 1,
+  playing = false,
+  onOpenAyah,
+  bookmarks = [],
+  onVisibleAyahChange,
+  onBookmarksInViewChange,
 }: ReadingViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rangesKey = ranges.map((r) => `${r.surah}:${r.from}-${r.to}`).join(",");
@@ -325,6 +343,79 @@ export function ReadingView({
     });
   }, [activeKey, activeWordIndex, pages]);
 
+  // Last read: where reading stopped before this view opened (a snapshot, so
+  // it doesn't chase the reader); the position saved for next time is the
+  // recited ayah while playing, or the ayah at the top of the view after
+  // scrolling by hand — never the view merely opening somewhere.
+  const [lastRead, setLastRead] = useState<LastRead | null>(null);
+  useEffect(() => setLastRead(loadLastRead()), []);
+  useEffect(() => {
+    if (playing && active) saveLastRead(active.surah, active.ayah);
+  }, [activeKey, playing]); // eslint-disable-line react-hooks/exhaustive-deps
+  const bookmarkKeys = new Set(bookmarks.map((b) => `${b.surah}:${b.ayah}`));
+  const bookmarksKey = [...bookmarkKeys].join(",");
+  // Which bookmark marks are on screen (the player's 🔖 fills for them).
+  const inViewCbRef = useRef(onBookmarksInViewChange);
+  inViewCbRef.current = onBookmarksInViewChange;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !pages) return;
+    const seen = new Set<string>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const k = (e.target as HTMLElement).dataset.bookmark ?? "";
+          if (e.isIntersecting) seen.add(k);
+          else seen.delete(k);
+        }
+        inViewCbRef.current?.([...seen]);
+      },
+      { root: el }
+    );
+    const marks = el.querySelectorAll<HTMLElement>("[data-bookmark]");
+    marks.forEach((m) => io.observe(m));
+    if (!marks.length) inViewCbRef.current?.([]);
+    return () => io.disconnect();
+  }, [pages, bookmarksKey]);
+  const inView = (r: AyahRef | null) =>
+    Boolean(r && plan.all.some(({ ref, ctx }) => ctx === "cur" && ref.surah === r.surah && ref.ayah === r.ayah));
+
+  // « Continue reading »: back to the last read ayah, when it is off screen
+  // (or in another Surah).
+  const target = lastRead;
+  const targetKey = target ? `${target.surah}:${target.ayah}` : null;
+  const targetHere = inView(target);
+  const [continueHidden, setContinueHidden] = useState(false);
+  const [targetInView, setTargetInView] = useState(true);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !pages) return;
+    const ayah = targetKey ? el.querySelector<HTMLElement>(`[data-key="${targetKey}"]`) : null;
+    if (!ayah) {
+      setTargetInView(false);
+      return;
+    }
+    const io = new IntersectionObserver(([e]) => setTargetInView(e.isIntersecting), { root: el });
+    io.observe(ayah);
+    return () => io.disconnect();
+  }, [pages, targetKey]);
+  const showContinue =
+    Boolean(target) &&
+    !continueHidden &&
+    (targetHere ? Boolean(pages) && !targetInView : Boolean(onOpenAyah)) &&
+    targetKey !== activeKey;
+  const goToAyah = (r: AyahRef) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stopFollow(el);
+    el.querySelector<HTMLElement>(`[data-key="${r.surah}:${r.ayah}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
+  const handleContinue = () => {
+    if (!target) return;
+    setContinueHidden(true);
+    if (targetHere) goToAyah(target);
+    else onOpenAyah?.(target.surah, target.ayah);
+  };
   // Page steps that can't move the audio scroll the page into view instead.
   useEffect(() => {
     if (!scrollToPage || !pages) return;
@@ -352,6 +443,8 @@ export function ReadingView({
   // view (reading along in one's own voice, not the audio).
   const pageCbRef = useRef(onVisiblePageChange);
   pageCbRef.current = onVisiblePageChange;
+  const ayahCbRef = useRef(onVisibleAyahChange);
+  ayahCbRef.current = onVisibleAyahChange;
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !pages?.length) return;
@@ -374,6 +467,15 @@ export function ReadingView({
         }
         pageCbRef.current?.(page);
         setViewPage(page);
+        // The first ayah still showing — where reading is, when scrolled by hand.
+        for (const node of el.querySelectorAll<HTMLElement>("[data-key]")) {
+          if (node.getBoundingClientRect().bottom <= top) continue;
+          const [s, a] = (node.dataset.key ?? "").split(":").map(Number);
+          if (!s || !a) break;
+          ayahCbRef.current?.({ surah: s, ayah: a });
+          if (Date.now() - userScrollAtRef.current < 4000) saveLastRead(s, a);
+          break;
+        }
       }, 80);
     };
     report();
@@ -389,13 +491,15 @@ export function ReadingView({
   // The recited word turns gold with a soft glow, as in the main verse view:
   // glyph words through the font's gold palette (Tajweed colours kept), text
   // words through colour.
-  const wordProps = (r: AyahRef, v: AyahVerse | null, i: number, isActive: boolean, live: boolean) => {
+  const wordProps = (r: AyahRef, v: AyahVerse | null, i: number, isActive: boolean, live: boolean, glyph = false) => {
     const t = v?.words?.[i];
     const seekable = Boolean(live && onSeekWord && t && t.endTime > t.startTime);
+    // Sajdah line: the page fonts draw their own once loaded.
+    const sajdah = isSajdahWord(r.surah, r.ayah, i) && !glyph;
     return {
       "data-word-idx": i,
       "aria-current": isActive ? ("true" as const) : undefined,
-      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${seekable ? "cursor-pointer" : ""}`,
+      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
       onClick: seekable
         ? (ev: React.MouseEvent) => {
             ev.stopPropagation();
@@ -426,6 +530,7 @@ export function ReadingView({
     const live = ctx === "cur";
     const k = `${ref.surah}:${ref.ayah}`;
     const activeIdx = live && k === activeKey ? activeWordIndex : -1;
+    const bookmarked = live && p.from === 0 && bookmarkKeys.has(k);
     let words: React.ReactNode;
     if (g) {
       words = g.w.slice(p.from, p.to + 1).map(([code, page, text], j) => {
@@ -433,7 +538,9 @@ export function ReadingView({
         return (
           <Fragment key={i}>
             {j > 0 && " "}
-            <span {...wordProps(ref, v, i, i === activeIdx, live)}>{glyphWord(code, page, text, i === activeIdx)}</span>
+            <span {...wordProps(ref, v, i, i === activeIdx, live, loadedPages.has(page))}>
+              {glyphWord(code, page, text, i === activeIdx)}
+            </span>
           </Fragment>
         );
       });
@@ -455,6 +562,17 @@ export function ReadingView({
           aria-hidden={live ? undefined : true}
           className={live ? (onSeekAyah ? "cursor-pointer" : undefined) : "opacity-35 pointer-events-none select-none"}
         >
+          {bookmarked && (
+            <span
+              data-bookmark={k}
+              role="img"
+              aria-label="Bookmark"
+              title="Bookmark"
+              className="inline-block align-[0.4em] mx-1 text-[0.55em] text-amber-300 drop-shadow-[0_0_6px_rgba(252,211,77,0.6)] select-none"
+            >
+              <BookmarkIcon filled />
+            </span>
+          )}
           {words}
           {p.end &&
             (g?.e && loadedPages.has(g.e[1]) ? (
@@ -570,6 +688,35 @@ export function ReadingView({
           )}
         </div>
       </div>
+
+      {/* « Continue reading » */}
+      {showContinue && target && (
+        <div className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4">
+          <div className="pointer-events-auto flex items-center rounded-full border border-amber-300/40 bg-black/45 backdrop-blur-md text-sand-50 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="flex items-center gap-2 py-1.5 pl-3.5 pr-2 text-xs sm:text-sm font-medium cursor-pointer hover:text-white"
+            >
+              <BookmarkIcon filled className="text-amber-300" />
+              <span>
+                Continue reading ·{" "}
+                {targetHere
+                  ? `Ayah ${target.ayah}`
+                  : `${QURAN_SURAHS.find((x) => x.number === target.surah)?.name ?? `Surah ${target.surah}`} ${target.surah}:${target.ayah}`}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setContinueHidden(true)}
+              aria-label="Dismiss"
+              className="grid h-7 w-7 mr-1 place-items-center rounded-full text-sand-200 hover:text-white cursor-pointer"
+            >
+              <CloseIcon className="text-sm" />
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

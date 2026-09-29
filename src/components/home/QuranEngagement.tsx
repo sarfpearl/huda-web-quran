@@ -894,13 +894,14 @@ export function PlayerStatsFrame({
   useEffect(() => {
     if (footerWrapRef.current) footerWrapRef.current.inert = !withFooter;
   }, [withFooter]);
-  // Minimum insets so the strip contents clear the rounded corners (compact pill is tight).
+  // The strips line up with the player's first / last button (the card's
+  // corners are no longer a full pill, so no extra room is needed for them).
   // With the bottom strip the card floats inside the frame, inset by CARD_INSET.
   const CARD_INSET = 10;
   const inset = withFooter ? CARD_INSET : 0;
   const stripInsets = {
-    paddingLeft: Math.max(geo?.left ?? 16, 16) + inset,
-    paddingRight: Math.max(geo?.right ?? 24, 24) + inset,
+    paddingLeft: Math.max(geo?.left ?? 16, 8) + inset,
+    paddingRight: Math.max(geo?.right ?? 16, 8) + inset,
   };
 
   const toggleViews = () => {

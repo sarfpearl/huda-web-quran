@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
+import { isSajdahWord } from "@/lib/data/sajdah";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
@@ -134,6 +135,7 @@ const QuranWord = memo(function QuranWord({
   glyphCode,
   glyphPage,
   tajweed = true,
+  sajdah = false,
   onSelect,
 }: {
   id: string;
@@ -145,6 +147,8 @@ const QuranWord = memo(function QuranWord({
   glyphPage?: number;
   /** Glyph palette: Tajweed colours, or plain white. */
   tajweed?: boolean;
+  /** Sajdah word: overlined (text only — the page fonts draw their own line). */
+  sajdah?: boolean;
   onSelect?: (idx: number) => void;
 }) {
   const active = state === "active";
@@ -162,7 +166,7 @@ const QuranWord = memo(function QuranWord({
             }
           : undefined
       }
-      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} inline-block transition-[color,text-shadow] duration-150 ${
+      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block transition-[color,text-shadow] duration-150 ${
         onSelect ? "cursor-pointer" : ""
       } ${WORD_TONE[state]}`}
     >
@@ -641,6 +645,7 @@ export function CenterVerseDisplay({
                       glyphCode={w.glyph?.[0]}
                       glyphPage={w.glyph?.[1]}
                       tajweed={tajweed}
+                      sajdah={!isPrelude && isSajdahWord(surahNum, ayahNum, idx)}
                       onSelect={hasWordTiming ? handleWordSelect : undefined}
                     />
                   );

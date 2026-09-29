@@ -334,6 +334,19 @@ export const BookOpenFilledIcon = (p: IconProps) => (
     ))}
   </Base>
 );
+/** Bookmark ribbon — the last read mark. */
+export const BookmarkIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
+  <Base {...p}>
+    <path d="M6 3.5h12v17l-6-4.2-6 4.2z" fill={filled ? "currentColor" : "none"} />
+  </Base>
+);
+/** Bookmark with a plus — add a bookmark. */
+export const BookmarkAddIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M6 3.5h12v17l-6-4.2-6 4.2z" />
+    <path d="M12 7.5v6M9 10.5h6" />
+  </Base>
+);
 /** Favourite (heart) — outline, or filled when `filled`. */
 export const FavouriteIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
   <Base strokeWidth={1.5} {...p}>

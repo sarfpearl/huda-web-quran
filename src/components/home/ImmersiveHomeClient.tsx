@@ -16,6 +16,8 @@ import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon } from "@/components/ui/Icon";
+import { bookmarkId, loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/lastRead";
+import { BookmarksPanel } from "./BookmarksPanel";
 import {
   isQuranTrack,
   isQuranTrackId,
@@ -298,13 +300,13 @@ export function ImmersiveHomeClient({
   // selected reciter's voice — including Sheikh Maher — so the ayah progress
   // bar, word highlight and verse text work uniformly for every reciter. Only a
   // reciter with no per-ayah audio at all falls back to Maher's full-Juz file.
-  const handleSelectJuz = (juzId: number) => {
+  const handleSelectJuz = (juzId: number, startIndex = 0) => {
     const juz = getQuranJuzByTrackId(`quran-juz-${juzId}`);
     if (!juz) return;
     const ayahUrls = buildJuzAyahUrls(juz.id, selectedReciter.id);
     if (ayahUrls && ayahUrls.length > 0) {
       const displayTrack = quranJuzToTrackForReciter(juz, selectedReciter, ayahUrls[0]);
-      player.playAyahSequence(displayTrack, ayahUrls, 0, buildJuzPreludes(juz.id, selectedReciter.id));
+      player.playAyahSequence(displayTrack, ayahUrls, startIndex, buildJuzPreludes(juz.id, selectedReciter.id));
       return;
     }
     const juzTrack = QURAN_TRACKS[juz.id - 1];
@@ -840,6 +842,51 @@ export function ImmersiveHomeClient({
         : readingRanges[0]
         ? mushafPageOf(readingRanges[0].surah, readingRanges[0].from)
         : 1);
+  // Bookmarks: ayahs marked by hand in reading mode (🔖 after « Page N »),
+  // as Surah or Juz bookmarks by what's being read; listed in the player's
+  // Bookmarks panel. Tapping places one at the recited ayah while playing,
+  // else at the first ayah on screen; with bookmarks on screen, tapping
+  // takes them out.
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  useEffect(() => setBookmarks(loadBookmarks()), []);
+  const updateBookmarks = (next: Bookmark[]) => {
+    setBookmarks(next);
+    saveBookmarks(next);
+  };
+  const [visibleAyah, setVisibleAyah] = useState<{ surah: number; ayah: number } | null>(null);
+  useEffect(() => setVisibleAyah(null), [readingKey]);
+  const inReading = (b: Bookmark) =>
+    readingJuz ? b.kind === "juz" && b.juz === readingJuz.id : b.kind === "surah" && b.surah === readingSurah;
+  const readingBookmarks = readingActive ? bookmarks.filter(inReading) : [];
+  // Bookmarks whose mark is on screen: the 🔖 shows filled and takes them out.
+  const [bookmarksInView, setBookmarksInView] = useState<string[]>([]);
+  const pageBookmarks = readingBookmarks.filter((b) => bookmarksInView.includes(`${b.surah}:${b.ayah}`));
+  useEffect(() => setBookmarksInView([]), [readingKey]);
+  const handleToggleBookmark = () => {
+    if (pageBookmarks.length) {
+      const drop = new Set(pageBookmarks.map(bookmarkId));
+      updateBookmarks(bookmarks.filter((b) => !drop.has(bookmarkId(b))));
+      return;
+    }
+    const at = player.isPlaying && readingAyah ? readingAyah : visibleAyah ?? readingAyah;
+    if (!at) return;
+    const b: Bookmark = readingJuz
+      ? { kind: "juz", juz: readingJuz.id, ...at, at: Date.now() }
+      : { kind: "surah", ...at, at: Date.now() };
+    updateBookmarks([b, ...bookmarks.filter((x) => bookmarkId(x) !== bookmarkId(b))]);
+  };
+  // Open a bookmark: reading mode, reciting from its ayah.
+  const handleOpenBookmark = (b: Bookmark) => {
+    setReadingMode(true);
+    if (b.kind === "surah") {
+      openSurahAt(b.surah, b.ayah);
+      return;
+    }
+    const i = Math.max(0, getJuzAyahPairs(b.juz!).findIndex(([s, a]) => s === b.surah && a === b.ayah));
+    if (activeJuz?.id === b.juz && player.ayahSequence) player.jumpToAyah(i);
+    else handleSelectJuz(b.juz!, i);
+  };
+
   const readingFirstPage = juzPageRange?.[0] ?? 1;
   const readingLastPage = juzPageRange?.[1] ?? MUSHAF_PAGE_COUNT;
   const handleGoToPage = (page: number) => {
@@ -853,6 +900,11 @@ export function ImmersiveHomeClient({
       return;
     }
     const [surahNum, ayah] = MUSHAF_PAGE_STARTS[p - 1];
+    openSurahAt(surahNum, ayah);
+  };
+  // Recite a Surah from an ayah: a seek within the playing Surah, else that
+  // Surah's track cued (or played, when playing) at the ayah.
+  const openSurahAt = (surahNum: number, ayah: number) => {
     if (surahNum === activeSurah?.number) {
       handleReadSeek(ayah);
       return;
@@ -888,6 +940,10 @@ export function ImmersiveHomeClient({
   const handleToggleMeaning = () => {
     setShowTranslation((prev) => !prev);
   };
+
+  const installGuideButton = (
+    <InstallGuideButton className="relative grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
+  );
 
   return (
     <div
@@ -1038,6 +1094,11 @@ export function ImmersiveHomeClient({
             onVisiblePageChange={setVisiblePage}
             scrollToPage={scrollToPage}
             textScale={readerScale}
+            playing={player.isPlaying}
+            onOpenAyah={openSurahAt}
+            bookmarks={readingBookmarks}
+            onVisibleAyahChange={setVisibleAyah}
+            onBookmarksInViewChange={setBookmarksInView}
           />
         )}
       </AnimatePresence>
@@ -1087,8 +1148,9 @@ export function ImmersiveHomeClient({
                 <ImageIcon className="text-base sm:text-lg" />
               )}
             </button>
-            {/* Reopens the Add to Home Screen guide after it was dismissed */}
-            <InstallGuideButton className="relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
+            {/* Reopens the Add to Home Screen guide after it was dismissed —
+                compact player: leads the bottom strip instead */}
+            {!playerCollapsed && installGuideButton}
             {/* Favourites (♥) — the Surahs / Juz this browser liked */}
             <TopicPickerModal
               variant="favourites"
@@ -1098,6 +1160,14 @@ export function ImmersiveHomeClient({
               activeCategorySlug={activeCategory.slug}
               onSelectCategory={handleSelectCategory}
               onSelectJuz={handleSelectJuz}
+            />
+            {/* Bookmarks (🔖) — the ayahs bookmarked in reading mode */}
+            <BookmarksPanel
+              bookmarks={bookmarks}
+              defaultKind={isJuz ? "juz" : "surah"}
+              onOpenBookmark={handleOpenBookmark}
+              onRemoveBookmark={(b) => updateBookmarks(bookmarks.filter((x) => bookmarkId(x) !== bookmarkId(b)))}
+              triggerClassName="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
             />
             </div>
           }
@@ -1142,6 +1212,7 @@ export function ImmersiveHomeClient({
                 onSeekToVerse={jumpToVerse}
                 viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
                 footerSlot={playerFooter}
+                footerLeading={installGuideButton}
                 onCollapsedChange={setPlayerCollapsed}
                 forceCompact={readingActive}
                 onTitleClick={() => setBrowserOpenRequest((n) => n + 1)}
@@ -1153,6 +1224,7 @@ export function ImmersiveHomeClient({
                         last: readingLastPage,
                         onStep: (d) => handleGoToPage(readingPage + d),
                         onOpenPicker: () => setPagePickerOpen(true),
+                        bookmark: { on: pageBookmarks.length > 0, onToggle: handleToggleBookmark },
                       }
                     : null
                 }

@@ -15,13 +15,13 @@ export default function SurahBanner({ surah }: { surah: number }) {
       className="relative mx-auto w-full max-w-[560px] [container-type:inline-size]"
       style={{ aspectRatio: "1000 / 260" }}
     >
-      {/* Glass inside the outer neon tube only (viewBox x 42–958, y 40–220, rx 26) */}
+      {/* Glass inside the outer neon tube only (viewBox x 42–958, y 40–220, rx 64 — rounded as the player card) */}
       <div
         className="absolute bg-white/[0.06] backdrop-blur-md"
-        style={{ left: "4.2%", right: "4.2%", top: "15.4%", bottom: "15.4%", borderRadius: "2.84% / 14.4%" }}
+        style={{ left: "4.2%", right: "4.2%", top: "15.4%", bottom: "15.4%", borderRadius: "6.99% / 35.6%" }}
       />
       {/* eslint-disable-next-line @next/next/no-img-element -- static SVG frame */}
-      <img src="/surah-frame-neon.svg" alt="" aria-hidden className="absolute inset-0 h-full w-full select-none" draggable={false} />
+      <img src="/surah-frame-neon.svg?v=2" alt="" aria-hidden className="absolute inset-0 h-full w-full select-none" draggable={false} />
       <h2
         lang="ar"
         dir="rtl"

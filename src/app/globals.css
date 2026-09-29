@@ -291,6 +291,13 @@
   .quran-word-glow {
     text-shadow: 0 0 18px rgba(251, 191, 36, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9);
   }
+  /* Sajdah words (sajdah.ts): the Mushaf's line over them, in gold. Text
+     words only — the page fonts draw their own line. */
+  .quran-word--sajdah {
+    /* A background, not text-decoration: the Hafs font's overline sits far
+       above the letters. Tuned to its content box (≈1.75em tall). */
+    background: linear-gradient(#fcd34d, #fcd34d) no-repeat 0 0.3em / 100% 0.06em;
+  }
   /* Glyph words carry their colours in the font palette, so an upcoming word
      is dimmed by opacity. */
   .quran-word--glyph.quran-word--dim > [aria-hidden] {
