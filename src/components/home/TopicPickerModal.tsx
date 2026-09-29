@@ -145,6 +145,12 @@ export function TopicPickerModal({
   // Re-read every time the panel opens so a new like appears straight away.
   const [favourites, setFavourites] = useState<Array<{ kind: "surah" | "juz"; id: number }> | null>(null);
   const [favouritesFailed, setFavouritesFailed] = useState(false);
+  // Surah | Juz segment — opens on the kind being played.
+  const [favTab, setFavTab] = useState<"surah" | "juz">("surah");
+  useEffect(() => {
+    if (!isOpen || !isFavourites) return;
+    setFavTab(player.current?.id.startsWith("quran-juz-") ? "juz" : "surah");
+  }, [isOpen, isFavourites]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isOpen || !isFavourites) return;
     const supabase = getSupabaseBrowserClient();
@@ -166,6 +172,10 @@ export function TopicPickerModal({
       cancelled = true;
     };
   }, [isOpen, isFavourites]);
+  const favCounts = {
+    surah: favourites?.filter((f) => f.kind === "surah").length ?? 0,
+    juz: favourites?.filter((f) => f.kind === "juz").length ?? 0,
+  };
   const countFor = (kind: "surah" | "juz", id: number) => {
     const map = viewCounts[kind];
     return map ? map[String(id)] ?? 0 : null;
@@ -326,6 +336,28 @@ export function TopicPickerModal({
                 </button>
               </div>
 
+              {/* 2a. Favourites: Surah | Juz */}
+              {isFavourites && (
+                <div role="tablist" className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
+                  {(["surah", "juz"] as const).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="tab"
+                      aria-selected={favTab === k}
+                      onClick={() => setFavTab(k)}
+                      className={cn(
+                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all cursor-pointer",
+                        favTab === k ? "bg-emerald-600 text-white shadow-md" : "text-sand-200/60 hover:text-white"
+                      )}
+                    >
+                      {k === "surah" ? "Surah" : "Juz"}
+                      {favCounts[k] > 0 && <span className="ml-1.5 tabular-nums opacity-70">{favCounts[k]}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* 2. Segmented Navigation Tabs (Surah | Juz | Bayan) */}
               {!isFavourites && (
               <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
@@ -408,22 +440,32 @@ export function TopicPickerModal({
                     <p className="px-2 py-8 text-center text-xs text-sand-200/60">Favourites aren&apos;t available right now.</p>
                   ) : favourites === null ? (
                     <div className="h-16 animate-pulse rounded-2xl bg-white/5" aria-busy="true" />
-                  ) : favourites.length === 0 ? (
-                    <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                      <FavouriteIcon className="text-2xl text-emerald-400/70" />
-                      <p className="text-xs text-sand-200/70">No favourites yet.</p>
-                      <p className="text-[11px] text-sand-200/50">Like the Surah or Juz you&apos;re listening to (♥ beside the cover) to keep it here.</p>
-                    </div>
-                  ) : (
-                    favourites.map((f) => {
-                      if (f.kind === "surah") {
-                        const sura = filteredSurah.find((x) => x.number === f.id);
-                        return sura ? renderSurahCard(sura) : null;
-                      }
-                      const juz = filteredJuz.find((x) => x.id === f.id);
-                      return juz ? renderJuzCard(juz) : null;
-                    })
-                  ))}
+                  ) : (() => {
+                    const cards = favourites
+                      .filter((f) => f.kind === favTab)
+                      .map((f) => {
+                        if (f.kind === "surah") {
+                          const sura = filteredSurah.find((x) => x.number === f.id);
+                          return sura ? renderSurahCard(sura) : null;
+                        }
+                        const juz = filteredJuz.find((x) => x.id === f.id);
+                        return juz ? renderJuzCard(juz) : null;
+                      })
+                      .filter(Boolean);
+                    if (cards.length) return cards;
+                    const label = favTab === "surah" ? "Surah" : "Juz";
+                    return (
+                      <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                        <FavouriteIcon className="text-2xl text-emerald-400/70" />
+                        <p className="text-xs text-sand-200/70">
+                          {q && favCounts[favTab] ? "No matching favourites." : `No ${label} favourites yet.`}
+                        </p>
+                        {!(q && favCounts[favTab]) && (
+                          <p className="text-[11px] text-sand-200/50">Like the {label} you&apos;re listening to (♥ beside the cover) to keep it here.</p>
+                        )}
+                      </div>
+                    );
+                  })())}
 
                 {/* D. BAYAN TAB (Categories) */}
                 {!isFavourites && activeTab === "bayan" &&
