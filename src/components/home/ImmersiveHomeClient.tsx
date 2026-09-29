@@ -6,7 +6,7 @@ import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
 import { ImmersiveBackground } from "./ImmersiveBackground";
-import { ImmersiveHeader } from "./ImmersiveHeader";
+import { ImmersiveHeader, READER_SCALES } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
@@ -728,6 +728,24 @@ export function ImmersiveHomeClient({
       /* storage unavailable */
     }
   }, []);
+  // Reading mode's text size (× default), remembered per browser.
+  const [readerScale, setReaderScale] = useState(1);
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem("huda:reader-scale"));
+      if (READER_SCALES.includes(v)) setReaderScale(v);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+  const handleReaderScale = (v: number) => {
+    setReaderScale(v);
+    try {
+      localStorage.setItem("huda:reader-scale", String(v));
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const handleToggleTajweed = () => {
     setShowTajweed((prev) => {
       try {
@@ -894,8 +912,13 @@ export function ImmersiveHomeClient({
         visualMode={visualMode}
       />
 
-      {/* 20% black scrim over every background so the verse text stays legible */}
-      <div className="absolute inset-0 z-[1] bg-black/20 pointer-events-none" aria-hidden="true" />
+      {/* Scrim over every background so the verse reads clearly on any scene,
+          bright ones too — the Tajweed glyph words carry no text shadow on
+          WebKit. Darker towards the edges, where the header and player sit. */}
+      <div
+        className="absolute inset-0 z-[1] pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.35),rgba(0,0,0,0.55))]"
+        aria-hidden="true"
+      />
 
       {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation).
           Phones / tablets: the open comments panel (and the keyboard) take the
@@ -938,6 +961,8 @@ export function ImmersiveHomeClient({
         showMeaning={showTranslation}
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
+        // …and gets a text-size control in its place.
+        textSize={readingActive ? { value: readerScale, onChange: handleReaderScale } : undefined}
         showTajweed={showTajweed}
         onToggleTajweed={handleToggleTajweed}
         selectedReciter={selectedReciter}
@@ -1012,6 +1037,7 @@ export function ImmersiveHomeClient({
             onSeekWord={handleReaderSeekWord}
             onVisiblePageChange={setVisiblePage}
             scrollToPage={scrollToPage}
+            textScale={readerScale}
           />
         )}
       </AnimatePresence>

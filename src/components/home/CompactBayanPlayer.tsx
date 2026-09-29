@@ -226,16 +226,10 @@ export function CompactBayanPlayer({
   }, [showTranslation]);
 
   // Reading mode: the Surah text needs the screen, so shrink to the compact
-  // pill while it's on and restore the full player after (only if it was us).
-  const readingCollapsedRef = useRef(false);
+  // pill while it's on. Leaving it keeps the pill (the verse view has the
+  // screen then too); the chevron still opens the full player.
   useEffect(() => {
-    if (forceCompact && !collapsed) {
-      toggleCollapsed(true, false);
-      readingCollapsedRef.current = true;
-    } else if (!forceCompact && readingCollapsedRef.current) {
-      readingCollapsedRef.current = false;
-      if (collapsed) toggleCollapsed(false, false);
-    }
+    if (forceCompact && !collapsed) toggleCollapsed(true, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCompact]);
 

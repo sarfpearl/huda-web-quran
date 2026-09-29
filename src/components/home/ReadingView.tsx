@@ -19,6 +19,7 @@ import {
   unloadPageFont,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
+import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 
 /** A run of ayahs inside one Surah (a whole Surah, or part of one in a Juz). */
@@ -50,6 +51,8 @@ interface ReadingViewProps {
   onVisiblePageChange?: (page: number) => void;
   /** Bump `n` to scroll to `page` (page steps that can't move the audio). */
   scrollToPage?: { page: number; n: number } | null;
+  /** Ayah text size, × the default (the reader's text-size setting). */
+  textScale?: number;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -95,6 +98,7 @@ export function ReadingView({
   onSeekWord,
   onVisiblePageChange,
   scrollToPage = null,
+  textScale = 1,
 }: ReadingViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rangesKey = ranges.map((r) => `${r.surah}:${r.from}-${r.to}`).join(",");
@@ -280,17 +284,23 @@ export function ReadingView({
   // (drag / wheel, not a tap) pauses following for a few seconds.
   const activeKey = active ? `${active.surah}:${active.ayah}` : null;
   const userScrollAtRef = useRef(0);
+  // Teleprompter-style follow (followScroll): the aim point is the recited
+  // word's line plus how far along that line the word sits, so the view
+  // drifts on with the recitation and the next line is already arriving as
+  // the current one is finished — no stepping from line to line.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const mark = () => {
       userScrollAtRef.current = Date.now();
+      stopFollow(el);
     };
     el.addEventListener("touchmove", mark, { passive: true });
     el.addEventListener("wheel", mark, { passive: true });
     return () => {
       el.removeEventListener("touchmove", mark);
       el.removeEventListener("wheel", mark);
+      stopFollow(el);
     };
   }, []);
   useEffect(() => {
@@ -298,19 +308,17 @@ export function ReadingView({
     if (!el || !activeKey || !pages) return;
     if (Date.now() - userScrollAtRef.current < 4000) return;
     const ayah = el.querySelector<HTMLElement>(`[data-key="${activeKey}"]`);
-    const target =
-      (activeWordIndex >= 0 &&
-        el.querySelector<HTMLElement>(`[data-key="${activeKey}"] [data-word-idx="${activeWordIndex}"]`)) ||
-      ayah;
+    const word =
+      activeWordIndex >= 0
+        ? el.querySelector<HTMLElement>(`[data-key="${activeKey}"] [data-word-idx="${activeWordIndex}"]`)
+        : null;
+    const target = word || ayah;
     if (!target) return;
-    const box = el.getBoundingClientRect();
-    const at = (target.getBoundingClientRect().top - box.top) / box.height;
-    // Inside the band: leave it (no scrolling on every word).
-    if (at >= 0.12 && at <= 0.62) return;
-    // A hidden tab doesn't animate smooth scrolls: jump there instead.
-    el.scrollBy({
-      top: target.getBoundingClientRect().top - box.top - box.height * 0.3,
-      behavior: document.hidden ? "auto" : "smooth",
+    const para = word?.closest("p");
+    const along = word && para ? alongLine(word, para.querySelectorAll<HTMLElement>("[data-word-idx]")) : 0;
+    followScroll(el, () => {
+      const box = el.getBoundingClientRect();
+      return el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.3;
     });
   }, [activeKey, activeWordIndex, pages]);
 
@@ -322,8 +330,9 @@ export function ReadingView({
       ?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [scrollToPage?.n, pages]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // A page switching between text and glyphs changes height; keep the page at
-  // the top of the view where it was so the reading doesn't jump.
+  // A page switching between text and glyphs (or a new text size) changes
+  // height; keep the page at the top of the view where it was so the reading
+  // doesn't jump.
   const anchorRef = useRef<{ page: number; top: number } | null>(null);
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -334,7 +343,7 @@ export function ReadingView({
     const delta = node.getBoundingClientRect().top - a.top;
     if (Math.abs(delta) > 1) el.scrollTop += delta;
     anchorRef.current = { page: a.page, top: node.getBoundingClientRect().top };
-  }, [loadedPages]);
+  }, [loadedPages, textScale]);
 
   // Page shown in the player strip = the page still visible at the top of the
   // view (reading along in one's own voice, not the audio).
@@ -503,7 +512,7 @@ export function ReadingView({
           key={`t${out.length}`}
           lang="ar"
           dir="rtl"
-          className="font-arabic text-center text-[1.6rem] sm:text-4xl leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow"
+          className="font-arabic text-center text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow"
         >
           {parts.map((p, i) => renderPart(p, `${p.ref.surah}:${p.ref.ayah}:${p.from}:${i}`))}
         </p>
@@ -532,6 +541,7 @@ export function ReadingView({
       {/* Scrolls between the header and the compact player; edges fade out */}
       <div
         ref={scrollRef}
+        style={{ "--reader-scale": textScale } as React.CSSProperties}
         className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain select-text [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 py-8 min-h-full flex flex-col justify-center">

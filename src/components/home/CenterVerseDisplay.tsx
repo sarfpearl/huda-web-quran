@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
@@ -365,6 +366,7 @@ export function CenterVerseDisplay({
       }
       // Soft top/bottom fade only on a pane that still needs scrolling.
       for (const pn of panes()) {
+        stopFollow(pn);
         pn.scrollTop = 0;
         const mask =
           overflows(pn)
@@ -392,19 +394,21 @@ export function CenterVerseDisplay({
     // greeting is still up, so the stage mounts later with the same fitKey.
   }, [fitKey, showTranslation, language, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
 
-  // Auto-scroll: the Arabic pane keeps the active word in view; the meaning
-  // pane tracks recitation progress through the ayah.
+  // Auto-scroll, teleprompter-style (followScroll): the Arabic pane drifts
+  // with the recitation — the active word's line plus how far along it the
+  // word is — so lines flow on instead of stepping; the meaning pane tracks
+  // recitation progress through the ayah the same way.
   useEffect(() => {
     if (typeof propWordIndex !== "number" || propWordIndex < 0) return;
     const ar = arabicPaneRef.current;
     if (ar && overflows(ar)) {
       const el = ar.querySelector<HTMLElement>(`[data-word-idx="${propWordIndex}"]`);
       if (el) {
-        const s = ar.getBoundingClientRect();
-        const r = el.getBoundingClientRect();
-        if (r.top < s.top + s.height * 0.15 || r.bottom > s.bottom - s.height * 0.25) {
-          ar.scrollTo({ top: ar.scrollTop + (r.top - s.top) - s.height * 0.3, behavior: "smooth" });
-        }
+        const along = alongLine(el, ar.querySelectorAll<HTMLElement>("[data-word-idx]"));
+        followScroll(ar, () => {
+          const s = ar.getBoundingClientRect();
+          return ar.scrollTop + el.getBoundingClientRect().top - s.top + along - s.height * 0.3;
+        });
       }
     }
     const mn = meaningPaneRef.current;
@@ -414,8 +418,7 @@ export function CenterVerseDisplay({
       // Hold the meaning at its start for the first 20% of the recitation and
       // reach its end by 90%, so both the opening and closing lines get read.
       const progress = Math.min(1, Math.max(0, (p - 0.2) / 0.7));
-      const top = progress * (mn.scrollHeight - mn.clientHeight);
-      if (Math.abs(top - mn.scrollTop) > 8) mn.scrollTo({ top, behavior: "smooth" });
+      followScroll(mn, () => progress * (mn.scrollHeight - mn.clientHeight));
     }
   }, [propWordIndex, fitKey]);
 
