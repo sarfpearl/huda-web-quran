@@ -259,6 +259,13 @@ export function ImmersiveHomeClient({
     player.playBayan(bayan, allBayan);
   };
 
+  const handleStepSurah = (dir: 1 | -1) => {
+    if (!activeSurah) return;
+    const num = ((activeSurah.number - 1 + dir + 114) % 114) + 1;
+    const track = surahTracksForCurrentReciter[num - 1];
+    if (track) player.playBayan(track, surahTracksForCurrentReciter);
+  };
+
   const handleShuffle = () => {
     if (categories.length === 0) return;
     const randomIndex = Math.floor(Math.random() * categories.length);
@@ -1276,8 +1283,22 @@ export function ImmersiveHomeClient({
                 trackKind={isJuz ? "Juz" : activeSurah ? "Surah" : null}
                 juzTiming={isJuz ? juzTiming : null}
                 // Juz: |< / >| move between Juz (1 ↔ 30 wraps), not between ayahs.
-                onPrevTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id <= 1 ? 30 : activeJuz.id - 1) : undefined}
-                onNextTrack={isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1) : undefined}
+                // Surah: the player's own next/previous need a loaded track, so
+                // before the first play step from the landing Surah (114 ↔ 1 wraps).
+                onPrevTrack={
+                  isJuz && activeJuz
+                    ? () => handleSelectJuz(activeJuz.id <= 1 ? 30 : activeJuz.id - 1)
+                    : !player.current && activeSurah
+                      ? () => handleStepSurah(-1)
+                      : undefined
+                }
+                onNextTrack={
+                  isJuz && activeJuz
+                    ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1)
+                    : !player.current && activeSurah
+                      ? () => handleStepSurah(1)
+                      : undefined
+                }
                 onSeekToVerse={jumpToVerse}
                 viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
                 footerSlot={playerFooter}
