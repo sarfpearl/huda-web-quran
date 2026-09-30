@@ -2,7 +2,7 @@
 // target on a soft spring instead of stepping or snapping, and a new target
 // mid-way just bends the motion. Used by the reader and the verse view.
 
-type Follow = { target: () => number; pos: number; set: number; v: number; last: number; raf: number };
+type Follow = { target: () => number; pos: number; set: number; v: number; last: number; raf: number; glide: boolean };
 const follows = new WeakMap<HTMLElement, Follow>();
 
 /** Stops any follow running on `el` (e.g. the viewer scrolled by hand). */
@@ -14,22 +14,25 @@ export function stopFollow(el: HTMLElement) {
 
 /**
  * Glides `el` towards the scrollTop that `target` returns. `target` is called
- * every frame, so it can re-measure a word as the layout shifts.
+ * every frame, so it can re-measure a word as the layout shifts. `glide`: a
+ * way back from however far (the reader scrolled off and left it) — never
+ * jumps, and takes about two seconds whatever the distance.
  */
-export function followScroll(el: HTMLElement, target: () => number) {
+export function followScroll(el: HTMLElement, target: () => number, glide = false) {
   const running = follows.get(el);
   if (running) {
     running.target = target;
+    running.glide ||= glide;
     return;
   }
   const max = () => el.scrollHeight - el.clientHeight;
   const clamp = (y: number) => Math.max(0, Math.min(max(), y));
   // A hidden tab runs no frames; far off (a seek, a new Surah): jump there.
-  if (document.hidden || Math.abs(clamp(target()) - el.scrollTop) > el.clientHeight) {
+  if (document.hidden || (!glide && Math.abs(clamp(target()) - el.scrollTop) > el.clientHeight)) {
     el.scrollTop = clamp(target());
     if (document.hidden) return;
   }
-  const f: Follow = { target, pos: el.scrollTop, set: el.scrollTop, v: 0, last: performance.now(), raf: 0 };
+  const f: Follow = { target, pos: el.scrollTop, set: el.scrollTop, v: 0, last: performance.now(), raf: 0, glide };
   const step = (now: number) => {
     if (follows.get(el) !== f) return;
     const dt = Math.min(0.05, (now - f.last) / 1000);
@@ -39,12 +42,14 @@ export function followScroll(el: HTMLElement, target: () => number) {
     const d = clamp(f.target()) - f.pos;
     // Critically damped spring: keeps ~0.2s behind the target, settles in
     // ~0.8s and never overshoots — the next line rises with the highlight.
-    const w = 5.5;
+    // A glide back is softer (w 3: ~2 s, the same whatever the distance).
+    const w = f.glide ? 3 : 5.5;
     f.v += (w * w * d - 2 * w * f.v) * dt;
-    // A longer glide (back to the recitation) keeps a reading pace — about a
-    // screen a second — instead of rushing past the text.
-    const vMax = Math.max(400, el.clientHeight);
-    f.v = Math.max(-vMax, Math.min(vMax, f.v));
+    // Following along keeps a reading pace — about a screen a second.
+    if (!f.glide) {
+      const vMax = Math.max(400, el.clientHeight);
+      f.v = Math.max(-vMax, Math.min(vMax, f.v));
+    }
     f.pos = clamp(f.pos + f.v * dt);
     // The fractional position is kept here: Safari rounds scrollTop, and a
     // slow drift built from rounded steps would stall.

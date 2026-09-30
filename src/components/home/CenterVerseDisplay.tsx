@@ -2,7 +2,8 @@
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
-import { isSajdahWord } from "@/lib/data/sajdah";
+import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
+import { PrayerRugIcon } from "@/components/ui/Icon";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
@@ -681,6 +682,10 @@ export function CenterVerseDisplay({
                     return (
                       <span key={`${idx}-${w.word}-end`} className="inline-flex items-center whitespace-nowrap">
                         {wordEl}
+                        {/* Ayah of prostration: the Sajdah icon, in place of the font's ۩. */}
+                        {!isPrelude && isSajdah(surahNum, ayahNum) && (
+                          <PrayerRugIcon role="img" aria-label="Sajdah" className="ml-2 text-[0.6em] text-amber-300 select-none" />
+                        )}
                         {glyphs?.e ? (
                           <span
                             aria-label={`Ayah ${ayahNum}`}

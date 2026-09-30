@@ -23,8 +23,8 @@ import {
 } from "@/lib/data/quranGlyphs";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import SurahBanner from "./SurahBanner";
-import { BookmarkIcon, CloseIcon } from "@/components/ui/Icon";
-import { isSajdahWord } from "@/lib/data/sajdah";
+import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
+import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 
@@ -326,10 +326,11 @@ export function ReadingView({
   // (drag / wheel, not a tap) pauses following for a few seconds.
   const activeKey = active ? `${active.surah}:${active.ayah}` : null;
   const userScrollAtRef = useRef(0);
-  // Scrolled away by hand: following waits until the recited word is back on
-  // screen (or the reader seeks) — it used to jump back from wherever the
-  // reader had got to after 4 s.
+  // Scrolled away by hand: after 7 s left alone, the view glides back to the
+  // recited word (it used to jump there after 4 s); seeking returns at once.
   const awayRef = useRef(false);
+  const IDLE_MS = 7000;
+  const [idleTick, setIdleTick] = useState(0);
   // Teleprompter-style follow (followScroll): the aim point is the recited
   // word's line plus how far along that line the word sits, so the view
   // drifts on with the recitation and the next line is already arriving as
@@ -337,10 +338,14 @@ export function ReadingView({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    let idle: ReturnType<typeof setTimeout> | undefined;
     const mark = () => {
       userScrollAtRef.current = Date.now();
       awayRef.current = true;
       stopFollow(el);
+      // Left alone: go back even if no new word starts right then.
+      clearTimeout(idle);
+      idle = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS + 50);
     };
     const onKey = (e: KeyboardEvent) => {
       if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) mark();
@@ -361,6 +366,7 @@ export function ReadingView({
       el.removeEventListener("touchstart", hold);
       el.removeEventListener("click", seek);
       window.removeEventListener("keydown", onKey);
+      clearTimeout(idle);
       stopFollow(el);
     };
   }, []);
@@ -379,7 +385,7 @@ export function ReadingView({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !activeKey || !pages) return;
-    if (Date.now() - userScrollAtRef.current < 4000) return;
+    if (Date.now() - userScrollAtRef.current < IDLE_MS) return;
     const ayah = el.querySelector<HTMLElement>(`[data-key="${activeKey}"]`);
     // Before its first word (or without word timing) aim at the ayah's first
     // word, not the ayah box: an ayah starting mid-line otherwise pulled the
@@ -389,13 +395,10 @@ export function ReadingView({
     );
     const target = word || ayah;
     if (!target) return;
-    const box = el.getBoundingClientRect();
-    if (awayRef.current) {
-      // Resume only once the recited word is on screen again.
-      const t = target.getBoundingClientRect();
-      if (t.bottom < box.top || t.top > box.bottom) return;
-      awayRef.current = false;
-    }
+    // Only while reciting: stopped, the reader stays wherever they went.
+    const glide = awayRef.current;
+    if (glide && !playing) return;
+    awayRef.current = false;
     const para = word?.closest("p");
     const along = word && para ? alongLine(word, para.querySelectorAll<HTMLElement>("[data-word-idx]")) : 0;
     // A third of the way down: clear of the faded top edge, with the lines
@@ -403,8 +406,8 @@ export function ReadingView({
     followScroll(el, () => {
       const box = el.getBoundingClientRect();
       return el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
-    });
-  }, [activeKey, activeWordIndex, pages]);
+    }, glide);
+  }, [activeKey, activeWordIndex, pages, idleTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Last read: where reading stopped before this view opened (a snapshot, so
   // it doesn't chase the reader); the position saved for next time is the
@@ -596,7 +599,7 @@ export function ReadingView({
           const [s, a] = (node.dataset.key ?? "").split(":").map(Number);
           if (!s || !a) break;
           ayahCbRef.current?.({ surah: s, ayah: a });
-          if (Date.now() - userScrollAtRef.current < 4000) saveLastRead(s, a);
+          if (Date.now() - userScrollAtRef.current < IDLE_MS) saveLastRead(s, a);
           break;
         }
       }, 80);
@@ -705,19 +708,39 @@ export function ReadingView({
             </span>
           )}
           {words}
-          {p.end &&
-            (g?.e && loadedPages.has(g.e[1]) && pageFontReady(g.e[1]) ? (
-              <span aria-label={`Ayah ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
-                {g.e[0]}
-              </span>
-            ) : (
+          {/* Icon, ayah number and « Sajdah » keep to one line. */}
+          <span className="whitespace-nowrap">
+            {/* Ayah of prostration: the Sajdah icon, in place of the font's ۩. */}
+            {p.end && isSajdah(ref.surah, ref.ayah) && (
+              <PrayerRugIcon
+                role="img"
+                aria-label="Sajdah"
+                className="ml-2 mr-4 inline-block align-[-0.12em] text-[0.95em] text-amber-300 select-none"
+              />
+            )}
+            {p.end &&
+              (g?.e && loadedPages.has(g.e[1]) && pageFontReady(g.e[1]) ? (
+                <span aria-label={`Ayah ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
+                  {g.e[0]}
+                </span>
+              ) : (
+                <span
+                  aria-label={`Ayah ${ref.ayah}`}
+                  className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+                >
+                  {toArabicNumerals(ref.ayah)}
+                </span>
+              ))}
+            {p.end && isSajdah(ref.surah, ref.ayah) && (
               <span
-                aria-label={`Ayah ${ref.ayah}`}
-                className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+                dir="ltr"
+                aria-hidden="true"
+                className="ml-2 mr-0.5 inline-block rounded-full bg-amber-300/25 px-3 py-1.5 align-middle [font-family:var(--font-poppins),Poppins,system-ui,sans-serif] text-[11px] sm:text-xs font-semibold leading-none text-amber-300 select-none [letter-spacing:0]"
               >
-                {toArabicNumerals(ref.ayah)}
+                Sajdah
               </span>
-            ))}
+            )}
+          </span>
         </span>{" "}
       </Fragment>
     );
