@@ -326,6 +326,10 @@ export function ReadingView({
   // (drag / wheel, not a tap) pauses following for a few seconds.
   const activeKey = active ? `${active.surah}:${active.ayah}` : null;
   const userScrollAtRef = useRef(0);
+  // Scrolled away by hand: following waits until the recited word is back on
+  // screen (or the reader seeks) — it used to jump back from wherever the
+  // reader had got to after 4 s.
+  const awayRef = useRef(false);
   // Teleprompter-style follow (followScroll): the aim point is the recited
   // word's line plus how far along that line the word sits, so the view
   // drifts on with the recitation and the next line is already arriving as
@@ -335,16 +339,43 @@ export function ReadingView({
     if (!el) return;
     const mark = () => {
       userScrollAtRef.current = Date.now();
+      awayRef.current = true;
       stopFollow(el);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) mark();
+    };
+    // A finger down stops a glide under it; only a drag counts as scrolling
+    // (a tap is a seek).
+    const hold = () => stopFollow(el);
+    // Tapping a word / ayah seeks: follow from there.
+    const seek = () => (awayRef.current = false);
     el.addEventListener("touchmove", mark, { passive: true });
     el.addEventListener("wheel", mark, { passive: true });
+    el.addEventListener("touchstart", hold, { passive: true });
+    el.addEventListener("click", seek);
+    window.addEventListener("keydown", onKey);
     return () => {
       el.removeEventListener("touchmove", mark);
       el.removeEventListener("wheel", mark);
+      el.removeEventListener("touchstart", hold);
+      el.removeEventListener("click", seek);
+      window.removeEventListener("keydown", onKey);
       stopFollow(el);
     };
   }, []);
+  const prevActiveRef = useRef<AyahRef | null>(null);
+  useEffect(() => {
+    // The recitation moved other than on to the next ayah (a seek, Prev /
+    // Next): follow it wherever it is.
+    const prev = prevActiveRef.current;
+    prevActiveRef.current = active;
+    if (active && prev) {
+      const n = nextRef(prev);
+      const same = prev.surah === active.surah && prev.ayah === active.ayah;
+      if (!same && !(n && n.surah === active.surah && n.ayah === active.ayah)) awayRef.current = false;
+    }
+  }, [activeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !activeKey || !pages) return;
@@ -358,11 +389,20 @@ export function ReadingView({
     );
     const target = word || ayah;
     if (!target) return;
+    const box = el.getBoundingClientRect();
+    if (awayRef.current) {
+      // Resume only once the recited word is on screen again.
+      const t = target.getBoundingClientRect();
+      if (t.bottom < box.top || t.top > box.bottom) return;
+      awayRef.current = false;
+    }
     const para = word?.closest("p");
     const along = word && para ? alongLine(word, para.querySelectorAll<HTMLElement>("[data-word-idx]")) : 0;
+    // A third of the way down: clear of the faded top edge, with the lines
+    // still to come in view below.
     followScroll(el, () => {
       const box = el.getBoundingClientRect();
-      return el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.3;
+      return el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
     });
   }, [activeKey, activeWordIndex, pages]);
 
@@ -413,6 +453,22 @@ export function ReadingView({
   // bookmark itself is on screen.
   const [continueHidden, setContinueHidden] = useState(false);
   const [targetInView, setTargetInView] = useState(true);
+  const continueUp = Boolean(target) && !isMark && !continueHidden && Boolean(pages);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !continueUp) return;
+    const timer = setTimeout(() => setContinueHidden(true), 12000);
+    const from = el.scrollTop;
+    const onScroll = () => {
+      if (Date.now() - userScrollAtRef.current < 1000 && Math.abs(el.scrollTop - from) > el.clientHeight / 4)
+        setContinueHidden(true);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [continueUp]);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !pages) return;
@@ -425,15 +481,19 @@ export function ReadingView({
     io.observe(ayah);
     return () => io.disconnect();
   }, [pages, targetKey]);
+  // Kept mounted once dismissed so it fades out instead of vanishing.
+  const continueFaded = !isMark && continueHidden;
   const showContinue =
     Boolean(target) &&
-    (isMark || !continueHidden) &&
     (targetHere ? Boolean(pages) && !targetInView : Boolean(isMark ? onOpenMark : onOpenAyah)) &&
     targetKey !== activeKey;
   const goToAyah = (r: AyahRef) => {
     const el = scrollRef.current;
     if (!el) return;
     stopFollow(el);
+    // Reading on from there: the recitation (if any) doesn't pull the view back.
+    userScrollAtRef.current = Date.now();
+    awayRef.current = true;
     el.querySelector<HTMLElement>(`[data-key="${r.surah}:${r.ayah}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
   const handleContinue = () => {
@@ -466,6 +526,31 @@ export function ReadingView({
     anchorRef.current = { page: a.page, top: node.getBoundingClientRect().top };
   }, [loadedPages, textScale]);
 
+  // The view ends just above the player's frame, measured: the fixed 9.5rem
+  // left the last lines under it (and it grows with the expanded player).
+  useEffect(() => {
+    const el = scrollRef.current;
+    const frame = document.querySelector<HTMLElement>("[data-player-frame]");
+    const host = el?.parentElement;
+    if (!el || !frame || !host) return;
+    const fit = () => {
+      const f = frame.getBoundingClientRect();
+      if (!f.height) return el.style.removeProperty("bottom");
+      el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(frame);
+    ro.observe(host);
+    frame.addEventListener("transitionend", fit);
+    window.addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      frame.removeEventListener("transitionend", fit);
+      window.removeEventListener("resize", fit);
+    };
+  }, []);
+
   // Page shown in the player strip = the page still visible at the top of the
   // view (reading along in one's own voice, not the audio).
   const pageCbRef = useRef(onVisiblePageChange);
@@ -482,17 +567,28 @@ export function ReadingView({
       clearTimeout(timer);
       timer = setTimeout(() => {
         // A line's worth below the faded top edge.
-        const top = el.getBoundingClientRect().top + 40;
+        const box = el.getBoundingClientRect();
+        const top = box.top + 40;
+        // Where the eye reads (the line recitation is kept on): the page shown
+        // in the player turns over as the next page's text reaches it, not
+        // only once the last one has left the top edge.
+        const line = box.top + box.height * 0.35;
         let page = pages[0].page;
+        let reading = page;
+        let found = false;
         for (const node of el.querySelectorAll<HTMLElement>("[data-page]")) {
           const b = node.getBoundingClientRect();
-          if (b.bottom > top) {
+          if (!found && b.bottom > top) {
             page = Number(node.dataset.page);
             anchorRef.current = { page, top: b.top };
+            found = true;
+          }
+          if (b.bottom > line) {
+            reading = Number(node.dataset.page);
             break;
           }
         }
-        pageCbRef.current?.(page);
+        pageCbRef.current?.(reading);
         setViewPage(page);
         // The first ayah still showing — where reading is, when scrolled by hand.
         for (const node of el.querySelectorAll<HTMLElement>("[data-key]")) {
@@ -505,12 +601,20 @@ export function ReadingView({
         }
       }, 80);
     };
+    // The anchor follows every scroll: one settled 80ms earlier was stale
+    // mid-scroll, and a page's glyphs loading then pulled the view back.
+    const track = () => {
+      const a = anchorRef.current;
+      const node = a && el.querySelector<HTMLElement>(`[data-page="${a.page}"]`);
+      if (a && node) a.top = node.getBoundingClientRect().top;
+      report();
+    };
     report();
-    el.addEventListener("scroll", report, { passive: true });
+    el.addEventListener("scroll", track, { passive: true });
     window.addEventListener("resize", report);
     return () => {
       clearTimeout(timer);
-      el.removeEventListener("scroll", report);
+      el.removeEventListener("scroll", track);
       window.removeEventListener("resize", report);
     };
   }, [pages]);
@@ -687,9 +791,9 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
+        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
       >
-        <div className="mx-auto max-w-4xl px-4 sm:px-8 py-8 min-h-full flex flex-col justify-center">
+        <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (
             <p className="py-16 text-center text-sm text-sand-200/70">This couldn&apos;t be loaded right now.</p>
           ) : !pages ? (
@@ -718,7 +822,10 @@ export function ReadingView({
 
       {/* « Continue reading » */}
       {showContinue && target && (
-        <div className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4">
+        <div
+          aria-hidden={continueFaded || undefined}
+          className={`pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4 transition-[opacity,visibility] duration-500 ${continueFaded ? "opacity-0 invisible" : ""}`}
+        >
           <div className="pointer-events-auto flex items-center rounded-full border border-amber-300/40 bg-black/45 backdrop-blur-md text-sand-50 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
             <button
               type="button"

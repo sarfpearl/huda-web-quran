@@ -41,6 +41,10 @@ export function followScroll(el: HTMLElement, target: () => number) {
     // ~0.8s and never overshoots — the next line rises with the highlight.
     const w = 5.5;
     f.v += (w * w * d - 2 * w * f.v) * dt;
+    // A longer glide (back to the recitation) keeps a reading pace — about a
+    // screen a second — instead of rushing past the text.
+    const vMax = Math.max(400, el.clientHeight);
+    f.v = Math.max(-vMax, Math.min(vMax, f.v));
     f.pos = clamp(f.pos + f.v * dt);
     // The fractional position is kept here: Safari rounds scrollTop, and a
     // slow drift built from rounded steps would stall.
