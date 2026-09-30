@@ -590,6 +590,15 @@ const PRE_SEEDED_SURAHS: Record<number, AyahVerse[]> = {
 
 /** In-memory cache for dynamic API results, keyed by `surah::reciterId`. */
 const memoryCache = new Map<string, AyahVerse[]>();
+/**
+ * Stand-in verse lists (a lone Bismillah) returned when every source failed.
+ * Never cached: a failed fetch (many at once while scrolling fast) otherwise
+ * stuck the Surah as "Bismillah, then blank ayahs" until a reload.
+ */
+const fallbackLists = new WeakSet<AyahVerse[]>();
+export function isFallbackVerses(verses: AyahVerse[] | null | undefined): boolean {
+  return Boolean(verses && fallbackLists.has(verses));
+}
 
 const cacheKey = (surahNumber: number, reciterId: string) => `${surahNumber}::${reciterId}`;
 
@@ -842,6 +851,7 @@ export async function fetchSurahVerses(
 
   // 2. Load reciter-independent base text verses (own cache).
   const baseVerses = await loadBaseVerses(surahNumber);
+  if (fallbackLists.has(baseVerses)) return baseVerses;
 
   // 3. Overlay the reciter's Quran.com word-segment timings when available so
   //    highlighting tracks that reciter's exact pace.
@@ -893,9 +903,12 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
   }
 
   if (typeof window !== "undefined" && typeof fetch !== "undefined") {
-    try {
-      const localRes = await fetch(`/data/quran-verses/${surahNumber}.json`);
-      if (localRes.ok) {
+    // One retry: a burst of requests (fast scrolling) can drop one. A missing
+    // file (most Surahs) goes straight to the API.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const localRes = await fetch(`/data/quran-verses/${surahNumber}.json`);
+        if (!localRes.ok) break;
         const localVerses = (await localRes.json()) as AyahVerse[];
         if (Array.isArray(localVerses) && localVerses.length > 0) {
           memoryCache.set(baseKey, localVerses);
@@ -906,9 +919,10 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
           }
           return localVerses;
         }
+        break;
+      } catch {
+        /* retry, then the remote API */
       }
-    } catch {
-      /* proceed to remote API if local fetch fails */
     }
   }
 
@@ -985,8 +999,8 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
     }
   }
 
-  const fallback = getFallbackVerses(surahNumber);
-  memoryCache.set(baseKey, fallback);
+  const fallback = [...getFallbackVerses(surahNumber)];
+  fallbackLists.add(fallback);
   return fallback;
 }
 

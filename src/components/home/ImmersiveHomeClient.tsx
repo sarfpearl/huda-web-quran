@@ -15,9 +15,9 @@ import { MushafPagePicker } from "./MushafPagePicker";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon } from "@/components/ui/Icon";
+import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon } from "@/components/ui/Icon";
+import { haptic } from "@/lib/haptics";
 import { bookmarkId, loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/lastRead";
-import { BookmarksPanel } from "./BookmarksPanel";
 import {
   isQuranTrack,
   isQuranTrackId,
@@ -842,13 +842,14 @@ export function ImmersiveHomeClient({
         : readingRanges[0]
         ? mushafPageOf(readingRanges[0].surah, readingRanges[0].from)
         : 1);
-  // Bookmarks: ayahs marked by hand (the player's 🔖+), as Surah or Juz
-  // bookmarks by what's playing; listed in the player's Bookmarks panel.
+  // Bookmark: ONE ayah marked by hand (the player's 🔖+), as a Mushaf's
+  // ribbon — a new one replaces it. Surah or Juz by what's playing; reading
+  // mode's « Bookmark » pill goes back to it.
   // Reading mode: tapping places one at the recited ayah while playing, else
   // at the first ayah on screen; with bookmarks on screen, tapping takes them
   // out. Otherwise it marks / unmarks the ayah being recited.
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  useEffect(() => setBookmarks(loadBookmarks()), []);
+  useEffect(() => setBookmarks(loadBookmarks().slice(0, 1)), []);
   const updateBookmarks = (next: Bookmark[]) => {
     setBookmarks(next);
     saveBookmarks(next);
@@ -883,7 +884,7 @@ export function ImmersiveHomeClient({
       if (!onAirAyah) return;
       const id = bookmarkId(bookmarkFor(onAirAyah));
       updateBookmarks(
-        onAirBookmarked ? bookmarks.filter((b) => bookmarkId(b) !== id) : [bookmarkFor(onAirAyah), ...bookmarks]
+        onAirBookmarked ? bookmarks.filter((b) => bookmarkId(b) !== id) : [bookmarkFor(onAirAyah)]
       );
       return;
     }
@@ -897,8 +898,10 @@ export function ImmersiveHomeClient({
     const b: Bookmark = readingJuz
       ? { kind: "juz", juz: readingJuz.id, ...at, at: Date.now() }
       : { kind: "surah", ...at, at: Date.now() };
-    updateBookmarks([b, ...bookmarks.filter((x) => bookmarkId(x) !== bookmarkId(b))]);
+    updateBookmarks([b]);
   };
+  const bookmarkOn = readingActive ? pageBookmarks.length > 0 : onAirBookmarked;
+  const mainBookmark = bookmarks[0] ?? null;
   // Open a bookmark: reading mode, reciting from its ayah.
   const handleOpenBookmark = (b: Bookmark) => {
     setReadingMode(true);
@@ -1120,10 +1123,44 @@ export function ImmersiveHomeClient({
             textScale={readerScale}
             playing={player.isPlaying}
             onOpenAyah={openSurahAt}
+            mark={bookmarks[0] ?? null}
+            onOpenMark={() => bookmarks[0] && handleOpenBookmark(bookmarks[0])}
             bookmarks={readingBookmarks}
             onVisibleAyahChange={setVisibleAyah}
             onBookmarksInViewChange={setBookmarksInView}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Main view: « Bookmark » back to the bookmarked ayah, in reading mode —
+          only while the recitation is stopped (a clean scene while it plays
+          or buffers to play)
+          and when the ayah on air isn't the bookmark itself. */}
+      <AnimatePresence>
+        {!readingActive && mainBookmark && !player.isPlaying && !player.isLoading && !onAirBookmarked && !engagement.composerOpen && (
+          <motion.div
+            key="main-bookmark"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+            className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30 flex justify-center px-4"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                handleOpenBookmark(mainBookmark);
+              }}
+              className="pointer-events-auto flex items-center gap-2 rounded-full border border-amber-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
+            >
+              <BookmarkIcon filled className="text-amber-300" />
+              <span>
+                Bookmark · {QURAN_SURAHS.find((x) => x.number === mainBookmark.surah)?.name ?? `Surah ${mainBookmark.surah}`}{" "}
+                {mainBookmark.surah}:{mainBookmark.ayah}
+              </span>
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1185,14 +1222,22 @@ export function ImmersiveHomeClient({
               onSelectCategory={handleSelectCategory}
               onSelectJuz={handleSelectJuz}
             />
-            {/* Bookmarks (🔖) — the ayahs bookmarked in reading mode */}
-            <BookmarksPanel
-              bookmarks={bookmarks}
-              defaultKind={isJuz ? "juz" : "surah"}
-              onOpenBookmark={handleOpenBookmark}
-              onRemoveBookmark={(b) => updateBookmarks(bookmarks.filter((x) => bookmarkId(x) !== bookmarkId(b)))}
-              triggerClassName="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
-            />
+            {/* 🔖 add (bookmark +) / remove (filled) the ayah being read */}
+            {onAirAyah && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  handleToggleBookmark();
+                }}
+                aria-pressed={bookmarkOn}
+                aria-label={bookmarkOn ? "Remove bookmark" : "Add bookmark"}
+                data-tooltip={bookmarkOn ? "Remove bookmark" : "Add bookmark"}
+                className={`pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer ${bookmarkOn ? "text-amber-300" : "text-sand-200"}`}
+              >
+                {bookmarkOn ? <BookmarkIcon filled className="text-base sm:text-lg" /> : <BookmarkAddIcon className="text-base sm:text-lg" />}
+              </button>
+            )}
             </div>
           }
         >
@@ -1237,11 +1282,6 @@ export function ImmersiveHomeClient({
                 viewSlot={<PlayerLikeButton e={engagement} lang={language} />}
                 footerSlot={playerFooter}
                 footerLeading={installGuideButton}
-                bookmark={
-                  onAirAyah
-                    ? { on: readingActive ? pageBookmarks.length > 0 : onAirBookmarked, onToggle: handleToggleBookmark }
-                    : null
-                }
                 onCollapsedChange={setPlayerCollapsed}
                 forceCompact={readingActive}
                 onTitleClick={() => setBrowserOpenRequest((n) => n + 1)}

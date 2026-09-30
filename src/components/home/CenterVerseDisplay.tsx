@@ -17,6 +17,7 @@ import {
   glyphInkPadding,
   glyphStyle,
   loadPageFont,
+  pageFontReady,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
 
@@ -443,6 +444,22 @@ export function CenterVerseDisplay({
   })();
   const tjKey = tjRef ? `${tjRef.surah}:${tjRef.ayah}` : "";
   const [glyphVerse, setGlyphVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
+  // The same words' KFGQPC-encoded text (text_qpc_hafs), drawn in the Hafs font
+  // whenever the glyphs aren't (WebKit with Tajweed off, fonts still loading):
+  // the Tanzil-style text drew U+06DF / U+06ED as dotted-circle placeholders.
+  const [qpcVerse, setQpcVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
+  useEffect(() => {
+    if (!tjRef) return;
+    let cancelled = false;
+    const { surah, ayah } = tjRef;
+    fetchSurahGlyphs(surah).then((verses) => {
+      const verse = verses?.find((v) => v.a === ayah);
+      if (verse && !cancelled) setQpcVerse({ key: tjKey, verse });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tjKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // WebKit: page fonts only while Tajweed is on (see isWebKit).
     if (!tjRef || !glyphFontsFor(tajweed)) return;
@@ -452,7 +469,7 @@ export function CenterVerseDisplay({
       const verse = verses?.find((v) => v.a === ayah);
       if (!verse || cancelled) return;
       const pages = [...new Set([...verse.w.map((w) => w[1]), ...(verse.e ? [verse.e[1]] : [])])];
-      const ok = await Promise.all(pages.map(loadPageFont));
+      const ok = await Promise.all(pages.map((p) => loadPageFont(p)));
       if (!cancelled && ok.every(Boolean)) setGlyphVerse({ key: tjKey, verse });
       // Warm the next page's font: recitation runs forward.
       loadPageFont(Math.min(604, Math.max(...pages) + 1));
@@ -461,7 +478,14 @@ export function CenterVerseDisplay({
       cancelled = true;
     };
   }, [tjKey, tajweed]); // eslint-disable-line react-hooks/exhaustive-deps
-  const glyphs = tjRef && glyphVerse?.key === tjKey && glyphFontsFor(tajweed) ? glyphVerse.verse : null;
+  const glyphs =
+    tjRef &&
+    glyphVerse?.key === tjKey &&
+    glyphFontsFor(tajweed) &&
+    glyphVerse.verse.w.every((w) => pageFontReady(w[1])) &&
+    (!glyphVerse.verse.e || pageFontReady(glyphVerse.verse.e[1]))
+      ? glyphVerse.verse
+      : null;
 
   // A tapped word shows as current straight away (before the seek lands, or on
   // its own when it can't seek); the audio-driven word takes over once it moves.
@@ -552,6 +576,8 @@ export function CenterVerseDisplay({
   // timed words at the same position.
   const displayWords: { word: string; endTime?: number; glyph?: [string, number] }[] = glyphs
     ? glyphs.w.map(([code, page, text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime, glyph: [code, page] }))
+    : tjRef && qpcVerse?.key === tjKey && qpcVerse.verse.w.length
+    ? qpcVerse.verse.w.map(([, , text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime }))
     : wordsToRender;
   wordsRef.current = wordsToRender;
   audioIdxRef.current = activeWordIndex;

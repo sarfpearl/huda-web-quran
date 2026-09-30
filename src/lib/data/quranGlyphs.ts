@@ -117,11 +117,23 @@ export function fetchSurahGlyphs(surahNumber: number): Promise<GlyphVerse[] | nu
 
 const fontCache = new Map<number, Promise<boolean>>();
 const fontFaces = new Map<number, FontFace>();
+/**
+ * Pages loaded for keeps (the main verse view): unloadPageFont leaves them. The
+ * fonts are shared, so reading mode unloading a page the main view was still
+ * drawing turned its glyph codes into plain Arabic ligatures (U+FC41… are
+ * real presentation forms) after switching between the two.
+ */
+const keptPages = new Set<number>();
 const palettesRegistered = new Set<number>();
 let paletteSheet: HTMLStyleElement | null = null;
 
-/** Load one page font (once) and register its dark palette. Resolves false on failure. */
-export function loadPageFont(page: number): Promise<boolean> {
+/**
+ * Load one page font (once) and register its dark palette. Resolves false on
+ * failure. `temporary` (WebKit reading mode): the caller may unloadPageFont it
+ * again; otherwise the page is kept.
+ */
+export function loadPageFont(page: number, temporary = false): Promise<boolean> {
+  if (!temporary) keptPages.add(page);
   let p = fontCache.get(page);
   if (!p) {
     p = (async () => {
@@ -175,11 +187,22 @@ export function loadPageFont(page: number): Promise<boolean> {
 }
 
 /**
+ * Whether a page font is in the document right now. Checked when drawing: a
+ * glyph code without its font shows as the wrong Arabic letters, so the
+ * Uthmani text is drawn instead.
+ */
+export function pageFontReady(page: number): boolean {
+  const face = fontFaces.get(page);
+  return Boolean(face && face.status === "loaded" && document.fonts.has(face));
+}
+
+/**
  * Drop a page font again (WebKit reading mode keeps only the pages on screen:
  * a whole Surah of page fonts crashed iPhone Safari). A later loadPageFont
- * brings it back.
+ * brings it back. Kept pages (loaded without `temporary`) stay.
  */
 export function unloadPageFont(page: number): void {
+  if (keptPages.has(page)) return;
   const face = fontFaces.get(page);
   if (face) {
     document.fonts.delete(face);

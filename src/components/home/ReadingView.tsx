@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import {
   fetchSurahVerses,
+  isFallbackVerses,
   toArabicNumerals,
   CANONICAL_BISMILLAH,
   type AyahVerse,
@@ -16,6 +17,7 @@ import {
   glyphStyle,
   isWebKit,
   loadPageFont,
+  pageFontReady,
   unloadPageFont,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
@@ -61,6 +63,10 @@ interface ReadingViewProps {
   playing?: boolean;
   /** « Continue reading » at a last read ayah outside what's shown. */
   onOpenAyah?: (surah: number, ayah: number) => void;
+  /** The bookmark: « Bookmark » pill goes back to it (over the last read). */
+  mark?: AyahRef | null;
+  /** Open the bookmark when it's outside what's shown. */
+  onOpenMark?: () => void;
   /** Bookmarked ayahs (marked in the text). */
   bookmarks?: AyahRef[];
   /** First ayah still showing at the top of the view, as the reader scrolls. */
@@ -115,6 +121,8 @@ export function ReadingView({
   textScale = 1,
   playing = false,
   onOpenAyah,
+  mark = null,
+  onOpenMark,
   bookmarks = [],
   onVisibleAyahChange,
   onBookmarksInViewChange,
@@ -147,28 +155,43 @@ export function ReadingView({
 
   const [verses, setVerses] = useState<Map<number, AyahVerse[]> | null>(null);
   const [failed, setFailed] = useState(false);
+  // A Surah whose text couldn't be fetched comes back as a lone Bismillah
+  // (isFallbackVerses): shown blank past ayah 1, so fetch it again shortly.
+  const [retry, setRetry] = useState(0);
+  useEffect(() => setRetry(0), [surahsKey, reciterId]);
   useEffect(() => {
     let cancelled = false;
-    setVerses(null);
-    setFailed(false);
-    scrollRef.current?.scrollTo({ top: 0 });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (retry === 0) {
+      setVerses(null);
+      setFailed(false);
+      scrollRef.current?.scrollTo({ top: 0 });
+    }
     Promise.all(plan.surahs.map((s) => fetchSurahVerses(s, reciterId).then((v) => [s, v] as const))).then(
-      (entries) => !cancelled && setVerses(new Map(entries)),
+      (entries) => {
+        if (cancelled) return;
+        setVerses(new Map(entries));
+        if (retry < 5 && entries.some(([, v]) => isFallbackVerses(v))) {
+          timer = setTimeout(() => setRetry((n) => n + 1), 1500 * (retry + 1));
+        }
+      },
       () => !cancelled && setFailed(true)
     );
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [surahsKey, reciterId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [surahsKey, reciterId, retry]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Madinah-Mushaf glyph words, like the main verse view: Tajweed palette when
   // on, plain white when off (WebKit: page fonts only while Tajweed is on, see
-  // isWebKit). A word shows as Uthmani text until its page font is in.
+  // isWebKit). The glyph data always loads: its words' KFGQPC text is what's
+  // drawn (Hafs font) wherever a page font isn't — the Tanzil-style text drew
+  // U+06DF / U+06ED as dotted circles — and its pages lay out the Mushaf pages.
   const useGlyphs = glyphFontsFor(tajweed);
   const [glyphs, setGlyphs] = useState<Map<number, GlyphVerse[]> | null>(null);
   useEffect(() => {
     setGlyphs(null);
-    if (!useGlyphs) return;
     let cancelled = false;
     // Surah headers' Bismillah is 1:1's glyphs (Mushaf page 1).
     const need = [...new Set([1, ...plan.surahs])];
@@ -181,7 +204,7 @@ export function ReadingView({
     return () => {
       cancelled = true;
     };
-  }, [surahsKey, useGlyphs]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [surahsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Page fonts. Chromium / Firefox: every page, one by one in reading order.
   // WebKit: a whole Surah of COLR page fonts (Al-Baqarah: 49) crashed iPhone
@@ -207,16 +230,16 @@ export function ReadingView({
     return [...pages].sort((a, b) => a - b).join(",");
   }, [glyphs, plan]);
   const wantedKey = useMemo(() => {
-    if (!allPagesKey) return "";
+    if (!allPagesKey || !useGlyphs) return "";
     const all = allPagesKey.split(",").map(Number);
     if (!windowed) return ["1", ...all].join(",");
     const at = viewPage ?? all[0];
     return [1, ...all.filter((p) => p === at || p === at + 1)].join(",");
-  }, [allPagesKey, windowed, viewPage]);
+  }, [allPagesKey, windowed, viewPage, useGlyphs]);
   const ownedRef = useRef<Set<number>>(new Set()); // fonts this view loaded (WebKit unloads them)
   useEffect(() => {
-    if (!wantedKey) return;
-    const wanted = new Set(wantedKey.split(",").map(Number));
+    // No page fonts wanted (WebKit, Tajweed off): drop the ones loaded here.
+    const wanted = new Set(wantedKey ? wantedKey.split(",").map(Number) : []);
     let cancelled = false;
     if (windowed) {
       for (const page of [...ownedRef.current]) {
@@ -232,7 +255,7 @@ export function ReadingView({
     (async () => {
       for (const page of wanted) {
         if (cancelled) return;
-        if (await loadPageFont(page)) {
+        if (await loadPageFont(page, windowed && page !== 1)) {
           if (cancelled) return;
           if (windowed && page !== 1) ownedRef.current.add(page);
           setLoadedPages((prev) => (prev.has(page) ? prev : new Set(prev).add(page)));
@@ -253,10 +276,10 @@ export function ReadingView({
   );
 
   const verseOf = (r: AyahRef) => verses?.get(r.surah)?.find((v) => v.ayahNumber === r.ayah) ?? null;
-  const glyphOf = (r: AyahRef) => (useGlyphs ? glyphs?.get(r.surah)?.find((v) => v.a === r.ayah) ?? null : null);
+  const glyphOf = (r: AyahRef) => glyphs?.get(r.surah)?.find((v) => v.a === r.ayah) ?? null;
   // Waiting on the glyph data (not the fonts) keeps the page layout from
   // jumping once it arrives; without glyphs, pages are per ayah.
-  const glyphsPending = useGlyphs && glyphs === null;
+  const glyphsPending = glyphs === null;
 
   // Pages: split every ayah by its words' pages, then keep only the parts of
   // the neighbouring ayahs that sit on the first / last page.
@@ -380,11 +403,14 @@ export function ReadingView({
   const inView = (r: AyahRef | null) =>
     Boolean(r && plan.all.some(({ ref, ctx }) => ctx === "cur" && ref.surah === r.surah && ref.ayah === r.ayah));
 
-  // « Continue reading »: back to the last read ayah, when it is off screen
-  // (or in another Surah).
-  const target = lastRead;
+  // « Bookmark » / « Continue reading »: back to the bookmark, else the last
+  // read ayah, when it is off screen (or in another Surah / Juz).
+  const isMark = Boolean(mark);
+  const target = mark ?? lastRead;
   const targetKey = target ? `${target.surah}:${target.ayah}` : null;
   const targetHere = inView(target);
+  // Only « Continue reading » can be dismissed; « Bookmark » stays until the
+  // bookmark itself is on screen.
   const [continueHidden, setContinueHidden] = useState(false);
   const [targetInView, setTargetInView] = useState(true);
   useEffect(() => {
@@ -401,8 +427,8 @@ export function ReadingView({
   }, [pages, targetKey]);
   const showContinue =
     Boolean(target) &&
-    !continueHidden &&
-    (targetHere ? Boolean(pages) && !targetInView : Boolean(onOpenAyah)) &&
+    (isMark || !continueHidden) &&
+    (targetHere ? Boolean(pages) && !targetInView : Boolean(isMark ? onOpenMark : onOpenAyah)) &&
     targetKey !== activeKey;
   const goToAyah = (r: AyahRef) => {
     const el = scrollRef.current;
@@ -412,8 +438,9 @@ export function ReadingView({
   };
   const handleContinue = () => {
     if (!target) return;
-    setContinueHidden(true);
+    if (!isMark) setContinueHidden(true);
     if (targetHere) goToAyah(target);
+    else if (isMark) onOpenMark?.();
     else onOpenAyah?.(target.surah, target.ayah);
   };
   // Page steps that can't move the audio scroll the page into view instead.
@@ -510,7 +537,7 @@ export function ReadingView({
     };
   };
   const glyphWord = (code: string, page: number, text: string, isActive = false) =>
-    loadedPages.has(page) ? (
+    loadedPages.has(page) && pageFontReady(page) ? (
       <>
         <span aria-hidden="true" style={{ ...glyphStyle(page, tajweed, isActive), ...glyphInkPadding(code, page) }}>
           {code}
@@ -538,7 +565,7 @@ export function ReadingView({
         return (
           <Fragment key={i}>
             {j > 0 && " "}
-            <span {...wordProps(ref, v, i, i === activeIdx, live, loadedPages.has(page))}>
+            <span {...wordProps(ref, v, i, i === activeIdx, live, loadedPages.has(page) && pageFontReady(page))}>
               {glyphWord(code, page, text, i === activeIdx)}
             </span>
           </Fragment>
@@ -575,7 +602,7 @@ export function ReadingView({
           )}
           {words}
           {p.end &&
-            (g?.e && loadedPages.has(g.e[1]) ? (
+            (g?.e && loadedPages.has(g.e[1]) && pageFontReady(g.e[1]) ? (
               <span aria-label={`Ayah ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
                 {g.e[0]}
               </span>
@@ -660,7 +687,7 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain select-text [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
+        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 py-8 min-h-full flex flex-col justify-center">
           {failed ? (
@@ -696,24 +723,26 @@ export function ReadingView({
             <button
               type="button"
               onClick={handleContinue}
-              className="flex items-center gap-2 py-1.5 pl-3.5 pr-2 text-xs sm:text-sm font-medium cursor-pointer hover:text-white"
+              className={`flex items-center gap-2 py-1.5 pl-3.5 ${isMark ? "pr-3.5" : "pr-2"} text-xs sm:text-sm font-medium cursor-pointer hover:text-white`}
             >
               <BookmarkIcon filled className="text-amber-300" />
               <span>
-                Continue reading ·{" "}
+                {isMark ? "Bookmark" : "Continue reading"} ·{" "}
                 {targetHere
                   ? `Ayah ${target.ayah}`
                   : `${QURAN_SURAHS.find((x) => x.number === target.surah)?.name ?? `Surah ${target.surah}`} ${target.surah}:${target.ayah}`}
               </span>
             </button>
-            <button
-              type="button"
-              onClick={() => setContinueHidden(true)}
-              aria-label="Dismiss"
-              className="grid h-7 w-7 mr-1 place-items-center rounded-full text-sand-200 hover:text-white cursor-pointer"
-            >
-              <CloseIcon className="text-sm" />
-            </button>
+            {!isMark && (
+              <button
+                type="button"
+                onClick={() => setContinueHidden(true)}
+                aria-label="Dismiss"
+                className="grid h-7 w-7 mr-1 place-items-center rounded-full text-sand-200 hover:text-white cursor-pointer"
+              >
+                <CloseIcon className="text-sm" />
+              </button>
+            )}
           </div>
         </div>
       )}

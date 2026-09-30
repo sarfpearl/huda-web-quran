@@ -12,8 +12,10 @@
  *
  * Output:
  *   public/data/quran-glyphs/<surah>.json
- *     [ { a: ayah, w: [ [code, page, textUthmani], ... ], e: [code, page] } ]
- *     (w = spoken words in order; e = the end-of-ayah ornament glyph)
+ *     [ { a: ayah, w: [ [code, page, text], ... ], e: [code, page] } ]
+ *     (w = spoken words in order; e = the end-of-ayah ornament glyph;
+ *     text = KFGQPC-encoded text_qpc_hafs, which the Uthmanic Hafs font draws
+ *     without dotted-circle placeholders — Tanzil-style text_uthmani doesn't)
  *   public/fonts/qpc-v4/p<page>.woff2   (skipped when already present)
  *
  * Usage:
@@ -45,14 +47,14 @@ if (mode === "all" || mode === "words") {
   await mkdir(WORDS_OUT, { recursive: true });
   for (let n = 1; n <= 114; n++) {
     const json = await get(
-      `https://api.quran.com/api/v4/verses/by_chapter/${n}?words=true&per_page=300&word_fields=code_v2,v2_page,text_uthmani`
+      `https://api.quran.com/api/v4/verses/by_chapter/${n}?words=true&per_page=300&word_fields=code_v2,v2_page,text_qpc_hafs`
     );
     const verses = json.verses.map((v) => {
       const spoken = v.words.filter((w) => w.char_type_name === "word");
       const end = v.words.find((w) => w.char_type_name === "end");
       return {
         a: v.verse_number,
-        w: spoken.map((w) => [w.code_v2, w.v2_page, w.text_uthmani]),
+        w: spoken.map((w) => [w.code_v2, w.v2_page, w.text_qpc_hafs]),
         ...(end ? { e: [end.code_v2, end.v2_page] } : {}),
       };
     });
