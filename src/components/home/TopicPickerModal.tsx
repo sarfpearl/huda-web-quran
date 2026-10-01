@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -64,7 +64,7 @@ const JUZ_PAGES = Array.from({ length: 30 }, (_, i) => {
   return [mushafPageOf(s0, a0), mushafPageOf(s1, a1)] as const;
 });
 
-// The content browser's morph out of its round button (see setPanelOrigin):
+// The content browser's morph out of its round button (see setPanelRef):
 // the shape at --reveal, and a ring tracing its edge that fades out at the end.
 const morphInset = (v: string) => `calc(var(${v}, 0px) * (1 - var(--reveal, 1)))`;
 const morphRadius = "calc(var(--r0, 24px) + (var(--r1, 28px) - var(--r0, 24px)) * var(--reveal, 1))";
@@ -133,7 +133,10 @@ export function TopicPickerModal({
   // shows; the clip comes off once open so the panel's shadow isn't cut.
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const setPanelOrigin = (el: HTMLDivElement | null) => {
+  // Stable, so it runs when the panel mounts — not on every re-render (the
+  // player's clock re-renders this), which would put the clip back once open.
+  const setPanelRef = useCallback((el: HTMLDivElement | null) => {
+    panelRef.current = el;
     const btn = triggerRef.current;
     if (!el || !btn) return;
     el.style.clipPath = MORPH_CLIP;
@@ -145,7 +148,7 @@ export function TopicPickerModal({
     el.style.setProperty("--il", inset(r.left - el.offsetLeft));
     el.style.setProperty("--r0", `${r.width / 2}px`);
     el.style.setProperty("--r1", getComputedStyle(el).borderTopLeftRadius);
-  };
+  }, []);
 
   // Opened from the player's name: show the tab of what's playing.
   useEffect(() => {
@@ -365,10 +368,7 @@ export function TopicPickerModal({
 
             {/* Right Slide-Over Panel */}
             <motion.div
-              ref={(el) => {
-                panelRef.current = el;
-                setPanelOrigin(el);
-              }}
+              ref={setPanelRef}
               initial={{ "--reveal": 0 } as never}
               animate={{ "--reveal": 1 } as never}
               exit={{ "--reveal": 0, transition: { duration: 0.5, ease: [0.4, 0, 1, 1] } } as never}
