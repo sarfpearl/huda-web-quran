@@ -196,7 +196,9 @@ export function CompactBayanPlayer({
     const src = next ? fullCoverRef.current : compactCoverRef.current;
     const dst = next ? compactCoverRef.current : fullCoverRef.current;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (src && dst && !reduceMotion) {
+    // A hidden end (no cover on very narrow screens) has nothing to fly to.
+    const shown = (el: Element | null): el is Element => Boolean(el && el.getBoundingClientRect().width > 0);
+    if (shown(src) && shown(dst) && !reduceMotion) {
       // Both views stay mounted (untransformed), but the frame around the card
       // still moves (its bottom strip opens / folds), so the flight follows the
       // destination's live position rather than this starting rect.
@@ -601,7 +603,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className={compactBtn}
+          className={`${compactBtn} ${NARROW_HIDE}`}
           aria-label={prevTrackLabel}
           title={prevTrackLabel}
         >
@@ -705,7 +707,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className={compactBtn}
+          className={`${compactBtn} ${NARROW_HIDE}`}
           aria-label={nextTrackLabel}
           title={nextTrackLabel}
         >
@@ -737,10 +739,11 @@ export function CompactBayanPlayer({
           so NOW PLAYING lines up with the cover's top and the Ayat pill with
           its bottom. */}
       <div className="relative flex items-stretch justify-between gap-3 sm:gap-5">
-        {/* Cover Artwork */}
+        {/* Cover Artwork — left out on very narrow screens, where it would
+            squeeze the title and the Ayat pill */}
         <div
           ref={fullCoverRef}
-          className={`${flight ? "invisible" : ""} relative h-[7.75rem] aspect-[3/4] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
+          className={`${flight ? "invisible" : ""} max-[379px]:hidden relative h-[7.75rem] aspect-[3/4] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
         >
           {coverSrc ? (
             <Image
@@ -935,7 +938,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_HIDE}`}
           aria-label={prevTrackLabel}
           title={prevTrackLabel}
         >
@@ -961,7 +964,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_HIDE}`}
           aria-label={nextTrackLabel}
           title={nextTrackLabel}
         >
@@ -1313,6 +1316,10 @@ const viewBase =
   "absolute bottom-0 left-1/2 -translate-x-1/2 transition-[opacity,transform,filter] motion-reduce:transition-none";
 const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
 const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
+
+/** Very narrow screens: Prev / Next Surah are left out so the player's
+ *  transport row (play, volume, minimize / expand) fits without clipping. */
+const NARROW_HIDE = "max-[369px]:hidden";
 
 const compactBtn =
   "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";

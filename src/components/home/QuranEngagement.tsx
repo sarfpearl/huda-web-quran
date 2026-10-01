@@ -436,6 +436,44 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
   return geo;
 }
 
+/**
+ * How compact a strip must be to fit its width: 0 = full; each level up drops
+ * something (the caller decides what). Steps up while the content overflows,
+ * and back down once the strip is as wide as the level below needed — the
+ * width it overflowed at — so it never flickers between two levels.
+ */
+function useFitLevel(ref: RefObject<HTMLElement>, max: number) {
+  const [level, setLevel] = useState(0);
+  const levelRef = useRef(0);
+  const needs = useRef<number[]>([]);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const l = levelRef.current;
+      if (el.clientWidth <= 0) return;
+      let next = l;
+      if (el.scrollWidth > el.clientWidth + 1 && l < max) {
+        needs.current[l] = el.scrollWidth;
+        next = l + 1;
+      } else if (l > 0 && el.clientWidth >= (needs.current[l - 1] ?? Infinity)) {
+        next = l - 1;
+      }
+      if (next !== l) {
+        levelRef.current = next;
+        setLevel(next);
+      }
+    };
+    // The strip's own width, and its groups' (a button coming or going).
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    for (const c of el.children) ro.observe(c);
+    measure();
+    return () => ro.disconnect();
+  }, [ref, max, level]);
+  return level;
+}
+
 function Metric({ label, value, live }: { label: string; value: string; live?: boolean }) {
   return (
     <div className="rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2.5">
@@ -903,6 +941,12 @@ export function PlayerStatsFrame({
     paddingLeft: Math.max(geo?.left ?? 16, 8) + inset,
     paddingRight: Math.max(geo?.right ?? 16, 8) + inset,
   };
+  // Narrow frame (compact player on a small screen): the top strip sheds, in
+  // turn, the "Live" word and wide gaps, then the Live button (its count is in
+  // the views details too), then the extra edge room — never overflows.
+  const topStripRef = useRef<HTMLDivElement>(null);
+  const fit = useFitLevel(topStripRef, 3);
+  const topInsets = fit >= 3 ? { paddingLeft: 8 + inset, paddingRight: 8 + inset } : stripInsets;
 
   const toggleViews = () => {
     setViewsOpen((v) => !v);
@@ -998,11 +1042,13 @@ export function PlayerStatsFrame({
       style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative w-0 min-w-full items-center justify-between transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
-        style={stripInsets}
+        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
+        style={topInsets}
+        ref={topStripRef}
       >
         {leading ?? <span />}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5" : "gap-3 sm:gap-4")}>
+          {fit < 2 && (
           <button
             type="button"
             data-engagement-keep
@@ -1011,9 +1057,10 @@ export function PlayerStatsFrame({
             className={stat}
           >
             <LiveDot on={Boolean(stats && stats.content.live > 0)} />
-            <span>{T.live[lang]}</span>
+            {fit < 1 && <span>{T.live[lang]}</span>}
             <span>{stats ? compactCount(stats.content.live) : "–"}</span>
           </button>
+          )}
           <button
             type="button"
             data-engagement-keep
