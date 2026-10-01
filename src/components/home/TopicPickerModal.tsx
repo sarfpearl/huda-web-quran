@@ -631,8 +631,9 @@ function AboutView() {
       ta.style.cssText = "position:fixed;opacity:0";
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+      const ok = document.execCommand("copy");
       ta.remove();
+      if (!ok) return; // nothing copied: no ✓
     }
     setCopied(true);
   };
@@ -679,7 +680,6 @@ function AboutView() {
           </div>
         ))}
       </div>
-
 
       {ABOUT.maker && (
         // Maker card: thin gold edge, a warm halo behind the logo, and a shine
