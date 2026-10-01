@@ -53,8 +53,8 @@ interface ReadingViewProps {
   activeWordIndex?: number;
   /** Tap a word → recite from its start. */
   onSeekWord?: (surah: number, ayah: number, startTime: number) => void;
-  /** Mushaf page at the top of the view, as the reader scrolls. */
-  onVisiblePageChange?: (page: number) => void;
+  /** Mushaf page at the top of the view, as the reader scrolls (`byHand`: since the last page step). */
+  onVisiblePageChange?: (page: number, byHand: boolean) => void;
   /** Bump `n` to open `page` at the top of the view (a page step). */
   scrollToPage?: { page: number; n: number; at: number } | null;
   /** Ayah text size, × the default (the reader's text-size setting). */
@@ -332,9 +332,16 @@ export function ReadingView({
   // recited word (it used to jump there after 4 s); seeking returns at once.
   const awayRef = useRef(false);
   const IDLE_MS = 7000;
-  // The page a page step opened, held at the top while its first lines are recited.
+  // The page a page step opened, held at the top while its first lines are
+  // recited. `reached`: the recitation has come to it (the step's seek lands
+  // a moment after the step — until then the recited ayah is the old one).
   const pinnedPageRef = useRef<number | null>(null);
+  const pinReachedRef = useRef(false);
   const doneStepRef = useRef<number | null>(null);
+  // The page a step is scrolling to: reported as the page while the view
+  // travels there (the pages passed on the way are not), until it has
+  // arrived and the view moves on, or the reader scrolls by hand.
+  const stepRef = useRef<{ page: number; at: number; arrived: boolean } | null>(null);
   const [idleTick, setIdleTick] = useState(0);
   // Teleprompter-style follow (followScroll): the aim point is the recited
   // word's line plus how far along that line the word sits, so the view
@@ -347,6 +354,7 @@ export function ReadingView({
     const mark = () => {
       userScrollAtRef.current = Date.now();
       awayRef.current = true;
+      pinnedPageRef.current = null;
       stopFollow(el);
       // Left alone: go back even if no new word starts right then.
       clearTimeout(idle);
@@ -400,6 +408,9 @@ export function ReadingView({
     );
     const target = word || ayah;
     if (!target) return;
+    // A page step about to be made (its pages just arrived): it opens the
+    // view; following the old recited ayah first pulled it back.
+    if (scrollToPage && doneStepRef.current !== scrollToPage.n && Date.now() - scrollToPage.at <= 8000) return;
     // Only while reciting: stopped, the reader stays wherever they went.
     const glide = awayRef.current;
     if (glide && !playing) return;
@@ -410,8 +421,14 @@ export function ReadingView({
     // with the previous page's foot above its first ayah — until the
     // recitation reaches the third-way line and following takes over.
     const section = target.closest<HTMLElement>("[data-page]");
-    if (pinnedPageRef.current !== null && Number(section?.dataset.page) !== pinnedPageRef.current)
-      pinnedPageRef.current = null;
+    if (pinnedPageRef.current !== null) {
+      const onPinned = Number(section?.dataset.page) === pinnedPageRef.current;
+      // Not reached yet: the recited ayah is still the one before the step —
+      // the stepped page stays put (Prev / Next while paused jumped back).
+      if (!pinReachedRef.current && !onPinned) return;
+      pinReachedRef.current = true;
+      if (!onPinned) pinnedPageRef.current = null;
+    }
     // A third of the way down: clear of the faded top edge, with the lines
     // still to come in view below.
     followScroll(el, () => {
@@ -531,6 +548,10 @@ export function ReadingView({
     if (!node) return;
     doneStepRef.current = scrollToPage.n;
     pinnedPageRef.current = scrollToPage.page;
+    pinReachedRef.current = false;
+    stopFollow(el);
+    stepRef.current = { page: scrollToPage.page, at: Date.now(), arrived: false };
+    pageCbRef.current?.(scrollToPage.page, false);
     awayRef.current = false;
     const top = el.scrollTop + node.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
     el.scrollTo({ top, behavior: "smooth" });
@@ -580,6 +601,8 @@ export function ReadingView({
   // view (reading along in one's own voice, not the audio).
   const pageCbRef = useRef(onVisiblePageChange);
   pageCbRef.current = onVisiblePageChange;
+  const scrollToPageAtRef = useRef(0);
+  scrollToPageAtRef.current = scrollToPage?.at ?? 0;
   const ayahCbRef = useRef(onVisibleAyahChange);
   ayahCbRef.current = onVisibleAyahChange;
   useEffect(() => {
@@ -613,7 +636,19 @@ export function ReadingView({
             break;
           }
         }
-        pageCbRef.current?.(reading);
+        const step = stepRef.current;
+        const byHand = userScrollAtRef.current > (step?.at ?? scrollToPageAtRef.current);
+        if (step && byHand) stepRef.current = null;
+        else if (step) {
+          const node = el.querySelector<HTMLElement>(`[data-page="${step.page}"]`);
+          // The last pages can't reach the top: the end of the view is arrival.
+          const atEnd = el.scrollTop >= el.scrollHeight - el.clientHeight - 2;
+          if (node && (node.getBoundingClientRect().top <= box.top + PAGE_TOP_PX + 4 || atEnd)) step.arrived = true;
+          // Arrived and the recitation carried the view on: back to reporting.
+          if (step.arrived && reading !== step.page && !atEnd) stepRef.current = null;
+          else reading = step.page;
+        }
+        pageCbRef.current?.(reading, byHand);
         setViewPage(page);
         // The first ayah still showing — where reading is, when scrolled by hand.
         for (const node of el.querySelectorAll<HTMLElement>("[data-key]")) {

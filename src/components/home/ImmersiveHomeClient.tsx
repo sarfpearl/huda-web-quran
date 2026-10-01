@@ -13,6 +13,7 @@ import { CenterVerseDisplay } from "./CenterVerseDisplay";
 import { ReadingView, type ReadingRange } from "./ReadingView";
 import { MushafPagePicker } from "./MushafPagePicker";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
+import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon } from "@/components/ui/Icon";
@@ -837,11 +838,34 @@ export function ImmersiveHomeClient({
   const [visiblePage, setVisiblePage] = useState<number | null>(null);
   useEffect(() => setVisiblePage(null), [readingKey]);
   const [scrollToPage, setScrollToPage] = useState<{ page: number; n: number; at: number } | null>(null);
+  // A page asked for (« » / the picker) is the page at once — not once the
+  // view has scrolled there and reported it — and holds over scroll reports
+  // until the view reports that page, or the reader scrolls by hand. Valid in
+  // the Surah / Juz it was asked from and the one it opens — and, for quick
+  // steps over a Surah's edge, those the steps before it passed through (the
+  // player catches up with them a moment later).
+  const [pageRequest, setPageRequest] = useState<{ page: number; keys: (string | null)[] } | null>(null);
+  const requestPage = (page: number, opens: string | null) =>
+    setPageRequest((r) => ({
+      page,
+      keys: [...new Set([...(r && r.keys.includes(readingKey) ? r.keys : []), readingKey, opens])],
+    }));
+  // A view fading out (AnimatePresence) still reports its own pages: only the
+  // current Surah / Juz's view counts.
+  const readingKeyRef = useRef(readingKey);
+  readingKeyRef.current = readingKey;
+  const handleVisiblePageChange = (viewKey: string | null, page: number, byHand: boolean) => {
+    if (viewKey !== readingKeyRef.current) return;
+    setVisiblePage(page);
+    setPageRequest((r) => (r && (byHand || r.page === page) ? null : r));
+  };
   const juzPageRange: [number, number] | null = juzPairs.length
     ? [mushafPageOf(juzPairs[0][0], juzPairs[0][1]), mushafPageOf(...juzPairs[juzPairs.length - 1])]
     : null;
   const readingPage = !readingActive
     ? 1
+    : pageRequest && pageRequest.keys.includes(readingKey)
+    ? pageRequest.page
     : visiblePage ??
       (readingAyah
         ? mushafPageOf(readingAyah.surah, readingAyah.ayah)
@@ -922,23 +946,47 @@ export function ImmersiveHomeClient({
 
   const readingFirstPage = juzPageRange?.[0] ?? 1;
   const readingLastPage = juzPageRange?.[1] ?? MUSHAF_PAGE_COUNT;
+  // The page the next « » steps from: set as a step is made, so taps
+  // quicker than a render (or the scroll report) don't step from a stale page.
+  const pageNowRef = useRef(readingPage);
+  pageNowRef.current = readingPage;
   const handleGoToPage = (page: number) => {
     const p = Math.min(readingLastPage, Math.max(readingFirstPage, page));
+    pageNowRef.current = p;
     if (readingJuz) {
       const [ps, pa] = MUSHAF_PAGE_STARTS[p - 1];
       // First Juz ayah on or after the page's start.
       const i = juzPairs.findIndex(([s, a]) => s > ps || (s === ps && a >= pa));
       if (player.ayahSequence && i >= 0) player.jumpToAyah(i);
+      requestPage(p, readingKey);
       setScrollToPage((prev) => ({ page: p, n: (prev?.n ?? 0) + 1, at: Date.now() }));
       return;
     }
     const [surahNum, ayah] = MUSHAF_PAGE_STARTS[p - 1];
+    // A Surah the reciter doesn't have isn't opened (the player says so): the
+    // page stays where it is.
+    if (surahNum !== activeSurah?.number && !reciterHasSurah(selectedReciter, surahNum)) {
+      pageNowRef.current = readingPage;
+      openSurahAt(surahNum, ayah);
+      return;
+    }
+    requestPage(p, `surah-${surahNum}`);
     openSurahAt(surahNum, ayah);
     setScrollToPage((prev) => ({ page: p, n: (prev?.n ?? 0) + 1, at: Date.now() }));
   };
+  // « »: one page on from the latest page; nothing past the first / last.
+  const handleStepPage = (d: -1 | 1) => {
+    const p = pageNowRef.current + d;
+    if (p < readingFirstPage || p > readingLastPage) return;
+    handleGoToPage(p);
+  };
+  // Only the latest call starts its Surah: a slower verse fetch of an earlier
+  // one (quick « » over a Surah's edge) must not start after it.
+  const openSurahSeqRef = useRef(0);
   // Recite a Surah from an ayah: a seek within the playing Surah, else that
   // Surah's track cued (or played, when playing) at the ayah.
   const openSurahAt = (surahNum: number, ayah: number) => {
+    const seq = ++openSurahSeqRef.current;
     if (surahNum === activeSurah?.number) {
       handleReadSeek(ayah);
       return;
@@ -947,6 +995,7 @@ export function ImmersiveHomeClient({
     if (!track) return;
     const wasPlaying = player.isPlaying;
     const start = (startAt?: (dur: number) => number) => {
+      if (seq !== openSurahSeqRef.current) return;
       const opts = startAt ? { startAt } : undefined;
       if (wasPlaying) player.playBayan(track, surahTracksForCurrentReciter, opts);
       else player.cueBayan(track, surahTracksForCurrentReciter, opts);
@@ -1127,7 +1176,7 @@ export function ImmersiveHomeClient({
             tajweed={showTajweed}
             activeWordIndex={readingWordIndex}
             onSeekWord={handleReaderSeekWord}
-            onVisiblePageChange={setVisiblePage}
+            onVisiblePageChange={(page, byHand) => handleVisiblePageChange(readingKey, page, byHand)}
             scrollToPage={scrollToPage}
             textScale={readerScale}
             playing={player.isPlaying}
@@ -1314,7 +1363,7 @@ export function ImmersiveHomeClient({
                         page: readingPage,
                         first: readingFirstPage,
                         last: readingLastPage,
-                        onStep: (d) => handleGoToPage(readingPage + d),
+                        onStep: handleStepPage,
                         onOpenPicker: () => setPagePickerOpen(true),
                       }
                     : null
