@@ -1025,7 +1025,8 @@ export function ImmersiveHomeClient({
   };
 
   const installGuideButton = (
-    <InstallGuideButton className="relative grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
+    // Very narrow screens: left out so the player's strips fit.
+    <InstallGuideButton className="max-[369px]:hidden relative grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
   );
 
   return (
