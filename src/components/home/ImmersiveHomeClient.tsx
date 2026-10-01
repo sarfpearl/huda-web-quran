@@ -860,6 +860,35 @@ export function ImmersiveHomeClient({
   const [pagePickerOpen, setPagePickerOpen] = useState(false);
   // Player's Surah / Juz name → open the content browser at it.
   const [browserOpenRequest, setBrowserOpenRequest] = useState(0);
+  // Every open of the app: splash → greeting → 2s later the content browser
+  // slides in, so a first-time visitor sees there's a Surah / Juz list. Waits
+  // for the splash to hide (the `huda-ready` class on <html>, SplashScreen);
+  // skipped if playback has already started by then.
+  const hasPlayedRef = useRef(hasPlayed);
+  hasPlayedRef.current = hasPlayed;
+  useEffect(() => {
+    const root = document.documentElement;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        if (!hasPlayedRef.current) setBrowserOpenRequest((n) => n + 1);
+      }, 2000);
+    };
+    if (root.classList.contains("huda-ready")) {
+      schedule();
+      return () => clearTimeout(timer);
+    }
+    const observer = new MutationObserver(() => {
+      if (!root.classList.contains("huda-ready")) return;
+      observer.disconnect();
+      schedule();
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
+  }, []);
   // The page on screen follows the reader's scrolling (ReadingView reports it);
   // before the first report, the recited ayah's page.
   const [visiblePage, setVisiblePage] = useState<number | null>(null);
