@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
-import { ChevronRightIcon, CloseIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
+import { CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -403,7 +403,7 @@ export function TopicPickerModal({
                       {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Listen & Read"}
                     </span>
                     <h3 className="text-xl font-black text-white tracking-tight">
-                      {isFavourites ? "Favourites" : showAbout ? "About HuDa" : "What would you like to recite?"}
+                      {isFavourites ? "Favourites" : showAbout ? "About HuDa" : "Choose a Surah or Juz"}
                     </h3>
                   </div>
                 </div>
@@ -615,6 +615,28 @@ export function TopicPickerModal({
 /** « About HuDa »: what it is, the app, the maker, credits, feedback. */
 function AboutView() {
   const contactHref = ABOUT.contact.includes("@") && !ABOUT.contact.startsWith("http") ? `mailto:${ABOUT.contact}` : ABOUT.contact;
+  // Copy the contact (✓ for a moment). Clipboard API, else a hidden textarea.
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1600);
+    return () => clearTimeout(t);
+  }, [copied]);
+  const copyContact = async () => {
+    try {
+      await navigator.clipboard.writeText(ABOUT.contact);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = ABOUT.contact;
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      if (!ok) return; // nothing copied: no ✓
+    }
+    setCopied(true);
+  };
   return (
     <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
       <div className="flex items-center gap-3">
@@ -649,6 +671,16 @@ function AboutView() {
         </a>
       )}
 
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-2.5">
+        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Sources &amp; credits</p>
+        {ABOUT.credits.map((c) => (
+          <div key={c.label}>
+            <p className="text-[11px] font-bold text-white">{c.label}</p>
+            <p className="text-[11px] text-sand-200/70">{c.value}</p>
+          </div>
+        ))}
+      </div>
+
       {ABOUT.maker && (
         // Maker card: thin gold edge, a warm halo behind the logo, and a shine
         // that sweeps across the gold lettering only (masked to the logo).
@@ -660,12 +692,14 @@ function AboutView() {
             />
             <p className="relative text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#E8C46E]/80">Crafted by</p>
             {ABOUT.makerLogo ? (
-              <div className="relative mx-auto mt-3 w-full max-w-[240px]">
+              // The SVG keeps the Figma frame's side margins (more room right of
+              // the lettering than left), so the light feather tail balances.
+              <div className="relative mx-auto mt-3 w-full max-w-[296px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={ABOUT.makerLogo}
                   alt={ABOUT.maker}
-                  width={780}
+                  width={964}
                   height={220}
                   className="h-auto w-full drop-shadow-[0_4px_18px_rgba(232,196,110,0.35)]"
                 />
@@ -679,35 +713,41 @@ function AboutView() {
               <p className="relative mt-2 text-lg font-bold text-white">{ABOUT.maker}</p>
             )}
             {ABOUT.makerNote && (
-              <p className="relative mx-auto mt-4 max-w-[30ch] text-xs leading-relaxed text-sand-100/75">{ABOUT.makerNote}</p>
+              <div className="relative mt-5 border-t border-white/10 pt-4 text-center">
+                <p className="text-[13px] leading-relaxed text-sand-100/85">{ABOUT.makerNote}</p>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-2.5">
-        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Sources &amp; credits</p>
-        {ABOUT.credits.map((c) => (
-          <div key={c.label}>
-            <p className="text-[11px] font-bold text-white">{c.label}</p>
-            <p className="text-[11px] text-sand-200/70">{c.value}</p>
-          </div>
-        ))}
-      </div>
-
       {ABOUT.contact && (
-        <a
-          href={contactHref}
-          target={contactHref.startsWith("http") ? "_blank" : undefined}
-          rel="noopener noreferrer"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors"
-        >
-          <span>
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-2">
+          <a
+            href={contactHref}
+            target={contactHref.startsWith("http") ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            className="min-w-0 flex-1 rounded-xl px-2.5 py-1.5 hover:bg-white/5 transition-colors"
+          >
             <span className="block text-xs font-bold text-white">Feedback</span>
-            <span className="block text-[11px] text-sand-200/70">{ABOUT.contact}</span>
-          </span>
-          <ChevronRightIcon className="h-4 w-4 text-sand-200/60" />
-        </a>
+            <span className="block truncate text-[11px] text-sand-200/70">{ABOUT.contact}</span>
+          </a>
+          <button
+            type="button"
+            onClick={copyContact}
+            aria-label={copied ? "Copied" : `Copy ${ABOUT.contact}`}
+            title={copied ? "Copied" : "Copy"}
+            className={cn(
+              "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-colors cursor-pointer active:scale-95",
+              copied
+                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
+                : "border-white/10 bg-white/10 text-sand-100 hover:bg-white/20 hover:text-white"
+            )}
+          >
+            {copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+            <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+          </button>
+        </div>
       )}
     </div>
   );
