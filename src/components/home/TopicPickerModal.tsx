@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
-import { CloseIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
+import { ChevronRightIcon, CloseIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -20,6 +20,9 @@ import {
   getSurahTracksForReciter,
   resolveActiveReciter,
 } from "@/lib/data/service";
+import { getJuzAyahPairs } from "@/lib/data/quran";
+import { MUSHAF_PAGE_COUNT, mushafPageOf } from "@/lib/data/mushafPages";
+import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
 import { compactCount } from "./QuranEngagement";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -53,6 +56,30 @@ interface TopicPickerModalProps {
   variant?: "browser" | "favourites";
 }
 
+// Mushaf pages each Juz spans, [first, last] — so the Juz search finds a page no.
+const JUZ_PAGES = Array.from({ length: 30 }, (_, i) => {
+  const pairs = getJuzAyahPairs(i + 1);
+  const [s0, a0] = pairs[0];
+  const [s1, a1] = pairs[pairs.length - 1];
+  return [mushafPageOf(s0, a0), mushafPageOf(s1, a1)] as const;
+});
+
+// The content browser's morph out of its round button (see setPanelOrigin):
+// the shape at --reveal, and a ring tracing its edge that fades out at the end.
+const morphInset = (v: string) => `calc(var(${v}, 0px) * (1 - var(--reveal, 1)))`;
+const morphRadius = "calc(var(--r0, 24px) + (var(--r1, 28px) - var(--r0, 24px)) * var(--reveal, 1))";
+const MORPH_CLIP = `inset(${morphInset("--it")} ${morphInset("--ir")} ${morphInset("--ib")} ${morphInset("--il")} round ${morphRadius})`;
+const MORPH_RING: React.CSSProperties = {
+  top: morphInset("--it"),
+  right: morphInset("--ir"),
+  bottom: morphInset("--ib"),
+  left: morphInset("--il"),
+  borderRadius: morphRadius,
+  border: "1px solid rgba(255, 255, 255, 0.22)",
+  background: "rgba(0, 0, 0, 0.12)",
+  opacity: "calc((1 - var(--reveal, 1)) / 0.2)",
+};
+
 const SCENE_THUMBNAILS: Record<string, string> = {
   "iman-taqwa": "/assets/images/bayan/iman-taqwa.jpg",
   "quran": "/assets/images/bayan/quran.jpg",
@@ -85,12 +112,40 @@ export function TopicPickerModal({
   const isFavourites = variant === "favourites";
   const player = useAudioPlayer();
   const [isOpen, setIsOpen] = useState(false);
+  // The browser's list, or its « About HuDa » view (footer link); every open
+  // starts on the list.
+  const [view, setView] = useState<"list" | "about">("list");
+  useEffect(() => {
+    if (isOpen) setView("list");
+  }, [isOpen]);
+  const showAbout = !isFavourites && view === "about";
   const [activeTab, setActiveTab] = useState<ModalTab>("surah");
   const [searchQuery, setSearchQuery] = useState("");
   // The panel is portalled to <body>: the ♥ trigger sits inside the player's
   // blurred frame, which would otherwise trap the fixed panel inside it.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // The panel morphs out of this round button: its visible shape (a clip-path
+  // inset) starts as the button's circle and stretches into the full rounded
+  // panel, then the content fades in — reversed on close. --reveal (0 → 1)
+  // drives it; --it/--ir/--ib/--il are the button's insets within the panel.
+  // A ring (MORPH_RING) traces the shape's edge, as the glass alone barely
+  // shows; the clip comes off once open so the panel's shadow isn't cut.
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const setPanelOrigin = (el: HTMLDivElement | null) => {
+    const btn = triggerRef.current;
+    if (!el || !btn) return;
+    el.style.clipPath = MORPH_CLIP;
+    const r = btn.getBoundingClientRect();
+    const inset = (v: number) => `${Math.max(0, v)}px`;
+    el.style.setProperty("--it", inset(r.top - el.offsetTop));
+    el.style.setProperty("--ir", inset(el.offsetLeft + el.offsetWidth - r.right));
+    el.style.setProperty("--ib", inset(el.offsetTop + el.offsetHeight - r.bottom));
+    el.style.setProperty("--il", inset(r.left - el.offsetLeft));
+    el.style.setProperty("--r0", `${r.width / 2}px`);
+    el.style.setProperty("--r1", getComputedStyle(el).borderTopLeftRadius);
+  };
 
   // Opened from the player's name: show the tab of what's playing.
   useEffect(() => {
@@ -110,7 +165,7 @@ export function TopicPickerModal({
       listRef.current
         ?.querySelector<HTMLElement>('[aria-current="true"]')
         ?.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 250);
+    }, 750);
     return () => clearTimeout(t);
   }, [isOpen, activeTab]);
 
@@ -198,7 +253,9 @@ export function TopicPickerModal({
       j.title.toLowerCase().includes(q) ||
       String(j.id).includes(q) ||
       `juz ${j.id}`.includes(q) ||
-      `para ${j.id}`.includes(q)
+      `para ${j.id}`.includes(q) ||
+      // A page no. (1–604): the Juz that page is in.
+      (/^\d+$/.test(q) && +q >= 1 && +q <= MUSHAF_PAGE_COUNT && +q >= JUZ_PAGES[j.id - 1][0] && +q <= JUZ_PAGES[j.id - 1][1])
     );
   });
 
@@ -248,9 +305,9 @@ export function TopicPickerModal({
         number={j.id.toString().padStart(2, "0")}
         imageSrc={juzImg}
         title={j.title}
-        secondaryLabel={j.label}
+        secondaryLabel={`Juz ${j.id}`}
         isArabicLabel={false}
-        subtitle={j.subtitle}
+        subtitle={`Page ${JUZ_PAGES[j.id - 1][0]} to ${JUZ_PAGES[j.id - 1][1]}`}
         iconName="quran"
         viewCount={countFor("juz", j.id)}
         viewCountText={compactCount(countFor("juz", j.id) ?? 0)}
@@ -272,6 +329,7 @@ export function TopicPickerModal({
     <>
       {/* Top Right Header Trigger Button (☰ content browser, or ♥ favourites) */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
         className={
@@ -289,7 +347,8 @@ export function TopicPickerModal({
         )}
       </button>
 
-      {/* Mac Control Center Style Right Slide-Over Panel */}
+      {/* Slide-over panel, every screen size: grows out of the ☰ button and
+          shrinks back into it, so the list is seen to live behind that icon. */}
       {mounted && createPortal(
       <AnimatePresence>
         {isOpen && (
@@ -299,28 +358,54 @@ export function TopicPickerModal({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               onClick={() => setIsOpen(false)}
               className="pointer-events-auto fixed inset-0 z-50 bg-black/40 cursor-pointer"
             />
 
             {/* Right Slide-Over Panel */}
             <motion.div
-              initial={{ x: "calc(100% + 1rem)" }}
-              animate={{ x: 0 }}
-              exit={{ x: "calc(100% + 1rem)" }}
-              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              ref={(el) => {
+                panelRef.current = el;
+                setPanelOrigin(el);
+              }}
+              initial={{ "--reveal": 0 } as never}
+              animate={{ "--reveal": 1 } as never}
+              exit={{ "--reveal": 0, transition: { duration: 0.5, ease: [0.4, 0, 1, 1] } } as never}
+              transition={{ duration: 0.75, ease: [0.32, 0.72, 0, 1] }}
+              onAnimationStart={() => {
+                const el = panelRef.current;
+                if (el) el.style.clipPath = MORPH_CLIP;
+              }}
+              onAnimationComplete={(def) => {
+                const el = panelRef.current;
+                if (el && (def as Record<string, unknown>)["--reveal"] === 1) el.style.clipPath = "none";
+              }}
               // Floating card in the player's glass, inset from the screen edges
-              className={`pointer-events-auto fixed top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-3 md:top-4 md:bottom-4 md:right-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6`}
+              className={`pointer-events-auto fixed top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-3 md:top-4 md:bottom-4 md:right-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6 [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
+              <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
-                    {isFavourites ? "Your Library" : "Islamic Atmospheres"}
-                  </span>
-                  <h3 className="text-xl font-black text-white tracking-tight">
-                    {isFavourites ? "Favourites" : "Pick your category"}
-                  </h3>
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+                <div className="flex min-w-0 items-center gap-2">
+                  {showAbout && (
+                    <button
+                      type="button"
+                      onClick={() => setView("list")}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
+                      aria-label="Back to the list"
+                    >
+                      <ChevronRightIcon className="h-4 w-4 rotate-180" />
+                    </button>
+                  )}
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
+                      {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Listen & Read"}
+                    </span>
+                    <h3 className="text-xl font-black text-white tracking-tight">
+                      {isFavourites ? "Favourites" : showAbout ? "About HuDa" : "What would you like to recite?"}
+                    </h3>
+                  </div>
                 </div>
 
                 <button
@@ -336,162 +421,187 @@ export function TopicPickerModal({
                 </button>
               </div>
 
-              {/* 2a. Favourites: Surah | Juz */}
-              {isFavourites && (
-                <div role="tablist" className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
-                  {(["surah", "juz"] as const).map((k) => (
+              {showAbout ? (
+                <AboutView />
+              ) : (
+                <>
+                  {/* 2a. Favourites: Surah | Juz */}
+                  {isFavourites && (
+                    <div role="tablist" className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
+                      {(["surah", "juz"] as const).map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          role="tab"
+                          aria-selected={favTab === k}
+                          onClick={() => setFavTab(k)}
+                          className={cn(
+                            "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all cursor-pointer",
+                            favTab === k ? "bg-emerald-600 text-white shadow-md" : "text-sand-200/60 hover:text-white"
+                          )}
+                        >
+                          {k === "surah" ? "Surah" : "Juz"}
+                          {favCounts[k] > 0 && <span className="ml-1.5 tabular-nums opacity-70">{favCounts[k]}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 2. Segmented Navigation Tabs (Surah | Juz | Bayan) */}
+                  {!isFavourites && (
+                  <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
                     <button
-                      key={k}
                       type="button"
-                      role="tab"
-                      aria-selected={favTab === k}
-                      onClick={() => setFavTab(k)}
+                      onClick={() => setActiveTab("surah")}
                       className={cn(
-                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all cursor-pointer",
-                        favTab === k ? "bg-emerald-600 text-white shadow-md" : "text-sand-200/60 hover:text-white"
+                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
+                        activeTab === "surah"
+                          ? "bg-emerald-600 text-white shadow-md"
+                          : "text-sand-200/60 hover:text-white"
                       )}
                     >
-                      {k === "surah" ? "Surah" : "Juz"}
-                      {favCounts[k] > 0 && <span className="ml-1.5 tabular-nums opacity-70">{favCounts[k]}</span>}
+                      Surah
                     </button>
-                  ))}
-                </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("quran")}
+                      className={cn(
+                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
+                        activeTab === "quran"
+                          ? "bg-emerald-600 text-white shadow-md"
+                          : "text-sand-200/60 hover:text-white"
+                      )}
+                    >
+                      Juz
+                    </button>
+
+
+                    {SHOW_BAYAN_TAB && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("bayan")}
+                      className={cn(
+                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
+                        activeTab === "bayan"
+                          ? "bg-emerald-600 text-white shadow-md"
+                          : "text-sand-200/60 hover:text-white"
+                      )}
+                    >
+                      Bayan
+                    </button>
+                    )}
+                  </div>
+                  )}
+
+                  {/* 3. Search Input Box */}
+                  <div className="relative mb-3">
+                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder={
+                        isFavourites
+                          ? "Search favourites..."
+                          : activeTab === "surah"
+                          ? "Search Surah..."
+                          : activeTab === "quran"
+                          ? "Search Juz or page no..."
+                          : "Search Bayan categories..."
+                      }
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-2xl bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
+                    />
+                  </div>
+
+                  {/* 4. Scrollable List Content using ContentListCard */}
+                  <div ref={listRef} className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
+                    {/* A. SURAH TAB (114 Surahs) */}
+                    {!isFavourites && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
+
+                    {/* B. QURAN TAB (30 Juz) */}
+                    {!isFavourites && activeTab === "quran" && filteredJuz.map(renderJuzCard)}
+
+
+                    {/* FAVOURITES PANEL (liked Surahs & Juz, newest first) */}
+                    {isFavourites &&
+                      (favouritesFailed ? (
+                        <p className="px-2 py-8 text-center text-xs text-sand-200/60">Favourites aren&apos;t available right now.</p>
+                      ) : favourites === null ? (
+                        <div className="h-16 animate-pulse rounded-2xl bg-white/5" aria-busy="true" />
+                      ) : (() => {
+                        const cards = favourites
+                          .filter((f) => f.kind === favTab)
+                          .map((f) => {
+                            if (f.kind === "surah") {
+                              const sura = filteredSurah.find((x) => x.number === f.id);
+                              return sura ? renderSurahCard(sura) : null;
+                            }
+                            const juz = filteredJuz.find((x) => x.id === f.id);
+                            return juz ? renderJuzCard(juz) : null;
+                          })
+                          .filter(Boolean);
+                        if (cards.length) return cards;
+                        const label = favTab === "surah" ? "Surah" : "Juz";
+                        return (
+                          <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                            <FavouriteIcon className="text-2xl text-emerald-400/70" />
+                            <p className="text-xs text-sand-200/70">
+                              {q && favCounts[favTab] ? "No matching favourites." : `No ${label} favourites yet.`}
+                            </p>
+                            {!(q && favCounts[favTab]) && (
+                              <p className="text-[11px] text-sand-200/50">Like the {label} you&apos;re listening to (♥ beside the cover) to keep it here.</p>
+                            )}
+                          </div>
+                        );
+                      })())}
+
+                    {/* D. BAYAN TAB (Categories) */}
+                    {!isFavourites && activeTab === "bayan" &&
+                      filteredCategories.map((c, index) => {
+                        const isCatActive = c.slug === activeCategorySlug;
+                        const thumb = SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg";
+                        return (
+                          <ContentListCard
+                            key={c.id}
+                            number={(index + 1).toString().padStart(2, "0")}
+                            imageSrc={thumb}
+                            title={c.name}
+                            secondaryLabel={c.nameTa}
+                            isArabicLabel={false}
+                            subtitle={c.description}
+                            iconName={c.icon}
+                            isActive={isCatActive}
+                            isPlaying={false}
+                            onClick={() => {
+                              onSelectCategory(c);
+                              setIsOpen(false);
+                            }}
+                          />
+                        );
+                      })}
+                  </div>
+                </>
               )}
 
-              {/* 2. Segmented Navigation Tabs (Surah | Juz | Bayan) */}
-              {!isFavourites && (
-              <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
+              {/* 5. Footer: « About HuDa » (the browser only) */}
+              {!isFavourites && !showAbout && (
                 <button
                   type="button"
-                  onClick={() => setActiveTab("surah")}
-                  className={cn(
-                    "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                    activeTab === "surah"
-                      ? "bg-emerald-600 text-white shadow-md"
-                      : "text-sand-200/60 hover:text-white"
-                  )}
+                  onClick={() => setView("about")}
+                  className="mt-3 flex w-full shrink-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-left hover:bg-white/10 transition-colors cursor-pointer"
                 >
-                  Surah
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/splash-logo.webp" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-bold text-white">About HuDa</span>
+                    <span className="block truncate text-[11px] text-sand-200/60">
+                      {ABOUT.appUrl || ABOUT.appNote ? "The app · credits · feedback" : "Credits · feedback"}
+                    </span>
+                  </span>
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/60" />
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("quran")}
-                  className={cn(
-                    "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                    activeTab === "quran"
-                      ? "bg-emerald-600 text-white shadow-md"
-                      : "text-sand-200/60 hover:text-white"
-                  )}
-                >
-                  Juz
-                </button>
-
-
-                {SHOW_BAYAN_TAB && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("bayan")}
-                  className={cn(
-                    "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                    activeTab === "bayan"
-                      ? "bg-emerald-600 text-white shadow-md"
-                      : "text-sand-200/60 hover:text-white"
-                  )}
-                >
-                  Bayan
-                </button>
-                )}
-              </div>
               )}
-
-              {/* 3. Search Input Box */}
-              <div className="relative mb-3">
-                <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder={
-                    isFavourites
-                      ? "Search favourites..."
-                      : activeTab === "surah"
-                      ? "Search Surah..."
-                      : activeTab === "quran"
-                      ? "Search Juz / Para..."
-                      : "Search Bayan categories..."
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-2xl bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
-                />
-              </div>
-
-              {/* 4. Scrollable List Content using ContentListCard */}
-              <div ref={listRef} className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
-                {/* A. SURAH TAB (114 Surahs) */}
-                {!isFavourites && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
-
-                {/* B. QURAN TAB (30 Juz) */}
-                {!isFavourites && activeTab === "quran" && filteredJuz.map(renderJuzCard)}
-
-
-                {/* FAVOURITES PANEL (liked Surahs & Juz, newest first) */}
-                {isFavourites &&
-                  (favouritesFailed ? (
-                    <p className="px-2 py-8 text-center text-xs text-sand-200/60">Favourites aren&apos;t available right now.</p>
-                  ) : favourites === null ? (
-                    <div className="h-16 animate-pulse rounded-2xl bg-white/5" aria-busy="true" />
-                  ) : (() => {
-                    const cards = favourites
-                      .filter((f) => f.kind === favTab)
-                      .map((f) => {
-                        if (f.kind === "surah") {
-                          const sura = filteredSurah.find((x) => x.number === f.id);
-                          return sura ? renderSurahCard(sura) : null;
-                        }
-                        const juz = filteredJuz.find((x) => x.id === f.id);
-                        return juz ? renderJuzCard(juz) : null;
-                      })
-                      .filter(Boolean);
-                    if (cards.length) return cards;
-                    const label = favTab === "surah" ? "Surah" : "Juz";
-                    return (
-                      <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                        <FavouriteIcon className="text-2xl text-emerald-400/70" />
-                        <p className="text-xs text-sand-200/70">
-                          {q && favCounts[favTab] ? "No matching favourites." : `No ${label} favourites yet.`}
-                        </p>
-                        {!(q && favCounts[favTab]) && (
-                          <p className="text-[11px] text-sand-200/50">Like the {label} you&apos;re listening to (♥ beside the cover) to keep it here.</p>
-                        )}
-                      </div>
-                    );
-                  })())}
-
-                {/* D. BAYAN TAB (Categories) */}
-                {!isFavourites && activeTab === "bayan" &&
-                  filteredCategories.map((c, index) => {
-                    const isCatActive = c.slug === activeCategorySlug;
-                    const thumb = SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg";
-                    return (
-                      <ContentListCard
-                        key={c.id}
-                        number={(index + 1).toString().padStart(2, "0")}
-                        imageSrc={thumb}
-                        title={c.name}
-                        secondaryLabel={c.nameTa}
-                        isArabicLabel={false}
-                        subtitle={c.description}
-                        iconName={c.icon}
-                        isActive={isCatActive}
-                        isPlaying={false}
-                        onClick={() => {
-                          onSelectCategory(c);
-                          setIsOpen(false);
-                        }}
-                      />
-                    );
-                  })}
-              </div>
             </motion.div>
           </>
         )}
@@ -499,5 +609,106 @@ export function TopicPickerModal({
       document.body
       )}
     </>
+  );
+}
+
+/** « About HuDa »: what it is, the app, the maker, credits, feedback. */
+function AboutView() {
+  const contactHref = ABOUT.contact.includes("@") && !ABOUT.contact.startsWith("http") ? `mailto:${ABOUT.contact}` : ABOUT.contact;
+  return (
+    <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
+      <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/splash-logo.webp" alt="" width={56} height={56} className="h-14 w-14 shrink-0 object-contain" />
+        <div>
+          <p className="text-lg font-black text-white">HuDa</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-sand-200/60">{ABOUT.tagline}</p>
+        </div>
+      </div>
+      <p className="text-sm leading-relaxed text-sand-100/85">{ABOUT.intro}</p>
+
+      {!ABOUT.appUrl && ABOUT.appNote && (
+        <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3">
+          <p className="text-xs font-bold text-white">HuDa is coming to mobile</p>
+          <p className="text-[11px] text-sand-200/70">{ABOUT.appNote}</p>
+        </div>
+      )}
+
+      {ABOUT.appUrl && (
+        <a
+          href={ABOUT.appUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 hover:bg-emerald-500/15 transition-colors"
+        >
+          <span>
+            <span className="block text-xs font-bold text-white">HuDa is on mobile too</span>
+            <span className="block text-[11px] text-sand-200/70">Get the app</span>
+          </span>
+          <ChevronRightIcon className="h-4 w-4 text-emerald-300" />
+        </a>
+      )}
+
+      {ABOUT.maker && (
+        // Maker card: thin gold edge, a warm halo behind the logo, and a shine
+        // that sweeps across the gold lettering only (masked to the logo).
+        <div className="rounded-[22px] bg-gradient-to-br from-[#F6DE9A]/50 via-white/10 to-[#B98532]/40 p-px">
+          <div className="relative overflow-hidden rounded-[21px] bg-[#0d0f0e]/80 px-5 pb-5 pt-4 text-center">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-6 mx-auto h-24 w-56 rounded-full bg-[#E8C46E]/20 blur-3xl"
+            />
+            <p className="relative text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#E8C46E]/80">Crafted by</p>
+            {ABOUT.makerLogo ? (
+              <div className="relative mx-auto mt-3 w-full max-w-[240px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={ABOUT.makerLogo}
+                  alt={ABOUT.maker}
+                  width={780}
+                  height={220}
+                  className="h-auto w-full drop-shadow-[0_4px_18px_rgba(232,196,110,0.35)]"
+                />
+                <span
+                  aria-hidden="true"
+                  className="huda-logo-shine pointer-events-none absolute inset-0"
+                  style={{ WebkitMaskImage: `url(${ABOUT.makerLogo})`, maskImage: `url(${ABOUT.makerLogo})` }}
+                />
+              </div>
+            ) : (
+              <p className="relative mt-2 text-lg font-bold text-white">{ABOUT.maker}</p>
+            )}
+            {ABOUT.makerNote && (
+              <p className="relative mx-auto mt-4 max-w-[30ch] text-xs leading-relaxed text-sand-100/75">{ABOUT.makerNote}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-2.5">
+        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Sources &amp; credits</p>
+        {ABOUT.credits.map((c) => (
+          <div key={c.label}>
+            <p className="text-[11px] font-bold text-white">{c.label}</p>
+            <p className="text-[11px] text-sand-200/70">{c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {ABOUT.contact && (
+        <a
+          href={contactHref}
+          target={contactHref.startsWith("http") ? "_blank" : undefined}
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors"
+        >
+          <span>
+            <span className="block text-xs font-bold text-white">Feedback</span>
+            <span className="block text-[11px] text-sand-200/70">{ABOUT.contact}</span>
+          </span>
+          <ChevronRightIcon className="h-4 w-4 text-sand-200/60" />
+        </a>
+      )}
+    </div>
   );
 }
