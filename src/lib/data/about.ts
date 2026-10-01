@@ -12,7 +12,8 @@ export const ABOUT = {
   appNote: "The HuDa mobile app is on its way — coming soon.",
   /** Who made HuDa (e.g. a name or team). Empty → row hidden. */
   maker: "Sarf Pearl",
-  makerNote: "HuDa is designed and built by one person, as a labour of love for the Quran.",
+  makerNote:
+    "I’m Sarf Pearl, a Product Designer who loves turning thoughtful ideas into simple, meaningful experiences. After years of designing digital products, I’m now bringing that experience into HuDa — a personal labour of love that brings design, technology, and the Quran together in one place.",
   /** Maker's logo, from /public. Empty → name only. */
   makerLogo: "/about/sarf-pearl.svg",
   /** Feedback: an email address or a link. Empty → row hidden. */

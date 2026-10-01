@@ -179,6 +179,12 @@ export const CheckIcon = (p: IconProps) => (
     <path d="m5 12 4.5 4.5L19 7" />
   </Base>
 );
+export const CopyIcon = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="9" y="9" width="11" height="11" rx="2.5" />
+    <path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9" />
+  </Base>
+);
 export const TrashIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />
