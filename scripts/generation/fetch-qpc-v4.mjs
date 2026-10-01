@@ -34,6 +34,9 @@ const FONTS_OUT = resolve(ROOT, "public/fonts/qpc-v4");
 
 const mode = process.argv[2] ?? "all";
 
+/** surah:ayah:position of glyph words the reciters' timings split in two. */
+const SPLIT_POSITIONS = new Set(["37:130:3"]);
+
 async function get(url, as = "json") {
   for (let attempt = 1; attempt <= 5; attempt++) {
     const res = await fetch(url);
@@ -52,9 +55,22 @@ if (mode === "all" || mode === "words") {
     const verses = json.verses.map((v) => {
       const spoken = v.words.filter((w) => w.char_type_name === "word");
       const end = v.words.find((w) => w.char_type_name === "end");
+      // 37:130 word 3 «إِلۡ يَاسِينَ» is ONE Quran.com position but two glyphs
+      // (code "ﱑ ﱒ"), and every reciter's word segments time it as TWO words
+      // (positions 3 and 4). Split it so each word has its own glyph and
+      // highlight. Other two-glyph positions (e.g. 8:6 «بَعۡدَ مَا», ۞ / ۩
+      // marks) are timed as one word and stay whole.
+      const words = spoken.flatMap((w) => {
+        const codes = w.code_v2.split(" ");
+        const texts = w.text_qpc_hafs.split(" ");
+        if (SPLIT_POSITIONS.has(`${n}:${v.verse_number}:${w.position}`) && codes.length === texts.length) {
+          return codes.map((c, k) => [c, w.v2_page, texts[k]]);
+        }
+        return [[w.code_v2, w.v2_page, w.text_qpc_hafs]];
+      });
       return {
         a: v.verse_number,
-        w: spoken.map((w) => [w.code_v2, w.v2_page, w.text_qpc_hafs]),
+        w: words,
         ...(end ? { e: [end.code_v2, end.v2_page] } : {}),
       };
     });

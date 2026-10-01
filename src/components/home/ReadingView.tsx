@@ -55,8 +55,8 @@ interface ReadingViewProps {
   onSeekWord?: (surah: number, ayah: number, startTime: number) => void;
   /** Mushaf page at the top of the view, as the reader scrolls. */
   onVisiblePageChange?: (page: number) => void;
-  /** Bump `n` to scroll to `page` (page steps that can't move the audio). */
-  scrollToPage?: { page: number; n: number } | null;
+  /** Bump `n` to open `page` at the top of the view (a page step). */
+  scrollToPage?: { page: number; n: number; at: number } | null;
   /** Ayah text size, × the default (the reader's text-size setting). */
   textScale?: number;
   /** Recitation running (the recited ayah then counts as read). */
@@ -98,6 +98,8 @@ const hasBismillah = (s: number) => s !== 1 && s !== 9;
 type Ctx = "prev" | "cur" | "next";
 type Part = { ref: AyahRef; ctx: Ctx; page: number; from: number; to: number; end: boolean };
 type Item = { kind: "head"; surah: number; ctx: Ctx; page: number } | { kind: "part"; part: Part };
+/** A page opened by a page step sits this far down: just clear of the faded top edge. */
+const PAGE_TOP_PX = 26;
 
 /**
  * Reading mode (like Quran.com's "Reading · Arabic"), on the home scene: the
@@ -330,6 +332,9 @@ export function ReadingView({
   // recited word (it used to jump there after 4 s); seeking returns at once.
   const awayRef = useRef(false);
   const IDLE_MS = 7000;
+  // The page a page step opened, held at the top while its first lines are recited.
+  const pinnedPageRef = useRef<number | null>(null);
+  const doneStepRef = useRef<number | null>(null);
   const [idleTick, setIdleTick] = useState(0);
   // Teleprompter-style follow (followScroll): the aim point is the recited
   // word's line plus how far along that line the word sits, so the view
@@ -401,11 +406,19 @@ export function ReadingView({
     awayRef.current = false;
     const para = word?.closest("p");
     const along = word && para ? alongLine(word, para.querySelectorAll<HTMLElement>("[data-word-idx]")) : 0;
+    // A page stepped to (« ») opens at its top, as a turned Mushaf page — not
+    // with the previous page's foot above its first ayah — until the
+    // recitation reaches the third-way line and following takes over.
+    const section = target.closest<HTMLElement>("[data-page]");
+    if (pinnedPageRef.current !== null && Number(section?.dataset.page) !== pinnedPageRef.current)
+      pinnedPageRef.current = null;
     // A third of the way down: clear of the faded top edge, with the lines
     // still to come in view below.
     followScroll(el, () => {
       const box = el.getBoundingClientRect();
-      return el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
+      const aim = el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
+      if (pinnedPageRef.current === null || !section) return aim;
+      return Math.max(aim, el.scrollTop + section.getBoundingClientRect().top - box.top - PAGE_TOP_PX);
     }, glide);
   }, [activeKey, activeWordIndex, pages, idleTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -506,12 +519,21 @@ export function ReadingView({
     else if (isMark) onOpenMark?.();
     else onOpenAyah?.(target.surah, target.ayah);
   };
-  // Page steps that can't move the audio scroll the page into view instead.
+  // A page step (« » / the picker) opens that page at the top of the view,
+  // below the faded edge; the recitation following keeps it there (above).
   useEffect(() => {
-    if (!scrollToPage || !pages) return;
-    scrollRef.current
-      ?.querySelector<HTMLElement>(`[data-page="${scrollToPage.page}"]`)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    const el = scrollRef.current;
+    // Only a fresh step: a Surah's view opening later (reading mode reopened)
+    // must not jump back to an old one.
+    if (!scrollToPage || !pages || !el || Date.now() - scrollToPage.at > 8000) return;
+    if (doneStepRef.current === scrollToPage.n) return;
+    const node = el.querySelector<HTMLElement>(`[data-page="${scrollToPage.page}"]`);
+    if (!node) return;
+    doneStepRef.current = scrollToPage.n;
+    pinnedPageRef.current = scrollToPage.page;
+    awayRef.current = false;
+    const top = el.scrollTop + node.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
+    el.scrollTo({ top, behavior: "smooth" });
   }, [scrollToPage?.n, pages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A page switching between text and glyphs (or a new text size) changes
@@ -814,7 +836,7 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
+        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]"
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (

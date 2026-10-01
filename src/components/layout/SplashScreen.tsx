@@ -1,13 +1,13 @@
 /**
  * Opening splash: logo, name and a loading bar, in the server HTML so it
  * paints before any JS. It fades once the page has loaded (the scene image and
- * fonts are in the HTML, so `load` waits for them), shown at least briefly so
+ * fonts are in the HTML, so `load` waits for them), shown for at least 3s so
  * it doesn't flash, and never longer than MAX_MS. Hiding is a class on <html>
  * (which already takes suppressHydrationWarning) rather than removing the
  * node, so React hydration still matches; client navigations keep the class,
  * so the splash only shows on a full open of the app.
  */
-const MIN_MS = 700;
+const MIN_MS = 3000;
 const MAX_MS = 8000;
 
 const hideScript = `(function(){

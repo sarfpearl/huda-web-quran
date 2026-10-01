@@ -9,7 +9,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
 import { getAyahVideo } from "./surahVerseVideos";
-import { type QuranReciter, getReciterTimingCapability, reciterHasWordTiming, reciterEmbedsOwnBismillah, getReciterById } from "./quranReciters";
+import { fetchSurahGlyphs } from "./quranGlyphs";
+import { type QuranReciter, getReciterTimingCapability, reciterHasWordTiming, reciterHasWordTimingFor, reciterEmbedsOwnBismillah, getReciterById } from "./quranReciters";
 
 export interface QuranWordTiming {
   word: string;
@@ -26,6 +27,24 @@ export interface QuranWordTiming {
  */
 export interface WordSegment {
   wordIndex: number;
+  startTime: number;
+  endTime: number;
+  /**
+   * The source had no segment of its own for this word: it lies inside the
+   * measured voice segment of its neighbour (QDC merged several words into one
+   * segment), and that segment's span is shared among the words it covers by
+   * their letter counts. Measured bounds, estimated split.
+   */
+  estimated?: boolean;
+}
+
+/**
+ * A prelude the reciter's own audio recites before ayah 1 (not our prelude
+ * clip): its bounds in that audio, measured from the recording (see
+ * scripts/qa/repair-timings.cjs). No per-word timing — shown as a phrase.
+ */
+export interface EmbeddedPrelude {
+  type: "istiadhah" | "bismillah";
   startTime: number;
   endTime: number;
 }
@@ -85,6 +104,8 @@ export interface RecitationSegment {
   words?: QuranWordTiming[];
   wordSegments?: WordSegment[];
   video?: AyahVideoSync | null;
+  /** The real audio's end (s): no word is recited — or highlighted — after it. */
+  audioEnd?: number;
 }
 
 export const CANONICAL_ISTIADHAH = {
@@ -164,6 +185,21 @@ export interface AyahVerse {
   timestampTo?: number;   // In seconds
   words?: QuranWordTiming[];
   wordSegments?: WordSegment[];
+  /**
+   * The reciter has timing for this ayah's position in the audio but no usable
+   * WORD timing (no segments, or segments too sparse / out of order to trust):
+   * the ayah shows without a recited word instead of a made-up one.
+   */
+  noWordTiming?: string;
+  /** Ayah 1 only: preludes recited in the reciter's own audio before it. */
+  embeddedPrelude?: EmbeddedPrelude[];
+  /**
+   * The timing dataset's own ayah window in the Surah audio (seconds), before
+   * any boundary refinement. everyayah.com's per-ayah clips are cut at exactly
+   * this window (measured: ≤1.3% length difference at p95 for most reciters),
+   * so it maps a Juz clip's time onto the Surah-time word segments.
+   */
+  datasetWindow?: { from: number; to: number };
 }
 
 /** Pre-seeded instant verses for zero-latency initial render & offline reliability */
@@ -646,11 +682,153 @@ function splitArabicWords(textArabic: string): string[] {
     .filter((w) => !WAQF_MARKS.test(w) && w.replace(/[ً-ٰٟۖ-ۭ]/g, "").length > 0);
 }
 
+/** Raw QDC segment as cached in /data/quran-timings/<reciter>/<surah>.json. */
+interface RawSegment {
+  wordIndex?: number;
+  startSec: number;
+  endSec: number;
+}
+
+/**
+ * Minimum share of an ayah's words that must have their own voice segment, and
+ * minimum share of segment-to-segment steps that move to the same or next word,
+ * for its word timing to be trusted. Below either, the source segments are too
+ * sparse or scrambled (e.g. Tunaiji 13:1 «1,13,13,13,8,5,5,1,…») and filling
+ * them in would be guessing — the ayah shows without a recited word instead.
+ */
+const MIN_WORD_COVERAGE = 0.5;
+const MIN_SEQUENTIAL_STEPS = 0.6;
+
+/**
+ * A run of 1–3 segments whose word positions fit neither side (QDC typos such
+ * as «31,32,33,34,118,36» or «3,4,5,51,42,12») while the segments around it
+ * continue each other's sequence: the run was recited in between, so it is
+ * renumbered into the gap it sits in (measured span, inferred label →
+ * estimated). A genuine repeat continues from its NEW position, so it stays.
+ */
+function relabelOutliers(segs: WordSegment[]): WordSegment[] {
+  const out = segs.map((s) => ({ ...s }));
+  // A leading run before the sequence starts (e.g. 45:10 «13,14,2,3,…»).
+  for (let L = 1; L <= 3 && L < out.length; L++) {
+    const b = out[L].wordIndex;
+    if (b >= 1 && b <= L + 1 && out.slice(0, L).every((x) => x.wordIndex > b + 1)) {
+      for (let i = 0; i < L; i++) out[i] = { ...out[i], wordIndex: b > 1 ? Math.min(i + 1, b - 1) : 1, estimated: true };
+      break;
+    }
+  }
+  for (let k = 1; k < out.length - 1; k++) {
+    const a = out[k - 1].wordIndex;
+    for (let L = 1; L <= 3 && k + L < out.length; L++) {
+      const b = out[k + L].wordIndex;
+      const run = out.slice(k, k + L);
+      const fitsGap = b - a >= 1 && b - a <= L + 6;
+      // (A repeat never qualifies: it steps back, so what follows it isn't b > a.)
+      const offSide = run.every((x) => x.wordIndex < a - 1 || x.wordIndex > b + 1);
+      if (!fitsGap || !offSide) continue;
+      const missing = b - a - 1;
+      run.forEach((x, i) => {
+        out[k + i] = { ...x, wordIndex: missing > 0 ? a + 1 + Math.min(i, missing - 1) : a, estimated: true };
+      });
+      k += L - 1;
+      break;
+    }
+  }
+  return out;
+}
+
+/** Letters of a word (for sharing a merged segment among its words). */
+const letterWeight = (w: string | undefined) => Math.max(1, (w ?? "").replace(/[ً-ٰٟۖ-ۭـ\s]/g, "").length);
+
+/**
+ * Cleans one ayah's raw QDC segments into recitation-order word segments over
+ * word positions 1..wordCount, or explains why its word timing can't be used.
+ *  - 0-based indexes (one Alafasy ayah) are shifted to 1-based;
+ *  - empty / inverted segments are dropped, overlaps trimmed to the next start;
+ *  - a segment followed by a jump over n words, or a first / last segment that
+ *    isn't word 1 / the last word, covered those words too (QDC merges words
+ *    into one segment): its measured span is shared among them (estimated).
+ */
+export function sanitizeWordSegments(
+  raw: RawSegment[] | undefined,
+  wordsText: string[],
+  ayahWindow?: { from: number; to: number }
+): { segments: WordSegment[] } | { reason: string } {
+  const G = wordsText.length;
+  if (!raw || raw.length === 0) return { reason: "no word segments in source" };
+  if (G === 0) return { reason: "no words" };
+  const idx = raw.map((s) => (typeof s.wordIndex === "number" ? s.wordIndex : NaN));
+  if (idx.some((i) => !Number.isInteger(i))) return { reason: "segments without word positions" };
+  const zeroBased = Math.min(...idx) === 0 && Math.max(...idx) === G - 1;
+  let segs: WordSegment[] = raw
+    .map((s, k) => ({ wordIndex: idx[k] + (zeroBased ? 1 : 0), startTime: s.startSec, endTime: s.endSec }))
+    .filter((s) => s.wordIndex >= 1 && s.wordIndex <= G && s.endTime > s.startTime);
+  if (segs.length === 0) return { reason: "no valid word segments" };
+  // Segments displaced from their own ayah (Alafasy 6:93 starts 22s early):
+  // a data error the acoustic repair re-places; unrepaired, don't trust them.
+  if (ayahWindow && ayahWindow.to > ayahWindow.from) {
+    const inside = segs.filter((s) => s.startTime >= ayahWindow.from - 0.5 && s.startTime < ayahWindow.to + 0.5).length;
+    if (inside / segs.length < 0.8) return { reason: "word segments displaced from the ayah" };
+  }
+  for (let k = 0; k + 1 < segs.length; k++) {
+    if (segs[k].endTime > segs[k + 1].startTime && segs[k + 1].startTime > segs[k].startTime) {
+      segs[k] = { ...segs[k], endTime: segs[k + 1].startTime };
+    }
+  }
+  segs = segs.filter((s, k) => k === 0 || s.startTime >= segs[k - 1].startTime);
+  segs = relabelOutliers(segs);
+
+  const covered = new Set(segs.map((s) => s.wordIndex)).size / G;
+  let steps = 0;
+  for (let k = 1; k < segs.length; k++) {
+    const d = segs[k].wordIndex - segs[k - 1].wordIndex;
+    if (d === 0 || d === 1) steps++;
+  }
+  const sequential = segs.length > 1 ? steps / (segs.length - 1) : 1;
+  if (G > 1 && covered < MIN_WORD_COVERAGE) return { reason: "too few word segments (under half the words)" };
+  if (segs.length >= 4 && sequential < MIN_SEQUENTIAL_STEPS) {
+    return { reason: "word segments out of recitation order" };
+  }
+
+  // Share a measured span among consecutive word positions [from..to].
+  const share = (s: WordSegment, from: number, to: number): WordSegment[] => {
+    const ws = [];
+    for (let w = from; w <= to; w++) ws.push(letterWeight(wordsText[w - 1]));
+    const total = ws.reduce((a, b) => a + b, 0);
+    const out: WordSegment[] = [];
+    let t = s.startTime;
+    for (let w = from; w <= to; w++) {
+      const end = w === to ? s.endTime : t + ((s.endTime - s.startTime) * ws[w - from]) / total;
+      out.push({ wordIndex: w, startTime: t, endTime: end, ...(w === s.wordIndex ? {} : { estimated: true }) });
+      t = end;
+    }
+    return out;
+  };
+  const out: WordSegment[] = [];
+  for (let k = 0; k < segs.length; k++) {
+    const s = segs[k];
+    const next = segs[k + 1];
+    let from = s.wordIndex;
+    let to = s.wordIndex;
+    // Leading words before the first segment's word were recited in it.
+    if (k === 0 && s.wordIndex > 1) from = 1;
+    // A forward jump over words: this segment also covered the skipped ones.
+    if (next && next.wordIndex > s.wordIndex + 1) to = next.wordIndex - 1;
+    // Trailing words after the last segment's word.
+    if (!next && s.wordIndex < G) to = G;
+    out.push(...(from === to ? [s] : share(s, from, to)));
+  }
+  return { segments: out };
+}
+
 /**
  * Overlays a reciter's Quran.com (QDC) word-segment timings onto base text
  * verses. Each reciter recites at their own pace, so the timing dataset is
  * loaded per reciter from `/data/quran-timings/<reciterId>/<surah>.json`.
  * Returns a NEW verse array (base text untouched) or null if unavailable.
+ *
+ * Only this reciter's own timing is ever used: an ayah whose word segments are
+ * missing or unusable gets `noWordTiming` (ayah shown, no recited word) — never
+ * another reciter's words or an even split of the ayah.
  */
 async function applyReciterTimings(
   baseVerses: AyahVerse[],
@@ -667,111 +845,95 @@ async function applyReciterTimings(
 
     const byAyah = new Map<number, any>();
     timings.forEach((vt: any) => byAyah.set(vt.ayahNumber, vt));
+    const glyphs = await fetchGlyphWordTexts(surahNumber);
 
-    return baseVerses.map((verse) => {
+    const out = baseVerses.map((verse) => {
       const vt = byAyah.get(verse.ayahNumber);
-      if (!vt) return verse;
+      if (!vt) return { ...verse, words: undefined, wordSegments: undefined, noWordTiming: "no timing for this ayah" };
 
-      // Base word text: prefer explicit words, else split the Arabic text.
       let rawArabic = verse.textArabic.trim();
-      const strippedAyah1 = verse.ayahNumber === 1;
-      if (strippedAyah1) {
-        rawArabic = stripLeadingBismillah(rawArabic, surahNumber);
-      }
-      // The center display renders `words`, not `textArabic`. For ayah 1 always
-      // derive the word list from the freshly stripped text — never from a
-      // pre-built `verse.words` — so a stale/unstripped base (e.g. an older
-      // cached copy) can't leak the leading Bismillah into the on-screen words.
-      const wordsList =
-        !strippedAyah1 && verse.words && verse.words.length > 0
-          ? verse.words.map((w) => w.word)
-          : splitArabicWords(rawArabic);
+      if (verse.ayahNumber === 1) rawArabic = stripLeadingBismillah(rawArabic, surahNumber);
+      // Word positions are Quran.com's (the glyph words): the timings address
+      // them. The Tanzil text split is the fallback when glyph data is missing.
+      const textWords = splitArabicWords(rawArabic);
+      const wordsList = glyphs?.get(verse.ayahNumber) ?? textWords;
 
-      const segs = vt.segments as
-        | { startSec: number; endSec: number; wordIndex?: number }[]
-        | undefined;
-      let words = verse.words;
-      let wordSegments: WordSegment[] | undefined;
-      if (wordsList.length > 0 && segs && segs.length > 0) {
-        const hasWordIndex = segs.every(
-          (s) => typeof s.wordIndex === "number" && (s.wordIndex as number) > 0
-        );
-        if (hasWordIndex) {
-          // Keep the raw segments (in recitation order) so the live highlight can
-          // follow the voice exactly, including back onto a repeated word.
-          wordSegments = segs.map((s) => ({
-            wordIndex: s.wordIndex as number,
-            startTime: s.startSec,
-            endTime: s.endSec,
-          }));
-          // Map by QDC wordIndex (1-based), not by position. Some reciters recite
-          // a word more than once, giving several segments for one word. Take each
-          // word's FIRST occurrence (extending only across *consecutive* same-index
-          // segments, i.e. an elongated single utterance). A later, non-contiguous
-          // repeat is left in the gap before the next word, where the existing
-          // "hold current word until the next word's voice" logic keeps the
-          // highlight steady — instead of the old proportional stretch that
-          // desynced these reciters ("same word highlighted twice").
-          const byIdx = new Map<number, { start: number; end: number }>();
-          for (let k = 0; k < segs.length; k++) {
-            const wi = segs[k].wordIndex as number;
-            const prevWi = k > 0 ? (segs[k - 1].wordIndex as number) : undefined;
-            const cur = byIdx.get(wi);
-            if (!cur) {
-              byIdx.set(wi, { start: segs[k].startSec, end: segs[k].endSec });
-            } else if (prevWi === wi) {
-              // consecutive continuation of the same word (elongation) → extend
-              cur.end = Math.max(cur.end, segs[k].endSec);
-            }
-            // non-contiguous repeat → ignore; first occurrence already recorded
-          }
-          let lastEnd =
-            typeof vt.timestampFromSec === "number" ? vt.timestampFromSec : segs[0].startSec;
-          words = wordsList.map((word, i) => {
-            const t = byIdx.get(i + 1);
-            if (t) {
-              lastEnd = t.end;
-              return { word, startTime: t.start, endTime: t.end };
-            }
-            // Word with no segment (e.g. a skipped index): bridge the gap to the
-            // next timed word so the highlight keeps advancing.
-            let nextStart = lastEnd;
-            for (let j = i + 1; j < wordsList.length; j++) {
-              const tn = byIdx.get(j + 1);
-              if (tn) {
-                nextStart = tn.start;
-                break;
-              }
-            }
-            const start = lastEnd;
-            lastEnd = nextStart;
-            return { word, startTime: start, endTime: nextStart };
-          });
-        } else if (wordsList.length === segs.length) {
-          words = wordsList.map((word, i) => ({ word, startTime: segs[i].startSec, endTime: segs[i].endSec }));
-        } else {
-          // No wordIndex and count mismatch: distribute proportionally so the
-          // highlight still tracks the voice across the ayah.
-          const n = segs.length;
-          words = wordsList.map((word, i) => {
-            const si = Math.min(Math.floor((i / wordsList.length) * n), n - 1);
-            return { word, startTime: segs[si].startSec, endTime: segs[si].endSec };
-          });
-        }
-      }
-
-      return {
+      const from = typeof vt.timestampFromSec === "number" ? vt.timestampFromSec : 0;
+      const to = typeof vt.timestampToSec === "number" ? vt.timestampToSec : from;
+      // `misaligned`: the acoustic check found this ayah's word boundaries off
+      // the recording (scripts/qa/repair-timings.cjs) — keep it, no highlight.
+      const clean: ReturnType<typeof sanitizeWordSegments> =
+        typeof vt.misaligned === "string" ? { reason: vt.misaligned } : sanitizeWordSegments(vt.segments, wordsList, { from, to });
+      const base = {
         ...verse,
         textArabic: rawArabic,
-        timestampFrom: vt.timestampFromSec,
-        timestampTo: vt.timestampToSec,
-        words,
-        wordSegments,
+        timestampFrom: from,
+        timestampTo: to,
+        datasetWindow: { from, to },
+        ...(verse.ayahNumber === 1 && Array.isArray(data.embeddedPrelude) ? { embeddedPrelude: data.embeddedPrelude as EmbeddedPrelude[] } : {}),
       };
+      if ("reason" in clean) {
+        return { ...base, words: undefined, wordSegments: undefined, noWordTiming: clean.reason };
+      }
+      const segs = clean.segments;
+      // Each word's first recitation (repeats keep their own raw segments for
+      // the live highlight); every position 1..n has one after sanitising.
+      const first = new Map<number, WordSegment>();
+      for (const s of segs) if (!first.has(s.wordIndex)) first.set(s.wordIndex, s);
+      const displayWords = textWords.length === wordsList.length ? textWords : wordsList;
+      if (wordsList.some((_, i) => !first.has(i + 1))) {
+        return { ...base, words: undefined, wordSegments: undefined, noWordTiming: "word segments leave words unplaced" };
+      }
+      const words = wordsList.map((_, i) => {
+        const s = first.get(i + 1)!;
+        return { word: displayWords[i], startTime: s.startTime, endTime: s.endTime };
+      });
+      return { ...base, words, wordSegments: segs, noWordTiming: undefined };
     });
+    // The ayah begins with its voice. Alafasy's dataset often opens an ayah's
+    // window after its first word (65ms typically, up to ~2.4s) while the
+    // previous ayah's last word has already ended: that first word belongs to
+    // this ayah, so its window starts there — never over the previous ayah's
+    // voice, and never by more than 3s (larger = displaced data).
+    for (let i = 0; i < out.length; i++) {
+      const v = out[i];
+      const first = v.wordSegments?.[0];
+      if (!first || typeof v.timestampFrom !== "number" || first.startTime >= v.timestampFrom) continue;
+      const prev = out[i - 1];
+      const prevVoiceEnd = prev?.wordSegments?.length
+        ? Math.max(...prev.wordSegments.map((x) => x.endTime))
+        : prev?.timestampFrom ?? 0;
+      // Starts at the first word, or where the previous ayah's voice ends when
+      // the two touch (a few frames of overlap in the source).
+      const start = Math.max(first.startTime, prevVoiceEnd);
+      if (start - first.startTime <= 0.3 && start < v.timestampFrom && v.timestampFrom - start <= 3) {
+        out[i] = { ...v, timestampFrom: start };
+      }
+    }
+    // Two consecutive ayahs whose word timings overlap by more than a second
+    // contradict each other (one voice can't recite both), and the recording
+    // can't tell which is right: neither gets a word highlight.
+    for (let i = 0; i + 1 < out.length; i++) {
+      const a = out[i].wordSegments, b = out[i + 1].wordSegments;
+      if (!a?.length || !b?.length) continue;
+      const aEnd = Math.max(...a.map((x) => x.endTime));
+      const overlap = aEnd - b[0].startTime;
+      if (overlap > 1) {
+        const secs = overlap.toFixed(1);
+        out[i] = { ...out[i], words: undefined, wordSegments: undefined, noWordTiming: `word timings overlap the next ayah by ${secs}s` };
+        out[i + 1] = { ...out[i + 1], words: undefined, wordSegments: undefined, noWordTiming: `word timings overlap the previous ayah by ${secs}s` };
+      }
+    }
+    return out;
   } catch {
     return null;
   }
+}
+
+/** Quran.com word texts per ayah (the positions the timings address), or null. */
+async function fetchGlyphWordTexts(surahNumber: number): Promise<Map<number, string[]> | null> {
+  const verses = await fetchSurahGlyphs(surahNumber);
+  return verses ? new Map(verses.map((v) => [v.a, v.w.map((w) => w[2])])) : null;
 }
 
 /**
@@ -868,6 +1030,49 @@ export async function fetchSurahVerses(
   return baseVerses;
 }
 
+let legacyCachesDropped = false;
+/**
+ * Verse lists once cached in localStorage (huda-verses-v1…v6) carried the
+ * default reciter's word timings, which a word-sync reciter's missing segments
+ * then fell back on. The text now ships as local files: remove them once.
+ */
+function dropLegacyVerseCaches() {
+  if (legacyCachesDropped || typeof localStorage === "undefined") return;
+  legacyCachesDropped = true;
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && /^huda-verses-v\d+-/.test(k)) localStorage.removeItem(k);
+    }
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+let apiQueue: Promise<unknown> = Promise.resolve();
+/**
+ * GET a JSON URL from the public Quran API, strictly one request at a time and
+ * retrying a 429 / network failure with backoff (up to 3 tries).
+ */
+function queuedApiFetch(url: string): Promise<any> {
+  const run = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) return await res.json();
+        if (res.status !== 429 && res.status < 500) return null;
+      } catch {
+        /* CORS-less 429s surface as network errors: back off and retry */
+      }
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+    return null;
+  };
+  const p = apiQueue.then(run, run);
+  apiQueue = p.catch(() => undefined);
+  return p;
+}
+
 /**
  * Loads reciter-independent verse TEXT (Arabic/English/Tamil) for a Surah, with
  * default ayah-level timings baked in as a fallback. Cached by surah number.
@@ -878,33 +1083,17 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
     return memoryCache.get(baseKey)!;
   }
 
-  // v6: bumped to invalidate stale caches that stored ayah 1 with an un-stripped
-  // leading Bismillah in its word list (showed "Bismillah + الم" merged).
-  const storageKey = `huda-verses-v6-${surahNumber}`;
-  if (typeof window !== "undefined") {
-    try {
-      const cached = localStorage.getItem(storageKey);
-      if (cached) {
-        const parsed = JSON.parse(cached) as AyahVerse[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          memoryCache.set(baseKey, parsed);
-          return parsed;
-        }
-      }
-    } catch {
-      /* ignore storage error */
-    }
-  }
-
   if (PRE_SEEDED_SURAHS[surahNumber] && PRE_SEEDED_SURAHS[surahNumber].length > 0) {
     const seeded = PRE_SEEDED_SURAHS[surahNumber];
     memoryCache.set(baseKey, seeded);
     return seeded;
   }
 
+  // Every Surah's text ships in /data/quran-verses/<n>.json (generated by
+  // scripts/generation/build-quran-verses.mjs), so normal use never leaves the
+  // site. One retry: a burst of requests (fast scrolling) can drop one.
   if (typeof window !== "undefined" && typeof fetch !== "undefined") {
-    // One retry: a burst of requests (fast scrolling) can drop one. A missing
-    // file (most Surahs) goes straight to the API.
+    dropLegacyVerseCaches();
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const localRes = await fetch(`/data/quran-verses/${surahNumber}.json`);
@@ -912,11 +1101,6 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
         const localVerses = (await localRes.json()) as AyahVerse[];
         if (Array.isArray(localVerses) && localVerses.length > 0) {
           memoryCache.set(baseKey, localVerses);
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(localVerses));
-          } catch {
-            /* ignore storage errors */
-          }
           return localVerses;
         }
         break;
@@ -926,72 +1110,29 @@ async function loadBaseVerses(surahNumber: number): Promise<AyahVerse[]> {
     }
   }
 
+  // Last resort (a missing local file): the same editions from the public API,
+  // one request at a time with backoff — it answers bursts with 429 and no
+  // CORS header. Text only: no other reciter's timings are attached.
   if (typeof window !== "undefined" && typeof fetch !== "undefined") {
     try {
-      const res = await fetch(
+      const json = await queuedApiFetch(
         `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,en.sahih,ta.tamil`
       );
-      if (res.ok) {
-        const json = await res.json();
-        if (json?.data && Array.isArray(json.data) && json.data.length >= 2) {
-          const uthmani = json.data[0]?.ayahs || [];
-          const english = json.data[1]?.ayahs || [];
-          const tamil = json.data[2]?.ayahs || [];
-
-          const verses: AyahVerse[] = uthmani.map((ayah: any, idx: number) => ({
-            surahNumber,
-            ayahNumber: ayah.numberInSurah,
-            textArabic: ayah.text,
-            textEnglish: english[idx]?.text || "",
-            textTamil: tamil[idx]?.text || "",
-            verseKey: `${surahNumber}:${ayah.numberInSurah}`,
-          }));
-
-          try {
-            const timingRes = await fetch(`/data/quran-timings/${surahNumber}.json`);
-            if (timingRes.ok) {
-              const timingData = await timingRes.json();
-              if (timingData?.verseTimings && Array.isArray(timingData.verseTimings)) {
-                verses.forEach((verse, idx) => {
-                  const vt = timingData.verseTimings[idx];
-                  if (vt) {
-                    verse.timestampFrom = vt.timestampFromSec;
-                    verse.timestampTo = vt.timestampToSec;
-
-                    let rawArabic = verse.textArabic.trim();
-                    if (idx === 0) {
-                      rawArabic = stripLeadingBismillah(rawArabic, surahNumber);
-                      verse.textArabic = rawArabic;
-                    }
-
-                    const wordsList = splitArabicWords(rawArabic);
-                    if (wordsList.length > 0 && vt.segments && vt.segments.length > 0) {
-                      const n = vt.segments.length;
-                      verse.words = wordsList.map((word, wIdx) => {
-                        const si =
-                          wordsList.length === n
-                            ? wIdx
-                            : Math.min(Math.floor((wIdx / wordsList.length) * n), n - 1);
-                        return { word, startTime: vt.segments[si].startSec, endTime: vt.segments[si].endSec };
-                      });
-                    }
-                  }
-                });
-              }
-            }
-          } catch {
-            /* ignore timing load error */
-          }
-
-          if (verses.length > 0) {
-            memoryCache.set(baseKey, verses);
-            try {
-              localStorage.setItem(storageKey, JSON.stringify(verses));
-            } catch {
-              /* ignore storage errors */
-            }
-            return verses;
-          }
+      if (json?.data && Array.isArray(json.data) && json.data.length >= 2) {
+        const uthmani = json.data[0]?.ayahs || [];
+        const english = json.data[1]?.ayahs || [];
+        const tamil = json.data[2]?.ayahs || [];
+        const verses: AyahVerse[] = uthmani.map((ayah: any, idx: number) => ({
+          surahNumber,
+          ayahNumber: ayah.numberInSurah,
+          textArabic: idx === 0 ? stripLeadingBismillah(String(ayah.text).trim(), surahNumber) : ayah.text,
+          textEnglish: english[idx]?.text || "",
+          textTamil: tamil[idx]?.text || "",
+          verseKey: `${surahNumber}:${ayah.numberInSurah}`,
+        }));
+        if (verses.length > 0) {
+          memoryCache.set(baseKey, verses);
+          return verses;
         }
       }
     } catch {
@@ -1073,6 +1214,11 @@ export function getVoiceProgressInSegment(
   hasWordTiming: boolean;
 } {
   if (!segment) return { progress: 0, activeWordIndex: -1, activeWord: null, hasWordTiming: false };
+  // The audio has ended: nothing is being recited.
+  const audioEnd = "audioEnd" in segment ? segment.audioEnd : undefined;
+  if (typeof audioEnd === "number" && currentTime >= audioEnd) {
+    return { progress: 1, activeWordIndex: -1, activeWord: null, hasWordTiming: isExactWordTimingAllowed };
+  }
 
   const tFrom = "timestampFrom" in segment ? segment.timestampFrom : "startTime" in segment ? segment.startTime : undefined;
   const tTo = "timestampTo" in segment ? segment.timestampTo : "endTime" in segment ? segment.endTime : undefined;
@@ -1188,6 +1334,60 @@ export function getVoiceProgressInSegment(
   return { progress: 1, activeWordIndex: -1, activeWord: null, hasWordTiming: true };
 }
 
+/**
+ * How far an everyayah clip may differ in length from the dataset's ayah window
+ * and still be the same recording cut at the same points. Measured over random
+ * ayahs (scripts/qa/juz-clips.cjs): clips of the same cut sit within ~1–5%;
+ * a larger difference is another edit or take (e.g. many Dosari clips, Shuraim
+ * 78:40: 14.3s vs 4.5s) and mapping the timings onto it would light the wrong
+ * words, so such an ayah plays without a word highlight.
+ */
+export const JUZ_CLIP_TOLERANCE = 0.05;
+
+/**
+ * The Surah-time window a per-ayah clip of this ayah covers (the dataset's
+ * ayah window), when the ayah has word timing to map; else null.
+ */
+export function ayahClipWindow(verse: AyahVerse | null | undefined): { start: number; end: number } | null {
+  if (!verse || verse.noWordTiming || !verse.wordSegments?.length) return null;
+  const w = verse.datasetWindow;
+  if (!w || !(w.to > w.from)) return null;
+  return { start: w.from, end: w.to };
+}
+
+/**
+ * Word sync for an ayah played on its own (a per-ayah Juz clip from
+ * everyayah.com): clip time 0 = the dataset's ayah start, clip end = its end,
+ * so clip time maps straight onto the ayah's raw recitation-order word
+ * segments — a repeated word lights up again just as in Surah mode. No word
+ * sync when the ayah has no word timing or the clip is another cut (length off
+ * by more than JUZ_CLIP_TOLERANCE).
+ */
+export function getAyahClipWordSync(
+  verse: AyahVerse | null | undefined,
+  clipTime: number,
+  clipDuration: number
+): { hasWordTiming: boolean; activeWordIndex: number } {
+  const win = ayahClipWindow(verse);
+  if (!verse || !win) return { hasWordTiming: false, activeWordIndex: -1 };
+  const winDur = win.end - win.start;
+  const dur = clipDuration > 0 ? clipDuration : winDur;
+  if (Math.abs(dur / winDur - 1) > JUZ_CLIP_TOLERANCE) return { hasWordTiming: false, activeWordIndex: -1 };
+  const t = win.start + clipTime * (winDur / dur);
+  const r = getVoiceProgressInSegment({ ...verse, timestampFrom: win.start, timestampTo: win.end }, t, true);
+  return { hasWordTiming: r.hasWordTiming, activeWordIndex: r.activeWordIndex };
+}
+
+/** Clip time (seconds) at which a Surah-time moment of the ayah falls — for tap-to-seek. */
+export function ayahClipTimeOf(verse: AyahVerse | null | undefined, surahTime: number, clipDuration: number): number | null {
+  const win = ayahClipWindow(verse);
+  if (!win) return null;
+  const winDur = win.end - win.start;
+  const dur = clipDuration > 0 ? clipDuration : winDur;
+  if (Math.abs(dur / winDur - 1) > JUZ_CLIP_TOLERANCE) return null;
+  return Math.min(dur, Math.max(0, (surahTime - win.start) * (dur / winDur)));
+}
+
 /** Backward-compatible alias for getVoiceProgressInSegment */
 export const getVoiceProgressInVerse = getVoiceProgressInSegment;
 
@@ -1219,14 +1419,84 @@ export function getRecitationTimeline(
   totalDuration: number = 0,
   reciter?: QuranReciter | null
 ): RecitationSegment[] {
+  const segments = buildRecitationTimeline(surahNumber, verses, isJuz, totalDuration, reciter);
+  if (isJuz) return segments;
+  return finalizeTimeline(segments, totalDuration, reciterHasWordTimingFor(reciter, surahNumber));
+}
+
+/**
+ * Word-sync timelines come from measured timestamps, so two guards apply:
+ *  - consecutive windows never overlap — an ayah (or prelude) ends where the
+ *    next one's voice begins, so the earlier one can't hold the screen over it;
+ *  - nothing plays past the real audio: once the file's length is known, any
+ *    ayah / word that would start after it is dropped and the last is clipped,
+ *    so no word is highlighted after the audio has ended.
+ */
+function finalizeTimeline(segments: RecitationSegment[], totalDuration: number, measured: boolean): RecitationSegment[] {
+  if (!measured) return segments;
+  let out = segments.map((sg, i) => {
+    const next = segments[i + 1];
+    return next && sg.endTime > next.startTime && next.startTime > sg.startTime ? { ...sg, endTime: next.startTime } : sg;
+  });
+  if (totalDuration > 0) {
+    out = out
+      .filter((sg) => sg.startTime < totalDuration)
+      .map((sg) =>
+        sg.endTime <= totalDuration && !(sg.words ?? []).some((w) => w.endTime > totalDuration)
+          ? { ...sg, audioEnd: totalDuration }
+          : {
+              ...sg,
+              audioEnd: totalDuration,
+              endTime: Math.min(sg.endTime, totalDuration),
+              words: (sg.words ?? [])
+                .filter((w) => w.startTime < totalDuration)
+                .map((w) => (w.endTime > totalDuration ? { ...w, endTime: totalDuration } : w)),
+              wordSegments: sg.wordSegments
+                ?.filter((w) => w.startTime < totalDuration)
+                .map((w) => (w.endTime > totalDuration ? { ...w, endTime: totalDuration } : w)),
+            }
+      );
+  }
+  return out;
+}
+
+/** An ayah's measured words for the timeline (none when it has no word timing). */
+const measuredWords = (v: AyahVerse): QuranWordTiming[] => (v.noWordTiming ? [] : v.words ?? []);
+
+/** Timeline segments of preludes recited in the reciter's own audio. */
+function embeddedPreludeSegments(preludes: EmbeddedPrelude[]): RecitationSegment[] {
+  return preludes.map((p) => {
+    const c = p.type === "istiadhah" ? CANONICAL_ISTIADHAH : CANONICAL_BISMILLAH;
+    return {
+      id: `prelude-${p.type}`,
+      type: p.type,
+      startTime: p.startTime,
+      endTime: p.endTime,
+      textArabic: c.textArabic,
+      textEnglish: c.textEnglish,
+      textTamil: c.textTamil,
+      // Measured phrase bounds only — no per-word timing is claimed.
+      words: [],
+    };
+  });
+}
+
+function buildRecitationTimeline(
+  surahNumber: number | null,
+  verses: AyahVerse[],
+  isJuz: boolean,
+  totalDuration: number,
+  reciter: QuranReciter | null | undefined
+): RecitationSegment[] {
   if (!verses || verses.length === 0) return [];
 
   const isSudais = !reciter || reciter.id === "sudais";
   // Reciters with paired Quran.com word segments carry their own accurate
-  // per-verse timestamps and word timings (overlaid in fetchSurahVerses). Every
-  // other reciter falls back to proportional ayah-level glow so that borrowed
-  // timings never desync a differently paced voice.
-  const hasOwnTiming = reciterHasWordTiming(reciter);
+  // per-verse timestamps and word timings (overlaid in fetchSurahVerses) —
+  // unless the Surah's streamed recording doesn't match them. Every other case
+  // falls back to proportional ayah-level glow so that borrowed timings never
+  // desync a differently paced voice.
+  const hasOwnTiming = reciterHasWordTimingFor(reciter, surahNumber);
 
   // 1. JUZ TRACKS (e.g. Para 01.mp3)
   if (isJuz) {
@@ -1302,9 +1572,13 @@ export function getRecitationTimeline(
     const firstStart = typeof firstVerse?.timestampFrom === "number" ? firstVerse.timestampFrom : 0;
     const segments: RecitationSegment[] = [];
 
-    // If prelude audio exists before Ayah 1 (e.g. Isti'adhah), add Isti'adhah only
-    if (firstStart >= 3.0) {
-      const istWords = hasOwnTiming ? getEffectiveWordsForText(CANONICAL_ISTIADHAH.textArabic, 0, firstStart) : [];
+    // Isti'adhah recited in the reciter's own audio before Ayah 1 (never a
+    // Bismillah here): its measured bounds, else [0 → Ayah 1 voice].
+    const own9 = hasOwnTiming ? firstVerse?.embeddedPrelude?.filter((p) => p.type === "istiadhah") : undefined;
+    if (own9 && own9.length > 0) {
+      segments.push(...embeddedPreludeSegments(own9));
+    } else if (hasOwnTiming && firstStart >= 3.0) {
+      const istWords: QuranWordTiming[] = [];
       segments.push({
         id: "prelude-istiadhah",
         type: "istiadhah",
@@ -1351,8 +1625,8 @@ export function getRecitationTimeline(
         surahNumber: 9,
         ayahNumber: v.ayahNumber,
         verseKey: v.verseKey,
-        words: hasOwnTiming ? getEffectiveWords(v) : [],
-        wordSegments: hasOwnTiming ? v.wordSegments : undefined,
+        words: hasOwnTiming ? measuredWords(v) : [],
+        wordSegments: hasOwnTiming && !v.noWordTiming ? v.wordSegments : undefined,
         video: vVideo ? { source: vVideo.videoPath } : null,
       });
     }
@@ -1383,8 +1657,8 @@ export function getRecitationTimeline(
           surahNumber: 1,
           ayahNumber: ayahNum,
           verseKey: `1:${ayahNum}`,
-          words: getEffectiveWords(v),
-          wordSegments: v.wordSegments,
+          words: measuredWords(v),
+          wordSegments: v.noWordTiming ? undefined : v.wordSegments,
           video: vVideo ? { source: vVideo.videoPath } : null,
         });
       }
@@ -1438,19 +1712,19 @@ export function getRecitationTimeline(
   // that voice so word-sync opens with the Bismillah just like every other reciter
   // (whose Bismillah comes from our dedicated prelude clip instead). Its bounds are
   // [0 → Ayah 1 voice onset] read straight from the reciter's QDC timing.
+  // Some of these recordings open with the Isti'adhah AND the Bismillah (e.g.
+  // Dosari at a Juz start): the measured bounds of each (embeddedPrelude, from
+  // the recording) become separate segments, so the Bismillah never shows
+  // while the Isti'adhah is recited.
+  const ownPrelude = hasOwnTiming ? verses[0]?.embeddedPrelude : undefined;
   if (reciterEmbedsOwnBismillah(reciter, surahNumber ?? 0)) {
-    const v1Start = verses[0]?.timestampFrom;
-    const bismillahEnd = typeof v1Start === "number" && v1Start > 1 ? v1Start : 6.0;
-    segments.push({
-      id: "prelude-bismillah",
-      type: "bismillah",
-      startTime: 0,
-      endTime: bismillahEnd,
-      textArabic: CANONICAL_BISMILLAH.textArabic,
-      textEnglish: CANONICAL_BISMILLAH.textEnglish,
-      textTamil: CANONICAL_BISMILLAH.textTamil,
-      words: getEffectiveWordsForText(CANONICAL_BISMILLAH.textArabic, 0, bismillahEnd),
-    });
+    if (ownPrelude && ownPrelude.length > 0) {
+      segments.push(...embeddedPreludeSegments(ownPrelude));
+    } else {
+      const v1Start = verses[0]?.timestampFrom;
+      const bismillahEnd = typeof v1Start === "number" && v1Start > 1 ? v1Start : 6.0;
+      segments.push(...embeddedPreludeSegments([{ type: "bismillah", startTime: 0, endTime: bismillahEnd }]));
+    }
   }
 
   for (let i = 0; i < verses.length; i++) {
@@ -1469,7 +1743,7 @@ export function getRecitationTimeline(
       currentStart = end;
     }
 
-    const shiftedWords = hasOwnTiming ? getEffectiveWords(v) : [];
+    const shiftedWords = hasOwnTiming ? measuredWords(v) : [];
     const vVideo = surahNumber && v.ayahNumber ? getAyahVideo(surahNumber, v.ayahNumber) : null;
 
     segments.push({
@@ -1484,7 +1758,7 @@ export function getRecitationTimeline(
       ayahNumber: v.ayahNumber,
       verseKey: v.verseKey,
       words: shiftedWords,
-      wordSegments: hasOwnTiming ? v.wordSegments : undefined,
+      wordSegments: hasOwnTiming && !v.noWordTiming ? v.wordSegments : undefined,
       video: vVideo ? { source: vVideo.videoPath } : null,
     });
   }

@@ -6,6 +6,9 @@
  * as referenced on surahquran.com, along with verified mp3quran.net streaming audio servers.
  */
 
+import { AUDIO_ONLY_AVAILABLE_SURAHS } from "./reciterAvailability";
+import { WORD_SYNC_UNAVAILABLE } from "./wordSyncAvailability";
+
 export interface QuranReciter {
   id: string;
   name: string;
@@ -422,7 +425,7 @@ export const QURAN_RECITERS: QuranReciter[] = [
     style: "Hafs A'n Asim · Murattal",
     country: "Oman",
     photoUrl: "https://i.pinimg.com/564x/74/7c/9a/747c9a404c24c4e604cf51f197d8b3b5.jpg",
-    audioBaseUrl: "https://server11.mp3quran.net/bals/Rewayat-Hafs-A-n-Assem/",
+    audioBaseUrl: "https://server11.mp3quran.net/hazza/",
     sourceUrl: "https://surahquran.com/English/hazzaa",
     isImam: false,
     hasAcousticWordTiming: false,
@@ -435,7 +438,7 @@ export const QURAN_RECITERS: QuranReciter[] = [
     style: "Hafs A'n Asim · Murattal",
     country: "Saudi Arabia",
     photoUrl: "https://i.pinimg.com/564x/97/3a/24/973a243e5c4c9bbca49c2c172d065cd9.jpg",
-    audioBaseUrl: "https://server16.mp3quran.net/A_mosa/Rewayat-Hafs-A-n-Assem/",
+    audioBaseUrl: "https://server14.mp3quran.net/mousa/Rewayat-Hafs-A-n-Assem/",
     sourceUrl: "https://surahquran.com/English/mosa",
     isImam: false,
     hasAcousticWordTiming: false,
@@ -744,6 +747,48 @@ export function reciterHasWordTiming(reciter?: QuranReciter | null): boolean {
 }
 
 /**
+ * Why a Word Sync reciter's timing can't be used for one Surah (null = usable).
+ * The audio at that Surah's URL is a different recording than the one its QDC
+ * timings were measured on (verified acoustically by scripts/qa), so the
+ * Surah plays audio-only instead of highlighting the wrong words.
+ */
+export function wordSyncUnavailableReason(
+  reciter: QuranReciter | null | undefined,
+  surahNumber: number | null | undefined
+): string | null {
+  if (!reciter || !surahNumber) return null;
+  return WORD_SYNC_UNAVAILABLE[reciter.id]?.[surahNumber] ?? null;
+}
+
+/**
+ * Word Sync for this reciter AND this Surah: the reciter has word timings and
+ * they match the recording streamed for the Surah. Without a Surah (Juz, or
+ * nothing playing) it is the reciter-level capability.
+ */
+export function reciterHasWordTimingFor(
+  reciter: QuranReciter | null | undefined,
+  surahNumber: number | null | undefined
+): boolean {
+  return reciterHasWordTiming(reciter) && !wordSyncUnavailableReason(reciter, surahNumber);
+}
+
+/**
+ * Whether the reciter's server really has this Surah. Audio Only reciters list
+ * their gaps in reciterAvailability.ts (checked by scripts/qa/audio-sources.cjs);
+ * Word Sync reciters stream a complete QDC master set.
+ */
+export function reciterHasSurah(reciter: QuranReciter | null | undefined, surahNumber: number): boolean {
+  if (!reciter) return false;
+  const only = AUDIO_ONLY_AVAILABLE_SURAHS[reciter.id];
+  return !only || only.includes(surahNumber);
+}
+
+/** A reciter whose server has none of the Surahs (shown as unavailable). */
+export function reciterIsUnavailable(reciter: QuranReciter | null | undefined): boolean {
+  return Boolean(reciter && AUDIO_ONLY_AVAILABLE_SURAHS[reciter.id]?.length === 0);
+}
+
+/**
  * True when the reciter's paired audio master already recites its OWN Bismillah
  * before ayah 1 of the given surah (surahs 2-114; surah 9 has no Bismillah).
  *
@@ -873,9 +918,10 @@ export function getReciterTimingCapability(
   reciter?: QuranReciter | null,
   surahNumber?: number | null
 ): ReciterTimingCapability {
-  // Word-level acoustic timing is available for every surah of any reciter that
-  // has QDC segment data paired with its quranicaudio.com master.
-  if (reciterHasWordTiming(reciter)) {
+  // Word-level acoustic timing: any reciter with QDC segment data paired with
+  // its quranicaudio.com master — except the Surahs whose streamed recording
+  // doesn't match those timings (see wordSyncUnavailableReason).
+  if (reciterHasWordTimingFor(reciter, surahNumber)) {
     return {
       mode: "EXACT_WORD_TIMING",
       hasWordTiming: true,
@@ -883,6 +929,14 @@ export function getReciterTimingCapability(
     };
   }
   const name = reciter?.displayName || reciter?.name || "Selected Reciter";
+  const why = wordSyncUnavailableReason(reciter, surahNumber);
+  if (why) {
+    return {
+      mode: "AYAH_LEVEL_FALLBACK",
+      hasWordTiming: false,
+      sourceDescription: `Word Sync unavailable for this Surah (${name}): ${why}`,
+    };
+  }
   return {
     mode: "AYAH_LEVEL_FALLBACK",
     hasWordTiming: false,

@@ -1,0 +1,2486 @@
+{
+ "summary": {
+  "generated": "2026-10-01T05:04:22.000Z",
+  "secs": 65,
+  "totals": {
+   "ayahs": 6236,
+   "words": 77430,
+   "timingSegments": 715339,
+   "wordTextMatch": 77277,
+   "wordTextMismatch": 0
+  },
+  "wordSync": {
+   "reciters": 9,
+   "wordSyncSurahs": {
+    "sudais": 107,
+    "alafasy": 109,
+    "dosari": 112,
+    "abdulbaset": 113,
+    "minshawi": 113,
+    "hussary": 114,
+    "shuraim": 114,
+    "shatri": 111,
+    "tunaiji": 110
+   },
+   "audioOnlySurahs": {
+    "sudais": [
+     3,
+     4,
+     5,
+     28,
+     29,
+     86,
+     94
+    ],
+    "alafasy": [
+     14,
+     37,
+     78,
+     82,
+     91
+    ],
+    "dosari": [
+     50,
+     92
+    ],
+    "abdulbaset": [
+     2
+    ],
+    "minshawi": [
+     13
+    ],
+    "hussary": [],
+    "shuraim": [],
+    "shatri": [
+     17,
+     41,
+     59
+    ],
+    "tunaiji": [
+     10,
+     13,
+     14,
+     72
+    ]
+   },
+   "wordsSyncedMeasured": 661932,
+   "wordsSyncedEstimated": 1613,
+   "wordsUnsynced": 4797,
+   "unsyncedReasons": {
+    "word boundaries line up with the recording only at Xs": 1555,
+    "too few word segments (under half the words)": 2652,
+    "word timings overlap the next ayah by Xs": 113,
+    "word timings overlap the previous ayah by Xs": 134,
+    "word segments displaced from the ayah": 270,
+    "timed after the recording ends": 5,
+    "no word segments in source": 47,
+    "word segments out of recitation order": 21
+   },
+   "ayahsWithoutWordTiming": 270,
+   "voiceMatchPct": 100,
+   "invalidTimingRanges": 0,
+   "transitions": {
+    "checks": 54052,
+    "failures": 0
+   },
+   "seek": {
+    "checks": 54322,
+    "failures": 0
+   }
+  },
+  "preludes": {
+   "checks": 1026,
+   "mismatches": 0
+  },
+  "timingRepairsApplied": {
+   "misaligned": 72,
+   "displaced-shift": 47,
+   "zero-based-index": 1,
+   "embedded-prelude": 77
+  },
+  "juz": {
+   "ayahsCovered": 6236,
+   "ayahsWithWordSync": 49572,
+   "voiceMatchPct": 100,
+   "reciterJuzSupport": {
+    "sudais": true,
+    "alafasy": true,
+    "maher": true,
+    "ghamdi": true,
+    "dosari": true,
+    "abdulbaset": true,
+    "minshawi": true,
+    "hussary": true,
+    "hudhaifi": true,
+    "ajmi": true,
+    "juhani": true,
+    "shuraim": true,
+    "abbad": true,
+    "shatri": true,
+    "jaber": true,
+    "tablawi": true,
+    "ayyoub": true,
+    "balilah": false,
+    "bukhatir": false,
+    "basfar": true,
+    "qatami": true,
+    "banna": true,
+    "abkar": false,
+    "yamani": false,
+    "refaat": false,
+    "akhdar": true,
+    "kurdi": false,
+    "zahrani": false,
+    "jalil": false,
+    "balushi": false,
+    "mousa": false,
+    "oosi": false,
+    "jibril": false,
+    "saleh": false,
+    "barrak": false,
+    "toure": false,
+    "tunaiji": false,
+    "jazairi": false,
+    "alzain": false,
+    "alarabi": false,
+    "muhaisni": false,
+    "lhdan": false,
+    "peshawa": false,
+    "khalaf": false,
+    "noreen": false,
+    "soufi": false,
+    "salmi": false,
+    "rayan": false,
+    "nufais": false,
+    "waer": false,
+    "shorbaji": false
+   }
+  },
+  "audioOnly": {
+   "reciters": 42,
+   "unavailableReciters": [
+    "toure",
+    "jazairi",
+    "alarabi",
+    "shorbaji"
+   ],
+   "partial": {
+    "refaat": 83,
+    "balushi": 22,
+    "barrak": 51
+   }
+  },
+  "network": {
+   "localRequests": 1249,
+   "localMissing": 0,
+   "external": 0
+  },
+  "audioSources": {
+   "wordSyncHttpFailures": 0,
+   "wordSyncDurationDrift2s": 15,
+   "audioOnlyChecked": 4788,
+   "audioOnly404": 612,
+   "audioOnlyUnavailable": {
+    "refaat": 83,
+    "balushi": 22,
+    "barrak": 51,
+    "toure": 114,
+    "jazairi": 114,
+    "alarabi": 114,
+    "shorbaji": 114
+   },
+   "juzChecked": 3684,
+   "juzHttpFailures": 0
+  },
+  "acoustic": {
+   "scanned": 1026,
+   "match": 827,
+   "inconclusive": 178,
+   "mismatch": 21,
+   "boundaries": 55098,
+   "badBoundaries": 1336
+  },
+  "perReciter": {
+   "sudais": {
+    "surahs": 114,
+    "wordSyncSurahs": 107,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 2,
+    "words": 77430,
+    "measured": 64828,
+    "estimated": 38,
+    "unsynced": 38,
+    "voiceSamples": 3112998,
+    "voiceMatch": 3112998
+   },
+   "alafasy": {
+    "surahs": 114,
+    "wordSyncSurahs": 109,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 54,
+    "words": 77430,
+    "measured": 74716,
+    "estimated": 218,
+    "unsynced": 498,
+    "voiceSamples": 5091420,
+    "voiceMatch": 5091420
+   },
+   "dosari": {
+    "surahs": 114,
+    "wordSyncSurahs": 112,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 0,
+    "words": 77430,
+    "measured": 76969,
+    "estimated": 17,
+    "unsynced": 0,
+    "voiceSamples": 4452587,
+    "voiceMatch": 4452587
+   },
+   "abdulbaset": {
+    "surahs": 114,
+    "wordSyncSurahs": 113,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 135,
+    "words": 77430,
+    "measured": 68431,
+    "estimated": 244,
+    "unsynced": 2641,
+    "voiceSamples": 4787549,
+    "voiceMatch": 4787549
+   },
+   "minshawi": {
+    "surahs": 114,
+    "wordSyncSurahs": 113,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 8,
+    "words": 77430,
+    "measured": 76431,
+    "estimated": 69,
+    "unsynced": 77,
+    "voiceSamples": 4910781,
+    "voiceMatch": 4910781
+   },
+   "hussary": {
+    "surahs": 114,
+    "wordSyncSurahs": 114,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 0,
+    "words": 77430,
+    "measured": 77406,
+    "estimated": 24,
+    "unsynced": 0,
+    "voiceSamples": 7098176,
+    "voiceMatch": 7098176
+   },
+   "shuraim": {
+    "surahs": 114,
+    "wordSyncSurahs": 114,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 19,
+    "words": 77430,
+    "measured": 77089,
+    "estimated": 52,
+    "unsynced": 289,
+    "voiceSamples": 3065017,
+    "voiceMatch": 3065017
+   },
+   "shatri": {
+    "surahs": 114,
+    "wordSyncSurahs": 111,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 39,
+    "words": 77430,
+    "measured": 73253,
+    "estimated": 370,
+    "unsynced": 1015,
+    "voiceSamples": 4058937,
+    "voiceMatch": 4058937
+   },
+   "tunaiji": {
+    "surahs": 114,
+    "wordSyncSurahs": 110,
+    "ayahs": 6236,
+    "ayahsNoWordTiming": 13,
+    "words": 77430,
+    "measured": 72809,
+    "estimated": 581,
+    "unsynced": 239,
+    "voiceSamples": 4589130,
+    "voiceMatch": 4589130
+   }
+  },
+  "failuresBySeverity": {
+   "INFO ayah-no-word-timing": 270,
+   "INFO juz-unavailable": 1
+  }
+ },
+ "failures": [
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "sudais",
+   "surah": 2,
+   "ayah": 173,
+   "detail": "word boundaries line up with the recording only at -0.64s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "sudais",
+   "surah": 39,
+   "ayah": 54,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 6,
+   "ayah": 61,
+   "detail": "word timings overlap the next ayah by 2.9s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 6,
+   "ayah": 62,
+   "detail": "word timings overlap the previous ayah by 2.9s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 6,
+   "ayah": 92,
+   "detail": "word timings overlap the next ayah by 21.5s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 6,
+   "ayah": 93,
+   "detail": "word timings overlap the previous ayah by 21.5s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 7,
+   "ayah": 88,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 13,
+   "ayah": 32,
+   "detail": "word boundaries line up with the recording only at +0.7s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 13,
+   "ayah": 33,
+   "detail": "word boundaries line up with the recording only at +0.7s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 18,
+   "ayah": 6,
+   "detail": "word boundaries line up with the recording only at -1.26s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 18,
+   "ayah": 7,
+   "detail": "word boundaries line up with the recording only at -1.26s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 24,
+   "ayah": 46,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 24,
+   "ayah": 47,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 29,
+   "ayah": 10,
+   "detail": "word timings overlap the next ayah by 50.1s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 29,
+   "ayah": 11,
+   "detail": "word timings overlap the previous ayah by 50.1s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 35,
+   "ayah": 19,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 38,
+   "ayah": 52,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 53,
+   "ayah": 3,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 53,
+   "ayah": 5,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 53,
+   "ayah": 6,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 53,
+   "ayah": 8,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 53,
+   "ayah": 22,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 56,
+   "ayah": 5,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 56,
+   "ayah": 26,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 57,
+   "ayah": 10,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 60,
+   "ayah": 11,
+   "detail": "word timings overlap the next ayah by 5.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 60,
+   "ayah": 12,
+   "detail": "word timings overlap the previous ayah by 5.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 60,
+   "ayah": 13,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 69,
+   "ayah": 17,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 70,
+   "ayah": 17,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 80,
+   "ayah": 2,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 80,
+   "ayah": 3,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 80,
+   "ayah": 6,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 86,
+   "ayah": 16,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 86,
+   "ayah": 17,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 87,
+   "ayah": 5,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 87,
+   "ayah": 6,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 87,
+   "ayah": 8,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 87,
+   "ayah": 11,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 89,
+   "ayah": 2,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 89,
+   "ayah": 7,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 89,
+   "ayah": 24,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 89,
+   "ayah": 30,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 92,
+   "ayah": 2,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 92,
+   "ayah": 3,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 92,
+   "ayah": 4,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 92,
+   "ayah": 7,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 92,
+   "ayah": 14,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 92,
+   "ayah": 17,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 93,
+   "ayah": 6,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 93,
+   "ayah": 7,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 93,
+   "ayah": 9,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 94,
+   "ayah": 8,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 99,
+   "ayah": 3,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 105,
+   "ayah": 4,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "alafasy",
+   "surah": 111,
+   "ayah": 3,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 89,
+   "detail": "word boundaries line up with the recording only at -0.66s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 93,
+   "detail": "word boundaries line up with the recording only at -0.68s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 94,
+   "detail": "word boundaries line up with the recording only at -0.68s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 102,
+   "detail": "word boundaries line up with the recording only at -0.74s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 129,
+   "detail": "word boundaries line up with the recording only at -0.9s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 134,
+   "detail": "word boundaries line up with the recording only at -0.92s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 135,
+   "detail": "word boundaries line up with the recording only at -0.92s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 142,
+   "detail": "word boundaries line up with the recording only at -1.18s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 143,
+   "detail": "word boundaries line up with the recording only at -1.18s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 168,
+   "detail": "word boundaries line up with the recording only at -0.64s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 4,
+   "ayah": 169,
+   "detail": "word boundaries line up with the recording only at -0.64s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 5,
+   "ayah": 105,
+   "detail": "word boundaries line up with the recording only at -0.78s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 5,
+   "ayah": 106,
+   "detail": "word boundaries line up with the recording only at -0.78s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 9,
+   "ayah": 53,
+   "detail": "word boundaries line up with the recording only at -0.64s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 9,
+   "ayah": 54,
+   "detail": "word boundaries line up with the recording only at -0.64s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 9,
+   "ayah": 68,
+   "detail": "word boundaries line up with the recording only at -0.68s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 9,
+   "ayah": 69,
+   "detail": "word boundaries line up with the recording only at -0.68s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 9,
+   "ayah": 70,
+   "detail": "word boundaries line up with the recording only at -1.3s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 11,
+   "ayah": 28,
+   "detail": "word boundaries line up with the recording only at -1.36s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 16,
+   "ayah": 70,
+   "detail": "word boundaries line up with the recording only at +1.36s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 27,
+   "ayah": 89,
+   "detail": "word boundaries line up with the recording only at -0.7s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 27,
+   "ayah": 90,
+   "detail": "word boundaries line up with the recording only at -0.7s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 30,
+   "ayah": 48,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 30,
+   "ayah": 53,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 30,
+   "ayah": 54,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 30,
+   "ayah": 56,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 30,
+   "ayah": 58,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 4,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 9,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 14,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 20,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 22,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 23,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 24,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 26,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 32,
+   "ayah": 27,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 2,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 4,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 5,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 6,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 7,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 8,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 9,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 13,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 17,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 18,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 19,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 20,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 22,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 23,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 25,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 26,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 27,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 30,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 32,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 33,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 34,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 35,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 36,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 37,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 38,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 39,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 40,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 43,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 50,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 53,
+   "detail": "word boundaries line up with the recording only at +0.74s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 56,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 59,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 60,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 63,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 69,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 71,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 33,
+   "ayah": 72,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 1,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 8,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 9,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 11,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 12,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 13,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 14,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 15,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 18,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 19,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 23,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 31,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 32,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 33,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 37,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 43,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 45,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 50,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 53,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 34,
+   "ayah": 54,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 4,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 8,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 10,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 12,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 14,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 15,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 18,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 26,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 27,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 28,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 29,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 31,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 32,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 33,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 34,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 35,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 36,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 39,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 40,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 41,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 42,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 44,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 35,
+   "ayah": 45,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 12,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 30,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 40,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 52,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 68,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 69,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 73,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 76,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 78,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 36,
+   "ayah": 81,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 37,
+   "ayah": 102,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 37,
+   "ayah": 105,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 37,
+   "ayah": 138,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 75,
+   "ayah": 6,
+   "detail": "word boundaries line up with the recording only at -0.98s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 75,
+   "ayah": 7,
+   "detail": "word boundaries line up with the recording only at -0.98s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 75,
+   "ayah": 8,
+   "detail": "word boundaries line up with the recording only at -0.98s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 75,
+   "ayah": 9,
+   "detail": "word boundaries line up with the recording only at -0.98s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 75,
+   "ayah": 10,
+   "detail": "word boundaries line up with the recording only at -0.98s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "abdulbaset",
+   "surah": 75,
+   "ayah": 11,
+   "detail": "word boundaries line up with the recording only at -0.98s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 10,
+   "ayah": 36,
+   "detail": "word boundaries line up with the recording only at -0.68s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 10,
+   "ayah": 37,
+   "detail": "word boundaries line up with the recording only at -0.68s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 23,
+   "ayah": 1,
+   "detail": "word boundaries line up with the recording only at -1.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 23,
+   "ayah": 2,
+   "detail": "word boundaries line up with the recording only at -1.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 23,
+   "ayah": 3,
+   "detail": "word boundaries line up with the recording only at -1.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 23,
+   "ayah": 4,
+   "detail": "word boundaries line up with the recording only at -1.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 23,
+   "ayah": 5,
+   "detail": "word boundaries line up with the recording only at -1.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "minshawi",
+   "surah": 66,
+   "ayah": 12,
+   "detail": "word boundaries line up with the recording only at -0.88s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 3,
+   "ayah": 157,
+   "detail": "word boundaries line up with the recording only at -1.48s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 3,
+   "ayah": 158,
+   "detail": "word boundaries line up with the recording only at -1.48s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 12,
+   "ayah": 50,
+   "detail": "word timings overlap the next ayah by 4.4s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 12,
+   "ayah": 51,
+   "detail": "word timings overlap the previous ayah by 4.4s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 12,
+   "ayah": 75,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 12,
+   "ayah": 76,
+   "detail": "no word segments in source"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 17,
+   "ayah": 80,
+   "detail": "word boundaries line up with the recording only at +1.42s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 17,
+   "ayah": 81,
+   "detail": "word boundaries line up with the recording only at +1.42s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 20,
+   "ayah": 133,
+   "detail": "word boundaries line up with the recording only at +1.12s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 20,
+   "ayah": 134,
+   "detail": "word boundaries line up with the recording only at +1.12s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 40,
+   "ayah": 38,
+   "detail": "word boundaries line up with the recording only at -1.24s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 40,
+   "ayah": 39,
+   "detail": "word boundaries line up with the recording only at -1.24s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 40,
+   "ayah": 40,
+   "detail": "word boundaries line up with the recording only at -1.24s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 40,
+   "ayah": 64,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 57,
+   "ayah": 7,
+   "detail": "word boundaries line up with the recording only at +1.3s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 57,
+   "ayah": 8,
+   "detail": "word boundaries line up with the recording only at +1.3s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 78,
+   "ayah": 40,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 91,
+   "ayah": 14,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shuraim",
+   "surah": 91,
+   "ayah": 15,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 2,
+   "ayah": 232,
+   "detail": "word boundaries line up with the recording only at +0.9s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 2,
+   "ayah": 259,
+   "detail": "word boundaries line up with the recording only at +0.62s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 4,
+   "ayah": 12,
+   "detail": "word boundaries line up with the recording only at +1.16s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 4,
+   "ayah": 43,
+   "detail": "word boundaries line up with the recording only at +1.18s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 4,
+   "ayah": 90,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 4,
+   "ayah": 163,
+   "detail": "word boundaries line up with the recording only at +1.38s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 5,
+   "ayah": 116,
+   "detail": "word boundaries line up with the recording only at +0.9s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 5,
+   "ayah": 117,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 6,
+   "ayah": 58,
+   "detail": "word boundaries line up with the recording only at +0.88s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 6,
+   "ayah": 59,
+   "detail": "word boundaries line up with the recording only at +0.88s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 7,
+   "ayah": 40,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 7,
+   "ayah": 50,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 7,
+   "ayah": 51,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 7,
+   "ayah": 57,
+   "detail": "word boundaries line up with the recording only at +0.88s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 7,
+   "ayah": 75,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 7,
+   "ayah": 163,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 10,
+   "ayah": 24,
+   "detail": "word boundaries line up with the recording only at -1.04s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 10,
+   "ayah": 26,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 10,
+   "ayah": 56,
+   "detail": "word boundaries line up with the recording only at +0.74s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 10,
+   "ayah": 57,
+   "detail": "word boundaries line up with the recording only at +0.74s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 12,
+   "ayah": 6,
+   "detail": "word boundaries line up with the recording only at +0.82s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 12,
+   "ayah": 24,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 16,
+   "ayah": 92,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 22,
+   "ayah": 52,
+   "detail": "word segments displaced from the ayah"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 25,
+   "ayah": 68,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 26,
+   "ayah": 110,
+   "detail": "no word segments in source"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 33,
+   "ayah": 9,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 34,
+   "ayah": 19,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 35,
+   "ayah": 11,
+   "detail": "word boundaries line up with the recording only at +0.88s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 35,
+   "ayah": 32,
+   "detail": "word boundaries line up with the recording only at +0.8s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 37,
+   "ayah": 66,
+   "detail": "no word segments in source"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 37,
+   "ayah": 67,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 37,
+   "ayah": 100,
+   "detail": "no word segments in source"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 37,
+   "ayah": 101,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 40,
+   "ayah": 21,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 48,
+   "ayah": 15,
+   "detail": "word boundaries line up with the recording only at +1.16s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 50,
+   "ayah": 21,
+   "detail": "word boundaries line up with the recording only at +0.84s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 50,
+   "ayah": 22,
+   "detail": "word boundaries line up with the recording only at +0.84s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 60,
+   "ayah": 10,
+   "detail": "word boundaries line up with the recording only at +1.2s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 3,
+   "ayah": 44,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 7,
+   "ayah": 143,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 12,
+   "ayah": 101,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 15,
+   "ayah": 90,
+   "detail": "word segments out of recitation order"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 20,
+   "ayah": 111,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 28,
+   "ayah": 78,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 30,
+   "ayah": 38,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 33,
+   "ayah": 51,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 34,
+   "ayah": 50,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 40,
+   "ayah": 78,
+   "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 64,
+   "ayah": 13,
+   "detail": "word segments out of recitation order"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 86,
+   "ayah": 2,
+   "detail": "word segments out of recitation order"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "surah": 105,
+   "ayah": 4,
+   "detail": "word segments out of recitation order"
+  },
+  {
+   "category": "juz-unavailable",
+   "severity": "INFO",
+   "reciter": "tunaiji",
+   "detail": "no per-ayah recording: Juz shows an unavailable notice (no substitute voice)"
+  }
+ ]
+}
