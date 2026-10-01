@@ -774,6 +774,32 @@ export function ImmersiveHomeClient({
   const readingSurah = readingMode && !isJuz ? activeSurah?.number ?? null : null;
   const readingActive = readingSurah !== null || readingJuz !== null;
   const readingKey = readingJuz ? `juz-${readingJuz.id}` : readingSurah !== null ? `surah-${readingSurah}` : null;
+
+  // Audio Only playback (no word sync for this reciter × Surah / Juz) shows no
+  // verse on the scene, so open the full text in reading mode by default —
+  // once per reciter × track, so turning it off sticks until the track changes.
+  // Closed again on its own when the playback gains word sync.
+  const audioOnlyKey = !hasPlayed
+    ? null
+    : isJuz
+    ? activeJuz && !(reciterHasWordTiming(selectedReciter) && player.ayahSequence)
+      ? `${selectedReciter.id}:juz-${activeJuz.id}`
+      : null
+    : activeSurah && !reciterHasWordTimingFor(selectedReciter, activeSurah.number)
+    ? `${selectedReciter.id}:surah-${activeSurah.number}`
+    : null;
+  const audioOnlyRef = useRef<{ key: string | null; auto: boolean }>({ key: null, auto: false });
+  useEffect(() => {
+    const prev = audioOnlyRef.current;
+    if (audioOnlyKey === prev.key) return;
+    if (audioOnlyKey) {
+      setReadingMode(true);
+      audioOnlyRef.current = { key: audioOnlyKey, auto: true };
+    } else {
+      if (prev.auto) setReadingMode(false);
+      audioOnlyRef.current = { key: null, auto: false };
+    }
+  }, [audioOnlyKey]);
   // A Juz's ayahs, and the Surah-by-Surah ranges the reader shows.
   const juzPairs = useMemo(() => (readingJuz ? getJuzAyahPairs(readingJuz.id) : []), [readingJuz]);
   const readingRanges = useMemo<ReadingRange[]>(() => {
@@ -790,8 +816,9 @@ export function ImmersiveHomeClient({
     return out;
   }, [readingSurah, juzPairs]);
   // The recited ayah. Juz: only a per-ayah Juz knows it (Maher's full-Juz file doesn't).
+  // Audio Only Surah: no timings to place the ayah, so none is lit.
   const readingAyah = readingSurah !== null
-    ? player.isPrelude || !currentVerse ? null : { surah: readingSurah, ayah: currentVerse.ayahNumber }
+    ? player.isPrelude || !currentVerse || audioOnlyKey ? null : { surah: readingSurah, ayah: currentVerse.ayahNumber }
     : player.ayahSequence && !player.ayahSequence.preType && juzPairs[player.ayahSequence.index]
     ? { surah: juzPairs[player.ayahSequence.index][0], ayah: juzPairs[player.ayahSequence.index][1] }
     : null;
