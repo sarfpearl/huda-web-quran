@@ -400,7 +400,7 @@ export function TopicPickerModal({
                   )}
                   <div className="min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
-                      {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Quran"}
+                      {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Listen & Read"}
                     </span>
                     <h3 className="text-xl font-black text-white tracking-tight">
                       {isFavourites ? "Favourites" : showAbout ? "About HuDa" : "Choose a Surah or Juz"}
