@@ -21,6 +21,7 @@ import {
   getReciterAyah1TrimOffset,
   PRELUDE_AUDIO,
 } from "@/lib/data/service";
+import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { getSessionId } from "@/lib/audio/session";
 import { loadYouTubeIframeApi } from "@/lib/youtube/iframe-api";
 
@@ -155,6 +156,25 @@ function writePosition(bayanId: string, seconds: number) {
 // <audio> on iOS (see unlockStandby).
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
+
+/** The unavailable-Surah message for a Surah track its reciter lacks, else null. */
+function surahMissingFor(bayan: BayanWithRelations): string | null {
+  if (!isSurahTrackId(bayan.id)) return null;
+  const num = Number(bayan.id.replace(SURAH_TRACK_ID_PREFIX, ""));
+  const reciter = resolveActiveReciter(bayan);
+  if (reciterHasSurah(reciter, num)) return null;
+  return `${bayan.title} isn't available in ${reciter.displayName}'s recordings. Choose another reciter.`;
+}
+
+/** The next / previous Surah (wrapping 114 ↔ 1) the reciter's server has. */
+function stepAvailableSurah(reciter: ReturnType<typeof resolveActiveReciter>, from: number, dir: 1 | -1): number {
+  let n = from;
+  for (let i = 0; i < 114; i++) {
+    n = dir > 0 ? (n >= 114 ? 1 : n + 1) : n <= 1 ? 114 : n - 1;
+    if (reciterHasSurah(reciter, n)) return n;
+  }
+  return dir > 0 ? (from >= 114 ? 1 : from + 1) : from <= 1 ? 114 : from - 1;
+}
 
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
   // The element in use. A per-ayah sequence alternates between A and B: the
@@ -358,6 +378,23 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
    */
   const loadCurrent = useCallback(
     async (bayan: BayanWithRelations, autoplay: boolean) => {
+      // A Surah the reciter's server doesn't have (some Audio Only reciters
+      // publish only part of the Quran): say so instead of loading a 404 —
+      // and never swap in another reciter's voice.
+      const missing = surahMissingFor(bayan);
+      if (missing) {
+        pendingStartAtRef.current = null;
+        ayahSeqRef.current = null;
+        setAyahSequence(null);
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.removeAttribute("src");
+        }
+        setIsPlaying(false);
+        setIsLoading(false);
+        setError(missing);
+        return;
+      }
       const forcedStart = pendingStartAtRef.current;
       // A function start resolves against the real duration on metadata; until
       // then use the track's nominal duration so the UI shows the right ayah.
@@ -1107,8 +1144,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     if (current && isSurahTrackId(current.id)) {
       const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
-      const nextNum = num >= 114 ? 1 : num + 1;
       const activeReciter = resolveActiveReciter(current);
+      const nextNum = stepAvailableSurah(activeReciter, num, 1);
       const surahTracks = getSurahTracksForReciter(activeReciter);
       const nextTrack = surahTracks[nextNum - 1];
       if (nextTrack) {
@@ -1151,8 +1188,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     if (current && isSurahTrackId(current.id)) {
       const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
-      const prevNum = num <= 1 ? 114 : num - 1;
       const activeReciter = resolveActiveReciter(current);
+      const prevNum = stepAvailableSurah(activeReciter, num, -1);
       const surahTracks = getSurahTracksForReciter(activeReciter);
       const prevTrack = surahTracks[prevNum - 1];
       if (prevTrack) {

@@ -23,8 +23,8 @@ import {
 } from "@/lib/data/quranGlyphs";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import SurahBanner from "./SurahBanner";
-import { BookmarkIcon, CloseIcon } from "@/components/ui/Icon";
-import { isSajdahWord } from "@/lib/data/sajdah";
+import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
+import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 
@@ -55,8 +55,8 @@ interface ReadingViewProps {
   onSeekWord?: (surah: number, ayah: number, startTime: number) => void;
   /** Mushaf page at the top of the view, as the reader scrolls. */
   onVisiblePageChange?: (page: number) => void;
-  /** Bump `n` to scroll to `page` (page steps that can't move the audio). */
-  scrollToPage?: { page: number; n: number } | null;
+  /** Bump `n` to open `page` at the top of the view (a page step). */
+  scrollToPage?: { page: number; n: number; at: number } | null;
   /** Ayah text size, × the default (the reader's text-size setting). */
   textScale?: number;
   /** Recitation running (the recited ayah then counts as read). */
@@ -98,6 +98,8 @@ const hasBismillah = (s: number) => s !== 1 && s !== 9;
 type Ctx = "prev" | "cur" | "next";
 type Part = { ref: AyahRef; ctx: Ctx; page: number; from: number; to: number; end: boolean };
 type Item = { kind: "head"; surah: number; ctx: Ctx; page: number } | { kind: "part"; part: Part };
+/** A page opened by a page step sits this far down: just clear of the faded top edge. */
+const PAGE_TOP_PX = 26;
 
 /**
  * Reading mode (like Quran.com's "Reading · Arabic"), on the home scene: the
@@ -326,6 +328,14 @@ export function ReadingView({
   // (drag / wheel, not a tap) pauses following for a few seconds.
   const activeKey = active ? `${active.surah}:${active.ayah}` : null;
   const userScrollAtRef = useRef(0);
+  // Scrolled away by hand: after 7 s left alone, the view glides back to the
+  // recited word (it used to jump there after 4 s); seeking returns at once.
+  const awayRef = useRef(false);
+  const IDLE_MS = 7000;
+  // The page a page step opened, held at the top while its first lines are recited.
+  const pinnedPageRef = useRef<number | null>(null);
+  const doneStepRef = useRef<number | null>(null);
+  const [idleTick, setIdleTick] = useState(0);
   // Teleprompter-style follow (followScroll): the aim point is the recited
   // word's line plus how far along that line the word sits, so the view
   // drifts on with the recitation and the next line is already arriving as
@@ -333,22 +343,54 @@ export function ReadingView({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    let idle: ReturnType<typeof setTimeout> | undefined;
     const mark = () => {
       userScrollAtRef.current = Date.now();
+      awayRef.current = true;
       stopFollow(el);
+      // Left alone: go back even if no new word starts right then.
+      clearTimeout(idle);
+      idle = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS + 50);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) mark();
+    };
+    // A finger down stops a glide under it; only a drag counts as scrolling
+    // (a tap is a seek).
+    const hold = () => stopFollow(el);
+    // Tapping a word / ayah seeks: follow from there.
+    const seek = () => (awayRef.current = false);
     el.addEventListener("touchmove", mark, { passive: true });
     el.addEventListener("wheel", mark, { passive: true });
+    el.addEventListener("touchstart", hold, { passive: true });
+    el.addEventListener("click", seek);
+    window.addEventListener("keydown", onKey);
     return () => {
       el.removeEventListener("touchmove", mark);
       el.removeEventListener("wheel", mark);
+      el.removeEventListener("touchstart", hold);
+      el.removeEventListener("click", seek);
+      window.removeEventListener("keydown", onKey);
+      clearTimeout(idle);
       stopFollow(el);
     };
   }, []);
+  const prevActiveRef = useRef<AyahRef | null>(null);
+  useEffect(() => {
+    // The recitation moved other than on to the next ayah (a seek, Prev /
+    // Next): follow it wherever it is.
+    const prev = prevActiveRef.current;
+    prevActiveRef.current = active;
+    if (active && prev) {
+      const n = nextRef(prev);
+      const same = prev.surah === active.surah && prev.ayah === active.ayah;
+      if (!same && !(n && n.surah === active.surah && n.ayah === active.ayah)) awayRef.current = false;
+    }
+  }, [activeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !activeKey || !pages) return;
-    if (Date.now() - userScrollAtRef.current < 4000) return;
+    if (Date.now() - userScrollAtRef.current < IDLE_MS) return;
     const ayah = el.querySelector<HTMLElement>(`[data-key="${activeKey}"]`);
     // Before its first word (or without word timing) aim at the ayah's first
     // word, not the ayah box: an ayah starting mid-line otherwise pulled the
@@ -358,13 +400,27 @@ export function ReadingView({
     );
     const target = word || ayah;
     if (!target) return;
+    // Only while reciting: stopped, the reader stays wherever they went.
+    const glide = awayRef.current;
+    if (glide && !playing) return;
+    awayRef.current = false;
     const para = word?.closest("p");
     const along = word && para ? alongLine(word, para.querySelectorAll<HTMLElement>("[data-word-idx]")) : 0;
+    // A page stepped to (« ») opens at its top, as a turned Mushaf page — not
+    // with the previous page's foot above its first ayah — until the
+    // recitation reaches the third-way line and following takes over.
+    const section = target.closest<HTMLElement>("[data-page]");
+    if (pinnedPageRef.current !== null && Number(section?.dataset.page) !== pinnedPageRef.current)
+      pinnedPageRef.current = null;
+    // A third of the way down: clear of the faded top edge, with the lines
+    // still to come in view below.
     followScroll(el, () => {
       const box = el.getBoundingClientRect();
-      return el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.3;
-    });
-  }, [activeKey, activeWordIndex, pages]);
+      const aim = el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
+      if (pinnedPageRef.current === null || !section) return aim;
+      return Math.max(aim, el.scrollTop + section.getBoundingClientRect().top - box.top - PAGE_TOP_PX);
+    }, glide);
+  }, [activeKey, activeWordIndex, pages, idleTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Last read: where reading stopped before this view opened (a snapshot, so
   // it doesn't chase the reader); the position saved for next time is the
@@ -413,6 +469,22 @@ export function ReadingView({
   // bookmark itself is on screen.
   const [continueHidden, setContinueHidden] = useState(false);
   const [targetInView, setTargetInView] = useState(true);
+  const continueUp = Boolean(target) && !isMark && !continueHidden && Boolean(pages);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !continueUp) return;
+    const timer = setTimeout(() => setContinueHidden(true), 12000);
+    const from = el.scrollTop;
+    const onScroll = () => {
+      if (Date.now() - userScrollAtRef.current < 1000 && Math.abs(el.scrollTop - from) > el.clientHeight / 4)
+        setContinueHidden(true);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [continueUp]);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !pages) return;
@@ -425,15 +497,19 @@ export function ReadingView({
     io.observe(ayah);
     return () => io.disconnect();
   }, [pages, targetKey]);
+  // Kept mounted once dismissed so it fades out instead of vanishing.
+  const continueFaded = !isMark && continueHidden;
   const showContinue =
     Boolean(target) &&
-    (isMark || !continueHidden) &&
     (targetHere ? Boolean(pages) && !targetInView : Boolean(isMark ? onOpenMark : onOpenAyah)) &&
     targetKey !== activeKey;
   const goToAyah = (r: AyahRef) => {
     const el = scrollRef.current;
     if (!el) return;
     stopFollow(el);
+    // Reading on from there: the recitation (if any) doesn't pull the view back.
+    userScrollAtRef.current = Date.now();
+    awayRef.current = true;
     el.querySelector<HTMLElement>(`[data-key="${r.surah}:${r.ayah}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
   const handleContinue = () => {
@@ -443,12 +519,21 @@ export function ReadingView({
     else if (isMark) onOpenMark?.();
     else onOpenAyah?.(target.surah, target.ayah);
   };
-  // Page steps that can't move the audio scroll the page into view instead.
+  // A page step (« » / the picker) opens that page at the top of the view,
+  // below the faded edge; the recitation following keeps it there (above).
   useEffect(() => {
-    if (!scrollToPage || !pages) return;
-    scrollRef.current
-      ?.querySelector<HTMLElement>(`[data-page="${scrollToPage.page}"]`)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    const el = scrollRef.current;
+    // Only a fresh step: a Surah's view opening later (reading mode reopened)
+    // must not jump back to an old one.
+    if (!scrollToPage || !pages || !el || Date.now() - scrollToPage.at > 8000) return;
+    if (doneStepRef.current === scrollToPage.n) return;
+    const node = el.querySelector<HTMLElement>(`[data-page="${scrollToPage.page}"]`);
+    if (!node) return;
+    doneStepRef.current = scrollToPage.n;
+    pinnedPageRef.current = scrollToPage.page;
+    awayRef.current = false;
+    const top = el.scrollTop + node.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
+    el.scrollTo({ top, behavior: "smooth" });
   }, [scrollToPage?.n, pages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A page switching between text and glyphs (or a new text size) changes
@@ -466,6 +551,31 @@ export function ReadingView({
     anchorRef.current = { page: a.page, top: node.getBoundingClientRect().top };
   }, [loadedPages, textScale]);
 
+  // The view ends just above the player's frame, measured: the fixed 9.5rem
+  // left the last lines under it (and it grows with the expanded player).
+  useEffect(() => {
+    const el = scrollRef.current;
+    const frame = document.querySelector<HTMLElement>("[data-player-frame]");
+    const host = el?.parentElement;
+    if (!el || !frame || !host) return;
+    const fit = () => {
+      const f = frame.getBoundingClientRect();
+      if (!f.height) return el.style.removeProperty("bottom");
+      el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(frame);
+    ro.observe(host);
+    frame.addEventListener("transitionend", fit);
+    window.addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      frame.removeEventListener("transitionend", fit);
+      window.removeEventListener("resize", fit);
+    };
+  }, []);
+
   // Page shown in the player strip = the page still visible at the top of the
   // view (reading along in one's own voice, not the audio).
   const pageCbRef = useRef(onVisiblePageChange);
@@ -482,17 +592,28 @@ export function ReadingView({
       clearTimeout(timer);
       timer = setTimeout(() => {
         // A line's worth below the faded top edge.
-        const top = el.getBoundingClientRect().top + 40;
+        const box = el.getBoundingClientRect();
+        const top = box.top + 40;
+        // Where the eye reads (the line recitation is kept on): the page shown
+        // in the player turns over as the next page's text reaches it, not
+        // only once the last one has left the top edge.
+        const line = box.top + box.height * 0.35;
         let page = pages[0].page;
+        let reading = page;
+        let found = false;
         for (const node of el.querySelectorAll<HTMLElement>("[data-page]")) {
           const b = node.getBoundingClientRect();
-          if (b.bottom > top) {
+          if (!found && b.bottom > top) {
             page = Number(node.dataset.page);
             anchorRef.current = { page, top: b.top };
+            found = true;
+          }
+          if (b.bottom > line) {
+            reading = Number(node.dataset.page);
             break;
           }
         }
-        pageCbRef.current?.(page);
+        pageCbRef.current?.(reading);
         setViewPage(page);
         // The first ayah still showing — where reading is, when scrolled by hand.
         for (const node of el.querySelectorAll<HTMLElement>("[data-key]")) {
@@ -500,17 +621,25 @@ export function ReadingView({
           const [s, a] = (node.dataset.key ?? "").split(":").map(Number);
           if (!s || !a) break;
           ayahCbRef.current?.({ surah: s, ayah: a });
-          if (Date.now() - userScrollAtRef.current < 4000) saveLastRead(s, a);
+          if (Date.now() - userScrollAtRef.current < IDLE_MS) saveLastRead(s, a);
           break;
         }
       }, 80);
     };
+    // The anchor follows every scroll: one settled 80ms earlier was stale
+    // mid-scroll, and a page's glyphs loading then pulled the view back.
+    const track = () => {
+      const a = anchorRef.current;
+      const node = a && el.querySelector<HTMLElement>(`[data-page="${a.page}"]`);
+      if (a && node) a.top = node.getBoundingClientRect().top;
+      report();
+    };
     report();
-    el.addEventListener("scroll", report, { passive: true });
+    el.addEventListener("scroll", track, { passive: true });
     window.addEventListener("resize", report);
     return () => {
       clearTimeout(timer);
-      el.removeEventListener("scroll", report);
+      el.removeEventListener("scroll", track);
       window.removeEventListener("resize", report);
     };
   }, [pages]);
@@ -601,19 +730,39 @@ export function ReadingView({
             </span>
           )}
           {words}
-          {p.end &&
-            (g?.e && loadedPages.has(g.e[1]) && pageFontReady(g.e[1]) ? (
-              <span aria-label={`Ayah ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
-                {g.e[0]}
-              </span>
-            ) : (
+          {/* Icon, ayah number and « Sajdah » keep to one line. */}
+          <span className="whitespace-nowrap">
+            {/* Ayah of prostration: the Sajdah icon, in place of the font's ۩. */}
+            {p.end && isSajdah(ref.surah, ref.ayah) && (
+              <PrayerRugIcon
+                role="img"
+                aria-label="Sajdah"
+                className="ml-2 mr-4 inline-block align-[-0.12em] text-[0.95em] text-amber-300 select-none"
+              />
+            )}
+            {p.end &&
+              (g?.e && loadedPages.has(g.e[1]) && pageFontReady(g.e[1]) ? (
+                <span aria-label={`Ayah ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
+                  {g.e[0]}
+                </span>
+              ) : (
+                <span
+                  aria-label={`Ayah ${ref.ayah}`}
+                  className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+                >
+                  {toArabicNumerals(ref.ayah)}
+                </span>
+              ))}
+            {p.end && isSajdah(ref.surah, ref.ayah) && (
               <span
-                aria-label={`Ayah ${ref.ayah}`}
-                className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+                dir="ltr"
+                aria-hidden="true"
+                className="ml-2 mr-0.5 inline-block rounded-full bg-amber-300/25 px-3 py-1.5 align-middle [font-family:var(--font-poppins),Poppins,system-ui,sans-serif] text-[11px] sm:text-xs font-semibold leading-none text-amber-300 select-none [letter-spacing:0]"
               >
-                {toArabicNumerals(ref.ayah)}
+                Sajdah
               </span>
-            ))}
+            )}
+          </span>
         </span>{" "}
       </Fragment>
     );
@@ -687,9 +836,9 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain [mask-image:linear-gradient(to_bottom,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
+        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]"
       >
-        <div className="mx-auto max-w-4xl px-4 sm:px-8 py-8 min-h-full flex flex-col justify-center">
+        <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (
             <p className="py-16 text-center text-sm text-sand-200/70">This couldn&apos;t be loaded right now.</p>
           ) : !pages ? (
@@ -718,7 +867,10 @@ export function ReadingView({
 
       {/* « Continue reading » */}
       {showContinue && target && (
-        <div className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4">
+        <div
+          aria-hidden={continueFaded || undefined}
+          className={`pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4 transition-[opacity,visibility] duration-500 ${continueFaded ? "opacity-0 invisible" : ""}`}
+        >
           <div className="pointer-events-auto flex items-center rounded-full border border-amber-300/40 bg-black/45 backdrop-blur-md text-sand-50 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
             <button
               type="button"

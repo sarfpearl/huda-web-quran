@@ -962,7 +962,7 @@ export function PlayerStatsFrame({
     "flex items-center gap-1.5 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
 
   return (
-    <div className="relative max-w-full">
+    <div data-player-frame className="relative max-w-full">
       {/* View count details — outside the frame: a backdrop-filter inside another
           backdrop-filter can't blur what lies behind the outer one. */}
       <AnimatePresence>

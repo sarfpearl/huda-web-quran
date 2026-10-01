@@ -22,3 +22,6 @@ next-env.d.ts
 scratch/
 *.bak
 
+
+# QA audio envelopes (scripts/qa/voice-match.cjs)
+/.qa-cache/

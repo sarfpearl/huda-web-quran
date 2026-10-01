@@ -100,6 +100,33 @@ export function glyphInkPadding(code: string, page: number): React.CSSProperties
   return style;
 }
 
+/**
+ * The Rub el Hizb mark (۞) opening a quarter's first word is its own glyph
+ * in that word's code (“ﲱ ﲲ” = ۞ + the word), drawn as a star before the
+ * ayah: left out, glyph and text alike.
+ */
+function withoutHizbMark(v: GlyphVerse): GlyphVerse {
+  const first = v.w[0];
+  if (!first || !first[2].startsWith("\u06DE")) return v;
+  const [code, page, text] = first;
+  // The mark's glyph comes first, mostly space-separated (4 words run it on).
+  const rest = code.includes(" ") ? code.slice(code.indexOf(" ") + 1) : code.slice(1);
+  const word: GlyphWord = [rest, page, text.replace(/^\u06DE\s*/, "")];
+  return { ...v, w: [word, ...v.w.slice(1)] };
+}
+
+/**
+ * The Sajdah mark (۩) ending an ayah of prostration is its word's last glyph
+ * (all 15): left out, glyph and text — the app draws its own Sajdah icon.
+ */
+function withoutSajdahMark(v: GlyphVerse): GlyphVerse {
+  const last = v.w[v.w.length - 1];
+  if (!last || !last[2].includes("\u06E9")) return v;
+  const [code, page, text] = last;
+  const word: GlyphWord = [code.slice(0, -1).trimEnd(), page, text.replace(/\s*\u06E9/, "")];
+  return { ...v, w: [...v.w.slice(0, -1), word] };
+}
+
 const surahCache = new Map<number, Promise<GlyphVerse[] | null>>();
 
 /** Glyph words of every ayah of a surah, or null when unavailable. */
@@ -108,6 +135,7 @@ export function fetchSurahGlyphs(surahNumber: number): Promise<GlyphVerse[] | nu
   if (!p) {
     p = fetch(`/data/quran-glyphs/${surahNumber}.json`)
       .then((r) => (r.ok ? (r.json() as Promise<GlyphVerse[]>) : null))
+      .then((v) => v && v.map((x) => withoutSajdahMark(withoutHizbMark(x))))
       .catch(() => null);
     p.then((v) => v === null && surahCache.delete(surahNumber));
     surahCache.set(surahNumber, p);

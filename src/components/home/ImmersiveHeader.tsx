@@ -9,6 +9,7 @@ import {
   type QuranReciter,
   getDefaultReciter,
   reciterHasWordTiming,
+  reciterHasWordTimingFor,
 } from "@/lib/data/service";
 import {
   ImamQuranIcon,
@@ -114,8 +115,12 @@ export function ImmersiveHeader({
   // Translation language toggle is meaningful for Word Sync reciters whenever
   // verse text is on screen — that's every Surah, and now also a Juz played
   // per-ayah in a Word Sync reciter's voice (player.ayahSequence is set then).
-  const showLanguageToggle =
-    reciterHasWordTiming(selectedReciter) && (!isJuz || Boolean(player.ayahSequence));
+  // A Surah whose streamed recording doesn't match the reciter's timings plays
+  // audio-only (no verse text), so no toggle there either.
+  const surahOnAir = bayan && isSurahTrackId(bayan.id) ? Number(bayan.id.replace(/\D+/g, "")) : null;
+  const showLanguageToggle = isJuz
+    ? reciterHasWordTiming(selectedReciter) && Boolean(player.ayahSequence)
+    : reciterHasWordTimingFor(selectedReciter, surahOnAir);
 
   const handleToggleReciterSelector = (e: React.MouseEvent) => {
     e.preventDefault();

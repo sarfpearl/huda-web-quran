@@ -5,6 +5,7 @@ import Image from "next/image";
 import {
   QURAN_RECITERS,
   reciterHasWordTiming,
+  reciterIsUnavailable,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
 import { ImamQuranIcon } from "@/components/ui/Icon";
@@ -245,17 +246,24 @@ export function ReciterPickerModal({
           filteredReciters.map((reciter) => {
             const isSelected = selectedReciter.id === reciter.id;
             const hasError = imageErrors[reciter.id];
+            // Its server publishes none of the Surahs: listed, but not playable.
+            const unavailable = reciterIsUnavailable(reciter);
 
             return (
               <button
                 key={reciter.id}
                 ref={isSelected ? selectedItemRef : undefined}
                 type="button"
+                disabled={unavailable}
+                aria-disabled={unavailable || undefined}
                 onClick={() => {
+                  if (unavailable) return;
                   onSelectReciter(reciter);
                   onClose();
                 }}
-                className={`w-full flex items-center gap-3 p-2 sm:p-2.5 rounded-2xl transition-all cursor-pointer text-left border ${
+                className={`w-full flex items-center gap-3 p-2 sm:p-2.5 rounded-2xl transition-all text-left border ${
+                  unavailable ? "cursor-not-allowed opacity-45 " : "cursor-pointer "
+                }${
                   isSelected
                     ? "bg-emerald-950/40 border-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
                     : "bg-white/[0.04] border-white/5 hover:bg-white/[0.08] hover:border-white/15"
@@ -302,7 +310,7 @@ export function ReciterPickerModal({
                     </h4>
                   </div>
                   <p className="truncate text-[11px] text-sand-300/70 mt-0.5">
-                    {reciter.style} · {reciter.country}
+                    {unavailable ? "Recordings unavailable" : `${reciter.style} · ${reciter.country}`}
                   </p>
                 </div>
 
