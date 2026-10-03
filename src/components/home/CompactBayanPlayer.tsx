@@ -33,6 +33,7 @@ import {
   QURAN_TRACKS,
   SURAH_TRACKS,
   quranImageUrl,
+  mediaUrl,
   getSurahTracksForReciter,
   resolveActiveReciter,
   reciterHasWordTiming,
@@ -659,7 +660,7 @@ export function CompactBayanPlayer({
                 unoptimized={true}
                 draggable={false}
                 className="object-cover pointer-events-none"
-                onError={() => setCoverSrc("/assets/images/bayan/quran.jpg")}
+                onError={() => setCoverSrc(mediaUrl("/assets/images/bayan/quran.jpg"))}
               />
             ) : (
               <CoverArt seed={bayan.slug} icon={bayan.category.icon} rounded="rounded-full" className="h-full w-full" />
@@ -753,7 +754,7 @@ export function CompactBayanPlayer({
               unoptimized={true}
               priority
               className="object-cover [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
-              onError={() => setCoverSrc("/assets/images/bayan/quran.jpg")}
+              onError={() => setCoverSrc(mediaUrl("/assets/images/bayan/quran.jpg"))}
             />
           ) : (
             <CoverArt

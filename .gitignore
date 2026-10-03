@@ -17,6 +17,14 @@ next-env.d.ts
 *-4k*.mp4
 *-master.mp4
 
+# Cloudflare R2 migrated media assets
+public/assets/images/
+public/audio/prelude/
+public/videos/
+public/videos/**/qa_frames/
+public/videos/**/test/
+qa_frames/
+
 # Tooling and temporary files
 .chrome-profile/
 scratch/
@@ -25,3 +33,4 @@ scratch/
 
 # QA audio envelopes (scripts/qa/voice-match.cjs)
 /.qa-cache/
+.env*

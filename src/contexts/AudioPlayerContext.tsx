@@ -1288,7 +1288,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // reciter's voice — avoiding a duplicated Bismillah while still opening with
     // "A'udhu billahi..." → the reciter's own "Bismillah..." → the ayahs.
     const src = pel.currentSrc || pel.src;
-    if (src.includes("fatihah-prelude") && pel.currentTime >= PRELUDE_AUDIO.fatihah.istiadhahEndTime) {
+    if ((src.includes("fatihah-prelude") || src.includes("istiadhah")) && pel.currentTime >= PRELUDE_AUDIO.fatihah.istiadhahEndTime) {
       pel.pause();
       onPreludeEnded();
       return;

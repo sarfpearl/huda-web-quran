@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SurahCinematicBackground } from "./SurahCinematicBackground";
 import { JuzCinematicBackground } from "./JuzCinematicBackground";
 import { quranImageUrl } from "@/lib/data/service";
+import { mediaUrl } from "@/lib/media";
 import { refreshBackdrops } from "@/lib/refreshBackdrops";
 
 interface ImmersiveBackgroundProps {
@@ -183,7 +184,8 @@ function SceneElements({ categorySlug }: { categorySlug: string }) {
     "islamic-history": "/assets/images/bayan/islamic-history.jpg",
   };
 
-  const imageSrc = sceneImages[categorySlug];
+  const rawImageSrc = sceneImages[categorySlug];
+  const imageSrc = rawImageSrc ? mediaUrl(rawImageSrc) : undefined;
 
   if (imageSrc) {
     return (

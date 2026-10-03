@@ -52,6 +52,7 @@ export {
   getReciterAyah1TrimOffset,
   type SurahPreludeConfig,
 } from "./surahTrimming";
+export { mediaUrl } from "../media";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────

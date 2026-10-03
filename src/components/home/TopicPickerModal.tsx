@@ -17,6 +17,7 @@ import {
   QURAN_SURAHS,
   SURAH_TRACKS,
   quranImageUrl,
+  mediaUrl,
   getSurahTracksForReciter,
   resolveActiveReciter,
 } from "@/lib/data/service";
@@ -560,7 +561,7 @@ export function TopicPickerModal({
                     {!isFavourites && activeTab === "bayan" &&
                       filteredCategories.map((c, index) => {
                         const isCatActive = c.slug === activeCategorySlug;
-                        const thumb = SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg";
+                        const thumb = mediaUrl(SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg");
                         return (
                           <ContentListCard
                             key={c.id}

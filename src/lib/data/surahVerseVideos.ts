@@ -12,6 +12,8 @@
  * 5. Broadcast-grade 0.8s-1.0s overlap crossfade soft loop embedded in each asset.
  */
 
+import { mediaUrl } from "@/lib/media";
+
 export interface SurahVerseVideo {
   surahNumber: number;
   ayahNumber: number;
@@ -420,7 +422,10 @@ export function getAyahVideo(surahNumber: number, ayahNumber: number): SurahVers
   // Direct exact match only — NO fallback ranges permitted
   const exact = surahMap[ayahNumber];
   if (exact && exact.status === "APPROVED") {
-    return exact;
+    return {
+      ...exact,
+      videoPath: mediaUrl(exact.videoPath),
+    };
   }
 
   return null;

@@ -30,15 +30,18 @@ export const JUZ_VIDEOS: Record<number, JuzVideoConfig> = {
   },
 };
 
+import { mediaUrl } from "@/lib/media";
+
 export function getJuzVideo(juzNumber: number): JuzVideoConfig | null {
   return JUZ_VIDEOS[juzNumber] || null;
 }
 
 export function getJuzVideoPath(juzNumber: number): string | null {
-  return JUZ_VIDEOS[juzNumber]?.videoPath || null;
+  const path = JUZ_VIDEOS[juzNumber]?.videoPath;
+  return path ? mediaUrl(path) : null;
 }
 
 export function getJuzPlaylist(juzNumber: number): string[] {
   const config = JUZ_VIDEOS[juzNumber];
-  return config?.videoPath ? [config.videoPath] : [];
+  return config?.videoPath ? [mediaUrl(config.videoPath)] : [];
 }

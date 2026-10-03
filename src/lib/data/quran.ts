@@ -1,4 +1,5 @@
 import { PRELUDE_AUDIO } from "./surahTrimming";
+import { mediaUrl } from "@/lib/media";
 import type { BayanWithRelations } from "@/types/bayan";
 import type { Category } from "@/types/category";
 import type { Speaker } from "@/types/speaker";
@@ -34,10 +35,10 @@ export function quranImageUrl(
   if (kind === "surah") {
     const pad = String(num).padStart(3, "0");
     const slug = SURAH_SLUG_MAP[num] || `surah-${num}`;
-    return `/assets/images/surah/${pad}-${slug}.jpg?v=23`;
+    return mediaUrl(`/assets/images/surah/${pad}-${slug}.jpg?v=23`);
   }
   const pad = String(num).padStart(2, "0");
-  return `/assets/images/quran/juz-${pad}.jpg?v=5`;
+  return mediaUrl(`/assets/images/quran/juz-${pad}.jpg?v=5`);
 }
 
 /** Public shape consumed by the Quran picker UI. */
@@ -171,7 +172,7 @@ export const SURAH_TRACK_ID_PREFIX = "quran-surah-";
 
 export const surahAudioUrl = (n: number) =>
   n === 1
-    ? "/assets/audio/surah/001.mp3"
+    ? mediaUrl("/assets/audio/surah/001.mp3")
     : `https://server11.mp3quran.net/sds/${String(n).padStart(3, "0")}.mp3`;
 
 export type RevelationType = "Meccan" | "Medinan";

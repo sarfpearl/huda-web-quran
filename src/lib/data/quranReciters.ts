@@ -8,6 +8,7 @@
 
 import { AUDIO_ONLY_AVAILABLE_SURAHS } from "./reciterAvailability";
 import { WORD_SYNC_UNAVAILABLE } from "./wordSyncAvailability";
+import { mediaUrl } from "@/lib/media";
 
 export interface QuranReciter {
   id: string;
@@ -48,7 +49,7 @@ export const QURAN_RECITERS: QuranReciter[] = [
     country: "Saudi Arabia",
     photoUrl: "https://i.pinimg.com/564x/32/2c/17/322c1736a5bab17ef54e14717ac90e8a.jpg",
     audioBaseUrl: "https://server11.mp3quran.net/sds/",
-    localAudioFallback: "/assets/audio/surah/001.mp3",
+    localAudioFallback: mediaUrl("/assets/audio/surah/001.mp3"),
     sourceUrl: "https://surahquran.com/English/Alsudaes",
     isImam: true,
     hasAcousticWordTiming: true,
