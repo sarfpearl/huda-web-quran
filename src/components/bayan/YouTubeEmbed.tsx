@@ -7,6 +7,7 @@ import {
   youtubePlaylistEmbedUrl,
   youtubeThumbnail,
 } from "@/lib/youtube";
+import { mediaUrl } from "@/lib/media";
 import { PlayIcon } from "@/components/ui/Icon";
 
 /**
@@ -32,7 +33,7 @@ export function YouTubeEmbed({
 
   const thumbUrl = videoId
     ? youtubeThumbnail(videoId)
-    : "/assets/images/bayan/quran.jpg";
+    : mediaUrl("/assets/images/bayan/quran.jpg");
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black">

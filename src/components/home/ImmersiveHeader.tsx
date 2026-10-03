@@ -20,6 +20,9 @@ import {
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { ReciterPickerModal } from "./ReciterPickerModal";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
+
+/** How long the Tajweed panel stays open untouched before hiding itself. */
+const TAJWEED_AUTO_HIDE_MS = 4000;
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { CheckIcon } from "@/components/ui/Icon";
 
@@ -90,6 +93,14 @@ export function ImmersiveHeader({
       document.removeEventListener("keydown", onKey);
     };
   }, [activePopover]);
+  // It also hides itself a few seconds after opening — held while the pointer
+  // is over it or a keyboard user is inside it; flipping the switch restarts the clock.
+  const [tajweedHeld, setTajweedHeld] = useState(false);
+  useEffect(() => {
+    if (activePopover !== "tajweed" || tajweedHeld) return;
+    const t = window.setTimeout(() => setActivePopover(null), TAJWEED_AUTO_HIDE_MS);
+    return () => window.clearTimeout(t);
+  }, [activePopover, tajweedHeld, showTajweed]);
   const isReciterSelectorOpen = activePopover === "reciter";
   const [translationSheetOpen, setTranslationSheetOpen] = useState(false);
   const [textSizeSheetOpen, setTextSizeSheetOpen] = useState(false);
@@ -282,7 +293,13 @@ export function ImmersiveHeader({
             (only when verse text is on screen). The panel is positioned against
             the header, so it stays on screen on narrow phones. */}
         {onToggleTajweed && showLanguageToggle && (
-          <div ref={tajweedRef}>
+          <div
+            ref={tajweedRef}
+            onPointerEnter={(e) => e.pointerType === "mouse" && setTajweedHeld(true)}
+            onPointerLeave={() => setTajweedHeld(false)}
+            onFocus={(e) => e.target.matches(":focus-visible") && setTajweedHeld(true)}
+            onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setTajweedHeld(false)}
+          >
             <button
               type="button"
               onClick={() => setActivePopover((prev) => (prev === "tajweed" ? null : "tajweed"))}

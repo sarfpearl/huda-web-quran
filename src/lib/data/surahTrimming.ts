@@ -13,17 +13,18 @@
  */
 
 import { reciterHasWordTiming, reciterEmbedsOwnBismillah, type QuranReciter } from "./quranReciters";
+import { mediaUrl } from "@/lib/media";
 
 export const PRELUDE_AUDIO = {
   fatihah: {
     // Isti'adhah ONLY. The reciter's own audio recites the Bismillah, so the
     // prelude must not also contain one (that caused a doubled Bismillah).
-    url: "/audio/prelude/istiadhah-only-prelude.mp3",
+    url: mediaUrl("/audio/prelude/istiadhah-only-prelude.mp3"),
     duration: 6.57,
     istiadhahEndTime: 6.50,
   },
   bismillah: {
-    url: "/audio/prelude/bismillah-prelude.mp3",
+    url: mediaUrl("/audio/prelude/bismillah-prelude.mp3"),
     duration: 6.00,
   },
 } as const;

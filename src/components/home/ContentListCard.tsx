@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { mediaUrl } from "@/lib/media";
 import { CategoryIcon, ViewCountIcon } from "@/components/ui/Icon";
 
 export interface ContentListCardProps {
@@ -96,7 +97,7 @@ export function ContentListCard({
           quality={95}
           sizes="(max-width: 768px) 128px, 160px"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => setImgSrc("/assets/images/bayan/quran.jpg")}
+          onError={() => setImgSrc(mediaUrl("/assets/images/bayan/quran.jpg"))}
         />
       </div>
 

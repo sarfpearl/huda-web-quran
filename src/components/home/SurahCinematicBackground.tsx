@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 import { quranImageUrl } from "@/lib/data/quran";
+import { mediaUrl } from "@/lib/media";
 import { refreshBackdrops } from "@/lib/refreshBackdrops";
 
 interface SurahCinematicBackgroundProps {
@@ -29,18 +30,23 @@ export function SurahCinematicBackground({
   //    - Thematic chapter matching active Ayah
   //    - Continuous playback chapter or master video fallback
   const resolvedVideo = useMemo(() => {
-    if (propVideoSrc) return propVideoSrc;
-    if (ayahNumber) {
+    let chosen: string | null = null;
+    if (propVideoSrc) chosen = propVideoSrc;
+    else if (ayahNumber) {
       const ayahVid = getAyahVideo(surahNumber, ayahNumber)?.videoPath;
-      if (ayahVid) return ayahVid;
-
-      const surahData = getSurahVisualData(surahNumber);
-      const chapterForVerse = surahData.chapters.find(
-        (c) => ayahNumber >= c.fromVerse && ayahNumber <= c.toVerse
-      );
-      if (chapterForVerse?.videoPath) return chapterForVerse.videoPath;
+      if (ayahVid) chosen = ayahVid;
+      else {
+        const surahData = getSurahVisualData(surahNumber);
+        const chapterForVerse = surahData.chapters.find(
+          (c) => ayahNumber >= c.fromVerse && ayahNumber <= c.toVerse
+        );
+        if (chapterForVerse?.videoPath) chosen = chapterForVerse.videoPath;
+      }
     }
-    return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
+    if (!chosen) {
+      chosen = resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
+    }
+    return chosen ? mediaUrl(chosen) : null;
   }, [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]);
 
   // Only commit a clip once it has stayed wanted briefly — rapid ayah stepping

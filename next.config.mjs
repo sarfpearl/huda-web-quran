@@ -10,6 +10,8 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev" },
+      { protocol: "https", hostname: "*.r2.dev" },
     ],
   },
 };

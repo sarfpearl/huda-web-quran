@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getJuzVideoPath } from "@/lib/data/quranJuzVideos";
+import { mediaUrl } from "@/lib/media";
 
 interface JuzCinematicBackgroundProps {
   juzNumber: number;
@@ -12,7 +13,8 @@ export function JuzCinematicBackground({
   juzNumber,
   isPlaying = false,
 }: JuzCinematicBackgroundProps) {
-  const videoSrc = getJuzVideoPath(juzNumber);
+  const rawVideo = getJuzVideoPath(juzNumber);
+  const videoSrc = rawVideo ? mediaUrl(rawVideo) : null;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);

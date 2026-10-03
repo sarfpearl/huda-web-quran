@@ -5,6 +5,7 @@
  * and progression of its verses, mapping to cinematic video journeys.
  */
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
+import { mediaUrl } from "@/lib/media";
 
 export interface SurahChapter {
   id: number;
@@ -1063,11 +1064,11 @@ export function resolveSurahVideoPath(
 ): string {
   const data = getSurahVisualData(surahNum);
   if (!data.isMultiChapter || data.chapters.length <= 1 || totalDuration <= 0) {
-    return data.masterVideoPath;
+    return mediaUrl(data.masterVideoPath);
   }
   const progress = Math.min(Math.max(currentTime / totalDuration, 0), 1);
   const activeChapter = data.chapters.find(
     (c) => progress >= c.timeRange[0] && progress < c.timeRange[1]
   );
-  return activeChapter?.videoPath ?? data.chapters[0].videoPath;
+  return mediaUrl(activeChapter?.videoPath ?? data.chapters[0].videoPath);
 }
