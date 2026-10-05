@@ -81,7 +81,7 @@
 - [x] Direct R2 image URL and `/_next/image` optimized requests return 200.
 - [x] Surah + Juz thumbnails, background video and prelude audio load from R2 in production.
 - [ ] Decide what to do with the 13 untracked files (logos ~2.8 MB / ~3.7 MB — host on R2 or compress; rename `Logo_with Name.png` to drop the space; keep or drop `scripts/generation/generate_vertex_*.mjs` and `scripts/qa/results/repairs.json`). Do not commit without the owner's go-ahead.
-- [ ] One image is hot-linked from Pinterest (`i.pinimg.com/564x/d3/1c/c0/d31cc05ca4198ee3dcd3558a2254b979.jpg`). Third-party hotlinks can break at any time — consider moving it to R2 via `mediaUrl()`.
+- [x] Reciter portraits moved off Pinterest hotlinks: all 51 now self-hosted on R2 at `assets/images/reciters/<id>.jpg` (via `mediaUrl()`). The Juz "Maher" speaker image (already 403 on Pinterest) now reuses `reciters/maher.jpg`.
 - [ ] `README.md` is stale (points to a HANDOFF "roadmap/directory structure" that no longer exists; omits Tajweed, Word Sync, R2). `YOUTUBE_MUSIC_GUIDE.md` describes the older bayan/YouTube player — confirm whether it is still relevant.
 - [ ] Start new work from a fresh branch off `main` (`feat/tajweed-autohide` is already merged via PR #8).
 

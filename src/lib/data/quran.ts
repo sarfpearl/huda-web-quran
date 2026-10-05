@@ -117,7 +117,7 @@ const QURAN_RECITER: Speaker = {
   name: "Maher Al-Muaiqly",
   slug: "maher",
   bio: "Holy Qur'an reciter",
-  profileImageUrl: "https://i.pinimg.com/564x/56/67/6f/56676fdf7c3127885b51dc73db761a6b.jpg",
+  profileImageUrl: mediaUrl("/assets/images/reciters/maher.jpg"),
   isActive: true,
   createdAt: "",
 };
