@@ -51,6 +51,11 @@
 - **Git Tracking Cleanup:**
   - Removed 177 previously tracked media files from Git tracking index (`git rm --cached`).
   - **100% of all local files preserved on disk**; zero files were deleted.
+  - **Where the local copies actually live (checked 2026-10-05):**
+    - Surah / Juz / bayan artwork → repo-root `assets/images/{surah,quran,bayan}/` (114 + 30 + 15 files, git-ignored via `/assets`), **not** `public/assets/images/`. Folder dates show they have been there since mid-September.
+    - `public/assets/images/` now holds only `reciters/` (51 reciter portraits, also on R2).
+    - Videos → `public/videos/{surah,juz}/`; prelude audio → `public/audio/prelude/`.
+    - Consequence: with `NEXT_PUBLIC_MEDIA_BASE_URL` unset, local dev cannot load Surah artwork. Keep the variable set in `.env.local`.
   - `.gitignore` updated to ignore and protect:
     - `public/assets/images/`
     - `public/audio/prelude/`
@@ -178,13 +183,13 @@ Recent commits and merged PRs verified in git history:
    - `src/lib/media.ts` was implemented and all 15 app components and data files route media paths through `mediaUrl()`.
    - `next.config.mjs` was updated with `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` in `images.remotePatterns`.
    - Media tracking deletions (177 files) and ignore rules were committed (`967a134`) and merged to `main` via PR #8.
-   - All local files are physically preserved on disk.
+   - All local files are physically preserved on disk (artwork under repo-root `assets/images/`, see §2).
 
 2. **Production media issue (resolved):**
    - `NEXT_PUBLIC_MEDIA_BASE_URL` had an extra `"4f"` (`.r2.dev4f`). Corrected in Vercel and redeployed; verified live on 2026-10-05 (images, Juz thumbnails, video, prelude audio all load from R2).
 
 3. **What must NOT be changed unnecessarily:**
-   - Do NOT delete or move any local media files under `public/assets/images`, `public/videos`, or `public/audio/prelude`.
+   - Do NOT delete or move any local media files under `assets/images/`, `public/assets/images/`, `public/videos/`, or `public/audio/prelude/`.
    - Do NOT commit the untracked generation scripts or logo files unless asked.
    - Do NOT modify audio preludes or Indo-Pak Juz boundary logic.
    - Do NOT change `mediaUrl()` logic — it is verified correct.
