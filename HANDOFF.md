@@ -1,169 +1,207 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
-> **For:** Antigravity / Claude / any AI assistant continuing this project
-> **Updated:** 2026-10-02
-> **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`
-> **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)
-> **Live:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on every push to `main`)
-> **Repo:** `github.com/sarfpearl/huda-web-quran`
+> **For:** Antigravity / Claude / any AI assistant continuing this project  
+> **Last Updated:** 2026-10-05  
+> **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
+> **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
+> **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
+> **GitHub Repository:** `github.com/sarfpearl/huda-web-quran`  
 
 ---
 
-## 🟢 Latest Status — 2026-10-02 (read this first)
+## 1. Current Project Status
 
-`main` is live and up to date (last merge: PR #7 `feat/about-polish`).
-Workflow since PR #3: **one feature branch per change → PR → merge to `main` → Vercel deploys.**
-
-### Open / unpushed work
-| Branch | State | What |
-|---|---|---|
-| `feat/tajweed-autohide` | committed locally (`212d5c8`), **not pushed** | Tajweed colours panel hides itself after 4s (`TAJWEED_AUTO_HIDE_MS` in `ImmersiveHeader.tsx`); held open while hovered / keyboard-focused; flipping the switch restarts the timer |
-
-To ship it: `git push -u origin feat/tajweed-autohide`, open a PR, merge.
-
-### Shipped since the last handoff (2026-09-14 → 2026-10-02)
-| Area | What | Where |
-|---|---|---|
-| Reciters | 9 reciters with word-level sync (QDC timings); the rest are "Audio Only" | `quranReciters.ts`, `quranVerses.ts` |
-| Juz | Any reciter recites a Juz ayah-by-ayah via everyayah.com (`playAyahSequence`); Indo-Pak Juz boundaries | `quran.ts`, `AudioPlayerContext.tsx` |
-| Word sync QA | Acoustic verification/repair scripts; mismatched reciter×Surah pairs fall back to audio-only | `scripts/qa/*`, `wordSyncAvailability.ts`, `reciterAvailability.ts` |
-| Tajweed | Quran.com-style QPC V4 COLRv1 page fonts (colours inside the glyphs) + gold recited-word highlight | `quranGlyphs.ts`, `public/fonts/qpc-v4/`, `public/data/quran-glyphs/` |
-| Reading mode | Mushaf reading view for Surah & Juz, page picker, Sajdah markers, last read, bookmarks, text size | `ReadingView.tsx`, `MushafPagePicker.tsx`, `BookmarksPanel.tsx`, `mushafPages.ts`, `sajdah.ts` |
-| Engagement | Live listeners, view counts, comments (likes/replies), likes, favourites — anonymous Supabase RPCs; comment moderation page with moderator key | `QuranEngagement.tsx`, `supabase/migrations/*`, `src/app/admin` |
-| Mobile / iOS | iOS 26 edge-to-edge, install guide (add to home screen), Safari crash fixes, compact player | `InstallGuide.tsx`, `CompactBayanPlayer.tsx` |
-| Home | Content browser auto-opens and morphs from ☰; About HuDa (copy email, About Me) | `TopicPickerModal.tsx`, `about.ts` |
-
-### 🎬 Videos (still local only)
-- 16 early videos are tracked in git. The newer ones (**~4.7 GB**: `public/videos/juz/` and most `public/videos/surah/002-al-baqarah/*`) are **untracked** — on disk only, not deployed.
-- Path convention (see `src/lib/data/surahVerseVideos.ts` → `videoPath`, Juz in `quranJuzVideos.ts`):
-  - Surah loop: `public/videos/surah/NNN-slug.mp4`
-  - Per-ayah clips: `public/videos/surah/NNN-slug/<clip-name>.mp4`
-  - A new video must be registered in the data file or it won't play.
-- **Don't commit them to plain git** (GitHub 100 MB/file limit, repo bloat, push timeouts). Host them on a CDN / object storage (Firebase Storage, Cloudflare R2, Vercel Blob…) or Git LFS, then point `videoPath` at the URL. Not decided yet — ask the user.
-- Also untracked: `public/Logo_icon.png`, `public/Logo_with Name.png` (new brand logo, not yet wired as favicon/app icon), `scripts/generation/generate_vertex_*.mjs`, `scripts/qa/results/repairs.json`.
+| Item | Status |
+| :--- | :--- |
+| **Project** | HuDa Web Quran |
+| **Repository** | `sarfpearl/huda-web-quran` |
+| **Current Local Branch** | `feat/tajweed-autohide` (tracking `origin/feat/tajweed-autohide`) |
+| **Current HEAD Commit** | `967a134` (`feat: migrate media assets to Cloudflare R2`) |
+| **Main Branch Status** | `origin/main` is at `0305b5a` (includes PR #8 merge) |
+| **Latest Merged PR** | **PR #8** (`Merge pull request #8 from sarfpearl/feat/tajweed-autohide`) |
+| **Production URL** | [https://huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) |
+| **Current Deployment Status** | Ready on Vercel (Latest deployment: `dpl_HoYo3QmoL3jGcrwktymwMspSzZSg` / `huda-web-quran-luszzbh9m-...`) |
 
 ---
 
-## 📌 Project Overview
+## 2. Completed Work
 
-**HuDa Web Quran** is an immersive Holy Quran listening & reading web app (Tamil + English), with word-synced recitation for all 114 Surahs and 30 Juz, Tajweed colouring, verse-aware 8K artwork and cinematic video backgrounds. A Bayan (talk) section exists but is hidden for now.
+### Core Features & UI
+1. **Quran Reading & Navigation Mode:**
+   - Mushaf reading view for all 114 Surahs and 30 Juz.
+   - Interactive Mushaf page picker, Sajdah indicators, last-read tracking, and bookmarks panel (`ReadingView.tsx`, `MushafPagePicker.tsx`, `BookmarksPanel.tsx`).
+2. **Tajweed Auto-Hide:**
+   - Quran.com-style QPC V4 COLRv1 page fonts (colours inside glyphs) + gold recited-word highlight.
+   - Tajweed colours panel auto-hides after 4s idle timer (`TAJWEED_AUTO_HIDE_MS`), pauses on hover/focus, and resets when toggling the switch (`ImmersiveHeader.tsx`).
+3. **Word & Voice Sync:**
+   - 9 reciters with word-level acoustic sync using Quran.com QDC timings (`quranReciters.ts`, `quranVerses.ts`).
+   - EveryAyah ayah-by-ayah sequence playback for Juz mode across all reciters (`playAyahSequence`).
+   - Strict Indo-Pak Juz boundaries maintained.
+   - Acoustic QA validation and fallback scripts (`scripts/qa/*`).
 
-### Tech Stack
-| Layer | Technology |
-|---|---|
-| Framework | **Next.js 14.2** (App Router, TypeScript strict) |
-| Styling | **Tailwind CSS v3** — literal hex palette + a few CSS vars |
-| Animations | **Framer Motion** |
-| Audio | HTML5 `<audio>` (`AudioPlayerContext.tsx`) + YouTube IFrame API (Bayan) |
-| Backend | **Supabase** (views / live / comments / likes only) |
-| Hosting | **Vercel** (auto-deploy from `main`) |
-| Fonts | Poppins (UI), KFGQPC Uthmanic Hafs v0.18 + QPC V4 page fonts (Arabic), Noto Serif Tamil |
-
----
-
-## 🗂️ Project Structure (key files)
-
-```
-src/
-├── app/                      page.tsx (home), layout.tsx, globals.css, admin/, api/, bayan/ … (Bayan routes hidden)
-├── components/home/
-│   ├── ImmersiveHomeClient.tsx   ← orchestrator: reciter / Surah / Juz selection, Tajweed, reading mode
-│   ├── ImmersiveHeader.tsx       ← Translation, Tajweed panel, reciter avatar, reading, browser buttons
-│   ├── CenterVerseDisplay.tsx    ← verse + word highlight on the home stage
-│   ├── ReadingView.tsx           ← Mushaf reading mode (Surah & Juz)
-│   ├── CompactBayanPlayer.tsx    ← bottom player (ayah progress, bookmark, like)
-│   ├── TopicPickerModal.tsx      ← content browser (Surah | Juz, favourites, About)
-│   ├── ReciterPickerModal.tsx, QuranEngagement.tsx, InstallGuide.tsx, BookmarksPanel.tsx, MushafPagePicker.tsx
-│   └── ImmersiveBackground / SurahCinematicBackground / JuzCinematicBackground.tsx
-├── contexts/AudioPlayerContext.tsx   ← audio engine, preludes, playAyahSequence, jumpToAyah
-└── lib/data/
-    ├── quran.ts                ← Surah/Juz metadata, tracks, image URLs, Juz→ayah helpers
-    ├── quranReciters.ts        ← reciters, QDC timing ids, everyayah folders, Bismillah rules
-    ├── quranVerses.ts          ← verse text + timings, word-segment sync
-    ├── quranGlyphs.ts          ← QPC V4 page fonts, Tajweed palettes, TAJWEED_LEGEND
-    ├── surahTrimming.ts        ← Isti'adhah / Bismillah preludes
-    ├── wordSyncAvailability.ts, reciterAvailability.ts   ← GENERATED by scripts/qa
-    └── surahVerseVideos.ts, quranJuzVideos.ts, quran-artwork.ts, mushafPages.ts, sajdah.ts, about.ts
-scripts/  generation/ (timings, glyphs, images, videos) · qa/ (word-sync verification) · tools/ · archive/
-public/   data/quran-timings/ · data/quran-glyphs/ · fonts/qpc-v4/ · assets/images/ · audio/prelude/ · videos/
-supabase/ schema.sql + migrations/
-docs/     TODO.md (launch checklist)
-```
+### Cloudflare R2 Media Migration
+- **Bucket:** `huda-quran-media`
+- **Public R2 Base URL:** `https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev`
+- **Assets Uploaded:** **270 total files** (~2.84 GB total):
+  - **Images:** 159 files (172.00 MB)
+  - **Videos:** 109 files (2.68 GB)
+  - **Audio:** 2 prelude files (297.26 KB)
+- **Central Resolver:** `src/lib/media.ts` defines `mediaUrl(path)` which prepends `NEXT_PUBLIC_MEDIA_BASE_URL` when set, and gracefully falls back to local `/public` relative paths when unset.
+- **Upload Tool:** `scripts/tools/upload-to-r2.mjs` provides safe, idempotent uploads using `@aws-sdk/client-s3` with dry-run default, concurrency queue, and skip-identical check.
+- **Git Tracking Cleanup:**
+  - Removed 177 previously tracked media files from Git tracking index (`git rm --cached`).
+  - **100% of all local files preserved on disk**; zero files were deleted.
+  - `.gitignore` updated to ignore and protect:
+    - `public/assets/images/`
+    - `public/audio/prelude/`
+    - `public/videos/`
+    - `public/videos/**/qa_frames/`
+    - `public/videos/**/test/`
+    - `qa_frames/`
 
 ---
 
-## 🧠 Rules That Must Not Be Broken
+## 3. Production R2 Media Issue — ✅ RESOLVED (verified 2026-10-05)
 
-These were hard-won; each has broken before.
+- **Cause:** Vercel env var `NEXT_PUBLIC_MEDIA_BASE_URL` was saved with a trailing `"4f"` (`…r2.dev4f`) → DNS failure (503) and `/_next/image` rejections (400).
+- **Fix:** Env var corrected in Vercel Project Settings to `https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev`, then production redeployed. No code change was needed.
+- **Live verification on `https://huda-web-quran.vercel.app` (2026-10-05):**
+  - Server HTML contains **no** `r2.dev4f`; Al-Fatihah artwork URL is `https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/assets/images/surah/001-al-fatihah.jpg?v=23`.
+  - Direct R2 image → HTTP 200; `/_next/image?url=<r2 url>` → HTTP 200.
+  - Browser (desktop): Surah list — **120/120 images loaded, 0 broken**; Juz list — **30/30 Juz thumbnails loaded, 0 broken**; no console errors.
+  - Background video `videos/surah/001-al-fatihah.mp4` streams from R2 (`readyState 4`, no error).
+  - Prelude audio: playing Al-Fatihah fetched `audio/prelude/istiadhah-only-prelude.mp3` from R2, stopped at 6.6s, and handed over to the reciter (`quranicaudio …/1.mp3`) — no double Bismillah. `bismillah-prelude.mp3` on R2 returns 200/206.
+  - Mobile width: Surah panel thumbnails and background video load, 0 broken images.
 
-1. **Audio and word timings must come from the same source.** Word timings come from Quran.com QDC and match quranicaudio files. 9 reciters have them (sudais, alafasy, dosari, abdulbaset, minshawi, hussary, shuraim, shatri, tunaiji). Never borrow another reciter's timings.
-2. **Repeated words:** map QDC segments by `wordIndex`, drive the active word from `verse.wordSegments` (the highlight jumps back on a repeat).
+---
+
+## 4. Current Work Items / Next Steps
+
+- [x] Production build uses the corrected `NEXT_PUBLIC_MEDIA_BASE_URL` (no `.dev4f`).
+- [x] Direct R2 image URL and `/_next/image` optimized requests return 200.
+- [x] Surah + Juz thumbnails, background video and prelude audio load from R2 in production.
+- [ ] Decide what to do with the 13 untracked files (logos ~2.8 MB / ~3.7 MB — host on R2 or compress; rename `Logo_with Name.png` to drop the space; keep or drop `scripts/generation/generate_vertex_*.mjs` and `scripts/qa/results/repairs.json`). Do not commit without the owner's go-ahead.
+- [ ] One image is hot-linked from Pinterest (`i.pinimg.com/564x/d3/1c/c0/d31cc05ca4198ee3dcd3558a2254b979.jpg`). Third-party hotlinks can break at any time — consider moving it to R2 via `mediaUrl()`.
+- [ ] `README.md` is stale (points to a HANDOFF "roadmap/directory structure" that no longer exists; omits Tajweed, Word Sync, R2). `YOUTUBE_MUSIC_GUIDE.md` describes the older bayan/YouTube player — confirm whether it is still relevant.
+- [ ] Start new work from a fresh branch off `main` (`feat/tajweed-autohide` is already merged via PR #8).
+
+---
+
+## 5. Git / Uncommitted Work
+
+*Source of truth from `git status` on 2026-10-04:*
+
+### Staged Changes
+None. (0 files)
+
+### Unstaged Changes
+- `HANDOFF.md` (modified with this handoff documentation update)
+
+### Untracked Files (13 files total)
+- `public/Logo_icon.png` (Brand logo asset, ~2.8 MB)
+- `public/Logo_with Name.png` (Brand logo asset, ~3.7 MB)
+- `scripts/generation/generate_vertex_baqarah_ch10.mjs`
+- `scripts/generation/generate_vertex_baqarah_ch11.mjs`
+- `scripts/generation/generate_vertex_imran_01a.mjs`
+- `scripts/generation/generate_vertex_imran_02a.mjs`
+- `scripts/generation/generate_vertex_imran_02b.mjs`
+- `scripts/generation/generate_vertex_imran_02c.mjs`
+- `scripts/generation/generate_vertex_juz01.mjs`
+- `scripts/generation/generate_vertex_juz01_multi.mjs`
+- `scripts/generation/generate_vertex_juz01_v2.mjs`
+- `scripts/generation/generate_vertex_juz01_v3.mjs`
+- `scripts/qa/results/repairs.json`
+
+### Summary Counts
+- **Staged files:** 0
+- **Modified files:** 1 (`HANDOFF.md`)
+- **Untracked files:** 13
+
+---
+
+## 6. Important Git History
+
+Recent commits and merged PRs verified in git history:
+
+- `0305b5a` — **Merge pull request #8** from `sarfpearl/feat/tajweed-autohide` into `main`
+- `967a134` — `feat: migrate media assets to Cloudflare R2`
+- `a627ed9` — `docs: refresh HANDOFF.md for Antigravity (status to 2026-10-02, rules, pending work)`
+- `212d5c8` — `feat(tajweed): auto-hide the colours panel after a few seconds`
+- `c0adbbb` — **Merge pull request #7** from `sarfpearl/feat/about-polish`
+- `3749f94` — `fix(home): keep the Listen & Read label`
+- `343cd84` — `fix(about): show Copied only when the copy worked`
+- `0ac8d0f` — `feat(about): copy email, About Me text, logo balance, simpler title`
+- `b453fda` — **Merge pull request #6** from `sarfpearl/feat/content-browser-about`
+- Older historical PRs:
+  - **PR #4** — Reading-mode page navigation (`fix/reading-mode-page-navigation`)
+  - **PR #3** — Word-Sync / Voice-Sync (`feat/reciter-sync-min`)
+
+---
+
+## 7. Environment Configuration
+
+### Required Environment Variables (Names and Purposes Only)
+
+| Variable Name | Environment | Purpose |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_MEDIA_BASE_URL` | Vercel (Production/Preview) & `.env.local` | Public base URL for R2 CDN media delivery (`https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev`) |
+| `R2_ACCOUNT_ID` | Local `.env.local` | Cloudflare account ID for S3 SDK upload tool |
+| `R2_ACCESS_KEY_ID` | Local `.env.local` | Cloudflare R2 API token access key ID |
+| `R2_SECRET_ACCESS_KEY` | Local `.env.local` | Cloudflare R2 API token secret access key |
+| `R2_BUCKET_NAME` | Local `.env.local` | Cloudflare R2 bucket name (`huda-quran-media`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
+| `NEXT_PUBLIC_DATA_SOURCE` | Production & `.env.local` | Data source mode (e.g. `seed`) |
+| `NEXT_PUBLIC_SITE_URL` | Production & `.env.local` | Canonical website base URL |
+
+> [!CAUTION]
+> Never commit `.env*` files or log secret credential values in code, terminals, or documentation.
+
+---
+
+## 8. Verification Status
+
+| Check / Test | Result | Notes |
+| :--- | :---: | :--- |
+| `npm run typecheck` | ✅ **PASS** | 0 TypeScript errors |
+| `npm run lint` | ✅ **PASS** | 0 blocking errors (only standard hook dependency warnings) |
+| `npm run build` | ✅ **PASS** | 64/64 static pages generated cleanly |
+| **R2 Upload Verification** | ✅ **PASS** | 270/270 files verified on R2; direct requests return HTTP 200 |
+| **Production Deployment Image Loading** | ✅ **PASS** | Verified live in browser 2026-10-05 (see §3) |
+
+---
+
+## 9. Handoff Notes for Claude
+
+1. **What has already been completed:**
+   - All 270 media files (images, videos, prelude audio) were successfully uploaded to Cloudflare R2 bucket `huda-quran-media`.
+   - `src/lib/media.ts` was implemented and all 15 app components and data files route media paths through `mediaUrl()`.
+   - `next.config.mjs` was updated with `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` in `images.remotePatterns`.
+   - Media tracking deletions (177 files) and ignore rules were committed (`967a134`) and merged to `main` via PR #8.
+   - All local files are physically preserved on disk.
+
+2. **Production media issue (resolved):**
+   - `NEXT_PUBLIC_MEDIA_BASE_URL` had an extra `"4f"` (`.r2.dev4f`). Corrected in Vercel and redeployed; verified live on 2026-10-05 (images, Juz thumbnails, video, prelude audio all load from R2).
+
+3. **What must NOT be changed unnecessarily:**
+   - Do NOT delete or move any local media files under `public/assets/images`, `public/videos`, or `public/audio/prelude`.
+   - Do NOT commit the untracked generation scripts or logo files unless asked.
+   - Do NOT modify audio preludes or Indo-Pak Juz boundary logic.
+   - Do NOT change `mediaUrl()` logic — it is verified correct.
+
+4. **Where to continue from:**
+   - Work through the open items in §4 (untracked files decision, Pinterest hotlink, README refresh).
+   - If media ever breaks again: first check the Vercel env var value, then redeploy **without** build cache.
+
+---
+
+## 🧠 Architectural Rules That Must Not Be Broken
+
+1. **Audio and word timings must come from the same source:** Word timings come from Quran.com QDC and match quranicaudio files. 9 reciters have them (sudais, alafasy, dosari, abdulbaset, minshawi, hussary, shuraim, shatri, tunaiji). Never borrow another reciter's timings.
+2. **Repeated words:** map QDC segments by `wordIndex`, drive the active word from `verse.wordSegments`.
 3. **Surah 1** = Isti'adhah prelude clip (cut at 6.60s) → reciter's own Bismillah → ayahs. **Surahs 2–114** (never 9) open with Bismillah: Dosari 2–78 embeds his own; others get `bismillah-prelude.mp3`. Audio Only reciters get no prelude. Never double the Bismillah.
 4. **Juz boundaries are Indo-Pak**, not King Fahd/Madani (differ at Juz 4, 7, 11, 20, 21, 23). Don't "correct" them from quran.com.
-5. **Juz with any reciter** = everyayah.com per-ayah clips (`EVERYAYAH_FOLDERS`). No silent fallback to Maher — show a notice.
-6. **Arabic text:** use `text_qpc_hafs` with Hafs v0.18 (Tanzil text shows dotted circles). Never edit Quran text to fix rendering. Never add letter-spacing to Arabic. Nested elements stay under `.font-arabic` (base CSS forces Poppins on spans).
-7. **Tajweed** = QPC V4 COLRv1 glyph fonts (one glyph per word). A CSS-span colouring approach was tried and **rejected**.
-8. **Design system stays simple:** literal hex in `tailwind.config.ts` + a few RGB vars in `globals.css`. A big token layer was removed on purpose — don't reintroduce it.
-9. **iOS 26:** scene runs under the status bar; accept the iOS blur. Don't add a solid top strip.
-10. **Keep features small.** The user rejected a big analytics dashboard / login system. Ask before building large systems.
-11. After re-fetching timings or changing reciters, re-run `scripts/qa`: `voice-match` → `repair-timings` → `sync-suite`.
-
----
-
-## 🎨 Design System
-
-- **Primary green:** `#1a5140` · **Gold** (sparing): `#e8d19a` / `amber-300` · **Charcoal bg:** `#0e100f` · **Sand text:** `sand-50…300`
-- **Glass recipe:** `bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg`; popovers `bg-black/70 backdrop-blur-xl rounded-2xl`.
-- Header buttons are 40px below 400px width, 44px, 48px on `sm:` (375px phones must fit).
-
----
-
-## 🗄️ Data & Backend
-
-- Quran data is static (`public/data/…`) + external audio (quranicaudio / QDC, mp3quran.net, everyayah.com).
-- **Supabase** handles views, live listeners, comments, likes — anonymous browser id, RPCs in `supabase/migrations/`. Keys in `.env.local` (gitignored) and in Vercel env vars.
-- Bayan content is still seed/demo data (`seed.ts`) and hidden in the UI.
-
-### Environment Variables
-```env
-NEXT_PUBLIC_DATA_SOURCE=seed
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-```
-
----
-
-## 🐛 Pending Work
-
-See `docs/TODO.md` for the launch checklist. Main items:
-- [ ] Ship `feat/tajweed-autohide` (see top)
-- [ ] Decide video hosting and publish the ~4.7 GB of untracked videos
-- [ ] Wire the new logo (`public/Logo_icon.png`) as favicon / PWA icon
-- [ ] Clear Supabase test data before launch; harden counts against abuse
-- [ ] Admin login (currently a moderator key protects comment moderation)
-- [ ] Confirm KFGQPC font licence; test Tajweed on a real iPhone
-- [ ] Real Bayan content + per-category playlists (section currently hidden)
-
----
-
-## 🚀 Quick Start
-
-```bash
-cd /Users/pearl-9744/Claude/Projects/huda-web-quran
-npm install
-npm run dev          # → http://localhost:3000
-npm run typecheck    # must stay at 0 errors
-```
-
-> If the page shows only the background / `__webpack_modules__[moduleId] is not a function`: kill old servers (`lsof -ti:3000 | xargs kill -9`), `rm -rf .next`, restart `npm run dev`, hard-refresh. Don't run `next build` and `next dev` against the same `.next`.
-
----
-
-## 📝 Git Notes
-
-- Commit only code + small assets; keep `public/videos/**` out of commits.
-- The old Claude sandbox pushed through a proxy that timed out on big pushes (>~100 MB). A machine with direct GitHub access doesn't have that limit, but GitHub's 100 MB/file limit still applies.
-- Older branches (`feat/reciter-sync-min`, `feat/multi-reciter-word-sync`, `fix/reading-mode-page-navigation`, `claude/*`) are already merged or stale.
-- `docs/HANDOFF.md` is an older copy — this root `HANDOFF.md` is the current one.
+5. **Juz with any reciter** = everyayah.com per-ayah clips (`EVERYAYAH_FOLDERS`).
+6. **Arabic text:** use `text_qpc_hafs` with Hafs v0.18. Never edit Quran text to fix rendering.
+7. **Tajweed:** QPC V4 COLRv1 glyph fonts (one glyph per word).
+8. **Keep features focused and minimal:** Maintain simple design system, no unnecessary heavy layers.
