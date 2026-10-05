@@ -85,7 +85,7 @@
 - [x] Production build uses the corrected `NEXT_PUBLIC_MEDIA_BASE_URL` (no `.dev4f`).
 - [x] Direct R2 image URL and `/_next/image` optimized requests return 200.
 - [x] Surah + Juz thumbnails, background video and prelude audio load from R2 in production.
-- [ ] Decide what to do with the 13 untracked files (logos ~2.8 MB / ~3.7 MB — host on R2 or compress; rename `Logo_with Name.png` to drop the space; keep or drop `scripts/generation/generate_vertex_*.mjs` and `scripts/qa/results/repairs.json`). Do not commit without the owner's go-ahead.
+- [x] ~~Decide what to do with the 13 untracked files~~ Done 2026-10-05 (see §5). Was: (logos ~2.8 MB / ~3.7 MB — host on R2 or compress; rename `Logo_with Name.png` to drop the space; keep or drop `scripts/generation/generate_vertex_*.mjs` and `scripts/qa/results/repairs.json`). Do not commit without the owner's go-ahead.
 - [x] Reciter portraits moved off Pinterest hotlinks: all 51 now self-hosted on R2 at `assets/images/reciters/<id>.jpg` (via `mediaUrl()`). The Juz "Maher" speaker image (already 403 on Pinterest) now reuses `reciters/maher.jpg`.
 - [ ] `README.md` is stale (points to a HANDOFF "roadmap/directory structure" that no longer exists; omits Tajweed, Word Sync, R2). `YOUTUBE_MUSIC_GUIDE.md` describes the older bayan/YouTube player — confirm whether it is still relevant.
 - [ ] Start new work from a fresh branch off `main` (`feat/tajweed-autohide` is already merged via PR #8).
@@ -94,33 +94,11 @@
 
 ## 5. Git / Uncommitted Work
 
-*Source of truth from `git status` on 2026-10-04:*
+*As of 2026-10-05 the working tree is clean — no staged, modified or untracked files.*
 
-### Staged Changes
-None. (0 files)
-
-### Unstaged Changes
-- `HANDOFF.md` (modified with this handoff documentation update)
-
-### Untracked Files (13 files total)
-- `public/Logo_icon.png` (Brand logo asset, ~2.8 MB)
-- `public/Logo_with Name.png` (Brand logo asset, ~3.7 MB)
-- `scripts/generation/generate_vertex_baqarah_ch10.mjs`
-- `scripts/generation/generate_vertex_baqarah_ch11.mjs`
-- `scripts/generation/generate_vertex_imran_01a.mjs`
-- `scripts/generation/generate_vertex_imran_02a.mjs`
-- `scripts/generation/generate_vertex_imran_02b.mjs`
-- `scripts/generation/generate_vertex_imran_02c.mjs`
-- `scripts/generation/generate_vertex_juz01.mjs`
-- `scripts/generation/generate_vertex_juz01_multi.mjs`
-- `scripts/generation/generate_vertex_juz01_v2.mjs`
-- `scripts/generation/generate_vertex_juz01_v3.mjs`
-- `scripts/qa/results/repairs.json`
-
-### Summary Counts
-- **Staged files:** 0
-- **Modified files:** 1 (`HANDOFF.md`)
-- **Untracked files:** 13
+The 13 previously untracked files were resolved:
+- **Committed:** 10 Vertex/Veo generation scripts (`scripts/generation/generate_vertex_{baqarah_ch10,baqarah_ch11,imran_01a,imran_02a,imran_02b,imran_02c,juz01,juz01_v2,juz01_v3,juz01_multi}.mjs` — `juz01_multi` produced the current `juz-01-0X` clips) and `scripts/qa/results/repairs.json` (output of `repair-timings.cjs`).
+- **Moved, not committed:** the 2508×2508 brand master logos (`Logo_icon.png`, `Logo_with Name.png`, 6.6 MB) from `public/` to git-ignored `assets/brand/`. They are not referenced by the app (it uses `splash-logo.webp` and `icon-*.png`).
 
 ---
 
