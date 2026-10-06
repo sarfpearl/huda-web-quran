@@ -3,7 +3,7 @@
  * Surahs each Audio Only reciter really has on its mp3quran.net server
  * (HTTP 200, audio content, playable length). Reciters not listed have all 114.
  * An empty list = the server publishes none of them (reciter unavailable).
- * Checked: 2026-09-30
+ * Checked: 2026-10-06
  */
 export const AUDIO_ONLY_AVAILABLE_SURAHS: Record<string, number[]> = {
   "refaat": [

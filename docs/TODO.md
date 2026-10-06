@@ -43,10 +43,22 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       patched from Quran.com's Diyanet. A language file that can't load
       (offline) now shows English instead of an empty meaning. Surah 1
       English / Tamil stay hand-tuned (1:3, 1:5, 1:7 Tamil differ on purpose).
-- [ ] **3. Word / audio sync + Arabic highlight accuracy** — audio timing →
-      ayah → word → highlight on one timeline. Beginning, middle, long and short
-      verses; pause/resume; seek; next / previous verse; all 9 synced reciters
-      (`scripts/qa` pipeline); fallback reciters stay audio-only; mobile + desktop.
+- [x] **3. Word / audio sync + Arabic highlight accuracy** (2026-10-06) —
+      data: `sync-suite.cjs` 9 reciters × 114 Surahs × 77,430 words, 0
+      failures; `audio-sources.cjs` 1,026 Word Sync streams + 30 Maher Juz
+      files reachable, recording lengths unchanged since the 2026-09-30
+      voice-match (so its audio-only list still holds). Live, in the browser
+      (`highlight-probe.js` → `highlight-lag.cjs`, recordings in
+      `scripts/qa/results/highlight/`): every lit word was the word being
+      recited (245 word changes, 100%) — Surah start, long ayah (3:7),
+      pause / resume, next / previous ayah, word tap, after the Isti'adhah
+      prelude, reciter change (Alafasy, Sudais, Dosari), mobile 390px, Juz
+      per-ayah clips. **Fixed:** the highlight came up to 257ms late (median
+      135ms) — the player clock only moved on `timeupdate` (~4×/s). The player
+      now also updates on the animation frame the voice crosses the next word
+      boundary (`setTimeBoundary` / `nextTimelineBoundary`): median 13ms, p95
+      18ms, one re-render per word. `word-boundaries.cjs` checks no word
+      change falls between two boundaries (45 reciter × Surah runs, 0).
 - [ ] **4. Audio reliability** — play, pause, seek, forward / backward, volume,
       speed, previous / next ayah, previous / next Surah, reciter change,
       loading state, error recovery (bad network / 404 file), background and

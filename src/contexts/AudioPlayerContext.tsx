@@ -121,6 +121,14 @@ interface AudioPlayerApi extends AudioPlayerState {
   clearQueue: () => void;
   setExpanded: (expanded: boolean) => void;
   dismissContinue: () => void;
+  /**
+   * The next moment (on the clock being shown: `preludeCurrentTime` during a
+   * prelude, else `currentTime`) at which the screen changes — the next word
+   * of the ayah. `timeupdate` only fires ~4× a second, so a word would light
+   * up to 250ms after the voice reaches it; while playing, the clock is also
+   * updated on the first animation frame past this boundary. Null = none.
+   */
+  setTimeBoundary: (seconds: number | null) => void;
 }
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
@@ -1000,6 +1008,40 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     onPreludeEnded();
   }, [onPreludeEnded]);
 
+  // Word-accurate clock: see setTimeBoundary in AudioPlayerApi. Only the
+  // frame that crosses the boundary sets state, so the tree re-renders once
+  // per word, not every frame.
+  const timeBoundaryRef = useRef<number | null>(null);
+  const setTimeBoundary = useCallback((seconds: number | null) => {
+    timeBoundaryRef.current = seconds;
+  }, []);
+  useEffect(() => {
+    if (!isPlaying) return;
+    let raf = 0;
+    const frame = () => {
+      const b = timeBoundaryRef.current;
+      if (b !== null && !forcedSeekPendingRef.current) {
+        if (isPreludeRef.current) {
+          const pel = preludeAudioRef.current;
+          if (pel && !pel.paused && pel.currentTime >= b) {
+            timeBoundaryRef.current = null;
+            setPreludeCurrentTime(pel.currentTime);
+          }
+        } else {
+          const el = audioRef.current;
+          const t = el ? el.currentTime - currentTrimOffsetRef.current : -1;
+          if (el && !el.paused && t >= b) {
+            timeBoundaryRef.current = null;
+            setCurrentTime(Math.max(0, t));
+          }
+        }
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [isPlaying]);
+
   const onTimeUpdate = useCallback(() => {
     const el = audioRef.current;
     if (!el || !current) return;
@@ -1125,6 +1167,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       clearQueue,
       setExpanded,
       dismissContinue,
+      setTimeBoundary,
           }),
     [
       queue,
@@ -1164,6 +1207,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       clearQueue,
       setExpanded,
       dismissContinue,
+      setTimeBoundary,
           ]
   );
 

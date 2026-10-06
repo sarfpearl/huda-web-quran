@@ -60,6 +60,9 @@ import {
   getRecitationTimeline,
   getAyahClipWordSync,
   ayahClipTimeOf,
+  ayahClipWindow,
+  nextWordBoundary,
+  nextTimelineBoundary,
   CANONICAL_ISTIADHAH,
   CANONICAL_BISMILLAH,
   type AyahVerse,
@@ -649,6 +652,30 @@ export function ImmersiveHomeClient() {
     preludeCurrentTime: player.preludeCurrentTime,
     preludeDuration: player.preludeDuration,
   });
+
+  // Light each word on the frame its voice starts, not at the next ~4 Hz
+  // timeupdate: tell the player the next moment the highlight can change.
+  const { setTimeBoundary } = player;
+  const juzClipWindow = isJuz ? ayahClipWindow(juzAyahVerse) : null;
+  useEffect(() => {
+    if (!player.isPlaying) return setTimeBoundary(null);
+    if (!isJuz) {
+      const clock = player.isPrelude ? player.preludeCurrentTime : player.currentTime;
+      return setTimeBoundary(
+        player.isPrelude ? nextWordBoundary(currentSegment, clock) : nextTimelineBoundary(segments, currentSegment, clock),
+      );
+    }
+    // Per-ayah Juz clip: clip time ↔ the ayah's Surah-time window (scaled).
+    if (!juzClipWindow || player.ayahSequence?.preType || !juzWordSync.hasWordTiming) return setTimeBoundary(null);
+    const winDur = juzClipWindow.end - juzClipWindow.start;
+    const dur = player.duration > 0 ? player.duration : winDur;
+    const surahTime = juzClipWindow.start + player.currentTime * (winDur / dur);
+    const next = nextWordBoundary(juzAyahVerse, surahTime);
+    setTimeBoundary(next === null ? null : ayahClipTimeOf(juzAyahVerse, next, player.duration));
+  }, [
+    setTimeBoundary, isJuz, segments, currentSegment, juzAyahVerse, juzClipWindow, juzWordSync.hasWordTiming,
+    player.isPlaying, player.isPrelude, player.preludeCurrentTime, player.currentTime, player.duration, player.ayahSequence?.preType,
+  ]);
 
   // Tap a word → jump the recitation to its start. Surah timings share the
   // player clock; a per-ayah Juz file is ayah-relative and scaled (as above).
