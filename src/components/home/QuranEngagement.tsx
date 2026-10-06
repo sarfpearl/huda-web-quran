@@ -370,7 +370,7 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
       aria-label={count > 0 ? `${tip} · ${count}` : tip}
       data-tooltip={tip}
       className={cn(
-        "flex h-9 min-w-9 items-center justify-center gap-1 rounded-full bg-black/40 border border-white/10 text-[11px] font-bold tabular-nums transition-all cursor-pointer hover:bg-black/60 active:scale-90 disabled:cursor-default disabled:active:scale-100",
+        "tap-44 flex h-9 min-w-9 items-center justify-center gap-1 rounded-full bg-black/40 border border-white/10 text-[11px] font-bold tabular-nums transition-all cursor-pointer hover:bg-black/60 active:scale-90 disabled:cursor-default disabled:active:scale-100",
         count > 0 && "px-2.5",
         liked ? "text-emerald-400" : "text-sand-200/80 hover:text-emerald-300"
       )}
@@ -1004,7 +1004,7 @@ export function PlayerStatsFrame({
     </>
   );
   const stat =
-    "flex items-center gap-1.5 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
+    "tap-44 flex items-center gap-1.5 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
 
   return (
     <div data-player-frame className="relative max-w-full">

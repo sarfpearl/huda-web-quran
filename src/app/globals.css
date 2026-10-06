@@ -236,6 +236,22 @@
 }
 
 @layer utilities {
+  /* A tap area of at least 44×44px around a small control (Apple HIG /
+     WCAG 2.5.5), centred on it, without changing how it looks. Only for
+     controls that aren't positioned themselves (it makes them relative). */
+  .tap-44 {
+    position: relative;
+  }
+  .tap-44::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
   /* Skeleton shimmer */
   .skeleton {
     position: relative;

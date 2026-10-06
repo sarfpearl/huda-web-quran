@@ -837,7 +837,7 @@ export function CompactBayanPlayer({
                 ? "Play a random Juz"
                 : "Random Category / Shuffle"
             }
-            className="grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
+            className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
             aria-label={
               isSurahTrackId(bayan.id)
                 ? "Shuffle Surah"
@@ -860,7 +860,7 @@ export function CompactBayanPlayer({
             }}
             aria-label="Playback Speed"
             data-tooltip={`${L.speed} · ${player.playbackRate}x`}
-            className="grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+            className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
             {player.playbackRate}x
           </button>
@@ -1103,7 +1103,7 @@ function VolumeControl({
         type="button"
         tabIndex={open ? 0 : -1}
         onClick={() => { haptic(); toggleMute(); }}
-        className="grid h-7 w-7 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+        className="tap-44 grid h-7 w-7 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
         aria-label={isMuted ? "Unmute" : "Mute"}
         title={isMuted ? "Unmute" : "Mute"}
       >
@@ -1327,7 +1327,7 @@ const compactBtn =
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 const pillStepBtn =
-  "grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";
+  "tap-44 grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";
 
 /** « » ayah steps in the compact footer strip — strip height, tighter. */
 const footerStepBtn =

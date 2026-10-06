@@ -398,7 +398,7 @@ export function TopicPickerModal({
                     e.stopPropagation();
                     setIsOpen(false);
                   }}
-                  className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
+                  className="tap-44 pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
                   aria-label="Close"
                 >
                   <CloseIcon className="text-lg" />
