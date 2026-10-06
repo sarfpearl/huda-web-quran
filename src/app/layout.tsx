@@ -11,7 +11,7 @@ import { SplashScreen } from "@/components/layout/SplashScreen";
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.fullName} · ${siteConfig.tagline}`,
+    default: siteConfig.title,
     template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -26,14 +26,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: siteConfig.fullName,
-    title: `${siteConfig.fullName} · ${siteConfig.tagline}`,
+    title: siteConfig.title,
     description: siteConfig.description,
     url: siteConfig.url,
     locale: siteConfig.locale,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.fullName} · ${siteConfig.tagline}`,
+    title: siteConfig.title,
     description: siteConfig.description,
   },
   icons: {

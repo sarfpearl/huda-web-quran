@@ -9,6 +9,33 @@ import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
 const plain = (name: string) =>
   name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+// The last place found, kept so a reload doesn't ask again: iOS Safari
+// forgets a site's location permission between loads and would prompt every
+// time. Asked again only after a week, and never once denied.
+const PLACE_KEY = "huda-place";
+const PLACE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+interface SavedPlace {
+  city?: string;
+  detail?: PlaceDetail;
+  denied?: boolean;
+  at: number;
+}
+function readPlace(): SavedPlace | null {
+  try {
+    const p = JSON.parse(localStorage.getItem(PLACE_KEY) ?? "null") as SavedPlace | null;
+    return p && typeof p.at === "number" ? p : null;
+  } catch {
+    return null;
+  }
+}
+function savePlace(p: SavedPlace) {
+  try {
+    localStorage.setItem(PLACE_KEY, JSON.stringify(p));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 interface TimeLocationWidgetProps {
   className?: string;
   defaultLocation?: string;
@@ -47,6 +74,20 @@ export function TimeLocationWidget({
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       finishStage("location");
+      return;
+    }
+    const saved = readPlace();
+    if (saved && (saved.denied || Date.now() - saved.at < PLACE_MAX_AGE)) {
+      if (saved.city) setLocation(saved.city);
+      finishStage("location");
+      if (saved.detail) {
+        // After the home screen's listeners are attached.
+        const detail = saved.detail;
+        const t = setTimeout(() =>
+          window.dispatchEvent(new CustomEvent(PLACE_EVENT, { detail })),
+        );
+        return () => clearTimeout(t);
+      }
       return;
     }
     let cancelled = false;
@@ -92,14 +133,17 @@ export function TimeLocationWidget({
               if (city) {
                 setLocation(plain(city));
               }
+              savePlace({ city: city ? plain(city) : undefined, detail, at: Date.now() });
             }
           } catch {
             // Keep default location if reverse geocoding fails
           }
         },
-        () => {
+        (err) => {
           // Keep default location if permission denied. Without a timeout an
           // error only comes once the prompt has been answered.
+          if (err.code === err.PERMISSION_DENIED)
+            savePlace({ denied: true, at: Date.now() });
           done();
         },
         // No timeout while the prompt can still be up: Safari counts it
