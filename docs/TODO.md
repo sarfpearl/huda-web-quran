@@ -7,6 +7,7 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 - [ ] **Remove unused R2 keys from Vercel** — `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are in Vercel (Project → Settings → Environments → Production) but only the local `scripts/tools/upload-to-r2.mjs` uses them; the app never reads them. Delete both there; keep them in `.env.local`. Owner does this in the Vercel dashboard.
 - [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com). Until then IndoPak stays development-only. Steps once granted: see *IndoPak script by region* below.
 - [ ] **Clear Supabase test data before launch** — `truncate public.quran_listens, public.quran_presence;` in the Supabase SQL editor (add `public.quran_likes, public.quran_comments` to wipe those too). See *Quran views · live · comments · likes* below.
+- [ ] **Turn on admin login (owner, Supabase dashboard)** — until this is done `/admin/comments` can't load comments. Run `supabase/migrations/20261006120000_admin_login_moderation.sql` in the SQL editor, then follow the four setup steps at the top of that file: Email provider on and sign-ups off, Site URL + redirect URLs (`/admin/comments` on the live site and localhost), add your user, and insert it into `public.admins`. The old moderator key stops working once the migration runs.
 - [ ] **Old Bayan DB tables (owner's call)** — the Bayan section was removed from the app on 2026-10-06, but the live Supabase DB still has the tables `categories`, `speakers`, `bayan`, `bayan_plays` and the storage buckets `bayan-audio`, `bayan-images`, `speaker-images`. Nothing reads them. Back up first if the data matters, then drop them, e.g.
   `drop table if exists public.bayan_plays, public.bayan, public.speakers, public.categories cascade;`
   and delete the three buckets in Supabase Storage. Keep `public.admins` / `public.is_admin()` — comment moderation needs them. R2 also still holds unused `assets/images/bayan/*.jpg` (keep `bayan/quran.jpg`, the Quran fallback cover).
@@ -50,10 +51,10 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
       server. Options: per-IP rate limiting in a Supabase Edge Function or
       Vercel middleware, a captcha (Turnstile) on comments, or counting only
       signed-in users.
-- [ ] **Admin login** — `/admin` has no authentication yet; comment moderation
-      is protected by a moderator key instead
-      (`supabase/migrations/20260925090000_quran_comment_moderation.sql`).
-      Replace with Supabase Auth + `public.admins` when admin login is added.
+- [x] **Admin login** — `/admin/comments` signs in with an email magic link
+      (Supabase Auth); only users in `public.admins` can moderate. The
+      moderator key is gone
+      (`supabase/migrations/20261006120000_admin_login_moderation.sql`).
 - [ ] Supabase Free plan pauses after ~7 days without activity and has no
       automatic backups — restore from the dashboard if paused; consider Pro
       before relying on the data.

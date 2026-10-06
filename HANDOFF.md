@@ -93,6 +93,7 @@
 
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
+- [ ] **Admin login — owner setup:** `/admin/comments` now uses an email magic link (Supabase Auth + `public.admins`) instead of the moderator key. Run `supabase/migrations/20261006120000_admin_login_moderation.sql` and the setup steps at its top; until then the page shows the login but can't list comments.
 - [ ] Optional: remove `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
 - [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.

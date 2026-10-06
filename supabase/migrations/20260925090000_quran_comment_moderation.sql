@@ -1,5 +1,6 @@
 -- ============================================================================
 --  HuDa Web Quran : comment moderation (/admin/comments)
+--  SUPERSEDED by 20261006120000_admin_login_moderation.sql (admin login).
 --  Run AFTER 20260924130000_quran_views_comments.sql. Idempotent.
 --
 --  There is no admin login yet, so moderation is gated by a moderator key:
