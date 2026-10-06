@@ -51,11 +51,17 @@ export function TimeLocationWidget({
     }
     let cancelled = false;
     let status: PermissionStatus | undefined;
-    const done = () => finishStage("location");
-    // Allow / Don't Allow flips the permission state, even when the position
-    // itself is slow to come or fails.
+    let poll: ReturnType<typeof setInterval> | undefined;
+    const done = () => {
+      clearInterval(poll);
+      finishStage("location");
+    };
+    // Allow flips the permission state to "granted" even while the position
+    // itself is slow to come. Only "granted" counts: Safari reports a passing
+    // "denied" while its own app-level prompt is still up, and a real denial
+    // reaches the error callback at once anyway.
     const onChange = () => {
-      if (status && status.state !== "prompt") done();
+      if (status?.state === "granted") done();
     };
     const ask = (wasAnswered: boolean) => {
       if (cancelled) return;
@@ -111,10 +117,22 @@ export function TimeLocationWidget({
         if (cancelled) return;
         status = s;
         status?.addEventListener("change", onChange);
-        ask(status?.state === "granted" || status?.state === "denied");
+        const answered = status?.state === "granted" || status?.state === "denied";
+        // Android Chrome doesn't always fire "change", and once allowed the
+        // position can take a long time (no GPS fix indoors), so check the
+        // state every second while the prompt may be up.
+        if (status && !answered)
+          poll = setInterval(() => {
+            navigator.permissions
+              .query({ name: "geolocation" })
+              .then((s) => s.state === "granted" && done())
+              .catch(() => {});
+          }, 1000);
+        ask(answered);
       });
     return () => {
       cancelled = true;
+      clearInterval(poll);
       status?.removeEventListener("change", onChange);
     };
   }, []);
