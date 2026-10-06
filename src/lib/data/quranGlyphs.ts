@@ -143,6 +143,43 @@ export function fetchSurahGlyphs(surahNumber: number): Promise<GlyphVerse[] | nu
   return p;
 }
 
+/**
+ * IndoPak script (South Asia's Mushaf style): the same verses and word
+ * positions as the glyph data, each word's text swapped for its IndoPak text
+ * (public/data/quran-indopak, scripts/generation/fetch-indopak-words.mjs).
+ * Drawn as text only — there are no IndoPak page fonts, so no Tajweed colours.
+ * The ۞ / ۩ marks come off the text as they do off the glyphs.
+ */
+const indoPakCache = new Map<number, Promise<GlyphVerse[] | null>>();
+const plainIndoPak = (t: string) => t.replace(/^\u06DE\s*/, "").replace(/\s*\u06E9/, "").trim();
+export function fetchSurahIndoPak(surahNumber: number): Promise<GlyphVerse[] | null> {
+  let p = indoPakCache.get(surahNumber);
+  if (!p) {
+    const words = fetch(`/data/quran-indopak/${surahNumber}.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ a: number; w: string[] }[]>) : null))
+      .catch(() => null);
+    p = Promise.all([fetchSurahGlyphs(surahNumber), words]).then(([glyphs, ip]) => {
+      if (!glyphs || !ip) return null;
+      const byAyah = new Map(ip.map((v) => [v.a, v.w]));
+      return glyphs.map((v) => {
+        const texts = byAyah.get(v.a);
+        if (!texts || texts.length !== v.w.length) return v;
+        return { ...v, w: v.w.map(([code, page], i): GlyphWord => [code, page, plainIndoPak(texts[i])]) };
+      });
+    });
+    p.then((v) => v === null && indoPakCache.delete(surahNumber));
+    indoPakCache.set(surahNumber, p);
+  }
+  return p;
+}
+
+/** The verse words for a script: glyph data with Uthmani or IndoPak text. */
+export const fetchSurahWords = (surahNumber: number, script: QuranScript) =>
+  script === "indopak" ? fetchSurahIndoPak(surahNumber) : fetchSurahGlyphs(surahNumber);
+
+/** The Mushaf script the Arabic is shown in. */
+export type QuranScript = "uthmani" | "indopak";
+
 const fontCache = new Map<number, Promise<boolean>>();
 const fontFaces = new Map<number, FontFace>();
 /**

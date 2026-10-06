@@ -4,7 +4,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
 /* Ayah meanings in other scripts (src/lib/data/translations.ts). The browser
    downloads a script's font files only when that text is on screen. */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500&family=Noto+Sans+Malayalam:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&family=Noto+Sans+Bengali:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500&family=Noto+Sans+Malayalam:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&family=Noto+Sans+Bengali:wght@400;500&family=Noto+Naskh+Arabic:wght@400;500&display=swap');
 
 /* KFGQPC Uthmanic Script HAFS v0.18 — Madinah Mushaf font for Quran Arabic
    text, the build Quran.com ships (v0.09 couldn't draw U+06ED). It's made for
@@ -86,7 +86,6 @@
   .font-arabic :where(span, div, p) {
     font-family: inherit;
   }
-
   html,
   body {
     max-width: 100vw;
@@ -584,4 +583,13 @@ textarea,
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-tab-gold::after { animation: none; opacity: 0; }
+}
+
+/* IndoPak script (src/lib/data/quranScript.ts): Quran.com's text_indopak is
+   encoded for "AlQuran IndoPak by QuranWBW", declared as 'IndoPak' once
+   QuranWBW grants permission (docs/TODO.md). Until then Noto Naskh Arabic
+   (OFL) draws it — a few words use that font's private-use marks and show
+   as boxes, which is why IndoPak stays development-only for now. */
+.font-arabic.quran-indopak {
+  font-family: 'IndoPak', 'Noto Naskh Arabic', 'Uthmanic Hafs', serif;
 }

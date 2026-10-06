@@ -27,7 +27,8 @@ import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 const TAJWEED_AUTO_HIDE_MS = 4000;
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { CheckIcon } from "@/components/ui/Icon";
-import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
+import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
+import type { QuranScript } from "@/lib/data/quranGlyphs";
 
 /** Reading mode's text sizes, × the default. */
 export const READER_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75];
@@ -47,6 +48,9 @@ interface ImmersiveHeaderProps {
   /** Tajweed colouring of the verse text + toggle */
   showTajweed?: boolean;
   onToggleTajweed?: () => void;
+  /** Mushaf script and its picker (shown in the Tajweed panel when enabled). */
+  script?: QuranScript;
+  onChooseScript?: (script: QuranScript) => void;
   selectedReciter?: QuranReciter;
   onSelectReciter?: (reciter: QuranReciter) => void;
   isQuranActive?: boolean;
@@ -70,6 +74,8 @@ export function ImmersiveHeader({
   textSize,
   showTajweed = false,
   onToggleTajweed,
+  script = "uthmani",
+  onChooseScript,
   selectedReciter = getDefaultReciter(),
   onSelectReciter,
   isQuranActive = true,
@@ -403,26 +409,52 @@ export function ImmersiveHeader({
                 aria-label={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
                 className="pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150"
               >
+                {/* Mushaf script: Uthmani (Madani) or IndoPak */}
+                {onChooseScript && (
+                  <div className="mb-2 border-b border-white/10 px-1 pb-3">
+                    <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-sand-300/70">Script</p>
+                    <div role="radiogroup" aria-label="Quran script" className={TAB_TRACK}>
+                      {SCRIPT_CHOICES.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={script === c.id}
+                          onClick={() => onChooseScript(c.id)}
+                          className={`${TAB} ${script === c.id ? SELECTED_TAB : UNSELECTED_TAB}`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={showTajweed}
-                  onClick={onToggleTajweed}
-                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 hover:bg-white/5 cursor-pointer"
+                  aria-checked={showTajweed && script !== "indopak"}
+                  aria-disabled={script === "indopak"}
+                  onClick={script === "indopak" ? undefined : onToggleTajweed}
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 ${
+                    script === "indopak" ? "cursor-not-allowed opacity-50" : "hover:bg-white/5 cursor-pointer"
+                  }`}
                 >
-                  <span className={`text-sm font-semibold ${language === "ta" ? "font-tamil" : ""}`}>
-                    {language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
+                  <span className="flex flex-col text-left">
+                    <span className={`text-sm font-semibold ${language === "ta" ? "font-tamil" : ""}`}>
+                      {language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
+                    </span>
+                    {script === "indopak" && <span className="text-[11px] text-sand-300/70">Uthmani script only</span>}
                   </span>
                   <span
                     aria-hidden="true"
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${showTajweed ? "bg-amber-400/90" : "bg-white/20"}`}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${showTajweed && script !== "indopak" ? "bg-amber-400/90" : "bg-white/20"}`}
                   >
                     <span
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${showTajweed ? "left-[1.375rem]" : "left-0.5"}`}
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${showTajweed && script !== "indopak" ? "left-[1.375rem]" : "left-0.5"}`}
                     />
                   </span>
                 </button>
-                <ul className={`mt-1 grid gap-1.5 px-2 pb-1 pt-2 border-t border-white/10 ${showTajweed ? "" : "opacity-50"}`}>
+                <ul className={`mt-1 grid gap-1.5 px-2 pb-1 pt-2 border-t border-white/10 ${showTajweed && script !== "indopak" ? "" : "opacity-50"}`}>
                   {TAJWEED_LEGEND.map((r) => (
                     <li key={r.color} className="flex items-center gap-2.5 text-xs text-sand-100/90">
                       <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
@@ -550,3 +582,8 @@ function TajweedIcon({ on, className }: { on: boolean; className?: string }) {
     </svg>
   );
 }
+
+const SCRIPT_CHOICES: { id: QuranScript; label: string }[] = [
+  { id: "uthmani", label: "Uthmani" },
+  { id: "indopak", label: "IndoPak" },
+];

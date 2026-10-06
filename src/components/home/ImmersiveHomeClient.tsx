@@ -14,6 +14,8 @@ import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/
 import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
+import type { QuranScript } from "@/lib/data/quranGlyphs";
+import { detectScript, INDOPAK_ENABLED, isQuranScript, placeScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
@@ -679,6 +681,46 @@ export function ImmersiveHomeClient() {
       /* storage unavailable */
     }
   }, []);
+  // Mushaf script (Uthmani / IndoPak, quranScript.ts): the one picked before,
+  // else a guess from the time zone, refined by the place once it's known.
+  // IndoPak has no Tajweed colours. Development-only until the IndoPak font
+  // is licensed (INDOPAK_ENABLED).
+  const [quranScript, setQuranScript] = useState<QuranScript>("uthmani");
+  useEffect(() => {
+    if (!INDOPAK_ENABLED) return;
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem(SCRIPT_STORAGE_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    if (isQuranScript(saved)) {
+      setQuranScript(saved);
+      return;
+    }
+    setQuranScript(detectScript());
+    const onPlace = (e: Event) => {
+      try {
+        if (isQuranScript(localStorage.getItem(SCRIPT_STORAGE_KEY))) return;
+      } catch {
+        /* storage unavailable */
+      }
+      const s = placeScript((e as CustomEvent<PlaceDetail>).detail?.countryCode);
+      if (s) setQuranScript(s);
+    };
+    window.addEventListener(PLACE_EVENT, onPlace);
+    return () => window.removeEventListener(PLACE_EVENT, onPlace);
+  }, []);
+  const handleChooseScript = (s: QuranScript) => {
+    setQuranScript(s);
+    try {
+      localStorage.setItem(SCRIPT_STORAGE_KEY, s);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+  const tajweedShown = showTajweed && quranScript !== "indopak";
+
   // Reading mode's text size (× default), remembered per browser.
   const [readerScale, setReaderScale] = useState(1);
   useEffect(() => {
@@ -1080,7 +1122,8 @@ export function ImmersiveHomeClient() {
         isJuz={isJuz}
         showGreeting={!hasPlayed}
         onSeekToWord={handleSeekToWord}
-        tajweed={showTajweed}
+        tajweed={tajweedShown}
+        script={quranScript}
       />
       </div>
 
@@ -1097,8 +1140,10 @@ export function ImmersiveHomeClient() {
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
         textSize={readingActive ? { value: readerScale, onChange: handleReaderScale } : undefined}
-        showTajweed={showTajweed}
+        showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
+        script={quranScript}
+        onChooseScript={INDOPAK_ENABLED ? handleChooseScript : undefined}
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
@@ -1158,7 +1203,8 @@ export function ImmersiveHomeClient() {
             reciterId={selectedReciter.id}
             active={readingAyah}
             onSeekAyah={handleReaderSeekAyah}
-            tajweed={showTajweed}
+            tajweed={tajweedShown}
+            script={quranScript}
             activeWordIndex={readingWordIndex}
             onSeekWord={handleReaderSeekWord}
             onVisiblePageChange={(page, byHand) => handleVisiblePageChange(readingKey, page, byHand)}
