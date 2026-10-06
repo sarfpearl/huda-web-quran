@@ -14,12 +14,14 @@ import {
 } from "@/lib/data/quranVerses";
 import {
   fetchSurahGlyphs,
+  fetchSurahWords,
   glyphFontsFor,
   glyphInkPadding,
   glyphStyle,
   loadPageFont,
   pageFontReady,
   type GlyphVerse,
+  type QuranScript,
 } from "@/lib/data/quranGlyphs";
 import { translationInfo, useExtraMeaning, type MeaningTarget, type TranslationLang } from "@/lib/data/translations";
 
@@ -46,6 +48,8 @@ interface CenterVerseDisplayProps {
   onSeekToWord?: (index: number, word: QuranWordTiming) => void;
   /** Tajweed mode: draw each word as its Mushaf Tajweed colour-font glyph. */
   tajweed?: boolean;
+  /** Mushaf script: IndoPak is drawn as text (no page fonts, no Tajweed). */
+  script?: QuranScript;
 }
 
 const GREETING = {
@@ -231,7 +235,9 @@ export function CenterVerseDisplay({
   showGreeting = false,
   onSeekToWord,
   tajweed = false,
+  script = "uthmani",
 }: CenterVerseDisplayProps) {
+  const indoPak = script === "indopak";
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -458,7 +464,7 @@ export function CenterVerseDisplay({
     const ayah = it.ayahNumber ?? currentVerse?.ayahNumber;
     return surah && ayah && ayah > 0 ? { surah, ayah } : null;
   })();
-  const tjKey = tjRef ? `${tjRef.surah}:${tjRef.ayah}` : "";
+  const tjKey = tjRef ? `${script}:${tjRef.surah}:${tjRef.ayah}` : "";
   const [glyphVerse, setGlyphVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
   // The same words' KFGQPC-encoded text (text_qpc_hafs), drawn in the Hafs font
   // whenever the glyphs aren't (WebKit with Tajweed off, fonts still loading):
@@ -468,7 +474,7 @@ export function CenterVerseDisplay({
     if (!tjRef) return;
     let cancelled = false;
     const { surah, ayah } = tjRef;
-    fetchSurahGlyphs(surah).then((verses) => {
+    fetchSurahWords(surah, script).then((verses) => {
       const verse = verses?.find((v) => v.a === ayah);
       if (verse && !cancelled) setQpcVerse({ key: tjKey, verse });
     });
@@ -478,7 +484,7 @@ export function CenterVerseDisplay({
   }, [tjKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // WebKit: page fonts only while Tajweed is on (see isWebKit).
-    if (!tjRef || !glyphFontsFor(tajweed)) return;
+    if (!tjRef || indoPak || !glyphFontsFor(tajweed)) return;
     let cancelled = false;
     const { surah, ayah } = tjRef;
     fetchSurahGlyphs(surah).then(async (verses) => {
@@ -497,6 +503,7 @@ export function CenterVerseDisplay({
   const glyphs =
     tjRef &&
     glyphVerse?.key === tjKey &&
+    !indoPak &&
     glyphFontsFor(tajweed) &&
     glyphVerse.verse.w.every((w) => pageFontReady(w[1])) &&
     (!glyphVerse.verse.e || pageFontReady(glyphVerse.verse.e[1]))
@@ -663,7 +670,7 @@ export function CenterVerseDisplay({
             data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic ${indoPak ? "quran-indopak" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
               <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">

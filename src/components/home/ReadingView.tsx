@@ -11,7 +11,7 @@ import {
   type AyahVerse,
 } from "@/lib/data/quranVerses";
 import {
-  fetchSurahGlyphs,
+  fetchSurahWords,
   glyphFontsFor,
   glyphInkPadding,
   glyphStyle,
@@ -20,6 +20,7 @@ import {
   pageFontReady,
   unloadPageFont,
   type GlyphVerse,
+  type QuranScript,
 } from "@/lib/data/quranGlyphs";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import SurahBanner from "./SurahBanner";
@@ -49,6 +50,8 @@ interface ReadingViewProps {
   onSeekAyah?: (surah: number, ayah: number) => void;
   /** Tajweed colours (QPC V4 page fonts), as the main verse view. */
   tajweed?: boolean;
+  /** Mushaf script: IndoPak is drawn as text (no page fonts, no Tajweed). */
+  script?: QuranScript;
   /** Word being recited in the active ayah (0-based, -1 = none). */
   activeWordIndex?: number;
   /** Tap a word → recite from its start. */
@@ -116,6 +119,7 @@ export function ReadingView({
   active = null,
   onSeekAyah,
   tajweed = false,
+  script = "uthmani",
   activeWordIndex = -1,
   onSeekWord,
   onVisiblePageChange,
@@ -190,14 +194,16 @@ export function ReadingView({
   // isWebKit). The glyph data always loads: its words' KFGQPC text is what's
   // drawn (Hafs font) wherever a page font isn't — the Tanzil-style text drew
   // U+06DF / U+06ED as dotted circles — and its pages lay out the Mushaf pages.
-  const useGlyphs = glyphFontsFor(tajweed);
+  // IndoPak: the same words and Mushaf pages, drawn as IndoPak text.
+  const indoPak = script === "indopak";
+  const useGlyphs = !indoPak && glyphFontsFor(tajweed);
   const [glyphs, setGlyphs] = useState<Map<number, GlyphVerse[]> | null>(null);
   useEffect(() => {
     setGlyphs(null);
     let cancelled = false;
     // Surah headers' Bismillah is 1:1's glyphs (Mushaf page 1).
     const need = [...new Set([1, ...plan.surahs])];
-    Promise.all(need.map((s) => fetchSurahGlyphs(s).then((g) => [s, g] as const))).then((entries) => {
+    Promise.all(need.map((s) => fetchSurahWords(s, script).then((g) => [s, g] as const))).then((entries) => {
       if (cancelled) return;
       const map = new Map<number, GlyphVerse[]>();
       for (const [s, g] of entries) if (g) map.set(s, g);
@@ -206,7 +212,7 @@ export function ReadingView({
     return () => {
       cancelled = true;
     };
-  }, [surahsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [surahsKey, script]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Page fonts. Chromium / Firefox: every page, one by one in reading order.
   // WebKit: a whole Surah of COLR page fonts (Al-Baqarah: 49) crashed iPhone
@@ -813,7 +819,7 @@ export function ReadingView({
       >
         <SurahBanner surah={surah} />
         {hasBismillah(surah) && (
-          <p lang="ar" dir="rtl" className="font-arabic mt-6 text-2xl sm:text-3xl text-sand-50/90 quran-arabic-shadow">
+          <p lang="ar" dir="rtl" className={`font-arabic ${indoPak ? "quran-indopak" : ""} mt-6 text-2xl sm:text-3xl text-sand-50/90 quran-arabic-shadow`}>
             {bismillahGlyphs
               ? bismillahGlyphs.w.map(([code, page, text], i) => (
                   <Fragment key={i}>
@@ -841,7 +847,7 @@ export function ReadingView({
           key={`t${out.length}`}
           lang="ar"
           dir="rtl"
-          className="font-arabic text-center text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow"
+          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-center text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
         >
           {parts.map((p, i) => renderPart(p, `${p.ref.surah}:${p.ref.ayah}:${p.from}:${i}`))}
         </p>

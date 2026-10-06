@@ -1,20 +1,30 @@
 # TODO
 
-## Next phase · IndoPak script by region
+## IndoPak script by region
 
-- [ ] **Show the Quran in IndoPak script for South Asia** — India, Pakistan,
-      Bangladesh, Sri Lanka and South Africa read the IndoPak style (its own
-      harakat, sukun and madd marks); everywhere else keeps Uthmani (Madani).
-      Pick the default from the device time zone (no location permission
-      needed), or the country from the location the app already asks for;
-      add an "Uthmani / IndoPak" switch so anyone can change it.
-  - Agreed: **no Tajweed colours in IndoPak** — the colour glyphs are QPC V4
-    Uthmani page fonts; IndoPak has no colour font. The recited-word highlight
-    stays, drawn as plain text.
-  - Check Quran.com's IndoPak text keeps the same word positions, so word
-    sync works unchanged.
-  - Reading mode's « Page N » counts the Madani 604 pages; IndoPak Mushafs
-    paginate differently — hide the page number in IndoPak or keep Madani's.
+Built on `feat/indopak-script`, **development-only** until the font is licensed
+(`INDOPAK_ENABLED` in `src/lib/data/quranScript.ts`: on in `next dev`, or with
+`NEXT_PUBLIC_INDOPAK=1`).
+
+- [x] IndoPak word text at the glyph data's word positions —
+      `public/data/quran-indopak/` (`scripts/generation/fetch-indopak-words.mjs`,
+      Quran.com `text_indopak`); word sync, highlight and tap-to-seek unchanged.
+- [x] Region default: device time zone, then the country from the location
+      (India, Pakistan, Bangladesh, Sri Lanka, Nepal, South Africa, Mauritius
+      → IndoPak); a script picked by hand is remembered (`huda:script`).
+- [x] "Uthmani | IndoPak" picker in the Tajweed panel; Tajweed colours are
+      Uthmani-only (switch disabled in IndoPak — agreed).
+- [x] Reading mode keeps the Madani 604-page layout and page numbers.
+- [ ] **Font licence** — Quran.com's `text_indopak` is encoded for
+      "AlQuran IndoPak by QuranWBW" (it uses that font's private-use marks).
+      Its licence: *not for distribution or development without written notice
+      by QuranWBW.com* (quranwbw@gmail.com). Until permission arrives the text
+      falls back to Noto Naskh Arabic, which shows 1,367 of 77,430 words
+      (1.77%) with boxes for those marks.
+- [ ] Once granted: self-host the font, declare it as `'IndoPak'` in
+      `globals.css` (`.font-arabic.quran-indopak` already lists it first), set
+      `NEXT_PUBLIC_INDOPAK=1` in Vercel, add the font to About → credits, and
+      check the ayah-end ornament and waqf marks with the real font.
 
 ## Quran views · live · comments · likes (Supabase)
 
