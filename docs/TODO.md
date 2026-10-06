@@ -76,8 +76,16 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       no Simulator.app): background + lock-screen playback and controls on
       iPhone Safari and Android Chrome, headphones / Bluetooth buttons, a call
       interrupting playback, Juz playing on with the screen locked.
-- [ ] **5. Surah navigation** — Surah search (number, English, Arabic),
-      previous / next Surah and ayah, bookmark, last reading position restored.
+- [~] **5. Surah navigation** (2026-10-06) — checked in the browser: Surah
+      search (item 1), previous / next ayah and Surah (114 → 1 and 1 → 114
+      wrap), bookmark (player 🔖 → "Bookmark · Ya-Sin 36:3" pill after a
+      reload → opens it in reading mode), reading mode's "Continue reading ·
+      Ya-Sin 36:4" after a reload → page 440. **Open (owner's call):** the
+      listening position isn't restored — every load lands on Al-Fatihah at
+      0:00 (on purpose, ImmersiveHomeClient) and a Surah always starts at
+      0:00 (`isQuran ? 0` in loadCurrent), though positions are still saved
+      (`huda-player:positions`); the old "Continue listening" card went with
+      the Bayan section.
 
 ### 🔴 P1 — before public launch
 - [ ] **6. Reading mode** — continuous / Mushaf view, manual scroll, current
