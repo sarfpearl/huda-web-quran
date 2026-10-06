@@ -11,16 +11,16 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-06, after PR #18.*
+*Snapshot: 2026-10-06, after PR #19.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters (Bayan section removed) |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `65dea7d` — Merge PR #18 (`docs/todo-open-items`) |
-| **Latest merged PRs** | #14 IndoPak script (dev-only) · #15 HANDOFF status + README · #16 env vars · #17 share image (og/twitter) · #18 TODO open items |
+| **`main`** | `b6cee90` — Merge PR #19 (`docs/handoff-status-1006b`) |
+| **Latest merged PRs** | #14 IndoPak script (dev-only) · #15 HANDOFF status + README · #16 env vars · #17 share image (og/twitter) · #18 TODO open items · #19 HANDOFF status |
 | **Open PRs** | None |
-| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — deploy of `65dea7d` succeeded |
+| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — deploy of `b6cee90` succeeded |
 | **Local working tree** | `main`, clean |
 
 ---
@@ -104,7 +104,7 @@
 - [x] README refreshed; HANDOFF media locations corrected (PR #10).
 - [x] 13 untracked files resolved (PR #11).
 - [x] Bayan removed, translations ×10, onboarding (PR #12).
-- [x] Maher's full-Juz audio moved off archive.org to R2 (PR #13): 30 files (~1.36 GB) at `audio/juz/maher/para-NN.mp3`; masters in git-ignored `assets/audio/juz/maher/`; `upload-to-r2.mjs --category=audio-juz`. Para 30 is 320 kbps (173 MB), others 128 kbps.
+- [x] Maher's full-Juz audio moved off archive.org to R2 (PR #13): 30 files (~1.36 GB) at `audio/juz/maher/para-NN.mp3`; masters in git-ignored `assets/audio/juz/maher/`; `upload-to-r2.mjs --category=audio-juz`. Para 30 is 320 kbps (173 MB), others 128 kbps. **Not played by the app** (checked 2026-10-06): picking a Juz plays it ayah-by-ayah for every reciter, Maher included (`handleSelectJuz` in `ImmersiveHomeClient.tsx`); the files stay on R2 as the masters' backup.
 - [x] IndoPak script, development-only (PR #14).
 - [x] HANDOFF status + README 10 languages (PR #15); merged remote branches deleted (only `main` remains).
 - [x] `NEXT_PUBLIC_DATA_SOURCE` — already absent from Vercel and `.env.local`; nothing to remove.
@@ -126,6 +126,7 @@
 
 ## 6. Important Git History
 
+- `b6cee90` — **PR #19** `docs/handoff-status-1006b`: HANDOFF status after PR #18
 - `65dea7d` — **PR #18** `docs/todo-open-items`: Open items checklist in `docs/TODO.md`
 - `317815f` — **PR #17** `feat/og-share-image`: share image for link previews
 - `a439624` — **PR #16** `docs/handoff-env-vars`: `NEXT_PUBLIC_SITE_URL` added, env-var table
@@ -176,7 +177,7 @@
 | **R2 Upload Verification** | ✅ **PASS** | Original 270 files + 51 reciter portraits + 30 Juz MP3s verified (200, sizes match) |
 | **Production Deployment Image Loading** | ✅ **PASS** | Verified live in browser 2026-10-05 (see §3) |
 | **Live site after PR #12–#13** | ✅ **PASS** | 2026-10-06: old Bayan routes 404, `/admin/comments` 200, reciter photos and video load, bundle uses the R2 Juz path |
-| **Full-Juz playback in the app** | ⚠️ Not ear-tested | R2 file loads and seeks in a browser; in-app play not listened to |
+| **Juz playback in the app** | ✅ **PASS** | 2026-10-06, live, checked from audio events + network (not by ear). Every reciter, Maher included, plays a Juz ayah-by-ayah from everyayah.com. Juz 1 (Alafasy): Isti'adhah → 1:1–1:7 → Bismillah → 2:1…, 148 ayahs. Juz 10 (Maher): starts 8:41, 128 ayahs (Indo-Pak), 8:75 → 9:1 with no Bismillah. No console errors. Maher's R2 full-Juz files (`audio/juz/maher/para-NN.mp3`) return 200 but the app does not play them (see §4). |
 
 ---
 
