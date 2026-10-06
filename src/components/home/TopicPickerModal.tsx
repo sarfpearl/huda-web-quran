@@ -14,7 +14,7 @@ import {
   QURAN_TRACKS,
   QURAN_SURAHS,
   SURAH_TRACKS,
-  quranImageUrl,
+  quranThumbUrl,
   getSurahTracksForReciter,
   resolveActiveReciter,
 } from "@/lib/data/service";
@@ -264,7 +264,7 @@ export function TopicPickerModal({
 
   const renderSurahCard = (s: (typeof QURAN_SURAHS)[number]) => {
     const isTrackCurrent = player.current?.id === `quran-surah-${s.number}`;
-    const surahImg = s.image || s.coverImageUrl || quranImageUrl("surah", s.number);
+    const surahImg = quranThumbUrl("surah", s.number);
     return (
       <ContentListCard
         key={`surah-${s.number}`}
@@ -291,7 +291,7 @@ export function TopicPickerModal({
 
   const renderJuzCard = (j: (typeof QURAN_JUZ)[number]) => {
     const isTrackCurrent = player.current?.id === `quran-juz-${j.id}`;
-    const juzImg = quranImageUrl("juz", j.id);
+    const juzImg = quranThumbUrl("juz", j.id);
     return (
       <ContentListCard
         key={`juz-${j.id}`}

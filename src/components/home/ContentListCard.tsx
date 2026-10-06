@@ -97,8 +97,7 @@ export function ContentListCard({
           src={imgSrc}
           alt={title}
           fill
-          quality={95}
-          sizes="(max-width: 768px) 128px, 160px"
+          unoptimized
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           onError={() => setImgSrc(mediaUrl("/assets/images/bayan/quran.jpg"))}
         />

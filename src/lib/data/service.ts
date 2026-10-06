@@ -22,6 +22,7 @@ import {
   quranPlayerSubtitle,
   quranContentLabel,
   quranImageUrl,
+  quranThumbUrl,
   surahAudioUrl,
 } from "./quran";
 export {
@@ -78,6 +79,7 @@ export {
   quranPlayerSubtitle,
   quranContentLabel,
   quranImageUrl,
+  quranThumbUrl,
   surahAudioUrl,
 };
 export {

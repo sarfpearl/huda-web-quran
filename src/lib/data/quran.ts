@@ -41,6 +41,20 @@ export function quranImageUrl(
   return mediaUrl(`/assets/images/quran/juz-${pad}.jpg?v=5`);
 }
 
+/** 320px list thumbnail on R2, served directly (no Vercel image optimizer). */
+export function quranThumbUrl(
+  kind: "surah" | "juz",
+  num: number
+): string {
+  if (kind === "surah") {
+    const pad = String(num).padStart(3, "0");
+    const slug = SURAH_SLUG_MAP[num] || `surah-${num}`;
+    return mediaUrl(`/assets/images/surah/thumbs/${pad}-${slug}.jpg?v=1`);
+  }
+  const pad = String(num).padStart(2, "0");
+  return mediaUrl(`/assets/images/quran/thumbs/juz-${pad}.jpg?v=1`);
+}
+
 /** Public shape consumed by the Quran picker UI. */
 export interface QuranJuz {
   id: number;
