@@ -12,6 +12,66 @@ Start here in a new conversation. Details for each are further down or in `HANDO
   `drop table if exists public.bayan_plays, public.bayan, public.speakers, public.categories cascade;`
   and delete the three buckets in Supabase Storage. Keep `public.admins` / `public.is_admin()` — comment moderation needs them. R2 also still holds unused `assets/images/bayan/*.jpg` (keep `bayan/quran.jpg`, the Quran fallback cover).
 
+## Launch QA (2026-10-06) — work top to bottom, one at a time
+
+Order = priority. P0 are launch blockers; P1 must be fixed before the public
+launch. Each item: check it on the live site + locally, fix what fails, tick it.
+
+### 🔴 P0 — launch blockers
+- [x] **1. Quran content correctness** (2026-10-06) — `node scripts/qa/quran-content.cjs`
+      checks everything against Quran.com's API: 114 Surahs (number, name,
+      Arabic name, verse count, Meccan / Medinan), all 6,236 ayahs' Arabic
+      text, 77,430 Tajweed glyph words + pages, the 604 Mushaf page starts,
+      30 Juz ranges, one translation line per ayah in all 10 languages —
+      0 failures. Known, allowed differences: Juz uses the Indo-Pak division
+      (Juz 4, 7, 11, 20, 21, 23 start a few ayahs off Madani — on purpose);
+      12:39 / 12:41 text view spells «يَٰصَىٰحِبَىِ» (Tanzil rasm); 37:130 is
+      two timed words. Fixed: surahChapters.ts "Aal-e-Imran" → "Aal-Imran";
+      Surah search now finds "yasin", "taha" (was Al-Mumtahanah only),
+      "ali imran", "alfatiha", English meaning ("the cow"), Tamil
+      (யாஸீன்) and Arabic with vowel marks; a typed number lists that Surah
+      first (`src/lib/data/surahSearch.ts`). Hizb isn't shown anywhere in the
+      app (not a feature today).
+- [ ] **2. Translation mapping** — every translation verse-aligned to its Arabic
+      verse (count per Surah, spot-check long Surahs); English, Tamil, other
+      languages; language switch; loading state; missing-translation fallback.
+- [ ] **3. Word / audio sync + Arabic highlight accuracy** — audio timing →
+      ayah → word → highlight on one timeline. Beginning, middle, long and short
+      verses; pause/resume; seek; next / previous verse; all 9 synced reciters
+      (`scripts/qa` pipeline); fallback reciters stay audio-only; mobile + desktop.
+- [ ] **4. Audio reliability** — play, pause, seek, forward / backward, volume,
+      speed, previous / next ayah, previous / next Surah, reciter change,
+      loading state, error recovery (bad network / 404 file), background and
+      lock-screen playback, iOS + Android.
+- [ ] **5. Surah navigation** — Surah search (number, English, Arabic),
+      previous / next Surah and ayah, bookmark, last reading position restored.
+
+### 🔴 P1 — before public launch
+- [ ] **6. Reading mode** — continuous / Mushaf view, manual scroll, current
+      ayah always visible while audio plays (follow-scroll), narrow screens.
+- [ ] **7. Navigation** — every nav item, browser back / forward, refresh,
+      direct URL and deep links, 404 page, loading states.
+- [ ] **8. Responsive** — 1440 / 1280 / 1024, 768 / 820, 390 / 393 / 412 /
+      430 px: no horizontal scroll, player fits, Arabic doesn't overflow,
+      tap targets, header, cards, modals, translation, reciter selector.
+- [ ] **9. Waqt (prayer) time in the header widget** — replace the clock +
+      location pill (`src/components/navigation/TimeLocationWidget.tsx`) with
+      the prayer time for that location. Agree the details with the owner first.
+
+### 🟠 P1
+- [ ] **10. Tajweed colours** — colour mapping, long verses, small screens,
+      light + dark, readability.
+- [ ] **11. Light / dark mode** — background, Arabic, translation, Tajweed,
+      player, cards, icons; contrast, selected / disabled states.
+- [ ] **12. SEO / share** — OG title / description / image, WhatsApp,
+      Facebook, X card, favicon, apple-touch-icon, canonical, sitemap,
+      robots, structured data.
+- [ ] **13. Performance** — FCP / LCP, JS bundle size, images, audio
+      loading, lazy loading, slow 4G, offline / error state.
+- [ ] **14. Accessibility** — keyboard nav, focus states, screen-reader and
+      button labels, audio controls, contrast, Arabic readability, touch
+      targets ≥ 44 px, reduced motion.
+
 ## IndoPak script by region
 
 Built on `feat/indopak-script`, **development-only** until the font is licensed
