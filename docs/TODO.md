@@ -163,8 +163,25 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       (WebKit GPU-crash workaround), so it's weaker there — now a soft dark
       oval scrim sits behind the ayah (`.quran-verse-scrim`, 55% at the
       centre fading to 0 at the text block's edge), in both Tajweed and plain.
-- [ ] **11. Light / dark mode** — background, Arabic, translation, Tajweed,
-      player, cards, icons; contrast, selected / disabled states.
+- [x] **11. Light / dark mode** (2026-10-07) — the Quran home is always the
+      dark scene (no theme toggle is rendered); only the 404 / error and
+      admin pages follow the system theme (404 checked light + dark).
+      Text-contrast audit (browser, every visible UI string, colour × opacity
+      composited over a dark #1a1a1a and a bright #4a4a4a scene) on the home
+      screen and in the content browser (Surah / Juz / About), reciter,
+      translation, Tajweed, prayer-times, favourites and comments panels.
+      **Fixed:** below AA 4.5:1 — the content browser's list numbers (3.2),
+      view counts (4.3), the favourites hint (4.3) and the player's "Now
+      playing" label (3.7) — brightened, all pass now. **Fixed, regression
+      from the deep links (item 7):** the immersive screen lock (and iOS 26
+      Safari bleed) was set only on "/", so on /surah/… and /juz/… — and on
+      "/" as soon as playback rewrote the address to /surah/1 — the page lost
+      its lock and the whole home tree would remount (MainLayout swaps its
+      wrapper). Now locked on all three. The home also forces
+      `color-scheme: dark` on <body>, so native controls (the prayer sheet's
+      method list) don't open white-on-white under a light system theme.
+      Disabled controls (opacity 30%) are exempt from contrast. Skip link:
+      see item 14.
 - [ ] **12. SEO / share** — OG title / description / image, WhatsApp,
       Facebook, X card, favicon, apple-touch-icon, canonical, sitemap,
       robots, structured data.

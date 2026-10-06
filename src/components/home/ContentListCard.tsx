@@ -85,7 +85,7 @@ export function ContentListCard({
       <span
         className={cn(
           "w-5 text-center text-xs font-mono font-bold shrink-0 transition-colors",
-          isActive ? "text-amber-300" : "text-sand-200/40 group-hover:text-sand-200/70"
+          isActive ? "text-amber-300" : "text-sand-200/60 group-hover:text-sand-200/85"
         )}
       >
         {number}
@@ -137,7 +137,7 @@ export function ContentListCard({
           showCount ? "min-w-8 px-2.5" : "w-8",
           isActive
             ? SELECTED_BADGE
-            : "bg-white/5 text-sand-200/50 group-hover:bg-white/10 group-hover:text-sand-200/80"
+            : "bg-white/5 text-sand-200/65 group-hover:bg-white/10 group-hover:text-sand-200/85"
         )}
       >
         {isActive && isPlaying ? (

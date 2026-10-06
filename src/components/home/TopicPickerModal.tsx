@@ -512,7 +512,7 @@ export function TopicPickerModal({
                               {q && favCounts[favTab] ? "No matching favourites." : `No ${label} favourites yet.`}
                             </p>
                             {!(q && favCounts[favTab]) && (
-                              <p className="text-[11px] text-sand-200/50">Like the {label} you&apos;re listening to (♥ beside the cover) to keep it here.</p>
+                              <p className="text-[11px] text-sand-200/65">Like the {label} you&apos;re listening to (♥ beside the cover) to keep it here.</p>
                             )}
                           </div>
                         );
