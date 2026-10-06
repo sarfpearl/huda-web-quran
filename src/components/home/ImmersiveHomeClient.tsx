@@ -29,6 +29,8 @@ import {
   type TranslationLang,
 } from "@/lib/data/translations";
 import { bookmarkId, loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/lastRead";
+import { deepLinkMeta, deepLinkPath, type DeepLink } from "@/lib/deepLink";
+import { siteConfig } from "@/lib/site";
 import {
   isQuranTrack,
   isQuranTrackId,
@@ -37,6 +39,7 @@ import {
   getQuranJuzByTrackId,
   SURAH_TRACKS,
   QURAN_SURAHS,
+  QURAN_JUZ,
   QURAN_TRACKS,
   getSurahTracksForReciter,
   quranSurahToTrack,
@@ -101,7 +104,7 @@ const formatClock = (sec: number) => {
   return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
 };
 
-export function ImmersiveHomeClient() {
+export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink | null } = {}) {
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
@@ -887,7 +890,9 @@ export function ImmersiveHomeClient() {
   // if playback has started by then.
   const hasPlayedRef = useRef(hasPlayed);
   hasPlayedRef.current = hasPlayed;
+  const cameByLink = Boolean(deepLink);
   useEffect(() => {
+    if (cameByLink) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
     // Location too: the install step is skipped at once on desktop, in the
@@ -902,7 +907,8 @@ export function ImmersiveHomeClient() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, []);
+    // Not over a Surah / Juz the visitor came to by a link.
+  }, [cameByLink]);
   // The page on screen follows the reader's scrolling (ReadingView reports it);
   // before the first report, the recited ayah's page.
   const [visiblePage, setVisiblePage] = useState<number | null>(null);
@@ -1102,6 +1108,35 @@ export function ImmersiveHomeClient() {
       .catch(() => start());
   };
 
+  // Deep link (/surah/36/3, lib/deepLink): cue that Surah at that ayah once,
+  // on open — browsers don't let a page start audio by itself, so it waits
+  // for play. A Juz link offers « ▶ Juz 30 » instead (a Juz starts playing).
+  const deepLinkAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!mounted || deepLinkAppliedRef.current || deepLink?.kind !== "surah") return;
+    deepLinkAppliedRef.current = true;
+    openSurahAt(deepLink.surah, deepLink.ayah);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
+  const juzLink = deepLink?.kind === "juz" && !hasPlayed ? deepLink.juz : null;
+
+  // The address follows what is playing (a refresh or a shared link comes
+  // back to it): /surah/N/ayah, or /juz/N. "/" stays until something plays.
+  const playingLink: DeepLink | null = !player.current
+    ? null
+    : isQuranTrackId(player.current.id) && activeJuz
+      ? { kind: "juz", juz: activeJuz.id }
+      : isSurahTrackId(player.current.id) && activeSurah
+        ? { kind: "surah", surah: activeSurah.number, ayah: !player.isPrelude && currentVerse?.ayahNumber ? currentVerse.ayahNumber : 1 }
+        : null;
+  const playingPath = playingLink && (hasPlayed || deepLink) ? deepLinkPath(playingLink) : null;
+  useEffect(() => {
+    if (!playingPath || !playingLink) return;
+    if (window.location.pathname !== playingPath) window.history.replaceState(null, "", playingPath + window.location.search);
+    document.title = `${deepLinkMeta(playingLink).title} · ${siteConfig.name}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playingPath]);
+
   // Ayah meaning (translation) is OFF on every page load; the toggle only
   // applies to the current session.
   const handleToggleMeaning = () => {
@@ -1277,7 +1312,7 @@ export function ImmersiveHomeClient() {
           where the last Surah listened to was left — only while the
           recitation is stopped (a clean scene while it plays or buffers). */}
       <AnimatePresence>
-        {!readingActive && (showBookmarkPill || showContinuePill) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
+        {!readingActive && (showBookmarkPill || showContinuePill || juzLink) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
           <motion.div
             key="main-bookmark"
             initial={{ opacity: 0, y: -8 }}
@@ -1286,6 +1321,21 @@ export function ImmersiveHomeClient() {
             transition={{ duration: 0.3 }}
             className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30 flex flex-wrap justify-center gap-2 px-4"
           >
+            {juzLink && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  handleSelectJuz(juzLink);
+                }}
+                className="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
+              >
+                <PlayIcon className="text-emerald-300" />
+                <span>
+                  Juz {juzLink} · {QURAN_JUZ[juzLink - 1]?.title}
+                </span>
+              </button>
+            )}
             {showContinuePill && continueAt && (
               <button
                 type="button"
