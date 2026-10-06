@@ -147,7 +147,7 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       Moonsighting, whose own precaution minutes adhan applies).
 
 ### 🟠 P1
-- [~] **10. Tajweed colours** (2026-10-07) — `scripts/qa/tajweed-colours.py`
+- [x] **10. Tajweed colours** (2026-10-07) — `scripts/qa/tajweed-colours.py`
       (needs fonttools + brotli): the dark Tajweed palette is identical in
       all 604 page fonts, and the header legend's 8 colours are exactly the
       font's rule colours. On the dark scene every colour passes WCAG large
@@ -156,12 +156,13 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       over the dark scene (ThemeToggle isn't rendered anywhere). **Fixed:**
       long ayahs went below their readable floor — 2:282 on a 390px phone
       shrank to 18px (and still scrolled); the 22px floor now holds, the
-      recited word stays on screen (60/60 samples). **Open (owner's call):**
+      recited word stays on screen (60/60 samples). **Added (owner's choice):**
       over bright scenes (sunlit sky, Surah 94; leaves, Surah 95) the
       colours lose contrast — 10% of the verse area is brighter than mid-grey
       in half the scene images; on iPhone the glyphs get no text shadow
-      (WebKit GPU-crash workaround), so it's weaker there. Proposed: a soft
-      dark radial scrim behind the verse (prototyped in the browser).
+      (WebKit GPU-crash workaround), so it's weaker there — now a soft dark
+      oval scrim sits behind the ayah (`.quran-verse-scrim`, 55% at the
+      centre fading to 0 at the text block's edge), in both Tajweed and plain.
 - [ ] **11. Light / dark mode** — background, Arabic, translation, Tajweed,
       player, cards, icons; contrast, selected / disabled states.
 - [ ] **12. SEO / share** — OG title / description / image, WhatsApp,

@@ -294,6 +294,14 @@
   }
 
   /* Quran Center Display Text Legibility */
+  /* A soft dark oval behind the ayah (owner's choice, 2026-10-07): over a
+     bright scene — a sunlit sky, leaves — the Tajweed colours (made for a
+     black page) and the white letters lost contrast, most on iPhone, where
+     glyph words get no text shadow. Fades to nothing at the text block's
+     edge, so the scroll pane never cuts it. */
+  .quran-verse-scrim {
+    background-image: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.42) 65%, rgba(0, 0, 0, 0));
+  }
   .quran-arabic-shadow {
     /* Crisp, tight contrast for the fine Uthmanic strokes — legible on the video
        background without a heavy glow that thickens/blurs the calligraphy. */
