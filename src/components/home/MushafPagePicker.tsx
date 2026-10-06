@@ -5,6 +5,7 @@ import { ActionSheet } from "@/components/ui/ActionSheet";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS } from "@/lib/data/mushafPages";
 import { cn } from "@/lib/utils";
+import { SELECTED, UNSELECTED_EDGE } from "@/components/ui/selection";
 
 interface MushafPagePickerProps {
   open: boolean;
@@ -75,7 +76,7 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
           placeholder="Page number or Surah…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
+          className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
         />
       </form>
       <div ref={listRef} className="no-scrollbar -mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 space-y-1">
@@ -90,7 +91,7 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
               aria-current={current ? "page" : undefined}
               className={cn(
                 "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
-                current ? "bg-emerald-600 text-white" : "text-sand-100 hover:bg-white/10"
+                current ? SELECTED : cn(UNSELECTED_EDGE, "text-sand-100 hover:bg-white/10")
               )}
             >
               <span className="font-bold tabular-nums">Page {page}</span>

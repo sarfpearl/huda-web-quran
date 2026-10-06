@@ -21,6 +21,7 @@ import {
   pageFontReady,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
+import { translationInfo, useExtraMeaning, type MeaningTarget, type TranslationLang } from "@/lib/data/translations";
 
 interface CenterVerseDisplayProps {
   currentVerse: AyahVerse | null;
@@ -28,6 +29,8 @@ interface CenterVerseDisplayProps {
   currentTime?: number;
   isPlaying?: boolean;
   language?: "en" | "ta";
+  /** The ayah-meaning language (any of TRANSLATIONS); defaults to `language`. */
+  translationLang?: TranslationLang;
   showTranslation?: boolean;
   activeWordIndex?: number;
   hasWordTiming?: boolean;
@@ -219,6 +222,7 @@ export function CenterVerseDisplay({
   currentTime,
   isPlaying = false,
   language = "en",
+  translationLang = language,
   showTranslation = true,
   activeWordIndex: propWordIndex,
   hasWordTiming: propHasWordTiming,
@@ -281,6 +285,17 @@ export function CenterVerseDisplay({
   const arabicPaneRef = useRef<HTMLDivElement>(null);
   const meaningPaneRef = useRef<HTMLDivElement>(null);
   const activeItemForFit = currentSegment ?? currentVerse;
+  // The meaning in a fetched language (Urdu, Malayalam…): what's on screen.
+  const meaningTarget: MeaningTarget = !activeItemForFit
+    ? null
+    : "type" in activeItemForFit && activeItemForFit.type === "istiadhah"
+      ? { kind: "istiadhah" }
+      : "type" in activeItemForFit && activeItemForFit.type === "bismillah"
+        ? { kind: "bismillah" }
+        : activeItemForFit.surahNumber && activeItemForFit.ayahNumber
+          ? { kind: "ayah", surah: activeItemForFit.surahNumber, ayah: activeItemForFit.ayahNumber }
+          : null;
+  const extraMeaning = useExtraMeaning(translationLang, meaningTarget);
   const fitKey = currentSegment
     ? `${currentSegment.id}-${currentSegment.type}`
     : `${currentVerse?.surahNumber}-${currentVerse?.verseKey}`;
@@ -398,7 +413,7 @@ export function CenterVerseDisplay({
     };
     // showGreeting: the first item (e.g. the Isti'adhah) can arrive while the
     // greeting is still up, so the stage mounts later with the same fitKey.
-  }, [fitKey, showTranslation, language, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
+  }, [fitKey, showTranslation, language, translationLang, extraMeaning, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
 
   // Auto-scroll, teleprompter-style (followScroll): the Arabic pane drifts
   // with the recitation — the active word's line plus how far along it the
@@ -517,6 +532,7 @@ export function CenterVerseDisplay({
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
+  const meaning = translationInfo(translationLang);
 
   // Verse Sync reciters: hide the verse text + meaning — the recitation audio
   // does not align word-for-word with the on-screen letters, so showing them
@@ -726,12 +742,16 @@ export function CenterVerseDisplay({
               data-fit-max={30}
               data-fit-max-tablet={26}
               data-fit-max-mobile={24}
-              lang={language === "ta" ? "ta" : "en"}
-              className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] md:text-left tracking-wide quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-opacity duration-300 ${translationSizeClass}`}
+              lang={meaning.id}
+              dir={meaning.dir}
+              style={meaning.font && meaning.id !== "ta" ? { fontFamily: meaning.font } : undefined}
+              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-opacity duration-300 ${translationSizeClass}`}
             >
-              {language === "ta"
+              {translationLang === "ta"
                 ? activeItem.textTamil || activeItem.textEnglish
-                : activeItem.textEnglish}
+                : translationLang === "en"
+                  ? activeItem.textEnglish
+                  : extraMeaning ?? ""}
             </p>
             </div>
           )}

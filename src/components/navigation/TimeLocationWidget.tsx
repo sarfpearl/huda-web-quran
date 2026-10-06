@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { afterSplash, finishStage } from "@/lib/onboarding";
+import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
+
+// Place names as plain letters: "Gūduvāncheri" → "Guduvancheri" — the macrons
+// read as stray lines over the small label.
+const plain = (name: string) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 interface TimeLocationWidgetProps {
   className?: string;
@@ -9,7 +15,7 @@ interface TimeLocationWidgetProps {
 
 export function TimeLocationWidget({
   className = "",
-  defaultLocation = "Gūduvāncheri",
+  defaultLocation = "Guduvancheri",
 }: TimeLocationWidgetProps) {
   const [timeStr, setTimeStr] = useState<string>("");
   const [location, setLocation] = useState<string>(defaultLocation);
@@ -34,10 +40,22 @@ export function TimeLocationWidget({
     return () => clearInterval(interval);
   }, []);
 
+  // Asked only once the splash is gone, and the next onboarding step (the
+  // install guide) waits for the answer, so the two never show together.
   useEffect(() => {
-    if (typeof window !== "undefined" && "geolocation" in navigator) {
+    if (!("geolocation" in navigator)) {
+      finishStage("location");
+      return;
+    }
+    let cancelled = false;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    afterSplash().then(() => {
+      if (cancelled) return;
+      // A prompt left unanswered shouldn't hold the rest of the sequence.
+      fallback = setTimeout(() => finishStage("location"), 12000);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
+          finishStage("location");
           try {
             const { latitude, longitude } = position.coords;
             const res = await fetch(
@@ -45,6 +63,13 @@ export function TimeLocationWidget({
             );
             if (res.ok) {
               const data = await res.json();
+              // Where they are, for the first-visit translation language
+              // (country; in India the state, as an ISO 3166-2 code).
+              const detail: PlaceDetail = {
+                countryCode: data.address?.country_code,
+                stateCode: data.address?.["ISO3166-2-lvl4"],
+              };
+              window.dispatchEvent(new CustomEvent(PLACE_EVENT, { detail }));
               const city =
                 data.address?.suburb ||
                 data.address?.town ||
@@ -52,7 +77,7 @@ export function TimeLocationWidget({
                 data.address?.village ||
                 data.address?.county;
               if (city) {
-                setLocation(city);
+                setLocation(plain(city));
               }
             }
           } catch {
@@ -61,10 +86,15 @@ export function TimeLocationWidget({
         },
         () => {
           // Keep default location if permission denied
+          finishStage("location");
         },
         { timeout: 5000 }
       );
-    }
+    });
+    return () => {
+      cancelled = true;
+      clearTimeout(fallback);
+    };
   }, []);
 
   if (!mounted) {

@@ -2,6 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 /* Noto Serif Tamil — Elegant Unicode Tamil serif font for translations. */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
+/* Ayah meanings in other scripts (src/lib/data/translations.ts). The browser
+   downloads a script's font files only when that text is on screen. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500&family=Noto+Sans+Malayalam:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&family=Noto+Sans+Bengali:wght@400;500&display=swap');
 
 /* KFGQPC Uthmanic Script HAFS v0.18 — Madinah Mushaf font for Quran Arabic
    text, the build Quran.com ships (v0.09 couldn't draw U+06ED). It's made for
@@ -503,4 +506,29 @@ textarea,
   -webkit-user-select: text;
   user-select: text;
   -webkit-touch-callout: default;
+}
+
+/* Selected segmented tab (components/ui/selection.ts): gold like the maker
+   logo — a gold gradient edge, gold label, and the logo's shine sweeping across. */
+.huda-tab-gold {
+  position: relative;
+  overflow: hidden;
+  border-color: transparent;
+  background:
+    linear-gradient(rgba(35, 31, 22, 0.7), rgba(35, 31, 22, 0.7)) padding-box,
+    linear-gradient(120deg, #f6de9a, #b98532 40%, #f6de9a 65%, #8a6424) border-box;
+  color: #f6de9a;
+  box-shadow: 0 0 14px rgba(232, 196, 110, 0.18);
+}
+.huda-tab-gold::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 250, 230, 0.28) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  animation: huda-logo-shine 4.5s ease-in-out 0.6s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .huda-tab-gold::after { animation: none; opacity: 0; }
 }

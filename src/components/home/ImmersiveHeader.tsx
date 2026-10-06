@@ -18,6 +18,8 @@ import {
   TranslateIcon,
 } from "@/components/ui/Icon";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
+import { HoverTooltips } from "@/components/player/HoverTooltips";
+import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import { ReciterPickerModal } from "./ReciterPickerModal";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 
@@ -25,6 +27,7 @@ import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 const TAJWEED_AUTO_HIDE_MS = 4000;
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { CheckIcon } from "@/components/ui/Icon";
+import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
 
 /** Reading mode's text sizes, × the default. */
 export const READER_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75];
@@ -33,7 +36,9 @@ interface ImmersiveHeaderProps {
   visualMode?: "video" | "image";
   onToggleVisualMode?: () => void;
   language?: "en" | "ta";
-  onToggleLanguage?: () => void;
+  /** The ayah-meaning language and its picker (Off is `showMeaning`). */
+  translationLang?: TranslationLang;
+  onChooseTranslation?: (lang: TranslationLang) => void;
   /** Ayah meaning (translation) visibility + toggle */
   showMeaning?: boolean;
   onToggleMeaning?: () => void;
@@ -58,7 +63,8 @@ export function ImmersiveHeader({
   visualMode = "video",
   onToggleVisualMode,
   language = "en",
-  onToggleLanguage,
+  translationLang = language,
+  onChooseTranslation,
   showMeaning = true,
   onToggleMeaning,
   textSize,
@@ -78,6 +84,8 @@ export function ImmersiveHeader({
   const [activePopover, setActivePopover] = useState<"reciter" | "qa" | "tajweed" | null>(null);
   // The Tajweed panel closes on any press outside it, or Escape.
   const tajweedRef = useRef<HTMLDivElement>(null);
+  // Hover tooltips under the round header buttons (those with data-tooltip).
+  const controlsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (activePopover !== "tajweed") return;
     const onDown = (ev: PointerEvent) => {
@@ -101,16 +109,21 @@ export function ImmersiveHeader({
   }, [activePopover, tajweedHeld, showTajweed]);
   const isReciterSelectorOpen = activePopover === "reciter";
   const [translationSheetOpen, setTranslationSheetOpen] = useState(false);
+  // The sheet's language search; cleared whenever the sheet closes.
+  const [langQuery, setLangQuery] = useState("");
+  useEffect(() => {
+    if (!translationSheetOpen) setLangQuery("");
+  }, [translationSheetOpen]);
+  const q = langQuery.trim().toLowerCase();
+  const langChoices = q ? TRANSLATIONS.filter((c) => `${c.label} ${c.hint}`.toLowerCase().includes(q)) : TRANSLATIONS;
   const [textSizeSheetOpen, setTextSizeSheetOpen] = useState(false);
-  // Off hides the meaning; a language shows it in that language.
-  const chooseTranslation = (id: (typeof TRANSLATION_CHOICES)[number]["id"]) => {
-    if (id === "off") {
-      if (showMeaning) onToggleMeaning?.();
-      return;
-    }
-    if (language !== id) onToggleLanguage?.();
+  // Picking a language shows the meaning in it (the title bar switch turns it off).
+  const chooseTranslation = (id: TranslationLang) => {
+    if (translationLang !== id) onChooseTranslation?.(id);
     if (!showMeaning) onToggleMeaning?.();
   };
+
+  const current = translationInfo(translationLang);
   const [headerAvatarError, setHeaderAvatarError] = useState(false);
   const reciterTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -153,11 +166,12 @@ export function ImmersiveHeader({
       <TimeLocationWidget />
 
       {/* Top Right Header Controls */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <div ref={controlsRef} className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <HoverTooltips container={controlsRef} placement="bottom" selector="[data-tooltip]" />
         {/* QA HUD pill (leading, before the language toggle) */}
         {qaHudControlled}
 
-        {/* Ayah translation: opens a sheet to pick Off / English / Tamil
+        {/* Ayah translation: opens a sheet to pick Off or a language
             (only when verse text is on screen) */}
         {onToggleMeaning && showLanguageToggle && (
           <button
@@ -166,18 +180,21 @@ export function ImmersiveHeader({
             aria-haspopup="dialog"
             aria-label={
               showMeaning
-                ? `Translation: ${language === "ta" ? "Tamil" : "English"} — change`
+                ? `Translation: ${current.hint.split(" · ")[0]} — change`
                 : "Translation: off — choose a language"
             }
-            title={language === "ta" ? "மொழிபெயர்ப்பு" : "Translation of the meaning"}
+            data-tooltip={language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
             className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
             {/* Translate icon; dimmed (not slashed) when the translation is hidden */}
             <TranslateIcon className="h-5 w-5" />
-            <span className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && language === "ta" ? "font-tamil" : ""}`}>
-              {!showMeaning ? "Translation" : language === "ta" ? "தமிழ்" : "English"}
+            <span
+              className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && current.id === "ta" ? "font-tamil" : ""}`}
+              style={showMeaning && current.font && current.id !== "ta" ? { fontFamily: current.font } : undefined}
+            >
+              {!showMeaning ? "Translation" : current.label}
             </span>
           </button>
         )}
@@ -186,10 +203,67 @@ export function ImmersiveHeader({
           onClose={() => setTranslationSheetOpen(false)}
           label="Choose the translation language"
         >
-          <h3 className="pb-3 text-lg font-black text-white tracking-tight">Translation</h3>
-          <div className="space-y-1" role="radiogroup" aria-label="Translation language">
-            {TRANSLATION_CHOICES.map((c) => {
-              const selected = c.id === "off" ? !showMeaning : showMeaning && language === c.id;
+          {/* Laid out like the reciter picker: title bar, search, list of cards */}
+          <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
+            <div>
+              <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">Translation</h3>
+              <p className="mt-0.5 text-[11px] leading-none text-sand-300/70">Choose the meaning language</p>
+            </div>
+            <div className="flex items-center gap-2.5">
+            {/* On / Off (Off = Arabic only); picking a language turns it on */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showMeaning}
+              aria-label={showMeaning ? "Translation on — turn off (Arabic only)" : "Translation off — turn on"}
+              onClick={() => onToggleMeaning?.()}
+              className="flex items-center gap-2 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium text-sand-200 transition-colors hover:bg-white/5 cursor-pointer"
+            >
+              {showMeaning ? "On" : "Off"}
+              <span
+                className={`relative h-5 w-9 rounded-full border transition-colors ${
+                  showMeaning ? "border-amber-200/50 bg-amber-300/30" : "border-white/15 bg-white/10"
+                }`}
+              >
+                <span
+                  className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition-all ${
+                    showMeaning ? "left-[18px] bg-amber-200" : "left-[2px] bg-sand-300"
+                  }`}
+                />
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTranslationSheetOpen(false)}
+              aria-label="Close translation languages"
+              className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            </div>
+          </div>
+          <div className="relative mb-3">
+            <input
+              type="text"
+              value={langQuery}
+              onChange={(e) => setLangQuery(e.target.value)}
+              placeholder="Search languages..."
+              aria-label="Search languages"
+              className="w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+            />
+            <svg className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sand-300/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar" role="radiogroup" aria-label="Translation language">
+            {langChoices.length === 0 && (
+              <p className="py-6 text-center text-xs text-sand-300/60">No language found for “{langQuery.trim()}”</p>
+            )}
+            {langChoices.map((c) => {
+              // The language stays marked while off, so it's clear which one turns on.
+              const selected = translationLang === c.id;
               return (
                 <button
                   key={c.id}
@@ -200,15 +274,24 @@ export function ImmersiveHeader({
                     chooseTranslation(c.id);
                     setTranslationSheetOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
-                    selected ? "bg-emerald-600 text-white" : "text-sand-100 hover:bg-white/10"
+                  className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3.5 py-2.5 text-left transition-all cursor-pointer ${
+                    selected ? SELECTED : "bg-white/[0.04] border-white/5 text-sand-100 hover:bg-white/[0.08] hover:border-white/15"
                   }`}
                 >
                   <span className="flex flex-col">
-                    <span className={`text-sm font-bold ${c.id === "ta" ? "font-tamil" : ""}`}>{c.label}</span>
-                    <span className={`text-xs ${selected ? "text-white/80" : "text-sand-200/60"}`}>{c.hint}</span>
+                    <span
+                      className={`text-sm font-bold ${c.id === "ta" ? "font-tamil" : ""}`}
+                      style={c.font && c.id !== "ta" ? { fontFamily: c.font } : undefined}
+                    >
+                      {c.label}
+                    </span>
+                    <span className={`text-xs ${selected ? "text-sand-100/75" : "text-sand-200/60"}`}>{c.hint}</span>
                   </span>
-                  {selected && <CheckIcon className="text-base" />}
+                  {selected && (
+                    <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${SELECTED_BADGE}`}>
+                      <CheckIcon className="text-sm" />
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -304,7 +387,7 @@ export function ImmersiveHeader({
               aria-expanded={activePopover === "tajweed"}
               aria-haspopup="dialog"
               aria-label={language === "ta" ? "தஜ்வீத்" : "Tajweed"}
-              title={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
+              data-tooltip={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
               className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
                 showTajweed ? "text-amber-300" : "text-white/60"
               }`}
@@ -359,7 +442,7 @@ export function ImmersiveHeader({
             type="button"
             onClick={handleToggleReciterSelector}
             className="pointer-events-auto relative grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
-            title={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
+            data-tooltip={`Reciter · ${selectedReciter.displayName}`}
             aria-label={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
             aria-expanded={isReciterSelectorOpen}
             aria-haspopup="dialog"
@@ -443,12 +526,6 @@ export function ImmersiveHeader({
     </header>
   );
 }
-
-const TRANSLATION_CHOICES = [
-  { id: "off", label: "Off", hint: "Arabic only" },
-  { id: "en", label: "English", hint: "Saheeh International" },
-  { id: "ta", label: "தமிழ்", hint: "Tamil" },
-] as const;
 
 /** Three rule-coloured dots (Tajweed on) or muted outlines (off). */
 function TajweedIcon({ on, className }: { on: boolean; className?: string }) {

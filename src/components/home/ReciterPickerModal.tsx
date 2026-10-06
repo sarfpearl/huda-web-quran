@@ -8,8 +8,8 @@ import {
   reciterIsUnavailable,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
-import { ImamQuranIcon } from "@/components/ui/Icon";
 import { ActionSheet, PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
+import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 
 interface ReciterPickerModalProps {
   isOpen: boolean;
@@ -111,9 +111,6 @@ export function ReciterPickerModal({
       {/* Header with Title and Close Button */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-400">
-            <ImamQuranIcon className="text-base" />
-          </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-white tracking-tight leading-tight">
               Quran Reciter
@@ -143,7 +140,7 @@ export function ReciterPickerModal({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search Reciters..."
-          className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+          className="w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
         />
         <svg
           className="absolute left-3 top-2.5 h-3.5 w-3.5 text-sand-300/50"
@@ -161,7 +158,7 @@ export function ReciterPickerModal({
       </div>
 
       {/* Sync Mode Segment Control */}
-      <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-black/40 border border-white/10 p-1">
+      <div className={`mb-3 ${TAB_TRACK}`}>
         {([
           { key: "word", label: "Word Sync" },
           { key: "verse", label: "Audio Only" },
@@ -173,11 +170,7 @@ export function ReciterPickerModal({
               type="button"
               onClick={() => setSyncFilter(seg.key)}
               aria-pressed={active}
-              className={`flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-all cursor-pointer ${
-                active
-                  ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                  : "border border-transparent text-sand-300/60 hover:text-white hover:bg-white/[0.06]"
-              }`}
+              className={`${TAB} ${active ? SELECTED_TAB : UNSELECTED_TAB}`}
             >
               {seg.key === "word" ? (
                 <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
@@ -199,8 +192,8 @@ export function ReciterPickerModal({
       <div
         className={`mb-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left border ${
           syncFilter === "word"
-            ? "bg-emerald-500/[0.08] border-emerald-400/20"
-            : "bg-amber-400/[0.07] border-amber-300/20"
+            ? "bg-emerald-500/[0.24] border-emerald-400/20"
+            : "bg-amber-400/[0.24] border-amber-300/20"
         }`}
       >
         <span
@@ -235,7 +228,7 @@ export function ReciterPickerModal({
       </div>
 
       {/* Reciter List */}
-      <div className={`${isMobile ? "min-h-0 flex-1" : "max-h-[55vh]"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
+      <div className={`${isMobile ? "min-h-0 flex-1 pb-[max(env(safe-area-inset-bottom),0.5rem)]" : "max-h-[55vh] pb-2"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
         {filteredReciters.length === 0 ? (
           <div className="py-8 text-center text-xs text-sand-300/60">
             {searchQuery.trim()
@@ -265,7 +258,7 @@ export function ReciterPickerModal({
                   unavailable ? "cursor-not-allowed opacity-45 " : "cursor-pointer "
                 }${
                   isSelected
-                    ? "bg-emerald-950/40 border-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+                    ? SELECTED
                     : "bg-white/[0.04] border-white/5 hover:bg-white/[0.08] hover:border-white/15"
                 }`}
               >
@@ -316,7 +309,7 @@ export function ReciterPickerModal({
 
                 {/* Selected Checkmark Badge */}
                 {isSelected && (
-                  <div className="shrink-0 h-6 w-6 rounded-full bg-emerald-500/20 border border-emerald-400/40 grid place-items-center text-emerald-400 shadow-sm">
+                  <div className={`shrink-0 h-6 w-6 rounded-full grid place-items-center ${SELECTED_BADGE}`}>
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
@@ -328,27 +321,12 @@ export function ReciterPickerModal({
         )}
       </div>
 
-      {/* Footer / Attribution & Reference link */}
-      <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-sand-300/60">
-        <span>Source: surahquran.com</span>
-        <a
-          href="https://surahquran.com/quran-mp3-english.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 font-medium transition-colors"
-        >
-          <span>View All Reciters</span>
-          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
-      </div>
     </>
   );
 
   if (isMobile) {
     return (
-      <ActionSheet open={isOpen} onClose={onClose} label="Quran Reciter Selection">
+      <ActionSheet open={isOpen} onClose={onClose} label="Quran Reciter Selection" flush>
         <div ref={panelRef} className="flex min-h-0 flex-1 flex-col select-none">
           {body}
         </div>
@@ -364,7 +342,7 @@ export function ReciterPickerModal({
       role="dialog"
       aria-modal="true"
       aria-label="Quran Reciter Selection"
-      className={`absolute top-14 right-0 w-96 z-50 rounded-3xl ${PLAYER_GLASS} p-5 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200`}
+      className={`absolute top-14 right-0 w-96 z-50 overflow-hidden rounded-3xl ${PLAYER_GLASS} p-5 pb-0 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200`}
     >
       {body}
     </div>

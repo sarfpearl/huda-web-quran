@@ -1,5 +1,21 @@
 # TODO
 
+## Next phase · IndoPak script by region
+
+- [ ] **Show the Quran in IndoPak script for South Asia** — India, Pakistan,
+      Bangladesh, Sri Lanka and South Africa read the IndoPak style (its own
+      harakat, sukun and madd marks); everywhere else keeps Uthmani (Madani).
+      Pick the default from the device time zone (no location permission
+      needed), or the country from the location the app already asks for;
+      add an "Uthmani / IndoPak" switch so anyone can change it.
+  - Agreed: **no Tajweed colours in IndoPak** — the colour glyphs are QPC V4
+    Uthmani page fonts; IndoPak has no colour font. The recited-word highlight
+    stays, drawn as plain text.
+  - Check Quran.com's IndoPak text keeps the same word positions, so word
+    sync works unchanged.
+  - Reading mode's « Page N » counts the Madani 604 pages; IndoPak Mushafs
+    paginate differently — hide the page number in IndoPak or keep Madani's.
+
 ## Quran views · live · comments · likes (Supabase)
 
 - [ ] **Clear test data before launch** — once testing is finished, run in the

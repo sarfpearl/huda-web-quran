@@ -15,6 +15,7 @@ import {
 import { CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { ActionSheet, useIsMobile } from "@/components/ui/ActionSheet";
+import { HoverTooltips } from "@/components/player/HoverTooltips";
 
 /*
  * View count, live listeners and comments for the Surah / Juz on screen.
@@ -1046,6 +1047,7 @@ export function PlayerStatsFrame({
         style={topInsets}
         ref={topStripRef}
       >
+        <HoverTooltips container={topStripRef} />
         {leading ?? <span />}
         <div className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5" : "gap-3 sm:gap-4")}>
           {fit < 2 && (
@@ -1054,6 +1056,7 @@ export function PlayerStatsFrame({
             data-engagement-keep
             onClick={toggleViews}
             aria-label={`${T.liveNow[lang]}: ${stats?.content.live ?? 0}`}
+            data-tooltip={T.liveNow[lang]}
             className={stat}
           >
             <LiveDot on={Boolean(stats && stats.content.live > 0)} />
@@ -1067,6 +1070,7 @@ export function PlayerStatsFrame({
             onClick={toggleViews}
             aria-expanded={viewsOpen}
             aria-label={`${T.overall[lang]}: ${stats?.content.users ?? 0}`}
+            data-tooltip={T.views[lang]}
             className={cn(stat, viewsOpen && "text-emerald-300")}
           >
             <ViewCountIcon className="text-xs sm:text-sm" />

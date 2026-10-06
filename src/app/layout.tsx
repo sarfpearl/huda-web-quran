@@ -73,7 +73,7 @@ export default function RootLayout({
       <head>
         {/* Preload the KFGQPC Uthmanic Script HAFS Mushaf font so the Quran
             Arabic paints in the correct face immediately (no Amiri fallback flash). */}
-        <link rel="preload" href="/splash-logo.webp" as="image" type="image/webp" />
+        <link rel="preload" href="/huda-logo.webp?v=2" as="image" type="image/webp" />
         <link
           rel="preload"
           href="/fonts/UthmanicHafs1Ver18.woff2"

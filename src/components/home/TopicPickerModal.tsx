@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
-import { CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
+import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02 } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -25,6 +25,7 @@ import { ContentListCard } from "./ContentListCard";
 import { compactCount } from "./QuranEngagement";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSessionId } from "@/lib/audio/session";
+import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 
 type ModalTab = "surah" | "quran";
 
@@ -53,12 +54,15 @@ const JUZ_PAGES = Array.from({ length: 30 }, (_, i) => {
 
 // The content browser's morph out of its round button (see setPanelRef):
 // the shape at --reveal, and a ring tracing its edge that fades out at the end.
+// The top and right edges reach the panel's corner in the first quarter, so the
+// shape is pinned top-right and opens out leftward and down from there.
 const morphInset = (v: string) => `calc(var(${v}, 0px) * (1 - var(--reveal, 1)))`;
+const morphInsetFast = (v: string) => `calc(var(${v}, 0px) * (1 - min(1, var(--reveal, 1) * 4)))`;
 const morphRadius = "calc(var(--r0, 24px) + (var(--r1, 28px) - var(--r0, 24px)) * var(--reveal, 1))";
-const MORPH_CLIP = `inset(${morphInset("--it")} ${morphInset("--ir")} ${morphInset("--ib")} ${morphInset("--il")} round ${morphRadius})`;
+const MORPH_CLIP = `inset(${morphInsetFast("--it")} ${morphInsetFast("--ir")} ${morphInset("--ib")} ${morphInset("--il")} round ${morphRadius})`;
 const MORPH_RING: React.CSSProperties = {
-  top: morphInset("--it"),
-  right: morphInset("--ir"),
+  top: morphInsetFast("--it"),
+  right: morphInsetFast("--ir"),
   bottom: morphInset("--ib"),
   left: morphInset("--il"),
   borderRadius: morphRadius,
@@ -66,6 +70,12 @@ const MORPH_RING: React.CSSProperties = {
   background: "rgba(0, 0, 0, 0.12)",
   opacity: "calc((1 - var(--reveal, 1)) / 0.2)",
 };
+
+/** Puts the content browser's top-right corner on its header button's. */
+function pinToTrigger(el: HTMLElement, r: DOMRect) {
+  el.style.top = `${r.top}px`;
+  el.style.right = `${document.documentElement.clientWidth - r.right}px`;
+}
 
 export function TopicPickerModal({
   surahTracks,
@@ -98,6 +108,29 @@ export function TopicPickerModal({
   // shows; the clip comes off once open so the panel's shadow isn't cut.
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  // Header trigger: the panel's top-right corner is the button's top-right
+  // corner on every screen (the header centres its buttons, so its padding
+  // alone doesn't give it), kept there as the window resizes.
+  useEffect(() => {
+    if (!isOpen || isFavourites) return;
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    const pin = () => {
+      const el = panelRef.current;
+      const btn = triggerRef.current;
+      if (el && btn) pinToTrigger(el, btn.getBoundingClientRect());
+    };
+    // Again once the header buttons' size transition has settled.
+    const onResize = () => {
+      pin();
+      clearTimeout(settle);
+      settle = setTimeout(pin, 400);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      clearTimeout(settle);
+    };
+  }, [isOpen, isFavourites]);
   // Stable, so it runs when the panel mounts — not on every re-render (the
   // player's clock re-renders this), which would put the clip back once open.
   const setPanelRef = useCallback((el: HTMLDivElement | null) => {
@@ -106,6 +139,7 @@ export function TopicPickerModal({
     if (!el || !btn) return;
     el.style.clipPath = MORPH_CLIP;
     const r = btn.getBoundingClientRect();
+    if (!isFavourites) pinToTrigger(el, r);
     const inset = (v: number) => `${Math.max(0, v)}px`;
     el.style.setProperty("--it", inset(r.top - el.offsetTop));
     el.style.setProperty("--ir", inset(el.offsetLeft + el.offsetWidth - r.right));
@@ -113,7 +147,7 @@ export function TopicPickerModal({
     el.style.setProperty("--il", inset(r.left - el.offsetLeft));
     el.style.setProperty("--r0", `${r.width / 2}px`);
     el.style.setProperty("--r1", getComputedStyle(el).borderTopLeftRadius);
-  }, []);
+  }, [isFavourites]);
 
   // Opened from the player's name: show the tab of what's playing.
   useEffect(() => {
@@ -295,14 +329,13 @@ export function TopicPickerModal({
           triggerClassName ??
           "pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
         }
-        data-tooltip={triggerClassName ? (isFavourites ? "Favourites" : "Content Browser") : undefined}
+        data-tooltip={isFavourites ? "Favourites" : "Surah & Juz"}
         aria-label={isFavourites ? "Open Favourites" : "Open Content Browser"}
-        title={triggerClassName ? undefined : isFavourites ? "Favourites" : "Content Browser"}
       >
         {isFavourites ? (
           <FavouriteIcon className={triggerClassName ? "text-base sm:text-lg" : "h-5 w-5"} />
         ) : (
-          <TvMenuIcon className="h-5 w-5" />
+          <SearchIcon02 className="h-5 w-5" />
         )}
       </button>
 
@@ -337,8 +370,10 @@ export function TopicPickerModal({
                 const el = panelRef.current;
                 if (el && (def as Record<string, unknown>)["--reveal"] === 1) el.style.clipPath = "none";
               }}
-              // Floating card in the player's glass, inset from the screen edges
-              className={`pointer-events-auto fixed top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-3 md:top-4 md:bottom-4 md:right-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6 [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              // Floating card in the player's glass. Top and right match the
+              // header's padding (ImmersiveHeader), so the panel's corner is the
+              // trigger button's corner and the morph opens from it.
+              className={`pointer-events-auto fixed top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6 [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -359,7 +394,7 @@ export function TopicPickerModal({
                       {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Listen & Read"}
                     </span>
                     <h3 className="text-xl font-black text-white tracking-tight">
-                      {isFavourites ? "Favourites" : showAbout ? "About HuDa" : "Choose a Surah or Juz"}
+                      {isFavourites ? "Favourites" : showAbout ? "About HuDa Web Quran" : "Choose a Surah or Juz"}
                     </h3>
                   </div>
                 </div>
@@ -383,7 +418,7 @@ export function TopicPickerModal({
                 <>
                   {/* 2a. Favourites: Surah | Juz */}
                   {isFavourites && (
-                    <div role="tablist" className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
+                    <div role="tablist" className={cn("my-3", TAB_TRACK)}>
                       {(["surah", "juz"] as const).map((k) => (
                         <button
                           key={k}
@@ -392,8 +427,8 @@ export function TopicPickerModal({
                           aria-selected={favTab === k}
                           onClick={() => setFavTab(k)}
                           className={cn(
-                            "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all cursor-pointer",
-                            favTab === k ? "bg-emerald-600 text-white shadow-md" : "text-sand-200/60 hover:text-white"
+                            TAB,
+                            favTab === k ? SELECTED_TAB : UNSELECTED_TAB
                           )}
                         >
                           {k === "surah" ? "Surah" : "Juz"}
@@ -405,15 +440,13 @@ export function TopicPickerModal({
 
                   {/* 2. Segmented Navigation Tabs (Surah | Juz) */}
                   {!isFavourites && (
-                  <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
+                  <div className={cn("my-3", TAB_TRACK)}>
                     <button
                       type="button"
                       onClick={() => setActiveTab("surah")}
                       className={cn(
-                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                        activeTab === "surah"
-                          ? "bg-emerald-600 text-white shadow-md"
-                          : "text-sand-200/60 hover:text-white"
+                        TAB,
+                        activeTab === "surah" ? SELECTED_TAB : UNSELECTED_TAB
                       )}
                     >
                       Surah
@@ -423,10 +456,8 @@ export function TopicPickerModal({
                       type="button"
                       onClick={() => setActiveTab("quran")}
                       className={cn(
-                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                        activeTab === "quran"
-                          ? "bg-emerald-600 text-white shadow-md"
-                          : "text-sand-200/60 hover:text-white"
+                        TAB,
+                        activeTab === "quran" ? SELECTED_TAB : UNSELECTED_TAB
                       )}
                     >
                       Juz
@@ -448,7 +479,7 @@ export function TopicPickerModal({
                       }
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-2xl bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
+                      className="w-full rounded-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
                     />
                   </div>
 
@@ -506,9 +537,9 @@ export function TopicPickerModal({
                   className="mt-3 flex w-full shrink-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-left hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/splash-logo.webp" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
+                  <img src="/huda-logo-circle.webp" alt="" width={28} height={28} className="h-7 w-7 shrink-0 rounded-full object-contain" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold text-white">About HuDa</span>
+                    <span className="block text-xs font-bold text-white">About HuDa Web Quran</span>
                     <span className="block truncate text-[11px] text-sand-200/60">
                       {ABOUT.appUrl || ABOUT.appNote ? "The app · credits · feedback" : "Credits · feedback"}
                     </span>
@@ -553,20 +584,34 @@ function AboutView() {
   };
   return (
     <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
-      <div className="flex items-center gap-3">
+      {/* Logo left, name right — the pair centred over the intro */}
+      <div className="flex items-center justify-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/splash-logo.webp" alt="" width={56} height={56} className="h-14 w-14 shrink-0 object-contain" />
-        <div>
-          <p className="text-lg font-black text-white">HuDa</p>
+        <img src="/huda-logo-circle.webp" alt="" width={64} height={64} className="h-16 w-16 shrink-0 rounded-full object-contain" />
+        <div className="text-left">
+          <p className="text-lg font-black text-white">HuDa Web Quran</p>
           <p className="text-[10px] font-bold uppercase tracking-widest text-sand-200/60">{ABOUT.tagline}</p>
         </div>
       </div>
-      <p className="text-sm leading-relaxed text-sand-100/85">{ABOUT.intro}</p>
+      <p className="text-center text-[13px] leading-relaxed text-sand-100/85">{ABOUT.intro}</p>
 
       {!ABOUT.appUrl && ABOUT.appNote && (
         <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3">
-          <p className="text-xs font-bold text-white">HuDa is coming to mobile</p>
+          <p className="text-xs font-bold text-white">HuDa Mobile App</p>
           <p className="text-[11px] text-sand-200/70">{ABOUT.appNote}</p>
+          {ABOUT.appPlatforms.length > 0 && (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {ABOUT.appPlatforms.map((p) => (
+                <span
+                  key={p}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-black/20 px-2.5 py-1 text-[10px] font-semibold text-emerald-200"
+                >
+                  {p === "iOS" ? <AppleIcon className="text-sm" /> : <AndroidIcon className="text-sm" />}
+                  {p} · Coming soon
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -578,22 +623,12 @@ function AboutView() {
           className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 hover:bg-emerald-500/15 transition-colors"
         >
           <span>
-            <span className="block text-xs font-bold text-white">HuDa is on mobile too</span>
+            <span className="block text-xs font-bold text-white">HuDa Mobile App</span>
             <span className="block text-[11px] text-sand-200/70">Get the app</span>
           </span>
           <ChevronRightIcon className="h-4 w-4 text-emerald-300" />
         </a>
       )}
-
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-2.5">
-        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Sources &amp; credits</p>
-        {ABOUT.credits.map((c) => (
-          <div key={c.label}>
-            <p className="text-[11px] font-bold text-white">{c.label}</p>
-            <p className="text-[11px] text-sand-200/70">{c.value}</p>
-          </div>
-        ))}
-      </div>
 
       {ABOUT.maker && (
         // Maker card: thin gold edge, a warm halo behind the logo, and a shine
@@ -626,14 +661,48 @@ function AboutView() {
             ) : (
               <p className="relative mt-2 text-lg font-bold text-white">{ABOUT.maker}</p>
             )}
-            {ABOUT.makerNote && (
-              <div className="relative mt-5 border-t border-white/10 pt-4 text-center">
-                <p className="text-[13px] leading-relaxed text-sand-100/85">{ABOUT.makerNote}</p>
+            {ABOUT.makerNote.length > 0 && (
+              <div className="relative mt-5 space-y-3 border-t border-white/10 pt-4 text-center">
+                {ABOUT.makerNote.map((para) => (
+                  <p key={para} className="text-[13px] leading-relaxed text-sand-100/85">
+                    {/* **text** → gold; the split leaves those at odd indexes */}
+                    {para.split("**").map((part, i) =>
+                      i % 2 ? (
+                        <strong key={i} className="font-semibold text-[#E8C46E]">
+                          {part}
+                        </strong>
+                      ) : (
+                        part
+                      )
+                    )}
+                  </p>
+                ))}
               </div>
+            )}
+            {ABOUT.builtWith.length > 0 && (
+              <p className="relative mt-4 text-[11px] text-sand-200/70">
+                Created with AI ·{" "}
+                {ABOUT.builtWith.map((tool, i) => (
+                  <span key={tool}>
+                    {i > 0 && " & "}
+                    <span className="font-semibold text-[#E8C46E]">{tool}</span>
+                  </span>
+                ))}
+              </p>
             )}
           </div>
         </div>
       )}
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-2.5">
+        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Sources &amp; credits</p>
+        {ABOUT.credits.map((c) => (
+          <div key={c.label}>
+            <p className="text-[11px] font-bold text-white">{c.label}</p>
+            <p className="text-[11px] text-sand-200/70">{c.value}</p>
+          </div>
+        ))}
+      </div>
 
       {ABOUT.contact && (
         <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-2">

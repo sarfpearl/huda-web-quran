@@ -13,9 +13,19 @@ import { MushafPagePicker } from "./MushafPagePicker";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
+import { afterSplash, afterStage } from "@/lib/onboarding";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
+import {
+  browserTranslationLang,
+  detectTranslationLang,
+  isTranslationLang,
+  placeTranslationLang,
+  PLACE_EVENT,
+  type PlaceDetail,
+  type TranslationLang,
+} from "@/lib/data/translations";
 import { bookmarkId, loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/lastRead";
 import {
   isQuranTrack,
@@ -81,7 +91,10 @@ export function ImmersiveHomeClient() {
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
-  const [language, setLanguage] = useState<"en" | "ta">("en");
+  // The ayah-meaning language (English, Tamil, Urdu…). The app's own labels
+  // follow it only for Tamil — the rest of the interface is in English.
+  const [translationLang, setTranslationLang] = useState<TranslationLang>("en");
+  const language: "en" | "ta" = translationLang === "ta" ? "ta" : "en";
   // Greet the visitor on open; the ayah takes over once playback first starts.
   const [hasPlayed, setHasPlayed] = useState(false);
   useEffect(() => {
@@ -103,14 +116,11 @@ export function ImmersiveHomeClient() {
   useEffect(() => {
     setMounted(true);
     try {
-      const saved = localStorage.getItem("huda-visual-mode");
-      if (saved === "video" || saved === "image") {
-        setVisualMode(saved);
-      }
+      // Visual mode isn't restored: every open of the app starts in video mode.
+      // The language picked before, else a first-visit guess (browser
+      // language, time zone — refined by the place below; translations.ts).
       const savedLang = localStorage.getItem("huda-translation-lang");
-      if (savedLang === "en" || savedLang === "ta") {
-        setLanguage(savedLang);
-      }
+      setTranslationLang(isTranslationLang(savedLang) ? savedLang : detectTranslationLang());
       // Reciter is NOT restored: every page load lands on Al-Fatihah with the
       // default reciter (Sheikh Mishari Al-afasi), Surah tab.
     } catch {
@@ -201,27 +211,37 @@ export function ImmersiveHomeClient() {
   };
 
   const handleToggleVisualMode = () => {
-    setVisualMode((prev) => {
-      const next = prev === "video" ? "image" : "video";
-      try {
-        localStorage.setItem("huda-visual-mode", next);
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    setVisualMode((prev) => (prev === "video" ? "image" : "video"));
   };
 
-  const handleToggleLanguage = () => {
-    setLanguage((prev) => {
-      const next = prev === "en" ? "ta" : "en";
+  // Once the location is known (TimeLocationWidget), a visitor who never
+  // picked a language and whose browser named none of ours gets the language
+  // of where they are — e.g. Kerala → Malayalam, even with an English browser.
+  // Not saved: only a language picked by hand is remembered.
+  useEffect(() => {
+    const onPlace = (e: Event) => {
+      const { countryCode, stateCode } = (e as CustomEvent<PlaceDetail>).detail ?? {};
+      let saved: string | null = null;
       try {
-        localStorage.setItem("huda-translation-lang", next);
+        saved = localStorage.getItem("huda-translation-lang");
       } catch {
         /* ignore */
       }
-      return next;
-    });
+      if (isTranslationLang(saved) || browserTranslationLang()) return;
+      const lang = placeTranslationLang(countryCode, stateCode);
+      if (lang) setTranslationLang(lang);
+    };
+    window.addEventListener(PLACE_EVENT, onPlace);
+    return () => window.removeEventListener(PLACE_EVENT, onPlace);
+  }, []);
+
+  const handleChooseTranslation = (lang: TranslationLang) => {
+    setTranslationLang(lang);
+    try {
+      localStorage.setItem("huda-translation-lang", lang);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSeekToVerse = (targetTimeOrIndex: number) => {
@@ -782,32 +802,23 @@ export function ImmersiveHomeClient() {
   const [pagePickerOpen, setPagePickerOpen] = useState(false);
   // Player's Surah / Juz name → open the content browser at it.
   const [browserOpenRequest, setBrowserOpenRequest] = useState(0);
-  // Every open of the app: splash → greeting → 2s later the content browser
-  // slides in, so a first-time visitor sees there's a Surah / Juz list. Waits
-  // for the splash to hide (the `huda-ready` class on <html>, SplashScreen);
-  // skipped if playback has already started by then.
+  // Every open of the app, the content browser slides in so a first-time
+  // visitor sees there's a Surah / Juz list — last in the onboarding sequence
+  // (splash → location → install guide, lib/onboarding), a moment after the
+  // install guide closes or is skipped; not if playback has started by then.
   const hasPlayedRef = useRef(hasPlayed);
   hasPlayedRef.current = hasPlayed;
   useEffect(() => {
-    const root = document.documentElement;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const schedule = () => {
+    let cancelled = false;
+    Promise.all([afterSplash(), afterStage("install")]).then(() => {
+      if (cancelled) return;
       timer = setTimeout(() => {
         if (!hasPlayedRef.current) setBrowserOpenRequest((n) => n + 1);
-      }, 2000);
-    };
-    if (root.classList.contains("huda-ready")) {
-      schedule();
-      return () => clearTimeout(timer);
-    }
-    const observer = new MutationObserver(() => {
-      if (!root.classList.contains("huda-ready")) return;
-      observer.disconnect();
-      schedule();
+      }, 600);
     });
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     return () => {
-      observer.disconnect();
+      cancelled = true;
       clearTimeout(timer);
     };
   }, []);
@@ -1057,6 +1068,7 @@ export function ImmersiveHomeClient() {
         currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
         isPlaying={player.isPlaying}
         language={language}
+        translationLang={translationLang}
         showTranslation={showTranslation}
         activeWordIndex={isJuz ? juzWordSync.activeWordIndex : activeWordIndex}
         hasWordTiming={isJuz ? !juzPreSegment && juzWordSync.hasWordTiming : hasWordTiming}
@@ -1076,7 +1088,8 @@ export function ImmersiveHomeClient() {
         // The image/video toggle lives in the player strip whenever it shows.
         onToggleVisualMode={engagement.content ? undefined : handleToggleVisualMode}
         language={language}
-        onToggleLanguage={handleToggleLanguage}
+        translationLang={translationLang}
+        onChooseTranslation={handleChooseTranslation}
         showMeaning={showTranslation}
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
@@ -1113,7 +1126,7 @@ export function ImmersiveHomeClient() {
             onClick={() => setReadingMode((on) => !on)}
             aria-pressed={readingMode}
             aria-label={readingMode ? "Exit reading mode" : "Reading mode"}
-            title={readingMode ? "Exit reading mode" : "Reading mode"}
+            data-tooltip={readingMode ? "Exit reading mode" : "Reading mode"}
             // On: the filled book alone — no coloured ring (nor the focus ring
             // a tap left on it).
             className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 text-sand-100 shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none"
@@ -1279,7 +1292,6 @@ export function ImmersiveHomeClient() {
                 totalVerses={isJuz ? 1 : (activeSurah?.verses ?? verses.length)}
                 activeVerseIndex={isJuz ? 0 : activeIndex}
                 language={language}
-                onToggleLanguage={handleToggleLanguage}
                 showTranslation={showTranslation}
                 onToggleShowTranslation={handleToggleMeaning}
                 onPrevVerse={
