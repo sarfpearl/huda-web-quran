@@ -91,11 +91,11 @@
 
 ### Open
 - [ ] **GCP budget alert** (owner): Google Cloud Console → Billing → Budgets & alerts → budget for project `gen-lang-client-0172381348`, email alerts at 50% / 90% / 100%. Alerts only notify; they don't stop spending.
-- [ ] **Remove `NEXT_PUBLIC_DATA_SOURCE`** (owner): unused since the Bayan removal — delete it in Vercel (Project → Settings → Environment Variables) and `.env.local`.
+- [ ] **Share image (`og:image`)** — the site has none, so WhatsApp / Facebook link previews show no picture. Optional: add the HuDa logo or an artwork as the share image.
+- [ ] Optional: remove `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
 - [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.
 - [ ] Optional cleanup (owner's call): old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`) still exist in the live Supabase DB. R2 still holds `assets/images/bayan/*.jpg`; only `bayan/quran.jpg` is used (Quran fallback cover).
-- [ ] Delete the merged remote branch `feat/maher-juz-audio-r2`.
 
 ### Done (2026-10-05 → 10-06)
 - [x] Production R2 media issue (`.r2.dev4f` typo) resolved and verified live (§3).
@@ -105,6 +105,9 @@
 - [x] Bayan removed, translations ×10, onboarding (PR #12).
 - [x] Maher's full-Juz audio moved off archive.org to R2 (PR #13): 30 files (~1.36 GB) at `audio/juz/maher/para-NN.mp3`; masters in git-ignored `assets/audio/juz/maher/`; `upload-to-r2.mjs --category=audio-juz`. Para 30 is 320 kbps (173 MB), others 128 kbps.
 - [x] IndoPak script, development-only (PR #14).
+- [x] HANDOFF status + README 10 languages (PR #15); merged remote branches deleted (only `main` remains).
+- [x] `NEXT_PUBLIC_DATA_SOURCE` — already absent from Vercel and `.env.local`; nothing to remove.
+- [x] **`NEXT_PUBLIC_SITE_URL` added in Vercel** (Production, type Config) and redeployed. It was missing, so `sitemap.xml`, `robots.txt`, the canonical link and `og:url` all said `http://localhost:3000`. Verified live 2026-10-06: all now `https://huda-web-quran.vercel.app`.
 
 ---
 
@@ -142,12 +145,12 @@
 | :--- | :--- | :--- |
 | `NEXT_PUBLIC_MEDIA_BASE_URL` | Vercel (Production/Preview) & `.env.local` | Public base URL for R2 CDN media delivery (`https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev`) |
 | `R2_ACCOUNT_ID` | Local `.env.local` | Cloudflare account ID for S3 SDK upload tool |
-| `R2_ACCESS_KEY_ID` | Local `.env.local` | Cloudflare R2 API token access key ID |
-| `R2_SECRET_ACCESS_KEY` | Local `.env.local` | Cloudflare R2 API token secret access key |
+| `R2_ACCESS_KEY_ID` | Local `.env.local` (also in Vercel, unused there) | Cloudflare R2 API token access key ID |
+| `R2_SECRET_ACCESS_KEY` | Local `.env.local` (also in Vercel, unused there) | Cloudflare R2 API token secret access key |
 | `R2_BUCKET_NAME` | Local `.env.local` | Cloudflare R2 bucket name (`huda-quran-media`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
-| `NEXT_PUBLIC_SITE_URL` | Production & `.env.local` | Canonical website base URL |
+| `NEXT_PUBLIC_SITE_URL` | Vercel Production (Config) | Canonical site URL `https://huda-web-quran.vercel.app` for sitemap, robots, canonical and `og:url`. Without it they fall back to `http://localhost:3000`. Not needed locally. |
 | `NEXT_PUBLIC_INDOPAK` | Optional | `1` turns on the IndoPak script outside `next dev` — only once the font is licensed |
 
 > [!CAUTION]
