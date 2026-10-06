@@ -11,16 +11,17 @@
 
 ## 1. Current Project Status
 
+*Snapshot: 2026-10-06, after PR #14.*
+
 | Item | Status |
 | :--- | :--- |
-| **Project** | HuDa Web Quran |
-| **Repository** | `sarfpearl/huda-web-quran` |
-| **Current Local Branch** | `feat/tajweed-autohide` (tracking `origin/feat/tajweed-autohide`) |
-| **Current HEAD Commit** | `967a134` (`feat: migrate media assets to Cloudflare R2`) |
-| **Main Branch Status** | `origin/main` is at `0305b5a` (includes PR #8 merge) |
-| **Latest Merged PR** | **PR #8** (`Merge pull request #8 from sarfpearl/feat/tajweed-autohide`) |
-| **Production URL** | [https://huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) |
-| **Current Deployment Status** | Ready on Vercel (Latest deployment: `dpl_HoYo3QmoL3jGcrwktymwMspSzZSg` / `huda-web-quran-luszzbh9m-...`) |
+| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters (Bayan section removed) |
+| **Repository** | `sarfpearl/huda-web-quran` (public) |
+| **`main`** | `5b1c970` — Merge PR #14 (`feat/indopak-script`) |
+| **Latest merged PRs** | #12 Bayan removal + 10 translation languages + onboarding · #13 Maher Juz audio on R2 · #14 IndoPak script (dev-only) |
+| **Open PRs** | None |
+| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — deploy of `5b1c970` succeeded |
+| **Local working tree** | `main`, clean |
 
 ---
 
@@ -38,6 +39,12 @@
    - EveryAyah ayah-by-ayah sequence playback for Juz mode across all reciters (`playAyahSequence`).
    - Strict Indo-Pak Juz boundaries maintained.
    - Acoustic QA validation and fallback scripts (`scripts/qa/*`).
+
+4. **Translations in 10 languages** (PR #12): English, Tamil + Urdu, Malayalam, Hindi, Indonesian, Bengali, Turkish, French, Malay, from alquran.cloud, built into `public/data/quran-translations/` (`scripts/generation/build-quran-translations.mjs`) and fetched per Surah when picked. First-visit language: browser language → place (country / Indian state) → time zone → English; a manual pick is remembered.
+5. **First-open onboarding** (PR #12 + fixes): splash → location → Add to Home Screen → content browser, one at a time (`src/lib/onboarding.ts`). Waits for the location answer (Safari / Android quirks handled).
+6. **IndoPak script by region — development-only** (PR #14): `public/data/quran-indopak/`, "Uthmani | IndoPak" picker in the Tajweed panel, region default. Enabled only in `next dev` or with `NEXT_PUBLIC_INDOPAK=1`, until the QuranWBW IndoPak font licence is granted (see `docs/TODO.md`).
+7. **Quran-only app** (PR #12): the Bayan / talks section, YouTube engine and Bayan admin were removed; `/admin/comments` (comment moderation) kept.
+8. **Media fully on R2:** artwork, list thumbnails (`assets/images/{surah,quran}/thumbs/`, served without Vercel Image Optimization), videos, preludes, 51 reciter portraits, and Maher's 30 full-Juz recordings (PR #13).
 
 ### Cloudflare R2 Media Migration
 - **Bucket:** `huda-quran-media`
@@ -82,47 +89,48 @@
 
 ## 4. Current Work Items / Next Steps
 
-- [x] Production build uses the corrected `NEXT_PUBLIC_MEDIA_BASE_URL` (no `.dev4f`).
-- [x] Direct R2 image URL and `/_next/image` optimized requests return 200.
-- [x] Surah + Juz thumbnails, background video and prelude audio load from R2 in production.
-- [x] ~~Decide what to do with the 13 untracked files~~ Done 2026-10-05 (see §5). Was: (logos ~2.8 MB / ~3.7 MB — host on R2 or compress; rename `Logo_with Name.png` to drop the space; keep or drop `scripts/generation/generate_vertex_*.mjs` and `scripts/qa/results/repairs.json`). Do not commit without the owner's go-ahead.
-- [x] Reciter portraits moved off Pinterest hotlinks: all 51 now self-hosted on R2 at `assets/images/reciters/<id>.jpg` (via `mediaUrl()`). The Juz "Maher" speaker image (already 403 on Pinterest) now reuses `reciters/maher.jpg`.
-- [x] `README.md` refreshed with current features (PR #10). `YOUTUBE_MUSIC_GUIDE.md` deleted with the Bayan removal.
-- [x] **Bayan removed from the app (2026-10-06).** Talks, speakers, categories, explore/search/surprise pages, the Bayan admin (`/admin/bayan`, speakers, categories, media, settings), the YouTube player engine and `/api/youtube`, the seed talk data, and the header / bottom nav / global player that only those pages used. Kept: Quran listen & read, Surah/Juz browser, favourites, comments, and **`/admin/comments`** (Quran comment moderation). Internal names `BayanWithRelations` / `CompactBayanPlayer` stay — Quran tracks still use that type; renaming is cosmetic.
-- [ ] **GCP budget alert:** Google Cloud Console → Billing → Budgets & alerts → create a budget for project `gen-lang-client-0172381348` (e.g. a small monthly amount) with email alerts at 50% / 90% / 100%. Alerts only notify — they do not stop spending.
-- [x] **Maher's full-Juz audio moved off archive.org to R2** (2026-10-06): 30 files (~1.4 GB) at `audio/juz/maher/para-01.mp3` … `para-30.mp3`, local masters in git-ignored `assets/audio/juz/maher/`, uploaded with `upload-to-r2.mjs --category=audio-juz`. `quran.ts` builds the URL via `mediaUrl()`; `resolveActiveReciter` recognises Maher by the `/audio/juz/maher/` path.
-- [ ] Remove the now-unused `NEXT_PUBLIC_DATA_SOURCE` env var from Vercel (Project → Settings → Environment Variables) and `.env.local`.
-- [ ] Optional cleanup, owner's call: the live Supabase DB still has the old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`); `supabase/schema.sql` no longer creates them. R2 still holds `assets/images/bayan/*.jpg` — only `bayan/quran.jpg` is still used (Quran fallback cover).
-- [ ] Start new work from a fresh branch off `main` (`feat/tajweed-autohide` is already merged via PR #8).
+### Open
+- [ ] **GCP budget alert** (owner): Google Cloud Console → Billing → Budgets & alerts → budget for project `gen-lang-client-0172381348`, email alerts at 50% / 90% / 100%. Alerts only notify; they don't stop spending.
+- [ ] **Remove `NEXT_PUBLIC_DATA_SOURCE`** (owner): unused since the Bayan removal — delete it in Vercel (Project → Settings → Environment Variables) and `.env.local`.
+- [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
+- [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.
+- [ ] Optional cleanup (owner's call): old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`) still exist in the live Supabase DB. R2 still holds `assets/images/bayan/*.jpg`; only `bayan/quran.jpg` is used (Quran fallback cover).
+- [ ] Delete the merged remote branch `feat/maher-juz-audio-r2`.
+
+### Done (2026-10-05 → 10-06)
+- [x] Production R2 media issue (`.r2.dev4f` typo) resolved and verified live (§3).
+- [x] 51 reciter portraits moved off Pinterest to R2 (PR #9).
+- [x] README refreshed; HANDOFF media locations corrected (PR #10).
+- [x] 13 untracked files resolved (PR #11).
+- [x] Bayan removed, translations ×10, onboarding (PR #12).
+- [x] Maher's full-Juz audio moved off archive.org to R2 (PR #13): 30 files (~1.36 GB) at `audio/juz/maher/para-NN.mp3`; masters in git-ignored `assets/audio/juz/maher/`; `upload-to-r2.mjs --category=audio-juz`. Para 30 is 320 kbps (173 MB), others 128 kbps.
+- [x] IndoPak script, development-only (PR #14).
 
 ---
 
 ## 5. Git / Uncommitted Work
 
-*As of 2026-10-05 the working tree is clean — no staged, modified or untracked files.*
+*2026-10-06: `main` working tree clean; no open PRs.*
 
-The 13 previously untracked files were resolved:
-- **Committed:** 10 Vertex/Veo generation scripts (`scripts/generation/generate_vertex_{baqarah_ch10,baqarah_ch11,imran_01a,imran_02a,imran_02b,imran_02c,juz01,juz01_v2,juz01_v3,juz01_multi}.mjs` — `juz01_multi` produced the current `juz-01-0X` clips) and `scripts/qa/results/repairs.json` (output of `repair-timings.cjs`).
-- **Moved, not committed:** the 2508×2508 brand master logos (`Logo_icon.png`, `Logo_with Name.png`, 6.6 MB) from `public/` to git-ignored `assets/brand/`. They are not referenced by the app (it uses `splash-logo.webp` and `icon-*.png`).
+> [!WARNING]
+> **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`.
 
 ---
 
 ## 6. Important Git History
 
-Recent commits and merged PRs verified in git history:
-
-- `0305b5a` — **Merge pull request #8** from `sarfpearl/feat/tajweed-autohide` into `main`
-- `967a134` — `feat: migrate media assets to Cloudflare R2`
-- `a627ed9` — `docs: refresh HANDOFF.md for Antigravity (status to 2026-10-02, rules, pending work)`
-- `212d5c8` — `feat(tajweed): auto-hide the colours panel after a few seconds`
-- `c0adbbb` — **Merge pull request #7** from `sarfpearl/feat/about-polish`
-- `3749f94` — `fix(home): keep the Listen & Read label`
-- `343cd84` — `fix(about): show Copied only when the copy worked`
-- `0ac8d0f` — `feat(about): copy email, About Me text, logo balance, simpler title`
-- `b453fda` — **Merge pull request #6** from `sarfpearl/feat/content-browser-about`
-- Older historical PRs:
-  - **PR #4** — Reading-mode page navigation (`fix/reading-mode-page-navigation`)
-  - **PR #3** — Word-Sync / Voice-Sync (`feat/reciter-sync-min`)
+- `5b1c970` — **PR #14** `feat/indopak-script`: IndoPak script by region (dev-only)
+- `f5360e4` — **PR #13** `feat/maher-juz-audio-r2`: Maher full-Juz audio on R2
+- `427b28b` — perf: Surah/Juz list thumbnails straight from R2
+- `83039a6`, `c3f9373`, `bf4dacf` — onboarding fixes (location prompt, Android)
+- `ad318cf` — chore: remove unused `public/images` (served from R2)
+- `d92ccb2` — **PR #12** `feat/remove-bayan`: Quran-only app, 10 translation languages, onboarding, UI polish
+- `1fc0472` — **PR #11**: generation scripts + QA report committed; logos moved to `assets/brand/`
+- `bbe94d7` — **PR #10**: README refresh, HANDOFF media locations
+- `c6baafd` — **PR #9**: reciter portraits on R2
+- `74f3ca6` — docs: production R2 issue marked resolved
+- `0305b5a` — **PR #8** `feat/tajweed-autohide` (incl. `967a134` R2 media migration)
+- Older: PR #7 About polish · #6 content browser + About · #4 reading-mode page navigation · #3 word / voice sync
 
 ---
 
@@ -140,6 +148,7 @@ Recent commits and merged PRs verified in git history:
 | `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
 | `NEXT_PUBLIC_SITE_URL` | Production & `.env.local` | Canonical website base URL |
+| `NEXT_PUBLIC_INDOPAK` | Optional | `1` turns on the IndoPak script outside `next dev` — only once the font is licensed |
 
 > [!CAUTION]
 > Never commit `.env*` files or log secret credential values in code, terminals, or documentation.
@@ -152,9 +161,11 @@ Recent commits and merged PRs verified in git history:
 | :--- | :---: | :--- |
 | `npm run typecheck` | ✅ **PASS** | 0 TypeScript errors |
 | `npm run lint` | ✅ **PASS** | 0 blocking errors (only standard hook dependency warnings) |
-| `npm run build` | ✅ **PASS** | 7/7 static pages (`/`, `/admin/comments`, 404, robots, sitemap) after the Bayan removal |
-| **R2 Upload Verification** | ✅ **PASS** | 270/270 files verified on R2; direct requests return HTTP 200 |
+| `npm run build` | ✅ **PASS** | 7/7 static pages (`/`, `/admin/comments`, 404, robots, sitemap) |
+| **R2 Upload Verification** | ✅ **PASS** | Original 270 files + 51 reciter portraits + 30 Juz MP3s verified (200, sizes match) |
 | **Production Deployment Image Loading** | ✅ **PASS** | Verified live in browser 2026-10-05 (see §3) |
+| **Live site after PR #12–#13** | ✅ **PASS** | 2026-10-06: old Bayan routes 404, `/admin/comments` 200, reciter photos and video load, bundle uses the R2 Juz path |
+| **Full-Juz playback in the app** | ⚠️ Not ear-tested | R2 file loads and seeks in a browser; in-app play not listened to |
 
 ---
 
@@ -177,7 +188,7 @@ Recent commits and merged PRs verified in git history:
    - Do NOT change `mediaUrl()` logic — it is verified correct.
 
 4. **Where to continue from:**
-   - Work through the open items in §4 (untracked files decision, Pinterest hotlink, README refresh).
+   - The open items in §4. Start each task on a fresh branch off `main`, one session per checkout (§5).
    - If media ever breaks again: first check the Vercel env var value, then redeploy **without** build cache.
 
 ---
@@ -203,10 +214,10 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 | Service | Purpose | Where |
 | :--- | :--- | :--- |
 | quranicaudio.com | Audio for the 9 Word Sync reciters | `quranReciters.ts` |
-| Quran.com API (QDC / qurancdn) | Word timings and QPC V4 Tajweed fonts, fetched once by scripts | `fetch-reciter-timings.mjs`, `fetch-qpc-v4.mjs` |
+| Quran.com API (QDC / qurancdn) | Word timings, QPC V4 Tajweed fonts, IndoPak word text — fetched once by scripts | `fetch-reciter-timings.mjs`, `fetch-qpc-v4.mjs`, `fetch-indopak-words.mjs` |
 | mp3quran.net | Audio for the other 42 (Audio Only) reciters | `quranReciters.ts` |
 | everyayah.com | Per-ayah clips so any reciter can recite a Juz | `EVERYAYAH_FOLDERS` |
-| alquran.cloud | Tamil and English (Sahih) translations | `quranVerses.ts` |
+| alquran.cloud | Translations (10 languages), built into `public/data/quran-translations/` by script | `build-quran-translations.mjs`, `quranVerses.ts` |
 | OpenStreetMap Nominatim | City name in the header clock widget | `TimeLocationWidget.tsx` |
 
 ---
@@ -222,3 +233,5 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 7. **Tajweed:** QPC V4 COLRv1 glyph fonts (one glyph per word).
 8. **Keep features focused and minimal:** Maintain simple design system, no unnecessary heavy layers.
 9. **Quran only:** Bayan / talks / YouTube were removed on 2026-10-06. Don't reintroduce them unless the owner asks.
+10. **IndoPak stays development-only** until QuranWBW grants the font licence. Don't ship it to production with the Noto fallback.
+11. **One AI session per checkout** (or separate worktrees); stage files by name.
