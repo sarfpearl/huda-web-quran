@@ -51,6 +51,13 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
       Only a salted hash of the IP is kept, for 2 days. Tune in
       `public.quran_ip_limit()`. Shared IPs (mobile CGNAT, offices) share the
       cap — raise it if real listeners stop being counted.
+      Live since 2026-10-06 (run together with the 2026-09-26 comment
+      likes/replies migration, which had never been applied — replies and
+      comment likes were broken on the live site until then). Checked live: IP
+      comes from `cf-connecting-ip`; forged `X-Forwarded-For` / `X-Real-IP`
+      don't change it, a forged `CF-Connecting-IP` is refused by Cloudflare.
+- [ ] **Drop the temporary probe** (owner, SQL editor):
+      `drop function if exists public.quran_ip_probe();`
 - [ ] **Later, if spam still gets through:** Cloudflare Turnstile on comments.
 - [x] **Admin login** — `/admin/comments` signs in with an email magic link
       (Supabase Auth); only users in `public.admins` can moderate. The
