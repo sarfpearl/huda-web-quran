@@ -166,22 +166,8 @@ export function ImmersiveBackground({
 
 function SceneElements({ categorySlug }: { categorySlug: string }) {
   const sceneImages: Record<string, string> = {
-    "iman-taqwa": "/assets/images/bayan/iman-taqwa.jpg",
     "quran": "/assets/images/bayan/quran.jpg",
     "quran-recitation": "/assets/images/bayan/quran.jpg",
-    "salah": "/assets/images/bayan/salah.jpg",
-    "ramadan": "/assets/images/bayan/ramadan.jpg",
-    "dua": "/assets/images/bayan/dua.jpg",
-    "hajj-umrah": "/assets/images/bayan/hajj-umrah.jpg",
-    "akhlaq": "/assets/images/bayan/akhlaq.jpg",
-    "self-improvement": "/assets/images/bayan/self-improvement.jpg",
-    "womens-topics": "/assets/images/bayan/womens-topics.jpg",
-    "family": "/assets/images/bayan/family.jpg",
-    "marriage": "/assets/images/bayan/marriage.jpg",
-    "parenting": "/assets/images/bayan/parenting.jpg",
-    "youth": "/assets/images/bayan/youth.jpg",
-    "death-akhirah": "/assets/images/bayan/death-akhirah.jpg",
-    "islamic-history": "/assets/images/bayan/islamic-history.jpg",
   };
 
   const rawImageSrc = sceneImages[categorySlug];

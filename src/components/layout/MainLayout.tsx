@@ -2,14 +2,10 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Header } from "@/components/navigation/Header";
-import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
-import { GlobalAudioPlayer } from "@/components/player/GlobalAudioPlayer";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const isAdmin = pathname?.startsWith("/admin");
 
   // The immersive home is a fixed full-screen view — lock the document so
   // mobile browsers can't scroll or rubber-band it.
@@ -64,15 +60,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Only the 404 / error pages render outside the immersive home.
   return (
-    <>
-      {!isAdmin && <Header />}
-      <main id="main" className="app-shell mx-auto min-h-screen max-w-6xl px-4 sm:px-6">
-        {children}
-      </main>
-      <GlobalAudioPlayer />
-      {!isAdmin && <MobileBottomNav />}
-    </>
+    <main id="main" className="app-shell mx-auto min-h-screen max-w-6xl px-4 sm:px-6">
+      {children}
+    </main>
   );
 }
 

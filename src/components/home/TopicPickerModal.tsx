@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import type { Category } from "@/types/category";
-import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
 import { CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, TvMenuIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
@@ -17,7 +15,6 @@ import {
   QURAN_SURAHS,
   SURAH_TRACKS,
   quranImageUrl,
-  mediaUrl,
   getSurahTracksForReciter,
   resolveActiveReciter,
 } from "@/lib/data/service";
@@ -29,23 +26,12 @@ import { compactCount } from "./QuranEngagement";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSessionId } from "@/lib/audio/session";
 
-type ModalTab = "surah" | "quran" | "bayan";
-
-// Bayan tab is hidden for now — flip to true to bring it back (code kept intact).
-const SHOW_BAYAN_TAB = false;
+type ModalTab = "surah" | "quran";
 
 interface TopicPickerModalProps {
-  categories: Category[];
-  speakers?: Speaker[];
-  allBayan?: BayanWithRelations[];
   surahTracks?: BayanWithRelations[];
-  activeCategorySlug: string;
-  onSelectCategory: (category: Category) => void;
-  onSelectSpeaker?: (speaker: Speaker) => void;
-  onSelectBayan?: (bayan: BayanWithRelations) => void;
   /** Play a Juz in the currently-selected reciter's voice (per-ayah). */
   onSelectJuz?: (juzId: number) => void;
-  onShuffle?: () => void;
   /** Bump to open the browser from outside (the player's Surah / Juz name). */
   openRequest?: number;
   /** Trigger button classes (default: the round header button). */
@@ -81,30 +67,8 @@ const MORPH_RING: React.CSSProperties = {
   opacity: "calc((1 - var(--reveal, 1)) / 0.2)",
 };
 
-const SCENE_THUMBNAILS: Record<string, string> = {
-  "iman-taqwa": "/assets/images/bayan/iman-taqwa.jpg",
-  "quran": "/assets/images/bayan/quran.jpg",
-  "quran-recitation": "/assets/images/bayan/quran.jpg",
-  "salah": "/assets/images/bayan/salah.jpg",
-  "ramadan": "/assets/images/bayan/ramadan.jpg",
-  "dua": "/assets/images/bayan/dua.jpg",
-  "hajj-umrah": "/assets/images/bayan/hajj-umrah.jpg",
-  "akhlaq": "/assets/images/bayan/akhlaq.jpg",
-  "self-improvement": "/assets/images/bayan/self-improvement.jpg",
-  "womens-topics": "/assets/images/bayan/womens-topics.jpg",
-  "family": "/assets/images/bayan/family.jpg",
-  "marriage": "/assets/images/bayan/marriage.jpg",
-  "parenting": "/assets/images/bayan/parenting.jpg",
-  "youth": "/assets/images/bayan/youth.jpg",
-  "death-akhirah": "/assets/images/bayan/death-akhirah.jpg",
-  "islamic-history": "/assets/images/bayan/islamic-history.jpg",
-};
-
 export function TopicPickerModal({
-  categories,
-  activeCategorySlug,
   surahTracks,
-  onSelectCategory,
   onSelectJuz,
   triggerClassName,
   openRequest = 0,
@@ -180,7 +144,7 @@ export function TopicPickerModal({
     juz: null,
   });
   const countKinds: Array<"surah" | "juz"> =
-    isFavourites ? ["surah", "juz"] : activeTab === "surah" ? ["surah"] : activeTab === "quran" ? ["juz"] : [];
+    isFavourites ? ["surah", "juz"] : activeTab === "surah" ? ["surah"] : ["juz"];
   const countKindsKey = countKinds.join(",");
   useEffect(() => {
     if (!isOpen || !countKindsKey) return;
@@ -241,15 +205,6 @@ export function TopicPickerModal({
   };
 
   const q = searchQuery.trim().toLowerCase();
-
-  const filteredCategories = categories.filter((c) => {
-    if (!q) return true;
-    return (
-      c.name.toLowerCase().includes(q) ||
-      (c.nameTa && c.nameTa.toLowerCase().includes(q)) ||
-      c.description.toLowerCase().includes(q)
-    );
-  });
 
   const filteredJuz = QURAN_JUZ.filter((j) => {
     if (!q) return true;
@@ -448,7 +403,7 @@ export function TopicPickerModal({
                     </div>
                   )}
 
-                  {/* 2. Segmented Navigation Tabs (Surah | Juz | Bayan) */}
+                  {/* 2. Segmented Navigation Tabs (Surah | Juz) */}
                   {!isFavourites && (
                   <div className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
                     <button
@@ -476,22 +431,6 @@ export function TopicPickerModal({
                     >
                       Juz
                     </button>
-
-
-                    {SHOW_BAYAN_TAB && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("bayan")}
-                      className={cn(
-                        "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all",
-                        activeTab === "bayan"
-                          ? "bg-emerald-600 text-white shadow-md"
-                          : "text-sand-200/60 hover:text-white"
-                      )}
-                    >
-                      Bayan
-                    </button>
-                    )}
                   </div>
                   )}
 
@@ -505,9 +444,7 @@ export function TopicPickerModal({
                           ? "Search favourites..."
                           : activeTab === "surah"
                           ? "Search Surah..."
-                          : activeTab === "quran"
-                          ? "Search Juz or page no..."
-                          : "Search Bayan categories..."
+                          : "Search Juz or page no..."
                       }
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -557,30 +494,6 @@ export function TopicPickerModal({
                         );
                       })())}
 
-                    {/* D. BAYAN TAB (Categories) */}
-                    {!isFavourites && activeTab === "bayan" &&
-                      filteredCategories.map((c, index) => {
-                        const isCatActive = c.slug === activeCategorySlug;
-                        const thumb = mediaUrl(SCENE_THUMBNAILS[c.slug] || "/assets/images/bayan/iman-taqwa.jpg");
-                        return (
-                          <ContentListCard
-                            key={c.id}
-                            number={(index + 1).toString().padStart(2, "0")}
-                            imageSrc={thumb}
-                            title={c.name}
-                            secondaryLabel={c.nameTa}
-                            isArabicLabel={false}
-                            subtitle={c.description}
-                            iconName={c.icon}
-                            isActive={isCatActive}
-                            isPlaying={false}
-                            onClick={() => {
-                              onSelectCategory(c);
-                              setIsOpen(false);
-                            }}
-                          />
-                        );
-                      })}
                   </div>
                 </>
               )}

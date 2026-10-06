@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Category } from "@/types/category";
-import type { Speaker } from "@/types/speaker";
 import type { BayanWithRelations } from "@/types/bayan";
 import { ImmersiveBackground } from "./ImmersiveBackground";
 import { ImmersiveHeader, READER_SCALES } from "./ImmersiveHeader";
@@ -67,12 +65,6 @@ import {
   PlayerLikeButton,
 } from "./QuranEngagement";
 
-interface ImmersiveHomeClientProps {
-  categories: Category[];
-  allBayan: BayanWithRelations[];
-  speakers?: Speaker[];
-}
-
 /**
  * The Surah each Juz begins in (many Juz start mid-surah). Only Maher has a
  * dedicated 30-Juz recording; when the listener picks another reciter for a
@@ -85,11 +77,7 @@ const JUZ_START_SURAH: Record<number, number> = {
   21: 29, 22: 33, 23: 36, 24: 39, 25: 41, 26: 46, 27: 51, 28: 58, 29: 67, 30: 78,
 };
 
-export function ImmersiveHomeClient({
-  categories,
-  allBayan,
-  speakers = [],
-}: ImmersiveHomeClientProps) {
+export function ImmersiveHomeClient() {
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
@@ -162,27 +150,6 @@ export function ImmersiveHomeClient({
     }
   }, [player.current, selectedReciter.id]);
 
-  // Initial category: default to 'quran' or 'iman-taqwa'
-  const defaultCategory =
-    categories.find((c) => c.slug === "quran" || c.slug === "quran-recitation") ??
-    categories.find((c) => c.slug === "iman-taqwa") ??
-    categories[0] ?? {
-      id: "iman-taqwa",
-      name: "Iman & Taqwa",
-      slug: "iman-taqwa",
-      nameTa: "ஈமான் & தக்வா",
-      description: "Strengthen your faith, devotion, and mindfulness of Allah.",
-      icon: "heart",
-      coverImageUrl: null,
-      sortOrder: 1,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    };
-
-  const [activeCategory, setActiveCategory] = useState<Category>(
-    () => defaultCategory
-  );
-
   const [overrideBayan, setOverrideBayan] = useState<BayanWithRelations | null>(null);
   // Current ayah's text + translation while a Juz plays per-ayah (word-sync reciter).
   const [juzAyahVerse, setJuzAyahVerse] = useState<AyahVerse | null>(null);
@@ -196,12 +163,6 @@ export function ImmersiveHomeClient({
   }, [notice]);
 
 
-  // Filter Bayans belonging to current active category
-  const categoryBayans = useMemo(() => {
-    const list = allBayan.filter((b) => b.categoryId === activeCategory.id);
-    return list.length > 0 ? list : allBayan;
-  }, [allBayan, activeCategory.id]);
-
   // Selected track (defaults to Surah 1: Al-Fatihah, or active player track / category track)
   const activeBayan = useMemo(() => {
     if (player.current) {
@@ -212,11 +173,9 @@ export function ImmersiveHomeClient({
     return (
       surahTracksForCurrentReciter[0] ??
       SURAH_TRACKS[0] ??
-      categoryBayans[0] ??
-      allBayan[0] ??
       null
     );
-  }, [overrideBayan, player, surahTracksForCurrentReciter, categoryBayans, allBayan]);
+  }, [overrideBayan, player, surahTracksForCurrentReciter]);
 
   // Resolve active Surah metadata if activeBayan is a Surah track
   const activeSurah = useMemo(() => {
@@ -234,48 +193,11 @@ export function ImmersiveHomeClient({
     return null;
   }, [activeBayan]);
 
-  const handleSelectCategory = (category: Category) => {
-    setOverrideBayan(null);
-    setActiveCategory(category);
-    const newCategoryBayans = allBayan.filter((b) => b.categoryId === category.id);
-    const targetBayan = newCategoryBayans[0] ?? allBayan[0];
-
-    // If audio is currently playing, smoothly transition audio to new category's top track
-    if (player.isPlaying && targetBayan) {
-      player.playBayan(targetBayan, newCategoryBayans);
-    }
-  };
-
-  const handleSelectSpeaker = (speaker: Speaker) => {
-    const speakerBayans = allBayan.filter((b) => b.speakerId === speaker.id);
-    if (speakerBayans.length > 0) {
-      const targetBayan = speakerBayans[0];
-      setOverrideBayan(targetBayan);
-      setActiveCategory(targetBayan.category);
-      if (player.isPlaying) {
-        player.playBayan(targetBayan, speakerBayans);
-      }
-    }
-  };
-
-  const handleSelectBayan = (bayan: BayanWithRelations) => {
-    setOverrideBayan(bayan);
-    setActiveCategory(bayan.category);
-    player.playBayan(bayan, allBayan);
-  };
-
   const handleStepSurah = (dir: 1 | -1) => {
     if (!activeSurah) return;
     const num = ((activeSurah.number - 1 + dir + 114) % 114) + 1;
     const track = surahTracksForCurrentReciter[num - 1];
     if (track) player.playBayan(track, surahTracksForCurrentReciter);
-  };
-
-  const handleShuffle = () => {
-    if (categories.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * categories.length);
-    const randomCat = categories[randomIndex];
-    handleSelectCategory(randomCat);
   };
 
   const handleToggleVisualMode = () => {
@@ -693,7 +615,7 @@ export function ImmersiveHomeClient({
     jumpToVerse,
   } = useQuranVerseSync({
     surahNumber: isJuz ? null : (activeSurah?.number ?? null),
-    categorySlug: activeBayan?.category?.slug || activeCategory.slug,
+    categorySlug: activeBayan?.category?.slug || "quran-recitation",
     currentTime: player.currentTime,
     duration: player.duration,
     isPlaying: player.isPlaying,
@@ -1095,7 +1017,7 @@ export function ImmersiveHomeClient({
     >
       {/* Edge-to-Edge Dynamic Scene Background (Category or Verse-Aware Surah Video) */}
       <ImmersiveBackground
-        categorySlug={activeBayan?.category?.slug || activeCategory.slug}
+        categorySlug={activeBayan?.category?.slug || "quran-recitation"}
         activeSurahNumber={activeSurah?.number ?? null}
         activeJuzNumber={activeJuz?.id ?? null}
         ayahNumber={currentVerse?.ayahNumber ?? null}
@@ -1150,7 +1072,6 @@ export function ImmersiveHomeClient({
 
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
       <ImmersiveHeader
-        onShuffle={handleShuffle}
         visualMode={visualMode}
         // The image/video toggle lives in the player strip whenever it shows.
         onToggleVisualMode={engagement.content ? undefined : handleToggleVisualMode}
@@ -1202,16 +1123,8 @@ export function ImmersiveHomeClient({
         )}
         <TopicPickerModal
           openRequest={browserOpenRequest}
-          categories={categories}
-          speakers={speakers}
-          allBayan={allBayan}
           surahTracks={surahTracksForCurrentReciter}
-          activeCategorySlug={activeCategory.slug}
-          onSelectCategory={handleSelectCategory}
           onSelectJuz={handleSelectJuz}
-          onSelectSpeaker={handleSelectSpeaker}
-          onSelectBayan={handleSelectBayan}
-          onShuffle={handleShuffle}
         />
       </ImmersiveHeader>
 
@@ -1331,10 +1244,7 @@ export function ImmersiveHomeClient({
             <TopicPickerModal
               variant="favourites"
               triggerClassName="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
-              categories={categories}
               surahTracks={surahTracksForCurrentReciter}
-              activeCategorySlug={activeCategory.slug}
-              onSelectCategory={handleSelectCategory}
               onSelectJuz={handleSelectJuz}
             />
             {/* 🔖 add (bookmark +) / remove (filled) the ayah being read */}
@@ -1361,9 +1271,7 @@ export function ImmersiveHomeClient({
             {activeBayan && (
               <CompactBayanPlayer
                 bayan={activeBayan}
-                categoryList={categoryBayans}
                 surahTracks={surahTracksForCurrentReciter}
-                onShuffleCategory={handleShuffle}
                 activeSurah={activeSurah}
                 currentVerse={isJuz ? null : currentVerse}
                 currentSegment={isJuz ? null : currentSegment}

@@ -1,9 +1,12 @@
 import type { Category } from "./category";
 import type { Speaker } from "./speaker";
 
-export type AudioSource = "local" | "youtube";
+export type AudioSource = "local";
 
-/** Raw Bayan row as stored in the database. */
+/**
+ * A playable track (a Surah or Juz recitation). The `Bayan` name is historical
+ * — the app used to host Islamic talks too; Quran tracks reuse this shape.
+ */
 export interface Bayan {
   id: string;
   title: string;
@@ -15,12 +18,7 @@ export interface Bayan {
   language: string;
   coverImageUrl: string | null;
   audioSource: AudioSource;
-  /** Present when audioSource === "local" (Supabase Storage URL). */
   audioUrl: string | null;
-  /** Present when audioSource === "youtube". */
-  youtubeVideoId: string | null;
-  /** Present when connected to a YouTube / YouTube Music playlist. */
-  youtubePlaylistId?: string | null;
   durationSeconds: number;
   publishedAt: string | null;
   isFeatured: boolean;
@@ -31,23 +29,10 @@ export interface Bayan {
 }
 
 /**
- * Bayan enriched with its speaker & category — the shape the UI and the
- * global player consume. The data layer resolves relations into this.
+ * A track with its reciter (speaker) and Quran category resolved — the shape
+ * the UI and the player consume.
  */
 export interface BayanWithRelations extends Bayan {
   speaker: Speaker;
   category: Category;
 }
-
-/** Anonymous listening analytics row. */
-export interface BayanPlay {
-  id: string;
-  bayanId: string;
-  sessionId: string;
-  startedAt: string;
-  completed: boolean;
-  durationListened: number;
-}
-
-/** Sort options shared by category / speaker / search listings. */
-export type BayanSort = "latest" | "popular" | "duration";

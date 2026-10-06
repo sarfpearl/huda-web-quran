@@ -4,7 +4,7 @@ export const siteConfig = {
   fullName: "HuDa Web Quran",
   tagline: "Listen. Reflect. Improve.",
   description:
-    "Discover and listen to the Holy Quran, Islamic Bayan and reminders in Tamil that inspire faith and reflection. Listen to lectures by topic and speaker.",
+    "Listen to and read the Holy Quran — 114 Surahs and 30 Juz, 51 reciters, word-by-word sync, Tajweed colours, Tamil and English translations.",
   // Prefer the env value; fall back to localhost for dev.
   url: (
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"

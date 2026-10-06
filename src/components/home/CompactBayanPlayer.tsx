@@ -51,9 +51,7 @@ import { HoverTooltips } from "@/components/player/HoverTooltips";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
-  categoryList?: BayanWithRelations[];
   surahTracks?: BayanWithRelations[];
-  onShuffleCategory?: () => void;
   activeSurah?: QuranSurah | null;
   currentVerse?: AyahVerse | null;
   currentSegment?: RecitationSegment | null;
@@ -105,9 +103,7 @@ interface CompactBayanPlayerProps {
 
 export function CompactBayanPlayer({
   bayan,
-  categoryList,
   surahTracks,
-  onShuffleCategory,
   activeSurah,
   currentVerse,
   currentSegment,
@@ -450,7 +446,7 @@ export function CompactBayanPlayer({
         ? activeSurahTracks
         : isQuranTrackId(bayan.id)
         ? QURAN_TRACKS
-        : categoryList;
+        : [bayan];
       player.playBayan(bayan, contextList);
     }
   };
@@ -476,7 +472,7 @@ export function CompactBayanPlayer({
         ? activeSurahTracks
         : isQuranTrackId(bayan.id)
         ? QURAN_TRACKS
-        : categoryList;
+        : [bayan];
       player.playBayan(bayan, contextList);
       setTimeout(() => player.seek(val), 100);
     }
@@ -485,7 +481,6 @@ export function CompactBayanPlayer({
   // Shuffle is context-aware:
   //   • Surah playing → jump to a DIFFERENT random Surah (excluding current)
   //   • Juz playing   → jump to a DIFFERENT random Juz (excluding current)
-  //   • otherwise      → shuffle the Bayan category (existing behaviour)
   const playRandomFrom = (tracks: BayanWithRelations[]) => {
     if (tracks.length === 0) return;
     const pool =
@@ -499,8 +494,6 @@ export function CompactBayanPlayer({
       playRandomFrom(surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan)));
     } else if (isQuranTrackId(bayan.id)) {
       playRandomFrom(QURAN_TRACKS);
-    } else {
-      onShuffleCategory?.();
     }
   };
 

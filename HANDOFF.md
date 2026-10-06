@@ -1,7 +1,7 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Antigravity / Claude / any AI assistant continuing this project  
-> **Last Updated:** 2026-10-05  
+> **Last Updated:** 2026-10-06  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
 > **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
@@ -87,7 +87,12 @@
 - [x] Surah + Juz thumbnails, background video and prelude audio load from R2 in production.
 - [x] ~~Decide what to do with the 13 untracked files~~ Done 2026-10-05 (see §5). Was: (logos ~2.8 MB / ~3.7 MB — host on R2 or compress; rename `Logo_with Name.png` to drop the space; keep or drop `scripts/generation/generate_vertex_*.mjs` and `scripts/qa/results/repairs.json`). Do not commit without the owner's go-ahead.
 - [x] Reciter portraits moved off Pinterest hotlinks: all 51 now self-hosted on R2 at `assets/images/reciters/<id>.jpg` (via `mediaUrl()`). The Juz "Maher" speaker image (already 403 on Pinterest) now reuses `reciters/maher.jpg`.
-- [ ] `README.md` is stale (points to a HANDOFF "roadmap/directory structure" that no longer exists; omits Tajweed, Word Sync, R2). `YOUTUBE_MUSIC_GUIDE.md` describes the older bayan/YouTube player — confirm whether it is still relevant.
+- [x] `README.md` refreshed with current features (PR #10). `YOUTUBE_MUSIC_GUIDE.md` deleted with the Bayan removal.
+- [x] **Bayan removed from the app (2026-10-06).** Talks, speakers, categories, explore/search/surprise pages, the Bayan admin (`/admin/bayan`, speakers, categories, media, settings), the YouTube player engine and `/api/youtube`, the seed talk data, and the header / bottom nav / global player that only those pages used. Kept: Quran listen & read, Surah/Juz browser, favourites, comments, and **`/admin/comments`** (Quran comment moderation). Internal names `BayanWithRelations` / `CompactBayanPlayer` stay — Quran tracks still use that type; renaming is cosmetic.
+- [ ] **GCP budget alert:** Google Cloud Console → Billing → Budgets & alerts → create a budget for project `gen-lang-client-0172381348` (e.g. a small monthly amount) with email alerts at 50% / 90% / 100%. Alerts only notify — they do not stop spending.
+- [ ] **Move Maher's full-Juz audio off archive.org to R2** (`src/lib/data/quran.ts:21`, `dn720304.ca.archive.org/…/quran-juz-audio-mp3`), so a third-party outage can't break it.
+- [ ] Remove the now-unused `NEXT_PUBLIC_DATA_SOURCE` env var from Vercel (Project → Settings → Environment Variables) and `.env.local`.
+- [ ] Optional cleanup, owner's call: the live Supabase DB still has the old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`); `supabase/schema.sql` no longer creates them. R2 still holds `assets/images/bayan/*.jpg` — only `bayan/quran.jpg` is still used (Quran fallback cover).
 - [ ] Start new work from a fresh branch off `main` (`feat/tajweed-autohide` is already merged via PR #8).
 
 ---
@@ -134,7 +139,6 @@ Recent commits and merged PRs verified in git history:
 | `R2_BUCKET_NAME` | Local `.env.local` | Cloudflare R2 bucket name (`huda-quran-media`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
-| `NEXT_PUBLIC_DATA_SOURCE` | Production & `.env.local` | Data source mode (e.g. `seed`) |
 | `NEXT_PUBLIC_SITE_URL` | Production & `.env.local` | Canonical website base URL |
 
 > [!CAUTION]
@@ -148,7 +152,7 @@ Recent commits and merged PRs verified in git history:
 | :--- | :---: | :--- |
 | `npm run typecheck` | ✅ **PASS** | 0 TypeScript errors |
 | `npm run lint` | ✅ **PASS** | 0 blocking errors (only standard hook dependency warnings) |
-| `npm run build` | ✅ **PASS** | 64/64 static pages generated cleanly |
+| `npm run build` | ✅ **PASS** | 7/7 static pages (`/`, `/admin/comments`, 404, robots, sitemap) after the Bayan removal |
 | **R2 Upload Verification** | ✅ **PASS** | 270/270 files verified on R2; direct requests return HTTP 200 |
 | **Production Deployment Image Loading** | ✅ **PASS** | Verified live in browser 2026-10-05 (see §3) |
 
@@ -178,6 +182,36 @@ Recent commits and merged PRs verified in git history:
 
 ---
 
+## 10. Services & Accounts
+
+No secret values here — those live only in `.env.local` (git-ignored) and Vercel's env settings.
+
+### Accounts we manage
+
+| Service | Purpose | Account / ID |
+| :--- | :--- | :--- |
+| **Claude** (Claude Code) | Writing and testing code, PRs, this handoff | `sarf.pearl@zohocorp.com` |
+| **Antigravity** (Google AI IDE) | Second AI assistant; this file was first written for it | Account not recorded |
+| **GitHub** | Source code, PRs, history | User `sarfpearl` · repo `sarfpearl/huda-web-quran` (**public**) · commit author `sarf-pearl` |
+| **Vercel** | Hosting; auto-deploys `main`, preview per PR | Team `hu-da-right-guidance` (`team_wteEbzTnEOJuAid754cd4N78`) · project `huda-web-quran` (`prj_OSs76BUbUlrTpgDxbOkJHTDg35Sz`) · `huda-web-quran.vercel.app` |
+| **Cloudflare R2** | All media: artwork, videos, prelude audio, reciter portraits | Bucket `huda-quran-media` · public URL `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` · account ID in `R2_ACCOUNT_ID` |
+| **Supabase** | Surah/Juz views, likes, comments (anonymous RPCs); comment moderation | Project ref `astqipbwohonowaoufwi` |
+| **Google Cloud – Vertex AI (Veo)** | Generating the Surah/Juz background videos (`scripts/generation/generate_vertex_*.mjs`); not used at runtime | Project `gen-lang-client-0172381348` |
+
+### Free third-party services (no account)
+
+| Service | Purpose | Where |
+| :--- | :--- | :--- |
+| quranicaudio.com | Audio for the 9 Word Sync reciters | `quranReciters.ts` |
+| Quran.com API (QDC / qurancdn) | Word timings and QPC V4 Tajweed fonts, fetched once by scripts | `fetch-reciter-timings.mjs`, `fetch-qpc-v4.mjs` |
+| mp3quran.net | Audio for the other 42 (Audio Only) reciters | `quranReciters.ts` |
+| everyayah.com | Per-ayah clips so any reciter can recite a Juz | `EVERYAYAH_FOLDERS` |
+| archive.org | Maher's full-Juz recordings | `quran.ts:21` |
+| alquran.cloud | Tamil and English (Sahih) translations | `quranVerses.ts` |
+| OpenStreetMap Nominatim | City name in the header clock widget | `TimeLocationWidget.tsx` |
+
+---
+
 ## 🧠 Architectural Rules That Must Not Be Broken
 
 1. **Audio and word timings must come from the same source:** Word timings come from Quran.com QDC and match quranicaudio files. 9 reciters have them (sudais, alafasy, dosari, abdulbaset, minshawi, hussary, shuraim, shatri, tunaiji). Never borrow another reciter's timings.
@@ -188,3 +222,4 @@ Recent commits and merged PRs verified in git history:
 6. **Arabic text:** use `text_qpc_hafs` with Hafs v0.18. Never edit Quran text to fix rendering.
 7. **Tajweed:** QPC V4 COLRv1 glyph fonts (one glyph per word).
 8. **Keep features focused and minimal:** Maintain simple design system, no unnecessary heavy layers.
+9. **Quran only:** Bayan / talks / YouTube were removed on 2026-10-06. Don't reintroduce them unless the owner asks.

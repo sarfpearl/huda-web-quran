@@ -30,7 +30,6 @@ import { CheckIcon } from "@/components/ui/Icon";
 export const READER_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75];
 
 interface ImmersiveHeaderProps {
-  onShuffle?: () => void;
   visualMode?: "video" | "image";
   onToggleVisualMode?: () => void;
   language?: "en" | "ta";
@@ -56,7 +55,6 @@ interface ImmersiveHeaderProps {
 }
 
 export function ImmersiveHeader({
-  onShuffle,
   visualMode = "video",
   onToggleVisualMode,
   language = "en",

@@ -1,4 +1,4 @@
-/** A Bayan topic category (e.g. Iman & Taqwa, Salah, Dua). */
+/** A track category (the Quran tracks use a single "quran-recitation" one). */
 export interface Category {
   id: string;
   name: string;
@@ -12,8 +12,4 @@ export interface Category {
   sortOrder: number;
   isActive: boolean;
   createdAt: string;
-  /** Connected YouTube / YouTube Music playlist ID for this category. */
-  youtubePlaylistId?: string | null;
-  /** Denormalised count of published Bayan; computed by the data layer. */
-  bayanCount?: number;
 }
