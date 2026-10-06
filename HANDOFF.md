@@ -90,7 +90,7 @@
 - [x] `README.md` refreshed with current features (PR #10). `YOUTUBE_MUSIC_GUIDE.md` deleted with the Bayan removal.
 - [x] **Bayan removed from the app (2026-10-06).** Talks, speakers, categories, explore/search/surprise pages, the Bayan admin (`/admin/bayan`, speakers, categories, media, settings), the YouTube player engine and `/api/youtube`, the seed talk data, and the header / bottom nav / global player that only those pages used. Kept: Quran listen & read, Surah/Juz browser, favourites, comments, and **`/admin/comments`** (Quran comment moderation). Internal names `BayanWithRelations` / `CompactBayanPlayer` stay — Quran tracks still use that type; renaming is cosmetic.
 - [ ] **GCP budget alert:** Google Cloud Console → Billing → Budgets & alerts → create a budget for project `gen-lang-client-0172381348` (e.g. a small monthly amount) with email alerts at 50% / 90% / 100%. Alerts only notify — they do not stop spending.
-- [ ] **Move Maher's full-Juz audio off archive.org to R2** (`src/lib/data/quran.ts:21`, `dn720304.ca.archive.org/…/quran-juz-audio-mp3`), so a third-party outage can't break it.
+- [x] **Maher's full-Juz audio moved off archive.org to R2** (2026-10-06): 30 files (~1.4 GB) at `audio/juz/maher/para-01.mp3` … `para-30.mp3`, local masters in git-ignored `assets/audio/juz/maher/`, uploaded with `upload-to-r2.mjs --category=audio-juz`. `quran.ts` builds the URL via `mediaUrl()`; `resolveActiveReciter` recognises Maher by the `/audio/juz/maher/` path.
 - [ ] Remove the now-unused `NEXT_PUBLIC_DATA_SOURCE` env var from Vercel (Project → Settings → Environment Variables) and `.env.local`.
 - [ ] Optional cleanup, owner's call: the live Supabase DB still has the old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`); `supabase/schema.sql` no longer creates them. R2 still holds `assets/images/bayan/*.jpg` — only `bayan/quran.jpg` is still used (Quran fallback cover).
 - [ ] Start new work from a fresh branch off `main` (`feat/tajweed-autohide` is already merged via PR #8).
@@ -194,7 +194,7 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 | **Antigravity** (Google AI IDE) | Second AI assistant; this file was first written for it | Account not recorded |
 | **GitHub** | Source code, PRs, history | User `sarfpearl` · repo `sarfpearl/huda-web-quran` (**public**) · commit author `sarf-pearl` |
 | **Vercel** | Hosting; auto-deploys `main`, preview per PR | Team `hu-da-right-guidance` (`team_wteEbzTnEOJuAid754cd4N78`) · project `huda-web-quran` (`prj_OSs76BUbUlrTpgDxbOkJHTDg35Sz`) · `huda-web-quran.vercel.app` |
-| **Cloudflare R2** | All media: artwork, videos, prelude audio, reciter portraits | Bucket `huda-quran-media` · public URL `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` · account ID in `R2_ACCOUNT_ID` |
+| **Cloudflare R2** | All media: artwork, videos, prelude audio, reciter portraits, Maher's full-Juz audio | Bucket `huda-quran-media` · public URL `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` · account ID in `R2_ACCOUNT_ID` |
 | **Supabase** | Surah/Juz views, likes, comments (anonymous RPCs); comment moderation | Project ref `astqipbwohonowaoufwi` |
 | **Google Cloud – Vertex AI (Veo)** | Generating the Surah/Juz background videos (`scripts/generation/generate_vertex_*.mjs`); not used at runtime | Project `gen-lang-client-0172381348` |
 
@@ -206,7 +206,6 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 | Quran.com API (QDC / qurancdn) | Word timings and QPC V4 Tajweed fonts, fetched once by scripts | `fetch-reciter-timings.mjs`, `fetch-qpc-v4.mjs` |
 | mp3quran.net | Audio for the other 42 (Audio Only) reciters | `quranReciters.ts` |
 | everyayah.com | Per-ayah clips so any reciter can recite a Juz | `EVERYAYAH_FOLDERS` |
-| archive.org | Maher's full-Juz recordings | `quran.ts:21` |
 | alquran.cloud | Tamil and English (Sahih) translations | `quranVerses.ts` |
 | OpenStreetMap Nominatim | City name in the header clock widget | `TimeLocationWidget.tsx` |
 
