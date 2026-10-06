@@ -846,8 +846,8 @@ export function resolveActiveReciter(
     return getReciterById(trackOrSpeakerOrId);
   }
 
-  // 0. From specific Quran Juz audio URL
-  if (trackOrSpeakerOrId?.audioUrl && trackOrSpeakerOrId.audioUrl.includes("quran-juz-audio-mp3")) {
+  // 0. From Maher's full-Juz audio URL (MAHER_JUZ_AUDIO_DIR in quran.ts)
+  if (trackOrSpeakerOrId?.audioUrl && trackOrSpeakerOrId.audioUrl.includes("/audio/juz/maher/")) {
     return getReciterById("maher");
   }
 

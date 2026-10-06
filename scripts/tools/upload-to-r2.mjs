@@ -8,6 +8,7 @@
  *   - public/assets/images/**  → assets/images/**
  *   - public/videos/**         → videos/**
  *   - public/audio/prelude/**  → audio/prelude/**
+ *   - assets/audio/juz/**      → audio/juz/**   (Maher full-Juz MP3s, git-ignored)
  *
  * Safety Mandates:
  *   1. DRY-RUN BY DEFAULT: Runs in preview mode unless --execute is explicitly passed.
@@ -103,6 +104,11 @@ const MAPPINGS = [
     category: "audio",
     localDir: path.join(ROOT_DIR, "public", "audio", "prelude"),
     remotePrefix: "audio/prelude",
+  },
+  {
+    category: "audio-juz",
+    localDir: path.join(ROOT_DIR, "assets", "audio", "juz"),
+    remotePrefix: "audio/juz",
   },
 ];
 
@@ -238,7 +244,7 @@ async function main() {
   }
 
   // Summary by category
-  const categories = ["images", "videos", "audio"];
+  const categories = MAPPINGS.map((m) => m.category);
   let totalBytes = 0;
   console.log(" Found Media Assets:");
   for (const cat of categories) {

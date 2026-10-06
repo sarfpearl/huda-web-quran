@@ -12,13 +12,14 @@ import { SURAH_METADATA_LIST } from "./surahList";
  *  that flow through the EXISTING global audio player (AudioPlayerContext).
  *
  *  Audio providers:
- *   - Juz: Internet Archive (Shaykh Maher Al-Muaiqly)
+ *   - Juz: Shaykh Maher Al-Muaiqly, self-hosted on R2 (originally archive.org)
  *   - Surahs: MP3Quran.net (Shaykh Abdur Rahman As-Sudais)
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-const RECITER_BASE =
-  "https://dn720304.ca.archive.org/0/items/quran-juz-audio-mp3";
+// Maher's 30 full-Juz recordings on R2 (copied from archive.org's
+// "quran-juz-audio-mp3" item). quranReciters.ts recognises Maher by this path.
+const MAHER_JUZ_AUDIO_DIR = "/audio/juz/maher";
 
 export const TRACK_ID_PREFIX = "quran-juz-";
 export const JUZ_TRACK_ID_PREFIX = "quran-juz-";
@@ -65,7 +66,7 @@ export interface QuranJuz {
 }
 
 const audioForJuz = (juz: number) =>
-  `${RECITER_BASE}/Para%20${String(juz).padStart(2, "0")}.mp3`;
+  mediaUrl(`${MAHER_JUZ_AUDIO_DIR}/para-${String(juz).padStart(2, "0")}.mp3`);
 
 const JUZ_TITLES: string[] = [
   "Alif Lam Meem",
