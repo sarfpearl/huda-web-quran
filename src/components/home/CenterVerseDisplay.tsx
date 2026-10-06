@@ -321,7 +321,10 @@ export function CenterVerseDisplay({
         if (texts.length === 0) return;
         texts.forEach((t) => (t.style.fontSize = ""));
         const bases = texts.map((t) => parseFloat(getComputedStyle(t).fontSize));
-        const mins = texts.map((t, j) => Math.min(bases[j], Number(t.dataset.fitMin) || 0));
+        // The readable floor holds even when the length class starts smaller
+        // (a long ayah's text-lg = 18px on phones): 2:282 shrank to 18px and
+        // still scrolled — too small for the Tajweed marks.
+        const mins = texts.map((t, j) => Number(t.dataset.fitMin) || bases[j]);
         // Growth cap depends on screen size: medium on phones, larger on
         // tablets, full on desktop (data-fit-max-mobile / -tablet / -max).
         const vw = window.innerWidth;
