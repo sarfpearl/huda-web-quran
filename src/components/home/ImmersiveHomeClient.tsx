@@ -811,7 +811,9 @@ export function ImmersiveHomeClient() {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
-    Promise.all([afterSplash(), afterStage("install")]).then(() => {
+    // Location too: the install step is skipped at once on desktop, in the
+    // installed app and while snoozed, which mustn't let this pass the prompt.
+    Promise.all([afterSplash(), afterStage("location"), afterStage("install")]).then(() => {
       if (cancelled) return;
       timer = setTimeout(() => {
         if (!hasPlayedRef.current) setBrowserOpenRequest((n) => n + 1);
