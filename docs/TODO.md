@@ -59,10 +59,23 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       boundary (`setTimeBoundary` / `nextTimelineBoundary`): median 13ms, p95
       18ms, one re-render per word. `word-boundaries.cjs` checks no word
       change falls between two boundaries (45 reciter × Surah runs, 0).
-- [ ] **4. Audio reliability** — play, pause, seek, forward / backward, volume,
-      speed, previous / next ayah, previous / next Surah, reciter change,
-      loading state, error recovery (bad network / 404 file), background and
-      lock-screen playback, iOS + Android.
+- [~] **4. Audio reliability** (2026-10-06) — checked in the browser (local
+      dev): play, pause, seek (progress bar → right ayah/word, keeps playing),
+      volume, mute, speed, previous / next ayah, next Surah (with Bismillah
+      prelude), reciter change, loading spinner on a stall. **Fixed:**
+      (1) a stream error swapped in *another reciter's* mp3quran file from
+      0:00 (Mishary → Sudais) while the screen still said Mishary and lit his
+      timings — now the same file is retried from where it stopped (3×, 1–3s
+      apart; offline: waits for the connection), then "Couldn't load… press
+      play to try again", and play reloads it at that position;
+      (2) speed reset to 1× on every new Surah / prelude while the button
+      still said 1.25× (`load()` resets `playbackRate` — `defaultPlaybackRate`
+      is set too); (3) no lock-screen / notification controls — Media Session
+      added (Surah · reciter · cover, play / pause / previous / next / seek).
+      **Still to do on real phones** (no iOS Simulator on this Mac — Xcode has
+      no Simulator.app): background + lock-screen playback and controls on
+      iPhone Safari and Android Chrome, headphones / Bluetooth buttons, a call
+      interrupting playback, Juz playing on with the screen locked.
 - [ ] **5. Surah navigation** — Surah search (number, English, Arabic),
       previous / next Surah and ayah, bookmark, last reading position restored.
 

@@ -133,6 +133,9 @@ interface AudioPlayerApi extends AudioPlayerState {
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
 
+/** Retries of a failed stream (same URL, same position) before giving up. */
+const MAX_STREAM_RETRIES = 3;
+
 function readPositions(): Record<string, number> {
   if (typeof window === "undefined") return {};
   try {
@@ -190,6 +193,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const preludeAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastSaveRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
+  // Stream recovery (onError): the raw position to come back to, the attempt
+  // a newer load / retry cancels, and where the last retry resumed.
+  const lastRawTimeRef = useRef<number>(0);
+  const retryTokenRef = useRef<number>(0);
+  const retryResumeRef = useRef<number>(0);
   const isPreludeRef = useRef<boolean>(false);
   const currentTrimOffsetRef = useRef<number>(0);
   // Active per-ayah recitation sequence (a Juz recited in a chosen reciter's
@@ -259,19 +267,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  // Sync volume, mute & playbackRate to HTML5 audio elements
+  // Sync volume, mute & playbackRate to HTML5 audio elements. Every new src
+  // load() resets playbackRate to defaultPlaybackRate, so both are set — else
+  // the next Surah (or the prelude) played at 1× while the button said 1.25×.
   useEffect(() => {
-    for (const el of [audioARef.current, audioBRef.current]) {
+    for (const el of [audioARef.current, audioBRef.current, preludeAudioRef.current]) {
       if (!el) continue;
       el.volume = volume;
       el.muted = isMuted;
+      el.defaultPlaybackRate = playbackRate;
       el.playbackRate = playbackRate;
-    }
-    const pel = preludeAudioRef.current;
-    if (pel) {
-      pel.volume = volume;
-      pel.muted = isMuted;
-      pel.playbackRate = playbackRate;
     }
   }, [volume, isMuted, playbackRate]);
 
@@ -368,6 +373,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       forcedSeekPendingRef.current = false;
       setError(null);
       retryCountRef.current = 0;
+      retryTokenRef.current += 1;
+      lastRawTimeRef.current = 0;
       // Any normal load cancels an in-flight per-ayah Juz sequence.
       ayahSeqRef.current = null;
       setAyahSequence(null);
@@ -713,6 +720,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       cur.pause();
       sb.volume = cur.volume;
       sb.muted = cur.muted;
+      sb.defaultPlaybackRate = cur.playbackRate;
       sb.playbackRate = cur.playbackRate;
       try { sb.currentTime = 0; } catch { /* ignore */ }
       setDuration(Number.isFinite(sb.duration) ? sb.duration : 0);
@@ -798,6 +806,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const el = audioRef.current;
     if (!el) return;
     if (!el.src && current.audioUrl) {
+      loadCurrent(current, true);
+      return;
+    }
+    // Gave up after a stream error (see onError): play loads it again, from
+    // where it stopped.
+    if (el.error && !ayahSeqRef.current) {
+      const at = lastRawTimeRef.current - currentTrimOffsetRef.current;
+      if (at > 0) pendingStartAtRef.current = at;
       loadCurrent(current, true);
       return;
     }
@@ -912,6 +928,77 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     if (currentIndex > 0) playFromQueue(currentIndex - 1);
   }, [current, currentIndex, playFromQueue, playBayan, seek, loadAyahAt]);
+
+  // Lock screen / notification / headset controls (Media Session API): what
+  // is playing, play / pause, previous / next and seeking, so a listener with
+  // the phone locked or the tab in the background can still control it.
+  const mediaActionsRef = useRef({ resume, pause, next, previous, seek, time: currentTime });
+  mediaActionsRef.current = { resume, pause, next, previous, seek, time: currentTime };
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    const ms = navigator.mediaSession;
+    const act = () => mediaActionsRef.current;
+    const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
+      ["play", () => act().resume()],
+      ["pause", () => act().pause()],
+      ["previoustrack", () => act().previous()],
+      ["nexttrack", () => act().next()],
+      ["seekbackward", (d) => act().seek(Math.max(0, act().time - (d.seekOffset ?? 10)))],
+      ["seekforward", (d) => act().seek(act().time + (d.seekOffset ?? 10))],
+      ["seekto", (d) => typeof d.seekTime === "number" && act().seek(d.seekTime)],
+    ];
+    for (const [action, handler] of handlers) {
+      try {
+        ms.setActionHandler(action, handler);
+      } catch {
+        /* action not supported here */
+      }
+    }
+    return () => {
+      for (const [action] of handlers) {
+        try {
+          ms.setActionHandler(action, null);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+  }, []);
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
+    if (!current) {
+      navigator.mediaSession.metadata = null;
+      return;
+    }
+    const reciter = resolveActiveReciter(current);
+    const art = current.coverImageUrl;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: current.title,
+      artist: reciter?.displayName ?? current.speaker?.name ?? "",
+      album: "HuDa Web Quran",
+      artwork: art ? [{ src: new URL(art, window.location.href).href, sizes: "512x512", type: "image/jpeg" }] : [],
+    });
+  }, [current]);
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = current ? (isPlaying ? "playing" : "paused") : "none";
+  }, [current, isPlaying]);
+  // The lock screen's progress bar: set on play / pause / seek / length
+  // changes (the OS runs it forward from there), not on every tick.
+  const positionTick = Math.floor(currentTime / 15);
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator) || !navigator.mediaSession.setPositionState) return;
+    if (!(duration > 0) || !Number.isFinite(duration)) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration,
+        playbackRate: playbackRate || 1,
+        position: Math.min(Math.max(0, mediaActionsRef.current.time), duration),
+      });
+    } catch {
+      /* ignore */
+    }
+  }, [duration, playbackRate, isPlaying, positionTick]);
 
   const setVolume = useCallback((v: number) => {
     const clamped = Math.min(1, Math.max(0, v));
@@ -1053,6 +1140,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const offset = currentTrimOffsetRef.current;
     const effectiveTime = Math.max(0, el.currentTime - offset);
     setCurrentTime(effectiveTime);
+    if (el.currentTime > 0) lastRawTimeRef.current = el.currentTime;
+    // Playing well again for 30s since a recovery: later glitches get
+    // their full retries.
+    if (retryCountRef.current > 0 && el.currentTime > retryResumeRef.current + 30) retryCountRef.current = 0;
 
     // Per-ayah Juz playback: don't persist a resume position (it would be a
     // single ayah's offset, meaningless for the Juz as a whole).
@@ -1102,30 +1193,48 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       }
       return;
     }
+    // A stream that fails (network drop, server hiccup) is retried — the
+    // same recording, from where it stopped, so the word timings still fit.
+    // Never another reciter's file: its voice wouldn't match the reciter
+    // shown or the highlight. Offline: wait for the connection to come back.
     const el = audioRef.current;
-    if (current && el) {
-      // Automatic fallback for Quran Surah tracks
-      if (current.id.startsWith("quran-surah-") && retryCountRef.current < 2) {
-        const num = Number(current.id.replace("quran-surah-", ""));
-        const pad = String(num).padStart(3, "0");
-        const fallbacks = [
-          `https://server8.mp3quran.net/afs/${pad}.mp3`,
-          `https://server11.mp3quran.net/sds/${pad}.mp3`,
-          `https://server6.mp3quran.net/thubti/${pad}.mp3`,
-        ];
-        retryCountRef.current += 1;
-        const nextUrl = fallbacks[retryCountRef.current % fallbacks.length];
-        console.warn(`[HuDa Audio] Audio stream encountered an error, trying backup CDN: ${nextUrl}`);
-        el.src = nextUrl;
+    const url = el?.getAttribute("src");
+    if (current && el && url && retryCountRef.current < MAX_STREAM_RETRIES) {
+      retryCountRef.current += 1;
+      const token = ++retryTokenRef.current;
+      const resumeAt = lastRawTimeRef.current;
+      setIsLoading(true);
+      const attempt = () => {
+        if (retryTokenRef.current !== token || audioRef.current !== el) return;
+        retryResumeRef.current = resumeAt;
+        el.src = url;
         el.load();
-        el.play().catch(() => {});
-        return;
+        el.addEventListener(
+          "loadedmetadata",
+          () => {
+            if (retryTokenRef.current !== token) return;
+            try {
+              if (resumeAt > 0) el.currentTime = resumeAt;
+            } catch {
+              /* ignore */
+            }
+            el.play().catch(() => setIsLoading(false));
+          },
+          { once: true },
+        );
+      };
+      console.warn(`[HuDa Audio] Stream error — retry ${retryCountRef.current}/${MAX_STREAM_RETRIES} from ${resumeAt.toFixed(1)}s`);
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        window.addEventListener("online", attempt, { once: true });
+      } else {
+        setTimeout(attempt, 1000 * retryCountRef.current);
       }
+      return;
     }
     retryCountRef.current = 0;
     setIsPlaying(false);
     setIsLoading(false);
-    setError("Couldn't load this audio. Please try another.");
+    setError("Couldn't load this audio. Check your connection and press play to try again.");
   }, [current, advanceAyahSequence]);
 
   const value = useMemo<AudioPlayerApi>(
