@@ -93,7 +93,6 @@
 
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
-- [ ] **Admin login — owner setup:** `/admin/comments` now uses an email magic link (Supabase Auth + `public.admins`) instead of the moderator key. Run `supabase/migrations/20261006120000_admin_login_moderation.sql` and the setup steps at its top; until then the page shows the login but can't list comments.
 - [ ] Optional: remove `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
 - [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.
@@ -113,6 +112,7 @@
 - [x] **GCP budget alert** set (owner, 2026-10-06): "HuDa monthly budget", ₹1,000 / month, alerts at 50% / 90% / 100%, on project "Huda Quran Web" = `gen-lang-client-0172381348` (the Vertex/Veo video project). Alerts only email; they don't stop spending. ~₹3,560 of free credit was left at the time.
 - [x] **Share image** (PR #17): `src/app/opengraph-image.jpg` + `twitter-image.jpg` (HuDa logo + Quran artwork, 1200×675, 213 KB); Next.js file convention, absolute URLs via `metadataBase`.
 - [x] **Open items checklist** (PR #18): `docs/TODO.md` → "Open items" lists the four owner actions with exact steps.
+- [x] **Admin login** (PR #21): `/admin/comments` signs in with an email magic link (Supabase Auth + `public.admins`); moderator key removed. Owner setup done and verified live 2026-10-06. Admin = `sarf.pearl@gmail.com`. Supabase's built-in email only sends to the org's team members and ~2 emails/hour; add custom SMTP (e.g. Resend) before adding other admins. If a link lands on `localhost:3000`, the Site URL / Redirect URLs in Auth → URL Configuration are wrong.
 
 ---
 
