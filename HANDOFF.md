@@ -113,6 +113,7 @@
 - [x] **Share image** (PR #17): `src/app/opengraph-image.jpg` + `twitter-image.jpg` (HuDa logo + Quran artwork, 1200×675, 213 KB); Next.js file convention, absolute URLs via `metadataBase`.
 - [x] **Open items checklist** (PR #18): `docs/TODO.md` → "Open items" lists the four owner actions with exact steps.
 - [x] **Admin login** (PR #21): `/admin/comments` signs in with an email magic link (Supabase Auth + `public.admins`); moderator key removed. Owner setup done and verified live 2026-10-06. Admin = `sarf.pearl@gmail.com`. Supabase's built-in email only sends to the org's team members and ~2 emails/hour; add custom SMTP (e.g. Resend) before adding other admins. If a link lands on `localhost:3000`, the Site URL / Redirect URLs in Auth → URL Configuration are wrong.
+- [x] **Per-IP limits** (PR #23): max 30 new browser ids per IP per day (views / live / likes) and 20 comments per IP per hour; salted IP hash only. Live 2026-10-06, verified (see `docs/TODO.md`). The 2026-09-26 comment likes/replies migration was found unapplied and run at the same time — **check `supabase/migrations/` against the live DB when something comment-related misbehaves.**
 
 ---
 
