@@ -182,9 +182,24 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       method list) don't open white-on-white under a light system theme.
       Disabled controls (opacity 30%) are exempt from contrast. Skip link:
       see item 14.
-- [ ] **12. SEO / share** — OG title / description / image, WhatsApp,
-      Facebook, X card, favicon, apple-touch-icon, canonical, sitemap,
-      robots, structured data.
+- [x] **12. SEO / share** (2026-10-07) — `node scripts/qa/seo-share.cjs
+      [base-url]` (production build, `next start`): home, Surah, ayah link
+      and Juz pages each have their own title / description / canonical
+      (ayah → its Surah), the full Open Graph + X large card
+      (`opengraph-image.jpg` 1200×675, 218 KB — under WhatsApp's ~300 KB),
+      favicon / apple-touch-icon / manifest / robots (admin disallowed) /
+      sitemap (145 URLs) served; bad links are 404 + noindex. **Fixed:**
+      shared Surah / Juz / ayah links had **no image** and a small X card —
+      a page setting `openGraph` / `twitter` replaces the layout's whole
+      object (no deep merge), losing image, site name, type and
+      `summary_large_image`; now every page builds both via `shareMetadata()`
+      (`src/lib/site.ts`). `og:locale` was `ta_IN` on English pages →
+      `en_US`. `/favicon.ico` was a 404 → `src/app/favicon.ico` (16/32/48).
+      **Added:** JSON-LD — `WebSite` on home (site name in search results),
+      `BreadcrumbList` on Surah / Juz (`src/lib/structuredData.ts`).
+      **After deploy:** re-run against the live site, and check a link in
+      Facebook's Sharing Debugger / a WhatsApp chat (WhatsApp caches a
+      preview per URL — the old image-less ones may linger).
 - [ ] **13. Performance** — FCP / LCP, JS bundle size, images, audio
       loading, lazy loading, slow 4G, offline / error state.
 - [ ] **14. Accessibility** — keyboard nav, focus states, screen-reader and

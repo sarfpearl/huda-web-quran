@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { siteConfig } from "@/lib/site";
+import { shareMetadata, siteConfig } from "@/lib/site";
 import { ThemeProvider, themeInitScript } from "@/components/theme/ThemeProvider";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -23,19 +23,7 @@ export const metadata: Metadata = {
     // Home-screen app: let the scene run under the status bar (no black band).
     statusBarStyle: "black-translucent",
   },
-  openGraph: {
-    type: "website",
-    siteName: siteConfig.fullName,
-    title: siteConfig.title,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    locale: siteConfig.locale,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.title,
-    description: siteConfig.description,
-  },
+  ...shareMetadata({ title: siteConfig.title, description: siteConfig.description, url: siteConfig.url }),
   icons: {
     icon: [
       { url: "/favicon.png", sizes: "64x64", type: "image/png" },
