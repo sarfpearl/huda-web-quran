@@ -1,0 +1,198 @@
+{
+  "summary": {
+    "en": {
+      "edition": "en.sahih",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0,
+      "reviewed": 1
+    },
+    "ta": {
+      "edition": "ta.tamil",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ur": {
+      "edition": "ur.jalandhry",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ml": {
+      "edition": "ml.abdulhameed",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "hi": {
+      "edition": "qurancom:122",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "id": {
+      "edition": "id.indonesian",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 15,
+      "reviewed": 3
+    },
+    "bn": {
+      "edition": "bn.bengali",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0,
+      "reviewed": 11
+    },
+    "tr": {
+      "edition": "tr.diyanet",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1
+    },
+    "fr": {
+      "edition": "fr.hamidullah",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ms": {
+      "edition": "ms.basmeih",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    }
+  },
+  "failuresByCategory": {},
+  "failures": [],
+  "notes": [
+    {
+      "lang": "ta",
+      "key": "1:3",
+      "note": "Surah 1 hand-tuned",
+      "shipped": "(அவன்) அளவற்ற அருளாளன், நிகரற்ற அன்புடையோன்.",
+      "source": "(அவன்) அளவற்ற அருளாளன், நிகரற்ற அன்புடையோன்."
+    },
+    {
+      "lang": "ta",
+      "key": "1:5",
+      "note": "Surah 1 hand-tuned",
+      "shipped": "(இறைவா!) உன்னையே நாங்கள் வணங்குகிறோம், உன்னிடமே நாங்கள் உதவியும் தேடுகிறோம்.",
+      "source": "(இறைவா!) உன்னையே நாங்கள் வணங்குகிறோம், உன்னிடமே நாங்கள் உதவியும் தேடுகிறோம்."
+    },
+    {
+      "lang": "ta",
+      "key": "1:7",
+      "note": "Surah 1 hand-tuned",
+      "shipped": "(அது) நீ எவர்களுக்கு அருள் புரிந்தாயோ அவ்வழி, (அது) உன் கோபத்துக்கு ஆளானோர் வழியுமல்ல, நெறி தவறியோர் வழியுமல்ல.",
+      "source": "(அது) நீ எவர்களுக்கு அருள் புரிந்தாயோ அவ்வழி, (அது) உன் கோபத்துக்கு ஆளானோர் வழியுமல்ல, நெறி தவறியோர் வழியுமல்ல."
+    },
+    {
+      "lang": "id",
+      "key": "7:78",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Karena itu mereka ditimpa gempa, maka jadilah mereka mayat-mayat yang bergelimpangan di tempat tinggal mereka."
+    },
+    {
+      "lang": "id",
+      "key": "26:46",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Maka tersungkurlah ahli-ahli sihir sambil bersujud (kepada Allah),"
+    },
+    {
+      "lang": "id",
+      "key": "38:1",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Shaad, demi Al Quran yang mempunyai keagungan."
+    },
+    {
+      "lang": "id",
+      "key": "51:18",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "Dan selalu memohonkan ampunan diwaktu pagi sebelum fajar."
+    },
+    {
+      "lang": "id",
+      "key": "52:6",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "dan laut yang di dalam tanahnya ada api,"
+    },
+    {
+      "lang": "id",
+      "key": "53:34",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "serta memberi sedikit dan tidak mau memberi lagi?"
+    },
+    {
+      "lang": "id",
+      "key": "68:18",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "dan mereka tidak menyisihkan (hak fakir miskin),"
+    },
+    {
+      "lang": "id",
+      "key": "68:30",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "Lalu sebahagian mereka menghadapi sebahagian yang lain seraya cela mencela."
+    },
+    {
+      "lang": "id",
+      "key": "74:14",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "dan Ku-lapangkan baginya (rezeki dan kekuasaan) dengan selapang-lapangnya,"
+    },
+    {
+      "lang": "id",
+      "key": "74:22",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "sesudah itu dia bermasam muka dan merengut,"
+    },
+    {
+      "lang": "id",
+      "key": "75:34",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "Kecelakaanlah bagimu (hai orang kafir) dan kecelakaanlah bagimu,"
+    },
+    {
+      "lang": "id",
+      "key": "75:35",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "kemudian kecelakaanlah bagimu (hai orang kafir) dan kecelakaanlah bagimu."
+    },
+    {
+      "lang": "id",
+      "key": "78:21",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Sesungguhnya neraka Jahannam itu (padanya) ada tempat pengintai,"
+    },
+    {
+      "lang": "id",
+      "key": "79:43",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "Siapakah kamu (maka) dapat menyebutkan (waktunya)?"
+    },
+    {
+      "lang": "id",
+      "key": "92:4",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "sesungguhnya usaha kamu memang berbeda-beda."
+    },
+    {
+      "lang": "tr",
+      "key": "2:27",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "Onlar, Allah'a verdikleri sözü, pekiştirilmesinden sonra bozan, Allah'ın korunmasını emrettiği bağları (iman, akrabalık, beşeri ve ahlâki bütün ilişkileri) koparan ve yeryüzünde bozgunculuk yapan kimselerdir. İşte onlar ziyana uğrayanların ta kendileridir."
+    }
+  ]
+}
