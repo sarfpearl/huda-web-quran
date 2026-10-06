@@ -26,7 +26,8 @@ An immersive Holy Quran listening & reading web app, built with **Next.js 14 (Ap
 ### 📖 Read
 - **Mushaf reading view** with a page picker, Sajdah markers, last-read position and bookmarks.
 - **Tajweed colours** using Quran.com's QPC V4 COLRv1 page fonts (colours live inside the glyphs). The colour legend auto-hides after a few seconds.
-- Arabic text in KFGQPC Hafs (`text_qpc_hafs`), with **Tamil and English** translations.
+- Arabic text in KFGQPC Hafs (`text_qpc_hafs`).
+- **Translations in 10 languages:** English, Tamil, Urdu, Malayalam, Hindi, Indonesian, Bengali, Turkish, French and Malay (all from alquran.cloud — English and Tamil load with the verses; the other 8 are prebuilt in `public/data/quran-translations/` and fetched per Surah when picked). The first visit picks the language from the browser, then the location or time zone; a manual choice is remembered.
 
 ### 🎬 Visuals
 - Cinematic background videos for Surahs and Juz, with verse-themed artwork as the fallback.
