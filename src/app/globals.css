@@ -385,6 +385,59 @@
   cursor: pointer;
 }
 
+/* Played part of the Quran progress bar (CompactBayanPlayer): a gold
+   gradient with a light sweeping across it, and a soft halo pulsing round the
+   knob, while the recitation plays. */
+.progress-fill-gold {
+  background: linear-gradient(90deg, #b8860b 0%, #f5c451 55%, #ffe08a 100%);
+  box-shadow: 0 0 10px rgba(245, 196, 81, 0.55);
+}
+.progress-fill-gold::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  background-position: -60% 0;
+  opacity: 0;
+}
+.progress-fill-gold.is-playing::after {
+  opacity: 1;
+  animation: huda-progress-sweep 2.4s ease-in-out infinite;
+}
+@keyframes huda-progress-sweep {
+  0% {
+    background-position: -60% 0;
+  }
+  100% {
+    background-position: 160% 0;
+  }
+}
+.progress-knob-gold.is-playing {
+  animation: huda-knob-glow 2.4s ease-in-out infinite;
+}
+@keyframes huda-knob-glow {
+  0%,
+  100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 0 0 rgba(245, 196, 81, 0.5);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 0 7px rgba(245, 196, 81, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill-gold.is-playing::after,
+  .progress-knob-gold.is-playing {
+    animation: none;
+  }
+}
+
 /* Opening splash (SplashScreen): fades out once <html> gets .huda-ready */
 #huda-splash {
   position: fixed;

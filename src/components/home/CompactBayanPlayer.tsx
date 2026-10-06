@@ -874,14 +874,16 @@ export function CompactBayanPlayer({
               thumb is hidden; the knob below mirrors the same progress. */}
           <div className="absolute inset-x-0 h-2 rounded-full bg-white/20 ring-1 ring-inset ring-white/10 overflow-hidden pointer-events-none">
             <div
-              className={`absolute inset-y-0 left-0 rounded-full ${isQuran ? "bg-amber-400" : "bg-emerald-500"} transition-[width] duration-100 ease-linear`}
+              className={`absolute inset-y-0 left-0 overflow-hidden rounded-full ${isQuran ? `progress-fill-gold${isPlaying ? " is-playing" : ""}` : "bg-emerald-500"} transition-[width] duration-100 ease-linear`}
               style={{ width: `${barPct}%` }}
             />
           </div>
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute top-1/2 z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white ${
-              isQuran ? "bg-amber-400" : "bg-emerald-500"
+              isQuran
+                ? `bg-amber-400 progress-knob-gold${isPlaying ? " is-playing" : ""}`
+                : "bg-emerald-500"
             } shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-[left,transform] duration-100 ease-linear group-active:scale-110`}
             style={{ left: `${barPct}%` }}
           />

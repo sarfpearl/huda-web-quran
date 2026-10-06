@@ -6,7 +6,8 @@ import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
 
 // Place names as plain letters: "Gūduvāncheri" → "Guduvancheri" — the macrons
 // read as stray lines over the small label.
-const plain = (name: string) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const plain = (name: string) =>
+  name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 interface TimeLocationWidgetProps {
   className?: string;
@@ -41,25 +42,31 @@ export function TimeLocationWidget({
   }, []);
 
   // Asked only once the splash is gone, and the next onboarding step (the
-  // install guide) waits for the answer, so the two never show together.
+  // install guide, then the content browser) waits for the actual answer, so
+  // nothing opens while the browser's permission prompt is still on screen.
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       finishStage("location");
       return;
     }
     let cancelled = false;
-    let fallback: ReturnType<typeof setTimeout> | undefined;
-    afterSplash().then(() => {
+    let status: PermissionStatus | undefined;
+    const done = () => finishStage("location");
+    // Allow / Don't Allow flips the permission state, even when the position
+    // itself is slow to come or fails.
+    const onChange = () => {
+      if (status && status.state !== "prompt") done();
+    };
+    const ask = (wasAnswered: boolean) => {
       if (cancelled) return;
-      // A prompt left unanswered shouldn't hold the rest of the sequence.
-      fallback = setTimeout(() => finishStage("location"), 12000);
+      if (wasAnswered) done();
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          finishStage("location");
+          done();
           try {
             const { latitude, longitude } = position.coords;
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
             );
             if (res.ok) {
               const data = await res.json();
@@ -85,15 +92,30 @@ export function TimeLocationWidget({
           }
         },
         () => {
-          // Keep default location if permission denied
-          finishStage("location");
+          // Keep default location if permission denied. Without a timeout an
+          // error only comes once the prompt has been answered.
+          done();
         },
-        { timeout: 5000 }
+        // No timeout while the prompt can still be up: Safari counts it
+        // against the prompt and would fail before the user answers.
+        wasAnswered ? { timeout: 5000 } : {},
       );
-    });
+    };
+    afterSplash()
+      .then(() =>
+        navigator.permissions
+          ?.query({ name: "geolocation" })
+          .catch(() => undefined),
+      )
+      .then((s) => {
+        if (cancelled) return;
+        status = s;
+        status?.addEventListener("change", onChange);
+        ask(status?.state === "granted" || status?.state === "denied");
+      });
     return () => {
       cancelled = true;
-      clearTimeout(fallback);
+      status?.removeEventListener("change", onChange);
     };
   }, []);
 
