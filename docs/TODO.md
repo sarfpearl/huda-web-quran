@@ -87,8 +87,17 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       the saved last-listened Surah (`cueBayan` no longer saves or clears it).
 
 ### 🔴 P1 — before public launch
-- [ ] **6. Reading mode** — continuous / Mushaf view, manual scroll, current
-      ayah always visible while audio plays (follow-scroll), narrow screens.
+- [x] **6. Reading mode** (2026-10-06) — `scripts/qa/reading-follow-probe.js`
+      (browser) samples every 200ms whether the recited word is on screen:
+      desktop Al-Baqarah at 2× across pages 2→3 200/200; mobile 390px 149/150
+      (the word always 164–362px into a 584px pane — never in the faded
+      edges or under the player); Juz 30 across Surah 78 → 79 (only the
+      Bismillah prelude has no word) and the saved probe 60/60. Manual
+      scroll: follow pauses 7s, then glides back (visible again at 9.0s).
+      No horizontal scroll, no word past the edge at 390px. Reading mode
+      is the Madinah page view only (no separate "continuous" mode). Noted,
+      not changed: the « Bookmark » pill sits over the pane's faded top edge
+      while reading (by design — it stays until its ayah is on screen).
 - [ ] **7. Navigation** — every nav item, browser back / forward, refresh,
       direct URL and deep links, 404 page, loading states.
 - [ ] **8. Responsive** — 1440 / 1280 / 1024, 768 / 820, 390 / 393 / 412 /
