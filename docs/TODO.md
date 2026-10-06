@@ -45,12 +45,13 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
       `truncate public.quran_listens, public.quran_presence;`
       (keeps likes and comments; add `public.quran_likes, public.quran_comments`
       to wipe those too).
-- [ ] **Harden counts against abuse (later)** — views, live and likes are
-      anonymous (random browser id), so someone could inflate them with many
-      browsers / ids. Listening time and comment rate are already clamped on the
-      server. Options: per-IP rate limiting in a Supabase Edge Function or
-      Vercel middleware, a captcha (Turnstile) on comments, or counting only
-      signed-in users.
+- [x] **Per-IP limits** (`supabase/migrations/20261006150000_quran_ip_limits.sql`) —
+      one IP can bring in at most 30 new browser ids a day (over that, a new id
+      gets no view / live / like row) and post at most 20 comments an hour.
+      Only a salted hash of the IP is kept, for 2 days. Tune in
+      `public.quran_ip_limit()`. Shared IPs (mobile CGNAT, offices) share the
+      cap — raise it if real listeners stop being counted.
+- [ ] **Later, if spam still gets through:** Cloudflare Turnstile on comments.
 - [x] **Admin login** — `/admin/comments` signs in with an email magic link
       (Supabase Auth); only users in `public.admins` can moderate. The
       moderator key is gone
