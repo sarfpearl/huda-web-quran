@@ -6,8 +6,9 @@
 // served; bad links are 404 + noindex.
 //
 // Usage: node scripts/qa/seo-share.cjs [base-url]   (default: the live site)
-// Locally: NEXT_PUBLIC_SITE_URL=https://huda-web-quran.vercel.app next build,
-// then `next start -p 3100` and pass http://localhost:3100.
+// Locally (a separate build dir, so a running `next dev` keeps working):
+//   NEXT_DIST_DIR=.next-prod NEXT_PUBLIC_SITE_URL=https://huda-web-quran.vercel.app next build
+// then the "prod" launch config (`next start -p 3100`) and pass http://localhost:3100.
 const BASE = (process.argv[2] || "https://huda-web-quran.vercel.app").replace(/\/$/, "");
 const SITE = "https://huda-web-quran.vercel.app";
 

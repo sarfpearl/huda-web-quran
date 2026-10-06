@@ -20,7 +20,10 @@
         "-p",
         "3100"
       ],
-      "port": 3100
+      "port": 3100,
+      "env": {
+        "NEXT_DIST_DIR": ".next-prod"
+      }
     }
   ]
 }
