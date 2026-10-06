@@ -126,9 +126,25 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       reciter avatar clips a hit area), the ayah pill's « » are 36px (its
       pill clips), the progress bar is 20px tall; all pass WCAG 2.2 AA's
       24px minimum. Dense icon rows overlap each other's hit areas a little.
-- [ ] **9. Waqt (prayer) time in the header widget** — replace the clock +
-      location pill (`src/components/navigation/TimeLocationWidget.tsx`) with
-      the prayer time for that location. Agree the details with the owner first.
+- [x] **9. Waqt (prayer) time in the header widget** (2026-10-07) — the
+      header pill shows the **current prayer and its waqt, start – end**
+      (owner's choice): "Isha 7:07 PM – 4:49 AM" + the place (md+), or
+      "Isha / 7:07 – 4:49" on phones (fits 390 / 640 px with the longest
+      "Maghrib 12:59 – 12:59"); between sunrise and Dhuhr, "Dhuhr from
+      11:59". Tap → today's six times, method, Asr. Computed on the device
+      with adhan-js (`src/lib/prayerTimes.ts`) from the saved location
+      (coordinates now kept in `huda-place`; older saves ask once more).
+      Method and Asr **by region** (owner's choice): India / Pakistan /
+      Bangladesh / Sri Lanka → Karachi, Saudi → Umm al-Qura, Gulf, Egypt,
+      Malaysia / Indonesia / Singapore, Turkey, Iran, US / Canada (ISNA),
+      UK (Moonsighting), else Muslim World League; Asr Hanafi in Pakistan,
+      Bangladesh, Turkey, Central Asia and India outside Kerala / Tamil Nadu
+      / Puducherry / Lakshadweep, else Shafi'i. Changeable in the sheet
+      (`huda:prayer-prefs`). High latitudes: twilight-angle rule; no sunrise
+      / sunset (polar) → the old clock. No location → the old clock + place.
+      `scripts/qa/prayer-times.cjs`: 12 cities vs AlAdhan's API on 3 dates
+      (Oct, June and December solstices) — within 2 min (5 for Dubai /
+      Moonsighting, whose own precaution minutes adhan applies).
 
 ### 🟠 P1
 - [ ] **10. Tajweed colours** — colour mapping, long verses, small screens,
