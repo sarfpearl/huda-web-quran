@@ -90,8 +90,6 @@
 ## 4. Current Work Items / Next Steps
 
 ### Open
-- [ ] **GCP budget alert** (owner): Google Cloud Console → Billing → Budgets & alerts → budget for project `gen-lang-client-0172381348`, email alerts at 50% / 90% / 100%. Alerts only notify; they don't stop spending.
-- [ ] **Share image (`og:image`)** — the site has none, so WhatsApp / Facebook link previews show no picture. Optional: add the HuDa logo or an artwork as the share image.
 - [ ] Optional: remove `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
 - [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.
@@ -108,6 +106,8 @@
 - [x] HANDOFF status + README 10 languages (PR #15); merged remote branches deleted (only `main` remains).
 - [x] `NEXT_PUBLIC_DATA_SOURCE` — already absent from Vercel and `.env.local`; nothing to remove.
 - [x] **`NEXT_PUBLIC_SITE_URL` added in Vercel** (Production, type Config) and redeployed. It was missing, so `sitemap.xml`, `robots.txt`, the canonical link and `og:url` all said `http://localhost:3000`. Verified live 2026-10-06: all now `https://huda-web-quran.vercel.app`.
+- [x] **GCP budget alert** set (owner, 2026-10-06): "HuDa monthly budget", ₹1,000 / month, alerts at 50% / 90% / 100%, on project "Huda Quran Web" = `gen-lang-client-0172381348` (the Vertex/Veo video project). Alerts only email; they don't stop spending. ~₹3,560 of free credit was left at the time.
+- [x] **Share image** (PR #17): `src/app/opengraph-image.jpg` + `twitter-image.jpg` (HuDa logo + Quran artwork, 1200×675, 213 KB); Next.js file convention, absolute URLs via `metadataBase`.
 
 ---
 
