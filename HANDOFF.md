@@ -11,16 +11,16 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-06, after PR #14.*
+*Snapshot: 2026-10-06, after PR #18.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters (Bayan section removed) |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `5b1c970` — Merge PR #14 (`feat/indopak-script`) |
-| **Latest merged PRs** | #12 Bayan removal + 10 translation languages + onboarding · #13 Maher Juz audio on R2 · #14 IndoPak script (dev-only) |
+| **`main`** | `65dea7d` — Merge PR #18 (`docs/todo-open-items`) |
+| **Latest merged PRs** | #14 IndoPak script (dev-only) · #15 HANDOFF status + README · #16 env vars · #17 share image (og/twitter) · #18 TODO open items |
 | **Open PRs** | None |
-| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — deploy of `5b1c970` succeeded |
+| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — deploy of `65dea7d` succeeded |
 | **Local working tree** | `main`, clean |
 
 ---
@@ -111,6 +111,7 @@
 - [x] **`NEXT_PUBLIC_SITE_URL` added in Vercel** (Production, type Config) and redeployed. It was missing, so `sitemap.xml`, `robots.txt`, the canonical link and `og:url` all said `http://localhost:3000`. Verified live 2026-10-06: all now `https://huda-web-quran.vercel.app`.
 - [x] **GCP budget alert** set (owner, 2026-10-06): "HuDa monthly budget", ₹1,000 / month, alerts at 50% / 90% / 100%, on project "Huda Quran Web" = `gen-lang-client-0172381348` (the Vertex/Veo video project). Alerts only email; they don't stop spending. ~₹3,560 of free credit was left at the time.
 - [x] **Share image** (PR #17): `src/app/opengraph-image.jpg` + `twitter-image.jpg` (HuDa logo + Quran artwork, 1200×675, 213 KB); Next.js file convention, absolute URLs via `metadataBase`.
+- [x] **Open items checklist** (PR #18): `docs/TODO.md` → "Open items" lists the four owner actions with exact steps.
 
 ---
 
@@ -125,6 +126,10 @@
 
 ## 6. Important Git History
 
+- `65dea7d` — **PR #18** `docs/todo-open-items`: Open items checklist in `docs/TODO.md`
+- `317815f` — **PR #17** `feat/og-share-image`: share image for link previews
+- `a439624` — **PR #16** `docs/handoff-env-vars`: `NEXT_PUBLIC_SITE_URL` added, env-var table
+- `869c03a` — **PR #15**: HANDOFF status, README 10 languages
 - `5b1c970` — **PR #14** `feat/indopak-script`: IndoPak script by region (dev-only)
 - `f5360e4` — **PR #13** `feat/maher-juz-audio-r2`: Maher full-Juz audio on R2
 - `427b28b` — perf: Surah/Juz list thumbnails straight from R2
