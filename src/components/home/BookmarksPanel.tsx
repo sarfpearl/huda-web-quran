@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import { fetchSurahVerses, toArabicNumerals } from "@/lib/data/quranVerses";
 import { bookmarkId, type Bookmark } from "@/lib/lastRead";
+import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 
 interface BookmarksPanelProps {
   bookmarks: Bookmark[];
@@ -190,7 +191,7 @@ export function BookmarksPanel({
                   </div>
 
                   {/* Surah | Juz */}
-                  <div role="tablist" className="flex items-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/10 my-3">
+                  <div role="tablist" className={cn("my-3", TAB_TRACK)}>
                     {(["surah", "juz"] as const).map((k) => (
                       <button
                         key={k}
@@ -199,8 +200,8 @@ export function BookmarksPanel({
                         aria-selected={tab === k}
                         onClick={() => setTab(k)}
                         className={cn(
-                          "flex-1 rounded-xl py-1.5 text-center text-xs font-bold transition-all cursor-pointer",
-                          tab === k ? "bg-emerald-600 text-white shadow-md" : "text-sand-200/60 hover:text-white"
+                          TAB,
+                          tab === k ? SELECTED_TAB : UNSELECTED_TAB
                         )}
                       >
                         {k === "surah" ? "Surah" : "Juz"}
@@ -216,7 +217,7 @@ export function BookmarksPanel({
                       placeholder="Search bookmarks..."
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      className="w-full rounded-2xl bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
+                      className="w-full rounded-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
                     />
                   </div>
 

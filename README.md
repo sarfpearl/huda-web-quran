@@ -33,8 +33,7 @@ An immersive Holy Quran listening & reading web app, built with **Next.js 14 (Ap
 - All media (artwork, videos, prelude audio, reciter portraits) is served from **Cloudflare R2**.
 
 ### 💬 Community & more
-- Anonymous view counts, likes and comments per Surah/Juz (Supabase RPCs).
-- Islamic talks (bayan) section: categories, speakers, explore and search, plus an admin area.
+- Anonymous view counts, likes and comments per Surah/Juz (Supabase RPCs), with a key-protected moderation page at `/admin/comments`.
 - Installable **PWA** with an in-app install guide; mobile-first with safe-area support.
 
 ---
@@ -45,7 +44,7 @@ An immersive Holy Quran listening & reading web app, built with **Next.js 14 (Ap
 | :--- | :--- |
 | Framework | Next.js 14 (App Router), React 18, TypeScript |
 | Styling | Tailwind CSS, Framer Motion |
-| Data | Supabase (Postgres + RPCs), seed data in `src/lib/data` |
+| Data | Static Quran data in `src/lib/data`; Supabase (Postgres + RPCs) for views, likes and comments |
 | Media | Cloudflare R2 (`src/lib/media.ts` → `mediaUrl()`) |
 | Audio sources | quranicaudio.com, mp3quran.net, everyayah.com |
 | Hosting | Vercel |
@@ -72,7 +71,6 @@ Other scripts: `npm run typecheck`, `npm run lint`, `npm run build`.
 | :--- | :--- |
 | `NEXT_PUBLIC_MEDIA_BASE_URL` | R2 public base URL. If unset, media falls back to local `/public` paths. |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project |
-| `NEXT_PUBLIC_DATA_SOURCE` | Data source mode (e.g. `seed`) |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Only for the R2 upload tool |
 
@@ -90,5 +88,4 @@ Never commit `.env*` files.
 
 ## 📄 Documentation
 
-- [HANDOFF.md](./HANDOFF.md) — current status, open work, and the architectural rules that must not be broken.
-- [YOUTUBE_MUSIC_GUIDE.md](./YOUTUBE_MUSIC_GUIDE.md) — YouTube playlist integration notes for the bayan section.
+- [HANDOFF.md](./HANDOFF.md) — current status, open work, services & accounts, and the architectural rules that must not be broken.

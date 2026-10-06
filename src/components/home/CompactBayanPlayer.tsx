@@ -48,12 +48,11 @@ import { haptic } from "@/lib/haptics";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { SURAH_NAMES } from "@/lib/data/surahNames";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
+import { VoiceBars } from "@/components/player/VoiceBars";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
-  categoryList?: BayanWithRelations[];
   surahTracks?: BayanWithRelations[];
-  onShuffleCategory?: () => void;
   activeSurah?: QuranSurah | null;
   currentVerse?: AyahVerse | null;
   currentSegment?: RecitationSegment | null;
@@ -105,9 +104,7 @@ interface CompactBayanPlayerProps {
 
 export function CompactBayanPlayer({
   bayan,
-  categoryList,
   surahTracks,
-  onShuffleCategory,
   activeSurah,
   currentVerse,
   currentSegment,
@@ -450,7 +447,7 @@ export function CompactBayanPlayer({
         ? activeSurahTracks
         : isQuranTrackId(bayan.id)
         ? QURAN_TRACKS
-        : categoryList;
+        : [bayan];
       player.playBayan(bayan, contextList);
     }
   };
@@ -476,7 +473,7 @@ export function CompactBayanPlayer({
         ? activeSurahTracks
         : isQuranTrackId(bayan.id)
         ? QURAN_TRACKS
-        : categoryList;
+        : [bayan];
       player.playBayan(bayan, contextList);
       setTimeout(() => player.seek(val), 100);
     }
@@ -485,7 +482,6 @@ export function CompactBayanPlayer({
   // Shuffle is context-aware:
   //   • Surah playing → jump to a DIFFERENT random Surah (excluding current)
   //   • Juz playing   → jump to a DIFFERENT random Juz (excluding current)
-  //   • otherwise      → shuffle the Bayan category (existing behaviour)
   const playRandomFrom = (tracks: BayanWithRelations[]) => {
     if (tracks.length === 0) return;
     const pool =
@@ -499,8 +495,6 @@ export function CompactBayanPlayer({
       playRandomFrom(surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan)));
     } else if (isQuranTrackId(bayan.id)) {
       playRandomFrom(QURAN_TRACKS);
-    } else {
-      onShuffleCategory?.();
     }
   };
 
@@ -696,7 +690,7 @@ export function CompactBayanPlayer({
               cy={18 - 16.5 * Math.cos(thumbAngle)}
               r={dragPct == null ? 2.2 : 3.2}
               fill={isQuran ? "#fde68a" : "#ffffff"}
-              stroke="rgba(0,0,0,0.5)"
+              stroke="#ffffff"
               strokeWidth="0.6"
               className="transition-[r] duration-150"
             />
@@ -765,14 +759,16 @@ export function CompactBayanPlayer({
             />
           )}
 
-          {/* Equalizer overlay when playing audio */}
+          {/* Voice bars while playing: rise with each recited word, dots in the pauses */}
           {isPlaying && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/45 backdrop-blur-[1px]">
-              <div className="flex items-end gap-0.5">
-                <span className="h-4 w-0.5 animate-[equalizer_0.6s_ease-in-out_infinite] bg-emerald-400" />
-                <span className="h-6 w-0.5 animate-[equalizer_0.8s_ease-in-out_infinite] bg-emerald-400" />
-                <span className="h-3.5 w-0.5 animate-[equalizer_0.5s_ease-in-out_infinite] bg-emerald-400" />
-              </div>
+              <VoiceBars
+                playing={isPlaying}
+                time={currentTime}
+                rate={player.playbackRate}
+                segments={segments}
+                className={isQuran ? "bg-amber-300" : "bg-emerald-400"}
+              />
             </div>
           )}
         </div>
@@ -799,7 +795,9 @@ export function CompactBayanPlayer({
               </span>
             )}
           </div>
-          <p className={`truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5 ${ta ? "font-tamil" : ""}`}>
+          {/* Tamil: taller line + a little padding, so truncate's overflow clip
+              doesn't cut the vowel signs above and below the letters. */}
+          <p className={`truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5 ${ta ? "font-tamil leading-relaxed py-0.5" : ""}`}>
             {categoryLine}
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
@@ -882,7 +880,7 @@ export function CompactBayanPlayer({
           </div>
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute top-1/2 z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-black/85 ${
+            className={`pointer-events-none absolute top-1/2 z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white ${
               isQuran ? "bg-amber-400" : "bg-emerald-500"
             } shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-[left,transform] duration-100 ease-linear group-active:scale-110`}
             style={{ left: `${barPct}%` }}

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
 /*
  * One shared tooltip for every button (or `[data-tooltip]` element) inside
  * `container`, labelled from its `data-tooltip` or `aria-label`. Rendered in a portal on <body> so
  * the player's overflow-hidden glass shell can't clip it. Shows on mouse /
- * pen hover and on keyboard focus; never on touch.
+ * pen hover and on keyboard focus; never on touch. `placement="bottom"` for
+ * controls at the top of the screen; `selector` narrows which elements get one.
  */
 
 interface Tip {
@@ -16,8 +17,29 @@ interface Tip {
   y: number;
 }
 
-export function HoverTooltips({ container }: { container: RefObject<HTMLElement> }) {
+export function HoverTooltips({
+  container,
+  placement = "top",
+  selector = "button, [data-tooltip]",
+}: {
+  container: RefObject<HTMLElement>;
+  placement?: "top" | "bottom";
+  selector?: string;
+}) {
   const [tip, setTip] = useState<Tip | null>(null);
+  // Nudged sideways so a tip by the screen edge (e.g. the header's last
+  // button) stays fully on screen.
+  const tipRef = useRef<HTMLDivElement>(null);
+  const [shift, setShift] = useState(0);
+  useLayoutEffect(() => {
+    const el = tipRef.current;
+    if (!tip || !el) return setShift(0);
+    const half = el.offsetWidth / 2;
+    const gutter = 8;
+    const left = tip.x - half;
+    const right = tip.x + half;
+    setShift(left < gutter ? gutter - left : right > window.innerWidth - gutter ? window.innerWidth - gutter - right : 0);
+  }, [tip]);
 
   useEffect(() => {
     const root = container.current;
@@ -42,11 +64,11 @@ export function HoverTooltips({ container }: { container: RefObject<HTMLElement>
       stashedTitle = el.getAttribute("title");
       if (stashedTitle !== null) el.removeAttribute("title");
       const r = el.getBoundingClientRect();
-      setTip({ text, x: r.left + r.width / 2, y: r.top });
+      setTip({ text, x: r.left + r.width / 2, y: placement === "bottom" ? r.bottom : r.top });
     };
 
     const buttonFrom = (target: EventTarget | null) =>
-      target instanceof Element ? (target.closest("button, [data-tooltip]") as HTMLElement | null) : null;
+      target instanceof Element ? (target.closest(selector) as HTMLElement | null) : null;
 
     const onOver = (e: PointerEvent) => {
       // Mouse / pen only — a tap on touch screens never shows a tooltip.
@@ -77,14 +99,15 @@ export function HoverTooltips({ container }: { container: RefObject<HTMLElement>
       root.removeEventListener("pointerdown", onPress);
       window.removeEventListener("scroll", hide, true);
     };
-  }, [container]);
+  }, [container, placement, selector]);
 
   if (!tip || typeof document === "undefined") return null;
   return createPortal(
     <div
+      ref={tipRef}
       role="tooltip"
-      className="pointer-events-none fixed z-[80] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-black/85 px-2.5 py-1 text-[11px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md animate-fade-in"
-      style={{ left: tip.x, top: tip.y - 8 }}
+      className={`pointer-events-none fixed z-[80] -translate-x-1/2 ${placement === "bottom" ? "" : "-translate-y-full"} whitespace-nowrap rounded-lg bg-black/85 px-2.5 py-1 text-[11px] font-semibold text-white shadow-[0_6px_18px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md animate-fade-in`}
+      style={{ left: tip.x + shift, top: placement === "bottom" ? tip.y + 8 : tip.y - 8 }}
     >
       {tip.text}
     </div>,

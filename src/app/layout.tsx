@@ -3,9 +3,6 @@ import "./globals.css";
 import { siteConfig } from "@/lib/site";
 import { ThemeProvider, themeInitScript } from "@/components/theme/ThemeProvider";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
-import { Header } from "@/components/navigation/Header";
-import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
-import { GlobalAudioPlayer } from "@/components/player/GlobalAudioPlayer";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SurahListenCounter } from "@/components/player/SurahListenCounter";
 import { SplashScreen } from "@/components/layout/SplashScreen";
@@ -76,7 +73,7 @@ export default function RootLayout({
       <head>
         {/* Preload the KFGQPC Uthmanic Script HAFS Mushaf font so the Quran
             Arabic paints in the correct face immediately (no Amiri fallback flash). */}
-        <link rel="preload" href="/splash-logo.webp" as="image" type="image/webp" />
+        <link rel="preload" href="/huda-logo.webp?v=2" as="image" type="image/webp" />
         <link
           rel="preload"
           href="/fonts/UthmanicHafs1Ver18.woff2"

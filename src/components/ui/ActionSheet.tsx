@@ -63,6 +63,7 @@ export function ActionSheet({
   labelledBy,
   label,
   keepAttr,
+  flush,
 }: {
   open: boolean;
   onClose: () => void;
@@ -72,6 +73,8 @@ export function ActionSheet({
   label?: string;
   /** Extra data-* attribute to put on the sheet (e.g. an outside-press guard). */
   keepAttr?: string;
+  /** No bottom padding: a scrolling list runs to the edge (it pads its own end). */
+  flush?: boolean;
 }) {
   const drag = useDragControls();
   const kb = useKeyboardInset(open);
@@ -144,7 +147,7 @@ export function ActionSheet({
               className={cn(
                 "flex min-h-0 flex-1 flex-col px-4",
                 // The keyboard covers the home indicator, so no safe-area pad then.
-                kb.bottom > 0 ? "pb-3" : "pb-[calc(env(safe-area-inset-bottom)+1rem)]",
+                flush ? "" : kb.bottom > 0 ? "pb-3" : "pb-[calc(env(safe-area-inset-bottom)+1rem)]",
               )}
             >
               {children}

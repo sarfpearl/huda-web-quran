@@ -11,7 +11,6 @@ import {
 } from "react";
 import type { BayanWithRelations } from "@/types/bayan";
 import {
-  incrementPlayCount,
   isQuranTrack,
   isSurahTrackId,
   SURAH_TRACK_ID_PREFIX,
@@ -22,14 +21,11 @@ import {
   PRELUDE_AUDIO,
 } from "@/lib/data/service";
 import { reciterHasSurah } from "@/lib/data/quranReciters";
-import { getSessionId } from "@/lib/audio/session";
-import { loadYouTubeIframeApi } from "@/lib/youtube/iframe-api";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────
  *  GLOBAL AUDIO PLAYER ENGINE
- *  Supports official YouTube IFrame Player API for YouTube playlists & videos,
- *  and HTML5 Audio for local audio streams.
+ *  HTML5 Audio for the Quran streams (plus a second element for preludes).
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -43,8 +39,6 @@ export interface ContinueListening {
   bayan: BayanWithRelations;
   position: number;
 }
-
-type SourceType = "youtube-playlist" | "youtube-video" | "local";
 
 interface AudioPlayerState {
   queue: BayanWithRelations[];
@@ -127,7 +121,6 @@ interface AudioPlayerApi extends AudioPlayerState {
   clearQueue: () => void;
   setExpanded: (expanded: boolean) => void;
   dismissContinue: () => void;
-  setShuffle?: (shuffle: boolean) => void;
 }
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
@@ -187,10 +180,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const standbyUnlockedRef = useRef(false);
   const waitingTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const preludeAudioRef = useRef<HTMLAudioElement | null>(null);
-  const ytPlayerRef = useRef<any>(null);
-  const ytReadyRef = useRef<boolean>(false);
-  const currentPlaylistIdRef = useRef<string | null>(null);
-  const activeSourceRef = useRef<SourceType>("local");
   const lastSaveRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
   const isPreludeRef = useRef<boolean>(false);
@@ -276,40 +265,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       pel.muted = isMuted;
       pel.playbackRate = playbackRate;
     }
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === "function") {
-      try {
-        ytPlayerRef.current.setVolume(isMuted ? 0 : Math.round(volume * 100));
-      } catch {
-        /* ignore */
-      }
-    }
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.setPlaybackRate === "function") {
-      try {
-        ytPlayerRef.current.setPlaybackRate(playbackRate);
-      } catch {
-        /* ignore */
-      }
-    }
   }, [volume, isMuted, playbackRate]);
-
-  // Periodic timer for updating progress and duration when YouTube player is active
-  useEffect(() => {
-    if (activeSourceRef.current !== "local" && isPlaying) {
-      const interval = setInterval(() => {
-        if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === "function") {
-          try {
-            const time = ytPlayerRef.current.getCurrentTime() || 0;
-            const dur = ytPlayerRef.current.getDuration() || 0;
-            setCurrentTime(time);
-            if (dur > 0 && dur !== duration) setDuration(dur);
-          } catch {
-            /* ignore */
-          }
-        }
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [isPlaying, duration]);
 
   // Keep the screen awake while a recitation is playing (Screen Wake Lock API).
   // The browser drops the lock whenever the tab is hidden, so re-acquire on
@@ -369,12 +325,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   /**
-   * Primary Source Selection & Playlist Loader:
-   * Source Selection Priority:
-   * 1. youtubePlaylistId -> USE YOUTUBE PLAYLIST (via official YT.Player)
-   * 2. Real local audio -> USE LOCAL AUDIO (HTML5 Audio)
-   * 3. youtubeVideoId -> USE SINGLE YOUTUBE VIDEO (via YT.Player)
-   * 4. Fallback content
+   * Loads a track into the HTML5 audio element (with its Surah prelude when
+   * one applies). Falls back to a known-good recitation if the track has no URL.
    */
   const loadCurrent = useCallback(
     async (bayan: BayanWithRelations, autoplay: boolean) => {
@@ -414,139 +366,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       clearStandby();
       ayahBlobRef.current.forEach((b) => URL.revokeObjectURL(b));
       ayahBlobRef.current.clear();
-      const playlistId = bayan.youtubePlaylistId || bayan.category?.youtubePlaylistId;
-      const isYoutubeSource =
-        bayan.audioSource === "youtube" ||
-        (bayan.audioSource !== "local" && Boolean(playlistId || bayan.youtubeVideoId));
       const localAudioUrl =
         bayan.audioSource === "local" && bayan.audioUrl && !bayan.audioUrl.includes("SoundHelix")
           ? bayan.audioUrl
           : null;
 
-      // ── SOURCE PRIORITY 1: REAL YOUTUBE PLAYLIST ───────────────────────
-      if (playlistId && isYoutubeSource) {
-        console.log("[Huda Audio] Selected category:", bayan.category?.name);
-        console.log("[Huda Audio] Audio source: youtube");
-        console.log("[Huda Audio] YouTube playlist ID:", playlistId);
-        console.log("[Huda Audio] Loading YouTube playlist:", playlistId);
-
-        activeSourceRef.current = "youtube-playlist";
-
-        // Stop HTML5 audio
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = "";
-        }
-
-        setIsLoading(true);
-        currentPlaylistIdRef.current = playlistId;
-
-        try {
-          const YT = await loadYouTubeIframeApi();
-
-          if (!ytPlayerRef.current) {
-            ytPlayerRef.current = new YT.Player("huda-yt-player-target", {
-              height: "1",
-              width: "1",
-              playerVars: {
-                autoplay: autoplay ? 1 : 0,
-                controls: 0,
-                disablekb: 1,
-                fs: 0,
-                modestbranding: 1,
-                rel: 0,
-                enablejsapi: 1,
-                origin: typeof window !== "undefined" ? window.location.origin : undefined,
-              },
-              events: {
-                onReady: (event: any) => {
-                  console.log("[Huda Audio] Player ready");
-                  ytReadyRef.current = true;
-                  if (currentPlaylistIdRef.current) {
-                    if (autoplay) {
-                      event.target.loadPlaylist({
-                        listType: "playlist",
-                        list: currentPlaylistIdRef.current,
-                        index: 0,
-                      });
-                    } else {
-                      event.target.cuePlaylist({
-                        listType: "playlist",
-                        list: currentPlaylistIdRef.current,
-                        index: 0,
-                      });
-                    }
-                  }
-                },
-                onStateChange: (event: any) => {
-                  const state = event.data;
-                  if (state === YT.PlayerState.PLAYING) {
-                    console.log("[Huda Audio] Player state: PLAYING");
-                    setIsPlaying(true);
-                    setIsLoading(false);
-                  } else if (state === YT.PlayerState.PAUSED) {
-                    console.log("[Huda Audio] Player state: PAUSED");
-                    setIsPlaying(false);
-                  } else if (state === YT.PlayerState.BUFFERING) {
-                    console.log("[Huda Audio] Player state: BUFFERING");
-                    setIsLoading(true);
-                  } else if (state === YT.PlayerState.ENDED) {
-                    console.log("[Huda Audio] Player state: ENDED");
-                    // YouTube playlist automatically advances to next item!
-                  } else if (state === YT.PlayerState.CUED) {
-                    console.log("[Huda Audio] Player state: CUED");
-                    setIsLoading(false);
-                  }
-                },
-                onError: (event: any) => {
-                  console.error("[Huda Audio] YouTube Player Error:", event.data);
-                  setIsPlaying(false);
-                  setIsLoading(false);
-                },
-              },
-            });
-          } else {
-            // Re-use existing singleton YT.Player instance safely!
-            if (autoplay) {
-              ytPlayerRef.current.loadPlaylist({
-                listType: "playlist",
-                list: playlistId,
-                index: 0,
-              });
-            } else {
-              ytPlayerRef.current.cuePlaylist({
-                listType: "playlist",
-                list: playlistId,
-                index: 0,
-              });
-            }
-          }
-        } catch (err) {
-          console.error("[Huda Audio] Failed to load YouTube Player API:", err);
-          setIsLoading(false);
-        }
-
-        setDuration(bayan.durationSeconds || 1800);
-        setCurrentTime(0);
-        return;
-      }
-
-      // ── SOURCE PRIORITY 2: REAL LOCAL AUDIO ─────────────────────────────
+      // ── TRACK AUDIO ─────────────────────────────────────────────────────
       if (localAudioUrl) {
-        console.log("[Huda Audio] Selected category:", bayan.category?.name);
-        console.log("[Huda Audio] Audio source: local");
-
-        activeSourceRef.current = "local";
-
-        // Pause YT player
-        if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
-          try {
-            ytPlayerRef.current.pauseVideo();
-          } catch {
-            /* ignore */
-          }
-        }
-
         const isSurah = isSurahTrackId(bayan.id);
         const surahNum = isSurah ? Number(bayan.id.replace(SURAH_TRACK_ID_PREFIX, "")) : null;
         const preludeReciter = isSurah ? resolveActiveReciter(bayan) : null;
@@ -588,7 +414,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           return;
         }
 
-        // Standard non-prelude track (Surah 9, non-Quran bayans, etc.)
+        // Standard non-prelude track (Surah 9, Juz files, etc.)
         if (preludeAudioRef.current) {
           preludeAudioRef.current.pause();
           preludeAudioRef.current.src = "";
@@ -660,79 +486,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         return;
       }
 
-      // ── SOURCE PRIORITY 3: SINGLE YOUTUBE VIDEO ──────────────────────────
-      if (bayan.youtubeVideoId) {
-        console.log("[Huda Audio] Selected category:", bayan.category?.name);
-        console.log("[Huda Audio] Audio source: youtube-video");
-        console.log("[Huda Audio] YouTube video ID:", bayan.youtubeVideoId);
-
-        activeSourceRef.current = "youtube-video";
-
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = "";
-        }
-
-        setIsLoading(true);
-        const videoId = bayan.youtubeVideoId;
-
-        try {
-          const YT = await loadYouTubeIframeApi();
-
-          if (!ytPlayerRef.current) {
-            ytPlayerRef.current = new YT.Player("huda-yt-player-target", {
-              height: "1",
-              width: "1",
-              playerVars: {
-                autoplay: autoplay ? 1 : 0,
-                controls: 0,
-                disablekb: 1,
-                fs: 0,
-                modestbranding: 1,
-                rel: 0,
-                enablejsapi: 1,
-                origin: typeof window !== "undefined" ? window.location.origin : undefined,
-              },
-              events: {
-                onReady: (event: any) => {
-                  console.log("[Huda Audio] Player ready");
-                  ytReadyRef.current = true;
-                  if (autoplay) event.target.loadVideoById(videoId);
-                  else event.target.cueVideoById(videoId);
-                },
-                onStateChange: (event: any) => {
-                  const state = event.data;
-                  if (state === YT.PlayerState.PLAYING) {
-                    console.log("[Huda Audio] Player state: PLAYING");
-                    setIsPlaying(true);
-                    setIsLoading(false);
-                  } else if (state === YT.PlayerState.PAUSED) {
-                    console.log("[Huda Audio] Player state: PAUSED");
-                    setIsPlaying(false);
-                  } else if (state === YT.PlayerState.BUFFERING) {
-                    console.log("[Huda Audio] Player state: BUFFERING");
-                    setIsLoading(true);
-                  }
-                },
-              },
-            });
-          } else {
-            if (autoplay) ytPlayerRef.current.loadVideoById(videoId);
-            else ytPlayerRef.current.cueVideoById(videoId);
-          }
-        } catch {
-          setIsLoading(false);
-        }
-
-        setDuration(bayan.durationSeconds || 1800);
-        setCurrentTime(0);
-        return;
-      }
-
-      // ── SOURCE PRIORITY 4: DEMO FALLBACK ────────────────────────────────
-      console.log("[Huda Audio] Audio source: demo fallback");
+      // ── FALLBACK: no usable URL ────────────────────────────────────────
       const fallbackUrl = "https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/1.mp3";
-      activeSourceRef.current = "local";
 
       const el = audioRef.current;
       if (!el) return;
@@ -776,7 +531,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       persistLast(nextQueue[index], readPositions()[bayan.id] ?? 0);
       setContinueListening(null);
 
-      void incrementPlayCount(bayan.id, getSessionId());
     },
     [queue, loadCurrent, persistLast]
   );
@@ -827,10 +581,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     ) => {
       if (!ayahUrls || ayahUrls.length === 0) return;
       const startIdx = Math.max(0, Math.min(startIndex, ayahUrls.length - 1));
-      // Stop any YouTube / prelude source and switch to the local element.
-      if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
-        try { ytPlayerRef.current.pauseVideo(); } catch { /* ignore */ }
-      }
+      // Stop any prelude and switch to the main element.
       if (preludeAudioRef.current) {
         preludeAudioRef.current.pause();
         preludeAudioRef.current.src = "";
@@ -838,7 +589,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       isPreludeRef.current = false;
       setIsPrelude(false);
       setPreludeType(null);
-      activeSourceRef.current = "local";
       currentTrimOffsetRef.current = 0;
       retryCountRef.current = 0;
       setError(null);
@@ -1023,15 +773,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsPlaying(false);
       return;
     }
-    if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === "function") {
-      try {
-        ytPlayerRef.current.pauseVideo();
-      } catch {
-        /* ignore */
-      }
-    } else if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    audioRef.current?.pause();
     setIsPlaying(false);
   }, []);
 
@@ -1045,22 +787,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       return;
     }
     if (!current) return;
-    if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === "function") {
-      try {
-        ytPlayerRef.current.playVideo();
-        setIsPlaying(true);
-      } catch {
-        loadCurrent(current, true);
-      }
-    } else {
-      const el = audioRef.current;
-      if (!el) return;
-      if (!el.src && current.audioUrl) {
-        loadCurrent(current, true);
-        return;
-      }
-      el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    const el = audioRef.current;
+    if (!el) return;
+    if (!el.src && current.audioUrl) {
+      loadCurrent(current, true);
+      return;
     }
+    el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
   }, [current, loadCurrent]);
 
   const togglePlay = useCallback(() => {
@@ -1078,15 +811,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       isPreludeRef.current = false;
       setIsPrelude(false);
       setPreludeType(null);
-    }
-    if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === "function") {
-      try {
-        ytPlayerRef.current.seekTo(seconds, true);
-        setCurrentTime(seconds);
-        return;
-      } catch {
-        /* ignore */
-      }
     }
     const el = audioRef.current;
     if (!el) return;
@@ -1115,7 +839,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setCurrentIndex(index);
       loadCurrent(queue[index], true);
       persistLast(queue[index], 0);
-      void incrementPlayCount(queue[index].id, getSessionId());
     },
     [queue, loadCurrent, persistLast]
   );
@@ -1133,15 +856,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     isPreludeRef.current = false;
     setIsPrelude(false);
 
-    if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.nextVideo === "function") {
-      console.log("[Huda Audio] Next playlist item");
-      try {
-        ytPlayerRef.current.nextVideo();
-        return;
-      } catch {
-        /* fallback to queue */
-      }
-    }
     if (current && isSurahTrackId(current.id)) {
       const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
       const activeReciter = resolveActiveReciter(current);
@@ -1172,15 +886,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     isPreludeRef.current = false;
     setIsPrelude(false);
 
-    if (activeSourceRef.current !== "local" && ytPlayerRef.current && typeof ytPlayerRef.current.previousVideo === "function") {
-      console.log("[Huda Audio] Previous playlist item");
-      try {
-        ytPlayerRef.current.previousVideo();
-        return;
-      } catch {
-        /* fallback to queue */
-      }
-    }
     const el = audioRef.current;
     if (el && el.currentTime > 3) {
       seek(0);
@@ -1210,17 +915,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   const setPlaybackRate = useCallback((r: number) => {
     setPlaybackRateState(r);
-  }, []);
-
-  const setShuffle = useCallback((shuffle: boolean) => {
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.setShuffle === "function") {
-      try {
-        ytPlayerRef.current.setShuffle(shuffle);
-        console.log("[Huda Audio] Playlist shuffle set to:", shuffle);
-      } catch {
-        /* ignore */
-      }
-    }
   }, []);
 
   const addToQueue = useCallback((bayan: BayanWithRelations) => {
@@ -1308,7 +1002,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   const onTimeUpdate = useCallback(() => {
     const el = audioRef.current;
-    if (!el || !current || activeSourceRef.current !== "local") return;
+    if (!el || !current) return;
     if (forcedSeekPendingRef.current) return;
     if (isPreludeRef.current) {
       setCurrentTime(0);
@@ -1367,7 +1061,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       return;
     }
     const el = audioRef.current;
-    if (activeSourceRef.current === "local" && current && el) {
+    if (current && el) {
       // Automatic fallback for Quran Surah tracks
       if (current.id.startsWith("quran-surah-") && retryCountRef.current < 2) {
         const num = Number(current.id.replace("quran-surah-", ""));
@@ -1389,9 +1083,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     retryCountRef.current = 0;
     setIsPlaying(false);
     setIsLoading(false);
-    if (activeSourceRef.current === "local") {
-      setError("Couldn't load this audio. Please try another.");
-    }
+    setError("Couldn't load this audio. Please try another.");
   }, [current, advanceAyahSequence]);
 
   const value = useMemo<AudioPlayerApi>(
@@ -1433,8 +1125,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       clearQueue,
       setExpanded,
       dismissContinue,
-      setShuffle,
-    }),
+          }),
     [
       queue,
       currentIndex,
@@ -1473,8 +1164,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       clearQueue,
       setExpanded,
       dismissContinue,
-      setShuffle,
-    ]
+          ]
   );
 
   // Events of the standby <audio> (per-ayah double buffer) are ignored.
@@ -1553,11 +1243,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           {...mainAudioEvents}
         />
       ))}
-
-      {/* Singleton target container for official YouTube IFrame Player API */}
-      <div className="pointer-events-none fixed -left-[9999px] -top-[9999px] h-1 w-1 opacity-0 overflow-hidden">
-        <div id="huda-yt-player-target" />
-      </div>
 
       {children}
     </AudioPlayerContext.Provider>

@@ -1869,16 +1869,9 @@ export function getActiveVerseIndex(
 }
 
 /**
- * Thematic Quran verses displayed when listening to Islamic Bayan categories.
+ * Fallback verse shown when a Quran track has no ayah-level text loaded yet.
  */
 export const CATEGORY_INSPIRATIONAL_VERSES: Record<string, AyahVerse> = {
-  "iman-taqwa": {
-    surahNumber: 94,
-    ayahNumber: 6,
-    textArabic: "إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا",
-    textEnglish: "Indeed, with hardship will be ease.",
-    verseKey: "94:6",
-  },
   "quran": {
     surahNumber: 2,
     ayahNumber: 2,
@@ -1892,69 +1885,6 @@ export const CATEGORY_INSPIRATIONAL_VERSES: Record<string, AyahVerse> = {
     textArabic: "وَرَتِّلِ ٱلْقُرْءَانَ تَرْتِيلًا",
     textEnglish: "And recite the Qur'an with measured recitation.",
     verseKey: "73:4",
-  },
-  "salah": {
-    surahNumber: 20,
-    ayahNumber: 14,
-    textArabic: "وَأَقِمِ ٱلصَّلَوٰةَ لِذِكْرِىٓ",
-    textEnglish: "And establish prayer for My remembrance.",
-    verseKey: "20:14",
-  },
-  "dua": {
-    surahNumber: 2,
-    ayahNumber: 186,
-    textArabic: "وَإِذَا سَأَلَكَ عِبَادِى عَنِّى فَإِنِّى قَرِيبٌ ۖ أُجِيبُ دَعْوَةَ ٱلدَّاعِ إِذَا دَعَانِ",
-    textEnglish: "And when My servants ask you concerning Me, indeed I am near. I respond to the invocation of the caller when he calls upon Me.",
-    verseKey: "2:186",
-  },
-  "ramadan": {
-    surahNumber: 2,
-    ayahNumber: 185,
-    textArabic: "شَهْرُ رَمَضَانَ ٱلَّذِىٓ أُنزِلَ فِيهِ ٱلْقُرْءَانُ هُدًۭى لِّلنَّاسِ",
-    textEnglish: "The month of Ramadan in which was revealed the Qur'an, a guidance for mankind.",
-    verseKey: "2:185",
-  },
-  "hajj-umrah": {
-    surahNumber: 2,
-    ayahNumber: 196,
-    textArabic: "وَأَتِمُّوا۟ ٱلْحَجَّ وَٱلْعُمْرَةَ لِلَّهِ",
-    textEnglish: "And complete the Hajj and 'umrah for Allah.",
-    verseKey: "2:196",
-  },
-  "akhlaq": {
-    surahNumber: 68,
-    ayahNumber: 4,
-    textArabic: "وَإِنَّكَ لَعَلَىٰ خُلُقٍ عَظِيمٍۢ",
-    textEnglish: "And indeed, you are of a great moral character.",
-    verseKey: "68:4",
-  },
-  "self-improvement": {
-    surahNumber: 13,
-    ayahNumber: 11,
-    textArabic: "إِنَّ ٱللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّىٰ يُغَيِّرُوا۟ مَا بِأَنفُسِهِمْ",
-    textEnglish: "Indeed, Allah will not change the condition of a people until they change what is in themselves.",
-    verseKey: "13:11",
-  },
-  "marriage": {
-    surahNumber: 30,
-    ayahNumber: 21,
-    textArabic: "وَمِنْ ءَايَٰتِهِۦٓ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَٰجًۭا لِّتَسْكُنُوٓا۟ إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةًۭ وَرَحْمَةً",
-    textEnglish: "And among His signs is that He created for you mates that you may find tranquility in them; and He placed between you affection and mercy.",
-    verseKey: "30:21",
-  },
-  "family": {
-    surahNumber: 25,
-    ayahNumber: 74,
-    textArabic: "رَبَّنَا هَبْ لَنَا مِنْ أَزْوَٰجِنَا وَذُرِّيَّٰتِنَا قُرَّةَ أَعْيُنٍۢ",
-    textEnglish: "Our Lord, grant us from among our spouses and offspring comfort to our eyes.",
-    verseKey: "25:74",
-  },
-  "death-akhirah": {
-    surahNumber: 3,
-    ayahNumber: 185,
-    textArabic: "كُلُّ نَفْسٍۢ ذَآئِقَةُ ٱلْمَوْتِ",
-    textEnglish: "Every soul will taste death.",
-    verseKey: "3:185",
   },
 };
 
@@ -1988,7 +1918,7 @@ export interface UseQuranVerseSyncProps {
 
 export function useQuranVerseSync({
   surahNumber,
-  categorySlug = "iman-taqwa",
+  categorySlug = "quran-recitation",
   currentTime = 0,
   duration = 0,
   isPlaying = false,

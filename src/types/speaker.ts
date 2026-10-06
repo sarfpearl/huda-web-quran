@@ -1,4 +1,4 @@
-/** A Bayan speaker / lecturer. */
+/** A track's reciter, as shown by the player. */
 export interface Speaker {
   id: string;
   name: string;
@@ -7,6 +7,4 @@ export interface Speaker {
   profileImageUrl: string | null;
   isActive: boolean;
   createdAt: string;
-  /** Denormalised count of published Bayan; computed by the data layer. */
-  bayanCount?: number;
 }

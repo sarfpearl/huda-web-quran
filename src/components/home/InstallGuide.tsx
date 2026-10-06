@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
+import { afterStage, finishStage } from "@/lib/onboarding";
 
 const DISMISSED_KEY = "huda-install-dismissed";
 // After "Not now", ask again in two weeks.
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
-// Let the first recitation screen settle before asking.
-const SHOW_DELAY_MS = 4000;
+// A beat after the location prompt is answered, so the two don't run together.
+const SHOW_DELAY_MS = 800;
 // How long each animated step stays on screen.
 const STEP_MS = 3200;
 // Fired by InstallGuideButton to bring the guide back after "Got it".
@@ -359,7 +360,10 @@ export function InstallGuide() {
   const installEvent = useInstallPrompt();
 
   useEffect(() => {
-    if (isStandalone()) return;
+    if (isStandalone()) {
+      finishStage("install");
+      return;
+    }
     const detected = detectEnv();
     // Desktop: only opened from the strip icon, never popped up by itself.
     if (detected) setEnv(detected);
@@ -372,13 +376,29 @@ export function InstallGuide() {
     const onInstalled = () => setOpen(false);
     window.addEventListener(OPEN_EVENT, onOpen);
     window.addEventListener("appinstalled", onInstalled);
-    const timer = !detected || snoozed() ? 0 : window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
+    // Onboarding: shown after the location prompt is answered; the content
+    // browser waits for this to close (or be skipped).
+    let timer = 0;
+    let cancelled = false;
+    if (!detected || snoozed()) finishStage("install");
+    else
+      afterStage("location").then(() => {
+        if (!cancelled) timer = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
+      });
     return () => {
+      cancelled = true;
       window.clearTimeout(timer);
       window.removeEventListener(OPEN_EVENT, onOpen);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
+
+  // Closing it (Not now, Got it, Install) lets the next onboarding step start.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open) finishStage("install");
+    wasOpen.current = open;
+  }, [open]);
 
   // Auto-play the steps in a loop; picking a dot restarts the clock from there.
   const stepCount = env?.steps.length ?? 0;

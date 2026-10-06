@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { mediaUrl } from "@/lib/media";
 import { CategoryIcon, ViewCountIcon } from "@/components/ui/Icon";
+import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
 
 export interface ContentListCardProps {
   /** Padded index number string e.g. "01", "02", ... "114" */
@@ -72,8 +73,10 @@ export function ContentListCard({
       aria-current={isActive ? "true" : undefined}
       className={cn(
         "group flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-all border select-none",
+        // Selected: soft glass with a thin gold border (the player's Quran gold) —
+        // no glow, which the list's scroll box would clip into a dark square.
         isActive
-          ? "bg-emerald-950/80 border-emerald-400/90 text-white shadow-[0_0_24px_rgba(52,211,153,0.25)]"
+          ? SELECTED
           : "bg-white/5 border-white/5 text-sand-100 hover:bg-white/10 hover:border-white/20 active:scale-[0.99]",
         className
       )}
@@ -82,7 +85,7 @@ export function ContentListCard({
       <span
         className={cn(
           "w-5 text-center text-xs font-mono font-bold shrink-0 transition-colors",
-          isActive ? "text-emerald-300" : "text-sand-200/40 group-hover:text-sand-200/70"
+          isActive ? "text-amber-300" : "text-sand-200/40 group-hover:text-sand-200/70"
         )}
       >
         {number}
@@ -134,15 +137,15 @@ export function ContentListCard({
           "flex h-8 shrink-0 items-center justify-center gap-1 rounded-full text-sm transition-all",
           showCount ? "min-w-8 px-2.5" : "w-8",
           isActive
-            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
+            ? SELECTED_BADGE
             : "bg-white/5 text-sand-200/50 group-hover:bg-white/10 group-hover:text-sand-200/80"
         )}
       >
         {isActive && isPlaying ? (
           <span className="flex items-end gap-0.5" aria-label="Playing">
-            <span className="h-3 w-0.5 animate-[equalizer_0.6s_ease-in-out_infinite] bg-emerald-300" />
-            <span className="h-4 w-0.5 animate-[equalizer_0.8s_ease-in-out_infinite] bg-emerald-300" />
-            <span className="h-2.5 w-0.5 animate-[equalizer_0.5s_ease-in-out_infinite] bg-emerald-300" />
+            <span className="h-3 w-0.5 animate-[equalizer_0.6s_ease-in-out_infinite] bg-amber-300" />
+            <span className="h-4 w-0.5 animate-[equalizer_0.8s_ease-in-out_infinite] bg-amber-300" />
+            <span className="h-2.5 w-0.5 animate-[equalizer_0.5s_ease-in-out_infinite] bg-amber-300" />
           </span>
         ) : showCount ? (
           <>
