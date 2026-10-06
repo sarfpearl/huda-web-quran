@@ -2,9 +2,11 @@
 export const siteConfig = {
   name: "HuDa",
   fullName: "HuDa Web Quran",
-  tagline: "Listen. Reflect. Improve.",
+  tagline: "Read. Listen. Reflect.",
+  // The home page's title and the share-card (link preview) title.
+  title: "HuDa Web Quran — Read. Listen. Reflect.",
   description:
-    "Listen to and read the Holy Quran — 114 Surahs and 30 Juz, 51 reciters, word-by-word sync, Tajweed colours, Tamil and English translations.",
+    "Read and listen to the Holy Quran — 114 Surahs, 30 Juz, 51 reciters, word-by-word sync, Tajweed colours, and multilingual translations.",
   // Prefer the env value; fall back to localhost for dev.
   url: (
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"

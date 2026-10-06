@@ -846,8 +846,9 @@ export function ImmersiveHomeClient() {
   const [browserOpenRequest, setBrowserOpenRequest] = useState(0);
   // Every open of the app, the content browser slides in so a first-time
   // visitor sees there's a Surah / Juz list — last in the onboarding sequence
-  // (splash → location → install guide, lib/onboarding), a moment after the
-  // install guide closes or is skipped; not if playback has started by then.
+  // (splash → location → install guide, lib/onboarding), 7 seconds after the
+  // install guide closes or is skipped, so the home screen is seen first; not
+  // if playback has started by then.
   const hasPlayedRef = useRef(hasPlayed);
   hasPlayedRef.current = hasPlayed;
   useEffect(() => {
@@ -859,7 +860,7 @@ export function ImmersiveHomeClient() {
       if (cancelled) return;
       timer = setTimeout(() => {
         if (!hasPlayedRef.current) setBrowserOpenRequest((n) => n + 1);
-      }, 600);
+      }, 7000);
     });
     return () => {
       cancelled = true;

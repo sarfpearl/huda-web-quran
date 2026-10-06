@@ -93,7 +93,7 @@
 
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
-- [ ] Optional: remove `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
+- [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
 - [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.
 - [ ] Optional cleanup (owner's call): old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`) still exist in the live Supabase DB. R2 still holds `assets/images/bayan/*.jpg`; only `bayan/quran.jpg` is used (Quran fallback cover).
@@ -156,8 +156,8 @@
 | :--- | :--- | :--- |
 | `NEXT_PUBLIC_MEDIA_BASE_URL` | Vercel (Production/Preview) & `.env.local` | Public base URL for R2 CDN media delivery (`https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev`) |
 | `R2_ACCOUNT_ID` | Local `.env.local` | Cloudflare account ID for S3 SDK upload tool |
-| `R2_ACCESS_KEY_ID` | Local `.env.local` (also in Vercel, unused there) | Cloudflare R2 API token access key ID |
-| `R2_SECRET_ACCESS_KEY` | Local `.env.local` (also in Vercel, unused there) | Cloudflare R2 API token secret access key |
+| `R2_ACCESS_KEY_ID` | Local `.env.local` (local only; removed from Vercel) | Cloudflare R2 API token access key ID |
+| `R2_SECRET_ACCESS_KEY` | Local `.env.local` (local only; removed from Vercel) | Cloudflare R2 API token secret access key |
 | `R2_BUCKET_NAME` | Local `.env.local` | Cloudflare R2 bucket name (`huda-quran-media`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
