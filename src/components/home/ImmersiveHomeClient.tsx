@@ -15,7 +15,7 @@ import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
-import { detectScript, INDOPAK_ENABLED, isQuranScript, placeScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
+import { INDOPAK_ENABLED, isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
@@ -742,22 +742,21 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     if (at !== null) player.seek(at);
   };
 
-  // Tajweed colours: off by default; remembered per browser — except on
-  // WebKit (Safari / iOS), where every visit starts off so a device that
-  // can't draw the page fonts reloads into the text view (see isWebKit).
+  // Tajweed colours: on by default everywhere (Safari / iOS included);
+  // switching them off is remembered per browser.
   const [showTajweed, setShowTajweed] = useState(false);
   useEffect(() => {
     // WebKit: page-font glyphs without text-shadows (see globals.css).
     if (isWebKit()) document.documentElement.dataset.wkGlyphLite = "";
-    if (isWebKit()) return;
     try {
-      if (localStorage.getItem("huda:tajweed") === "1") setShowTajweed(true);
+      // "huda:tajweed2": only an explicit off sticks (the old key held "1" / "0").
+      if (localStorage.getItem("huda:tajweed2") !== "0") setShowTajweed(true);
     } catch {
       /* storage unavailable */
     }
   }, []);
   // Mushaf script (Uthmani / IndoPak, quranScript.ts): the one picked before,
-  // else a guess from the time zone, refined by the place once it's known.
+  // else Uthmani (no time-zone / place guess any more).
   // IndoPak has no Tajweed colours. Development-only until the IndoPak font
   // is licensed (INDOPAK_ENABLED).
   const [quranScript, setQuranScript] = useState<QuranScript>("uthmani");
@@ -771,20 +770,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     }
     if (isQuranScript(saved)) {
       setQuranScript(saved);
-      return;
     }
-    setQuranScript(detectScript());
-    const onPlace = (e: Event) => {
-      try {
-        if (isQuranScript(localStorage.getItem(SCRIPT_STORAGE_KEY))) return;
-      } catch {
-        /* storage unavailable */
-      }
-      const s = placeScript((e as CustomEvent<PlaceDetail>).detail?.countryCode);
-      if (s) setQuranScript(s);
-    };
-    window.addEventListener(PLACE_EVENT, onPlace);
-    return () => window.removeEventListener(PLACE_EVENT, onPlace);
   }, []);
   const handleChooseScript = (s: QuranScript) => {
     setQuranScript(s);
@@ -824,7 +810,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const handleToggleTajweed = () => {
     setShowTajweed((prev) => {
       try {
-        if (!isWebKit()) localStorage.setItem("huda:tajweed", prev ? "0" : "1");
+        localStorage.setItem("huda:tajweed2", prev ? "0" : "1");
       } catch {
         /* storage unavailable */
       }

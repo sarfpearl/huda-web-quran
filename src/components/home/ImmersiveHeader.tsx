@@ -214,6 +214,7 @@ export function ImmersiveHeader({
           open={translationSheetOpen}
           onClose={() => setTranslationSheetOpen(false)}
           label="Choose the translation language"
+          flush
         >
           {/* Laid out like the reciter picker: title bar, search, list of cards */}
           <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
@@ -269,7 +270,7 @@ export function ImmersiveHeader({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar" role="radiogroup" aria-label="Translation language">
+          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar pb-[env(safe-area-inset-bottom)]" role="radiogroup" aria-label="Translation language">
             {langChoices.length === 0 && (
               <p className="py-6 text-center text-xs text-sand-300/60">No language found for “{langQuery.trim()}”</p>
             )}
@@ -287,7 +288,11 @@ export function ImmersiveHeader({
                     setTranslationSheetOpen(false);
                   }}
                   className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3.5 py-2.5 text-left transition-all cursor-pointer ${
-                    selected ? SELECTED : "bg-white/[0.04] border-white/5 text-sand-100 hover:bg-white/[0.08] hover:border-white/15"
+                    selected
+                      ? showMeaning
+                        ? SELECTED
+                        : "bg-white/[0.04] border-dashed border-white/25 text-sand-100/70"
+                      : "bg-white/[0.04] border-white/5 text-sand-100 hover:bg-white/[0.08] hover:border-white/15"
                   }`}
                 >
                   <span className="flex flex-col">
@@ -297,10 +302,10 @@ export function ImmersiveHeader({
                     >
                       {c.label}
                     </span>
-                    <span className={`text-xs ${selected ? "text-sand-100/75" : "text-sand-200/60"}`}>{c.hint}</span>
+                    <span className={`text-xs ${selected && showMeaning ? "text-sand-100/75" : "text-sand-200/60"}`}>{c.hint}</span>
                   </span>
                   {selected && (
-                    <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${SELECTED_BADGE}`}>
+                    <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${showMeaning ? SELECTED_BADGE : "border border-white/25 text-sand-300/60"}`}>
                       <CheckIcon className="text-sm" />
                     </span>
                   )}

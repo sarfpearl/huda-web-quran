@@ -9,7 +9,7 @@ import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIco
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
-import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -110,6 +110,9 @@ export function TopicPickerModal({
   // A ring (MORPH_RING) traces the shape's edge, as the glass alone barely
   // shows; the clip comes off once open so the panel's shadow isn't cut.
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const isMobile = useIsMobile();
+  // Phone sheet with a search box: sit on top of the on-screen keyboard.
+  const kb = useKeyboardInset(isOpen && isMobile);
   const panelRef = useRef<HTMLDivElement | null>(null);
   // Keyboard / screen reader: focus moves into the panel and stays there until
   // it closes (then back to the button); Escape closes it.
@@ -153,7 +156,7 @@ export function TopicPickerModal({
   const setPanelRef = useCallback((el: HTMLDivElement | null) => {
     panelRef.current = el;
     const btn = triggerRef.current;
-    if (!el || !btn) return;
+    if (!el || !btn || isMobile) return;
     el.style.clipPath = MORPH_CLIP;
     const r = btn.getBoundingClientRect();
     if (!isFavourites) pinToTrigger(el, r);
@@ -164,7 +167,7 @@ export function TopicPickerModal({
     el.style.setProperty("--il", inset(r.left - el.offsetLeft));
     el.style.setProperty("--r0", `${r.width / 2}px`);
     el.style.setProperty("--r1", getComputedStyle(el).borderTopLeftRadius);
-  }, [isFavourites]);
+  }, [isFavourites, isMobile]);
 
   // Opened from the player's name: show the tab of what's playing.
   useEffect(() => {
@@ -371,22 +374,37 @@ export function TopicPickerModal({
               role="dialog"
               aria-modal="true"
               aria-labelledby={titleId}
-              initial={{ "--reveal": 0 } as never}
-              animate={{ "--reveal": 1 } as never}
-              exit={{ "--reveal": 0, transition: { duration: 0.5, ease: [0.4, 0, 1, 1] } } as never}
-              transition={{ duration: 0.75, ease: [0.32, 0.72, 0, 1] }}
-              onAnimationStart={() => {
-                const el = panelRef.current;
-                if (el) el.style.clipPath = MORPH_CLIP;
-              }}
-              onAnimationComplete={(def) => {
-                const el = panelRef.current;
-                if (el && (def as Record<string, unknown>)["--reveal"] === 1) el.style.clipPath = "none";
-              }}
+              style={
+                isMobile && kb.bottom > 0
+                  ? { bottom: kb.bottom, height: "auto", maxHeight: Math.round(kb.height * 0.92) }
+                  : undefined
+              }
+              {...(isMobile
+                ? {
+                    // Phones / tablets: a bottom sheet docked to the bottom edge.
+                    initial: { y: "100%" },
+                    animate: { y: 0 },
+                    exit: { y: "100%" },
+                    transition: { type: "spring", damping: 30, stiffness: 320 },
+                  }
+                : {
+                    initial: { "--reveal": 0 } as never,
+                    animate: { "--reveal": 1 } as never,
+                    exit: { "--reveal": 0, transition: { duration: 0.5, ease: [0.4, 0, 1, 1] } } as never,
+                    transition: { duration: 0.75, ease: [0.32, 0.72, 0, 1] },
+                    onAnimationStart: () => {
+                      const el = panelRef.current;
+                      if (el) el.style.clipPath = MORPH_CLIP;
+                    },
+                    onAnimationComplete: (def: unknown) => {
+                      const el = panelRef.current;
+                      if (el && (def as Record<string, unknown>)["--reveal"] === 1) el.style.clipPath = "none";
+                    },
+                  })}
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6 outline-none [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? "inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] rounded-t-[28px] border-b-0 px-4 pt-4 pb-[env(safe-area-inset-bottom)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -548,10 +566,10 @@ export function TopicPickerModal({
                 <button
                   type="button"
                   onClick={() => setView("about")}
-                  className="mt-3 flex w-full shrink-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-left hover:bg-white/10 transition-colors cursor-pointer"
+                  className={`mt-3 ${isMobile ? "mb-4" : ""} flex w-full shrink-0 items-center gap-3 rounded-full border border-white/10 bg-white/5 p-1.5 text-left hover:bg-white/10 transition-colors cursor-pointer`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/huda-logo-circle.webp" alt="" width={28} height={28} className="h-7 w-7 shrink-0 rounded-full object-contain" />
+                  <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-contain" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-bold text-white">About HuDa Web Quran</span>
                     <span className="block truncate text-[11px] text-sand-200/60">

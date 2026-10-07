@@ -970,8 +970,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // of the active element and the prelude, not only when the track changes.
   const currentRef = useRef(current);
   currentRef.current = current;
-  const applyMediaMetadata = useCallback(() => {
+  const metaRetryRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const applyMediaMetadata = useCallback((retry = true) => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
+    // iOS can still blank the card just after a new stream starts (Now Playing
+    // is rebuilt from the element a moment later): set it again shortly after.
+    if (retry) {
+      metaRetryRef.current.forEach(clearTimeout);
+      metaRetryRef.current = [500, 2000].map((ms) => setTimeout(() => applyMediaMetadata(false), ms));
+    }
     const track = currentRef.current;
     if (!track) {
       navigator.mediaSession.metadata = null;
@@ -996,6 +1003,20 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     applyMediaMetadata();
   }, [current, applyMediaMetadata]);
+  // Pending retries must not outlive the provider.
+  useEffect(() => () => metaRetryRef.current.forEach(clearTimeout), []);
+  // Locking the phone is when the lock screen reads it: set it as the page hides.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") applyMediaMetadata(false);
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, [applyMediaMetadata]);
 
   // One recitation at a time: "playback" (not mixable) makes iOS pause this
   // tab when another app — Instagram, a video — starts its sound, and pause
