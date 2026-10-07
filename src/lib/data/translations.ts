@@ -18,7 +18,7 @@ export interface TranslationInfo {
   label: string;
   /** Language in English · translator. */
   hint: string;
-  /** alquran.cloud edition. */
+  /** alquran.cloud edition, or "qurancom:<id>" for Quran.com's API. */
   edition: string;
   dir: "ltr" | "rtl";
   /** Font stack for the meaning text (fonts loaded in globals.css). */
@@ -30,7 +30,7 @@ export const TRANSLATIONS: TranslationInfo[] = [
   { id: "ta", label: "தமிழ்", hint: "Tamil · Jan Trust", edition: "ta.tamil", dir: "ltr", font: "var(--font-tamil)" },
   { id: "ur", label: "اردو", hint: "Urdu · Fateh Muhammad Jalandhry", edition: "ur.jalandhry", dir: "rtl", font: "'Noto Nastaliq Urdu', serif" },
   { id: "ml", label: "മലയാളം", hint: "Malayalam · Abdul Hameed & Parappoor", edition: "ml.abdulhameed", dir: "ltr", font: "'Noto Sans Malayalam', sans-serif" },
-  { id: "hi", label: "हिन्दी", hint: "Hindi · Suhel Farooq Khan", edition: "hi.hindi", dir: "ltr", font: "'Noto Sans Devanagari', sans-serif" },
+  { id: "hi", label: "हिन्दी", hint: "Hindi · Azizul Haque al-Umari", edition: "qurancom:122", dir: "ltr", font: "'Noto Sans Devanagari', sans-serif" },
   { id: "id", label: "Bahasa Indonesia", hint: "Indonesian · Ministry of Religious Affairs", edition: "id.indonesian", dir: "ltr" },
   { id: "bn", label: "বাংলা", hint: "Bengali · Muhiuddin Khan", edition: "bn.bengali", dir: "ltr", font: "'Noto Sans Bengali', sans-serif" },
   { id: "tr", label: "Türkçe", hint: "Turkish · Diyanet İşleri", edition: "tr.diyanet", dir: "ltr" },
@@ -170,10 +170,11 @@ export type MeaningTarget =
   | null;
 
 /**
- * The meaning of `target` in an extra (non built-in) language: null while
- * loading, for English / Tamil, or when it can't be had.
+ * The meaning of `target` in an extra (non built-in) language: undefined while
+ * loading (and for English / Tamil), null when it can't be had (offline, file
+ * missing) — the caller then shows English.
  */
-export function useExtraMeaning(lang: TranslationLang, target: MeaningTarget): string | null {
+export function useExtraMeaning(lang: TranslationLang, target: MeaningTarget): string | null | undefined {
   const kind = target?.kind ?? null;
   const surah = target?.kind === "ayah" ? target.surah : kind === "bismillah" ? 1 : 0;
   const ayah = target?.kind === "ayah" ? target.ayah : kind === "bismillah" ? 1 : 0;
@@ -195,5 +196,5 @@ export function useExtraMeaning(lang: TranslationLang, target: MeaningTarget): s
     };
   }, [key, kind, lang, surah, ayah]);
 
-  return key && found?.key === key ? found.text : null;
+  return key && found?.key === key ? found.text : undefined;
 }

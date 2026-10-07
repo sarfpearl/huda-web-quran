@@ -539,7 +539,9 @@ export function CenterVerseDisplay({
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
-  const meaning = translationInfo(translationLang);
+  // An extra language that couldn't be loaded falls back to English.
+  const meaningMissing = extraMeaning === null;
+  const meaning = translationInfo(meaningMissing ? "en" : translationLang);
 
   // Verse Sync reciters: hide the verse text + meaning — the recitation audio
   // does not align word-for-word with the on-screen letters, so showing them
@@ -756,7 +758,7 @@ export function CenterVerseDisplay({
             >
               {translationLang === "ta"
                 ? activeItem.textTamil || activeItem.textEnglish
-                : translationLang === "en"
+                : translationLang === "en" || meaningMissing
                   ? activeItem.textEnglish
                   : extraMeaning ?? ""}
             </p>

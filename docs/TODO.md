@@ -32,9 +32,17 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       (யாஸீன்) and Arabic with vowel marks; a typed number lists that Surah
       first (`src/lib/data/surahSearch.ts`). Hizb isn't shown anywhere in the
       app (not a feature today).
-- [ ] **2. Translation mapping** — every translation verse-aligned to its Arabic
-      verse (count per Surah, spot-check long Surahs); English, Tamil, other
-      languages; language switch; loading state; missing-translation fallback.
+- [x] **2. Translation mapping** (2026-10-06) — `node scripts/qa/translations.cjs`:
+      all 10 languages × 6,236 ayahs = their source edition verbatim, and
+      each meaning closer to Quran.com's same ayah than to its neighbours
+      (0 failures; 15 refrains / short oaths checked by hand, listed in the
+      script). Fixed: **Hindi** switched to Quran.com's Azizul Haque al-Umari
+      — the old hi.hindi (Suhel Farooq Khan) ran ayahs into each other
+      (69:34 showed 69:35's meaning, 26:107 showed 26:108's, ~37 places);
+      **Turkish 3:177–178** (tr.diyanet had 3:178's first half in 3:177)
+      patched from Quran.com's Diyanet. A language file that can't load
+      (offline) now shows English instead of an empty meaning. Surah 1
+      English / Tamil stay hand-tuned (1:3, 1:5, 1:7 Tamil differ on purpose).
 - [ ] **3. Word / audio sync + Arabic highlight accuracy** — audio timing →
       ayah → word → highlight on one timeline. Beginning, middle, long and short
       verses; pause/resume; seek; next / previous verse; all 9 synced reciters
