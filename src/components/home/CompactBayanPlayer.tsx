@@ -166,6 +166,11 @@ export function CompactBayanPlayer({
   const compactRef = useRef<HTMLDivElement>(null);
   const [shellSize, setShellSize] = useState<{ w: number; h: number } | null>(null);
   const [animate, setAnimate] = useState(false);
+  // Until the shell is measured (server render, first paint) the active view
+  // sits in flow, so the shell already has its height — otherwise it rendered
+  // 0 tall and grew on hydration, shifting the ayah above (CLS 0.3).
+  const viewPos = (active: boolean) =>
+    !shellSize && active ? "relative mx-auto" : "absolute bottom-0 left-1/2 -translate-x-1/2";
 
   useLayoutEffect(() => {
     const active = collapsed ? compactRef.current : fullRef.current;
@@ -263,15 +268,14 @@ export function CompactBayanPlayer({
     setCoverSrc(bayan.coverImageUrl ?? null);
   }, [bayan.id, bayan.coverImageUrl]);
 
-  // Preload adjacent and sample Surah images to ensure instantaneous transition without flash
+  // Preload the next / previous Surah's scene so stepping doesn't flash black.
+  // (Each is ~1 MB — two random extra Surahs used to be preloaded as well.)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (surah) {
       const preloadNumbers = [
         surah.number === 114 ? 1 : surah.number + 1,
         surah.number === 1 ? 114 : surah.number - 1,
-        Math.floor(Math.random() * 114) + 1,
-        Math.floor(Math.random() * 114) + 1,
       ];
       preloadNumbers.forEach((n) => {
         const img = new window.Image();
@@ -402,7 +406,7 @@ export function CompactBayanPlayer({
       ) : (
         <span className="w-3" />
       )}
-      <span className="px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
+      <span className="min-w-0 truncate px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
         {isAyahSeq && ayahSeq ? (
           ayahSeq.preType === "istiadhah" ? (
             L.istiadhah
@@ -591,7 +595,7 @@ export function CompactBayanPlayer({
       <div
         ref={compactRef}
         aria-hidden={!collapsed}
-        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
@@ -725,7 +729,7 @@ export function CompactBayanPlayer({
     <div
       ref={fullRef}
       aria-hidden={collapsed}
-      className={`${viewBase} ${collapsed ? viewHidden : viewShown} w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-6 sm:py-6`}
+      className={`${viewPos(!collapsed)} ${viewBase} ${collapsed ? viewHidden : viewShown} player-full w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-6 sm:py-6`}
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
@@ -734,11 +738,12 @@ export function CompactBayanPlayer({
           so NOW PLAYING lines up with the cover's top and the Ayat pill with
           its bottom. */}
       <div className="relative flex items-stretch justify-between gap-3 sm:gap-5">
-        {/* Cover Artwork — left out on very narrow screens, where it would
-            squeeze the title and the Ayat pill */}
+        {/* Cover Artwork — left out when the card is under 300px wide
+            (.player-cover in globals.css), where it would squeeze the title
+            and the Ayat pill */}
         <div
           ref={fullCoverRef}
-          className={`${flight ? "invisible" : ""} max-[379px]:hidden relative h-[7.75rem] aspect-[3/4] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
+          className={`${flight ? "invisible" : ""} player-cover relative h-[7.75rem] aspect-[3/4] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 shadow-[0_6px_18px_rgba(0,0,0,0.55)]`}
         >
           {coverSrc ? (
             <Image
@@ -802,7 +807,7 @@ export function CompactBayanPlayer({
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
           {hasAyahPill && (
-            <div className="mt-2 inline-flex h-9 items-center gap-1.5 w-fit rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
+            <div className="mt-2 inline-flex h-9 items-center gap-0.5 w-fit max-w-full min-w-0 rounded-full bg-black/40 border border-white/15 text-xs sm:text-sm select-none">
               {ayahSteps(pillStepBtn, "h-4 w-4")}
             </div>
           )}
@@ -1313,8 +1318,7 @@ const COLLAPSED_KEY = "huda:player-collapsed";
 const SMALL_SCREEN = "(max-width: 767px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
-const viewBase =
-  "absolute bottom-0 left-1/2 -translate-x-1/2 transition-[opacity,transform,filter] motion-reduce:transition-none";
+const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition-none";
 const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
 const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
 
@@ -1326,8 +1330,10 @@ const compactBtn =
   "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
+// 32px wide (44px hit area via tap-44): with the cover shown, the pill
+// must fit «, "பிஸ்மில்லாஹ்" and » beside it on a 375px phone.
 const pillStepBtn =
-  "tap-44 grid h-full w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";
+  "tap-44 grid h-full w-8 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";
 
 /** « » ayah steps in the compact footer strip — strip height, tighter. */
 const footerStepBtn =

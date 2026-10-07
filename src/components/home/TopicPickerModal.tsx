@@ -24,7 +24,7 @@ import { searchSurahs } from "@/lib/data/surahSearch";
 import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
 import { compactCount } from "./QuranEngagement";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 
@@ -183,7 +183,7 @@ export function TopicPickerModal({
   const countKindsKey = countKinds.join(",");
   useEffect(() => {
     if (!isOpen || !countKindsKey) return;
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase) return;
     let cancelled = false;
     for (const kind of countKindsKey.split(",") as Array<"surah" | "juz">) {
@@ -211,7 +211,7 @@ export function TopicPickerModal({
   }, [isOpen, isFavourites]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isOpen || !isFavourites) return;
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase) {
       setFavouritesFailed(true);
       return;

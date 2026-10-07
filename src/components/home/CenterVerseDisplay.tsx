@@ -84,7 +84,7 @@ function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSS
   return (
     <div
       ref={stageRef}
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
       style={style}
     >
       <div
@@ -245,7 +245,9 @@ export function CenterVerseDisplay({
 
   // Reserve exactly the space the floating player and the header occupy (both
   // vary with viewport, safe area and the iOS home-screen status bar), so the
-  // verse stage never runs underneath either of them.
+  // verse stage never runs underneath either of them. Until measured, the
+  // stage's classes give the open screen's values (header 77 / 96px, full
+  // player 343 / 371px) so the server-rendered ayah doesn't jump on hydration.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
   useEffect(() => {
@@ -623,7 +625,7 @@ export function CenterVerseDisplay({
 
   return (
     <div
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
       style={stageInsets}
     >
       <div
@@ -675,7 +677,7 @@ export function CenterVerseDisplay({
             data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic ${indoPak ? "quran-indopak" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow quran-verse-scrim max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic ${indoPak ? "quran-indopak" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
               <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">

@@ -196,13 +196,16 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       return player.current;
     }
     if (overrideBayan) return overrideBayan;
-    // Default initial landing: Surah 1 (Al-Fatihah) for active reciter
+    // Default initial landing: Surah 1 (Al-Fatihah) for active reciter — or a
+    // Surah link's Surah, so /surah/36 doesn't first render (and download)
+    // Al-Fatihah's scene and clip.
+    const landing = deepLink?.kind === "surah" ? deepLink.surah : 1;
     return (
-      surahTracksForCurrentReciter[0] ??
+      surahTracksForCurrentReciter[landing - 1] ??
       SURAH_TRACKS[0] ??
       null
     );
-  }, [overrideBayan, player, surahTracksForCurrentReciter]);
+  }, [overrideBayan, player, surahTracksForCurrentReciter, deepLink]);
 
   // Resolve active Surah metadata if activeBayan is a Surah track
   const activeSurah = useMemo(() => {
@@ -1075,9 +1078,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const openSurahSeqRef = useRef(0);
   // Recite a Surah from an ayah: a seek within the playing Surah, else that
   // Surah's track cued (or played, when playing) at the ayah.
-  const openSurahAt = (surahNum: number, ayah: number) => {
+  const openSurahAt = (surahNum: number, ayah: number, cue = false) => {
     const seq = ++openSurahSeqRef.current;
-    if (surahNum === activeSurah?.number) {
+    if (!cue && surahNum === activeSurah?.number) {
       handleReadSeek(ayah);
       return;
     }
@@ -1115,7 +1118,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   useEffect(() => {
     if (!mounted || deepLinkAppliedRef.current || deepLink?.kind !== "surah") return;
     deepLinkAppliedRef.current = true;
-    openSurahAt(deepLink.surah, deepLink.ayah);
+    // Cue even though the landing already shows this Surah: nothing is loaded yet.
+    openSurahAt(deepLink.surah, deepLink.ayah, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
   const juzLink = deepLink?.kind === "juz" && !hasPlayed ? deepLink.juz : null;
@@ -1171,11 +1175,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         visualMode={visualMode}
       />
 
-      {/* Scrim over every background so the verse reads clearly on any scene,
-          bright ones too — the Tajweed glyph words carry no text shadow on
-          WebKit. Darker towards the edges, where the header and player sit. */}
+      {/* An even 40% black over every background (owner's choice, 2026-10-07:
+          no dark patch behind the ayah any more). */}
       <div
-        className="absolute inset-0 z-[1] pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.35),rgba(0,0,0,0.55))]"
+        className="absolute inset-0 z-[1] pointer-events-none bg-black/40"
         aria-hidden="true"
       />
 

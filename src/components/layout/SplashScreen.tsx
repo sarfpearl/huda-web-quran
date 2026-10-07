@@ -22,7 +22,7 @@ export function SplashScreen() {
     <>
       <div id="huda-splash" role="status" aria-label="Loading HuDa">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/huda-logo.webp?v=2" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
+        <img src="/huda-logo.webp?v=3" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
         <p className="huda-splash-name">HuDa</p>
         <p className="huda-splash-tagline">Guidance for every moment</p>
         <div className="huda-splash-bar" aria-hidden="true">
