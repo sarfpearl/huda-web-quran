@@ -618,6 +618,14 @@ textarea,
 .player-full {
   container: player-full / inline-size;
 }
+/* 300–343px cards (≈330–374px phones): a narrower cover, 72px instead of
+   93, so the title and the Ayat pill keep their room. */
+@container player-full (max-width: 310.98px) {
+  .player-cover {
+    width: 72px;
+    aspect-ratio: auto;
+  }
+}
 @container player-full (max-width: 267.98px) {
   .player-cover {
     display: none;

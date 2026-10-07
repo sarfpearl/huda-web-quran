@@ -1175,10 +1175,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         visualMode={visualMode}
       />
 
-      {/* An even 20% black over every background (owner's choice, 2026-10-07:
+      {/* An even 40% black over every background (owner's choice, 2026-10-07:
           no dark patch behind the ayah any more). */}
       <div
-        className="absolute inset-0 z-[1] pointer-events-none bg-black/20"
+        className="absolute inset-0 z-[1] pointer-events-none bg-black/40"
         aria-hidden="true"
       />
 
