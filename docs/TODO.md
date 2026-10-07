@@ -26,8 +26,8 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       search was 23px off-screen); Juz share checked in the browser
       (`/juz/30`, share sheet + copied link); an install prompt arriving after
       the sheet opened no longer swaps the steps — the bottom button becomes
-      "Install app" (same height, 0 layout shift). **Still open:** 404 page
-      polish (item 7, owner skipped). Local dev beside another `next dev`:
+      "Install app" (same height, 0 layout shift). 404 page polish: see
+      item 7. Local dev beside another `next dev`:
       the "dev-alt" launch config (`NEXT_DIST_DIR=.next-dev-alt`) — two dev
       servers on one `.next` turn pages into 404s.
 - [ ] **Content (owner)** — 103 Surahs have no background clip (they show
@@ -151,8 +151,16 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       title follow the Surah / ayah or Juz (`replaceState`), so refresh or
       sharing comes back to it; "/" still opens on Al-Fatihah and stays "/"
       until something plays; a link visit skips the auto-opening content
-      browser. **Not done (owner skipped for now):** 404 polish
-      (site title + splash on the 404 page).
+      browser. **404 polish (2026-10-07, `fix/404-polish`):**
+      title "Page not found · HuDa" (also under /surah/… and /juz/… — their
+      generateMetadata returned {} and the client swapped the title back to
+      the site's; now `notFoundMetadata` in `src/lib/site.ts`), no opening
+      splash (`html:has([data-not-found])`), the HuDa logo, a Tamil line,
+      its own theme colours — a bad /surah/… number rendered inside the
+      home's black wrapper, so light-theme text was dark on black; and
+      under /surah/… and /juz/… the 404 lost the `dark` class (ThemeProvider
+      now re-applies it on mount). Checked light + dark on /nope,
+      /surah/999, /surah/2/999, /juz/31.
 - [x] **8. Responsive** (2026-10-06) — `scripts/qa/responsive-check.js` at
       1440 / 1280 / 1024 / 820 / 768 / 430 / 412 / 393 / 390 px, on the home
       screen with an ayah on screen, the content browser, the reciter picker

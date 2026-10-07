@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 /** Central site configuration used for SEO, share links, and branding. */
 export const siteConfig = {
   name: "HuDa",
@@ -55,3 +57,13 @@ export function absoluteUrl(path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;
   return `${siteConfig.url}${clean}`;
 }
+
+/**
+ * The 404 page's metadata — also returned by a /surah/… or /juz/… link's
+ * generateMetadata for a bad number, else the client swaps the title back to
+ * the site's own.
+ */
+export const notFoundMetadata: Metadata = {
+  title: "Page not found",
+  robots: { index: false },
+};

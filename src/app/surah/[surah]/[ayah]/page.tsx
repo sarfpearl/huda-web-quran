@@ -4,13 +4,13 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ImmersiveHomeClient } from "@/components/home/ImmersiveHomeClient";
 import { deepLinkMeta, parseSurahLink } from "@/lib/deepLink";
 import { deepLinkJsonLd } from "@/lib/structuredData";
-import { absoluteUrl, shareMetadata } from "@/lib/site";
+import { absoluteUrl, notFoundMetadata, shareMetadata } from "@/lib/site";
 
 type Props = { params: { surah: string; ayah: string } };
 
 export function generateMetadata({ params }: Props): Metadata {
   const link = parseSurahLink(params.surah, params.ayah);
-  if (!link) return {};
+  if (!link) return notFoundMetadata;
   const { title, description } = deepLinkMeta(link);
   // One page per Surah in search: an ayah link is canonical to its Surah.
   return {

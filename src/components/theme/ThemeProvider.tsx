@@ -35,7 +35,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
+    // Worked out again, not read off <html>: a 404 under /surah/… or /juz/…
+    // re-renders <html> and drops the class the head script set.
+    let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) isDark = saved === "dark";
+    } catch {
+      /* ignore */
+    }
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
     setThemeState(isDark ? "dark" : "light");
   }, []);
 
