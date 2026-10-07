@@ -242,9 +242,9 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       (2026-10-07) makes a .webp beside each of the 288 JPEGs (114 Surah + 30
       Juz scenes + thumbnails), SSIM ≥ 0.97 each: scenes 164.8 → 49.8 MB
       (Al-Fatihah 798 → 159 KB), thumbs 3.4 → 2.2 MB; the app now asks for
-      .webp (`quranImageUrl` / `quranThumbUrl`) — **upload the WebPs before
-      this deploys** (`--upload --execute`; inventory shows "288 already have
-      a .webp" when done); Ya-Sin's clip is a 175 KB blue placeholder;
+      .webp (`quranImageUrl` / `quranThumbUrl`). **Uploaded 2026-10-07:** all
+      288 on R2 (`image/webp`, verified by size; every URL the app builds
+      returns 200), scene + cover + list thumbnails checked in the browser; Ya-Sin's clip is a 175 KB blue placeholder;
       (b) on a very slow line the install prompt can still arrive after the
       sheet opened (perf-slow: at 22 s) and swap the steps for the Install
       button — a 0.2 layout shift; (c) offline: no service worker, so the
