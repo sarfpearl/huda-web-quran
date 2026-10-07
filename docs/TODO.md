@@ -98,8 +98,19 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       is the Madinah page view only (no separate "continuous" mode). Noted,
       not changed: the « Bookmark » pill sits over the pane's faded top edge
       while reading (by design — it stays until its ayah is on screen).
-- [ ] **7. Navigation** — every nav item, browser back / forward, refresh,
-      direct URL and deep links, 404 page, loading states.
+- [~] **7. Navigation** (2026-10-06) — checked: 404 page, Back to Home,
+      browser back / forward, refresh. **Added (owner's choice): deep links**
+      (`src/lib/deepLink.ts`): `/surah/36`, `/surah/36/3` (an ayah) cue that
+      Surah at that ayah (play is the visitor's tap — browsers block
+      autoplay); `/juz/30` shows a « ▶ Juz 30 » pill; each has its own title,
+      description and canonical (an ayah link → its Surah); sitemap lists 114
+      Surahs + 30 Juz; bad numbers → 404. While playing, the address and
+      title follow the Surah / ayah or Juz (`replaceState`), so refresh or
+      sharing comes back to it; "/" still opens on Al-Fatihah and stays "/"
+      until something plays; a link visit skips the auto-opening content
+      browser. **Not done (owner skipped for now):** Back closing modals
+      (Back on Android leaves the site while a picker is open); 404 polish
+      (site title + splash on the 404 page).
 - [ ] **8. Responsive** — 1440 / 1280 / 1024, 768 / 820, 390 / 393 / 412 /
       430 px: no horizontal scroll, player fits, Arabic doesn't overflow,
       tap targets, header, cards, modals, translation, reciter selector.
