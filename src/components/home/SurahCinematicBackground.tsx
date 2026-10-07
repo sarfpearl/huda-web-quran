@@ -188,7 +188,6 @@ export function SurahCinematicBackground({
         src={quranImageUrl("surah", surahNumber)}
         alt=""
         decoding="async"
-        fetchPriority="high"
         onLoad={refreshBackdrops}
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
       />
@@ -202,7 +201,9 @@ export function SurahCinematicBackground({
           loop
           muted
           playsInline
-          preload="auto"
+          // Paused (the open screen): buffer just enough for the first frame
+          // (~3 MB of Al-Fatihah's 20 MB clip, not ~15) — fully once playing.
+          preload={isPlaying ? "auto" : "metadata"}
           onCanPlay={() => handleSlotCanPlay(0)}
           onPause={() => resumeIfActive(0)}
           className={`absolute inset-0 h-full w-full object-cover object-center ${
@@ -226,7 +227,7 @@ export function SurahCinematicBackground({
           loop
           muted
           playsInline
-          preload="auto"
+          preload={isPlaying ? "auto" : "metadata"}
           onCanPlay={() => handleSlotCanPlay(1)}
           onPause={() => resumeIfActive(1)}
           className={`absolute inset-0 h-full w-full object-cover object-center ${

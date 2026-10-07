@@ -166,6 +166,11 @@ export function CompactBayanPlayer({
   const compactRef = useRef<HTMLDivElement>(null);
   const [shellSize, setShellSize] = useState<{ w: number; h: number } | null>(null);
   const [animate, setAnimate] = useState(false);
+  // Until the shell is measured (server render, first paint) the active view
+  // sits in flow, so the shell already has its height — otherwise it rendered
+  // 0 tall and grew on hydration, shifting the ayah above (CLS 0.3).
+  const viewPos = (active: boolean) =>
+    !shellSize && active ? "relative mx-auto" : "absolute bottom-0 left-1/2 -translate-x-1/2";
 
   useLayoutEffect(() => {
     const active = collapsed ? compactRef.current : fullRef.current;
@@ -263,15 +268,14 @@ export function CompactBayanPlayer({
     setCoverSrc(bayan.coverImageUrl ?? null);
   }, [bayan.id, bayan.coverImageUrl]);
 
-  // Preload adjacent and sample Surah images to ensure instantaneous transition without flash
+  // Preload the next / previous Surah's scene so stepping doesn't flash black.
+  // (Each is ~1 MB — two random extra Surahs used to be preloaded as well.)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (surah) {
       const preloadNumbers = [
         surah.number === 114 ? 1 : surah.number + 1,
         surah.number === 1 ? 114 : surah.number - 1,
-        Math.floor(Math.random() * 114) + 1,
-        Math.floor(Math.random() * 114) + 1,
       ];
       preloadNumbers.forEach((n) => {
         const img = new window.Image();
@@ -591,7 +595,7 @@ export function CompactBayanPlayer({
       <div
         ref={compactRef}
         aria-hidden={!collapsed}
-        className={`${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
@@ -725,7 +729,7 @@ export function CompactBayanPlayer({
     <div
       ref={fullRef}
       aria-hidden={collapsed}
-      className={`${viewBase} ${collapsed ? viewHidden : viewShown} w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-6 sm:py-6`}
+      className={`${viewPos(!collapsed)} ${viewBase} ${collapsed ? viewHidden : viewShown} w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-6 sm:py-6`}
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
@@ -1313,8 +1317,7 @@ const COLLAPSED_KEY = "huda:player-collapsed";
 const SMALL_SCREEN = "(max-width: 767px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
-const viewBase =
-  "absolute bottom-0 left-1/2 -translate-x-1/2 transition-[opacity,transform,filter] motion-reduce:transition-none";
+const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition-none";
 const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
 const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
 

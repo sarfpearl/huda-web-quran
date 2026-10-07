@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
 import { quranContentOf } from "@/components/home/QuranEngagement";
 
@@ -39,7 +39,7 @@ export function SurahListenCounter() {
   };
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase) return;
 
     const flush = () => {

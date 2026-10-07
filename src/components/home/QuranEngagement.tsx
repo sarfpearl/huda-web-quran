@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
 import {
   QURAN_JUZ,
@@ -148,7 +148,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   const [likes, setLikes] = useState<{ count: number; liked: boolean } | null>(null);
 
   useEffect(() => {
-    setConfigured(Boolean(getSupabaseBrowserClient()));
+    setConfigured(Boolean(getSupabaseRpcClient()));
     try {
       setNameState(localStorage.getItem(NAME_KEY) ?? "");
     } catch {
@@ -172,7 +172,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   }, []);
 
   const loadComments = useCallback(() => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase) return;
     supabase
       .rpc("get_quran_comments", { p_kind: GENERAL.kind, p_ref: GENERAL.ref, p_limit: 50, p_viewer: getSessionId() })
@@ -184,7 +184,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   }, []);
 
   const loadStats = useCallback(() => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase || !kind || !ref) return setStatsFailed(true);
     supabase.rpc("get_quran_view_stats", { p_kind: kind, p_ref: ref }).then(
       ({ data, error }) => {
@@ -199,7 +199,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   }, [kind, ref]);
 
   const loadLikes = useCallback(() => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase || !kind || !ref) return;
     supabase
       .rpc("get_quran_likes", { p_viewer: getSessionId(), p_kind: kind, p_ref: ref })
@@ -228,7 +228,7 @@ export function useQuranEngagement(content: QuranContent | null) {
 
   /** Like / un-like (optimistic; reverts if the server says no). */
   const toggleLike = useCallback(async () => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase || !kind || !ref) return;
     let before: { count: number; liked: boolean } | null = null;
     setLikes((l) => {
@@ -252,7 +252,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   /** Returns an error message, or null on success. */
   const post = useCallback(
     async (body: string, parentId?: string | null): Promise<"rate" | "failed" | null> => {
-      const supabase = getSupabaseBrowserClient();
+      const supabase = getSupabaseRpcClient();
       if (!supabase) return "failed";
       try {
         const { data, error } = await supabase.rpc("add_quran_comment", {
@@ -276,7 +276,7 @@ export function useQuranEngagement(content: QuranContent | null) {
   );
 
   const remove = useCallback(async (id: string) => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase) return;
     let before: QuranComment[] = [];
     setComments((c) => {
@@ -291,7 +291,7 @@ export function useQuranEngagement(content: QuranContent | null) {
 
   /** Like / un-like a comment (optimistic; reverts if the server says no). */
   const toggleCommentLike = useCallback(async (id: string) => {
-    const supabase = getSupabaseBrowserClient();
+    const supabase = getSupabaseRpcClient();
     if (!supabase) return;
     let before: QuranComment | undefined;
     const patch = (fn: (c: QuranComment) => QuranComment) =>

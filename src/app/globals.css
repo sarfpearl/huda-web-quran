@@ -1,10 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-/* Noto Serif Tamil — Elegant Unicode Tamil serif font for translations. */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
-/* Ayah meanings in other scripts (src/lib/data/translations.ts). The browser
-   downloads a script's font files only when that text is on screen. */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500&family=Noto+Sans+Malayalam:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&family=Noto+Sans+Bengali:wght@400;500&family=Noto+Naskh+Arabic:wght@400;500&display=swap');
+/* Poppins, Amiri, Noto Serif Tamil and the other scripts' Noto fonts are
+   self-hosted by next/font (src/app/fonts.ts), which sets --font-poppins,
+   --font-tamil, --font-amiri, --font-urdu … on <html>. */
 
 /* KFGQPC Uthmanic Script HAFS v0.18 — Madinah Mushaf font for Quran Arabic
    text, the build Quran.com ships (v0.09 couldn't draw U+06ED). It's made for
@@ -31,9 +27,7 @@
  */
 @layer base {
   :root {
-    --font-poppins: 'Poppins', sans-serif;
-    --font-arabic: 'Uthmanic Hafs', 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
-    --font-tamil: 'Noto Serif Tamil', serif;
+    --font-arabic: 'Uthmanic Hafs', var(--font-amiri), 'Traditional Arabic', 'Scheherazade New', serif;
     /* Height reserved for the mobile bottom nav (incl. safe area). The player
        bar is positioned `bottom: var(--nav-height)` so the two never overlap. */
     --nav-height: calc(56px + env(safe-area-inset-bottom));
@@ -623,5 +617,5 @@ textarea,
    (OFL) draws it — a few words use that font's private-use marks and show
    as boxes, which is why IndoPak stays development-only for now. */
 .font-arabic.quran-indopak {
-  font-family: 'IndoPak', 'Noto Naskh Arabic', 'Uthmanic Hafs', serif;
+  font-family: 'IndoPak', var(--font-naskh), 'Uthmanic Hafs', serif;
 }

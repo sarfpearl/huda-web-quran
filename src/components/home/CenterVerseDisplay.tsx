@@ -84,7 +84,7 @@ function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSS
   return (
     <div
       ref={stageRef}
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
       style={style}
     >
       <div
@@ -245,7 +245,9 @@ export function CenterVerseDisplay({
 
   // Reserve exactly the space the floating player and the header occupy (both
   // vary with viewport, safe area and the iOS home-screen status bar), so the
-  // verse stage never runs underneath either of them.
+  // verse stage never runs underneath either of them. Until measured, the
+  // stage's classes give the open screen's values (header 77 / 96px, full
+  // player 343 / 371px) so the server-rendered ayah doesn't jump on hydration.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
   useEffect(() => {
@@ -623,7 +625,7 @@ export function CenterVerseDisplay({
 
   return (
     <div
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-16 sm:pt-20 pb-48 sm:pb-52 md:pb-56"
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
       style={stageInsets}
     >
       <div

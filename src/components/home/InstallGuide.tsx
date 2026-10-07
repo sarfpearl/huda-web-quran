@@ -10,6 +10,10 @@ const DISMISSED_KEY = "huda-install-dismissed";
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
 // A beat after the location prompt is answered, so the two don't run together.
 const SHOW_DELAY_MS = 800;
+// Browsers with their own install prompt: wait this long for it before
+// opening, so the sheet doesn't open on the steps and then swap to the Install
+// button (a jump — layout shift — on slow connections).
+const PROMPT_WAIT_MS = 6000;
 // How long each animated step stays on screen.
 const STEP_MS = 3200;
 // Fired by InstallGuideButton to bring the guide back after "Got it".
@@ -50,6 +54,21 @@ function useInstallPrompt() {
     () => deferredPrompt,
     () => null,
   );
+}
+
+/** Resolves once the install prompt has arrived, or after `ms` (or at once
+ *  if this browser never fires one). */
+function waitForPrompt(ms: number): Promise<void> {
+  if (deferredPrompt || !("onbeforeinstallprompt" in window)) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => {
+      promptListeners.delete(done);
+      window.clearTimeout(t);
+      resolve();
+    };
+    const t = window.setTimeout(done, ms);
+    promptListeners.add(done);
+  });
 }
 
 /** Opens the browser's own Install dialog; resolves true when the user accepts. */
@@ -382,9 +401,11 @@ export function InstallGuide() {
     let cancelled = false;
     if (!detected || snoozed()) finishStage("install");
     else
-      afterStage("location").then(() => {
-        if (!cancelled) timer = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
-      });
+      afterStage("location")
+        .then(() => waitForPrompt(PROMPT_WAIT_MS))
+        .then(() => {
+          if (!cancelled) timer = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
+        });
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
@@ -505,14 +526,21 @@ export function InstallGuide() {
                     <PhoneDemo chrome={env.chrome} scene={current.scene} sceneKey={step} />
                   </div>
 
-                  <div className="mt-3 min-h-[64px]" aria-live="polite">
-                    <p className="text-sm leading-snug">
-                      <span className="mr-1.5 font-semibold text-emerald-400">
-                        {step + 1}/{env.steps.length}
-                      </span>
-                      {current.en}
-                    </p>
-                    <p className="font-tamil mt-0.5 text-xs text-sand-300/85 leading-snug">{current.ta}</p>
+                  {/* Every step's text sits in one grid cell (only the current one
+                      shown), so the card is always as tall as the longest step and
+                      doesn't jump as the steps play (layout shift). */}
+                  <div className="mt-3 grid" aria-live="polite">
+                    {env.steps.map((st, i) => (
+                      <div key={i} className={`[grid-area:1/1] ${i === step ? "" : "invisible"}`} aria-hidden={i !== step}>
+                        <p className="text-sm leading-snug">
+                          <span className="mr-1.5 font-semibold text-emerald-400">
+                            {i + 1}/{env.steps.length}
+                          </span>
+                          {st.en}
+                        </p>
+                        <p className="font-tamil mt-0.5 text-xs text-sand-300/85 leading-snug">{st.ta}</p>
+                      </div>
+                    ))}
                   </div>
 
                   <div className="mt-1 flex justify-center gap-1" role="tablist" aria-label="Steps">

@@ -200,8 +200,40 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       **After deploy:** re-run against the live site, and check a link in
       Facebook's Sharing Debugger / a WhatsApp chat (WhatsApp caches a
       preview per URL — the old image-less ones may linger).
-- [ ] **13. Performance** — FCP / LCP, JS bundle size, images, audio
-      loading, lazy loading, slow 4G, offline / error state.
+- [~] **13. Performance** (2026-10-07) — production build (`NEXT_DIST_DIR=.next-prod`,
+      "prod" launch config), Lighthouse 12 mobile + `scripts/qa/perf-slow.mjs`
+      (real Chrome, slow 4G + 4× CPU). Mobile score 57 → 85, desktop 99;
+      FCP 2.9 → 0.9 s; CLS 0.30 → 0.01; page weight on open 17 MB → 6.4 MB
+      (home), 25.7 → 7.0 MB (/surah/36); home JS 354 → 294 kB. Slow 4G probe:
+      FCP 0.75 s, LCP 1.5 s (splash logo). Lighthouse's simulated LCP (4.1 s)
+      counts the splash's parallel scene image — not what the phone paints.
+      **Fixed:** (1) the paused open screen buffered ~15 MB of Al-Fatihah's
+      20 MB clip — `preload="metadata"` until playing (same first frame,
+      ~3 MB); (2) /surah/N first rendered — and downloaded — Al-Fatihah's
+      scene and clip before switching (the landing track is now the link's
+      Surah); (3) two random Surah images (~1 MB each) preloaded on every
+      Surah change — only next / previous now; (4) Google Fonts via four
+      render-blocking CSS `@import`s → self-hosted `next/font`
+      (`src/app/fonts.ts`), metric-matched fallbacks, no italics (unused),
+      only Poppins latin preloaded; (5) CLS 0.30 on hydration — the player
+      shell rendered 0 tall until measured, and the verse stage's fallback
+      paddings (192 / 64px) were far from the measured 343 / 77px; (6) the
+      install sheet grew / shrank between steps (all steps' text now share
+      one grid cell), and on Android Chrome it waits up to 6 s for the
+      browser's install prompt before opening; (7) public pages used the full
+      Supabase client (auth + realtime) for `.rpc()` only → PostgREST client
+      (`src/lib/supabase/rpc.ts`, −60 kB); admin keeps the full one. Splash
+      logo 512 → 384px (68 → 43 KB). Thumbnails are lazy (next/image).
+      **Not done / owner:** (a) R2 media — Al-Fatihah's clip is 20 MB for
+      19 s of 720p (8.6 Mbps; ~2 Mbps would look the same on a phone), scene
+      images are 2560px JPEGs of ~1 MB (WebP / AVIF ≈ 40% smaller) — needs
+      re-encoding + upload; Ya-Sin's clip is a 175 KB blue placeholder;
+      (b) on a very slow line the install prompt can still arrive after the
+      sheet opened (perf-slow: at 22 s) and swap the steps for the Install
+      button — a 0.2 layout shift; (c) offline: no service worker, so the
+      site can't open offline (audio offline handling: item 4); (d) a Surah
+      link preloads its recitation (~3 MB) before play — kept, so play is
+      instant for someone who followed a link.
 - [ ] **14. Accessibility** — keyboard nav, focus states, screen-reader and
       button labels, audio controls, contrast, Arabic readability, touch
       targets ≥ 44 px, reduced motion.
