@@ -226,10 +226,20 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       Supabase client (auth + realtime) for `.rpc()` only → PostgREST client
       (`src/lib/supabase/rpc.ts`, −60 kB); admin keeps the full one. Splash
       logo 512 → 384px (68 → 43 KB). Thumbnails are lazy (next/image).
-      **Not done / owner:** (a) R2 media — Al-Fatihah's clip is 20 MB for
-      19 s of 720p (8.6 Mbps; ~2 Mbps would look the same on a phone), scene
-      images are 2560px JPEGs of ~1 MB (WebP / AVIF ≈ 40% smaller) — needs
-      re-encoding + upload; Ya-Sin's clip is a 175 KB blue placeholder;
+      **Not done / owner:** (a) R2 media — videos: `scripts/tools/reencode-videos.mjs`
+      (2026-10-07; inventory → `--encode` → `--upload --execute`): each clip
+      climbs a bitrate ladder until VMAF ≥ 88 vs its source, audio stripped,
+      faststart, same R2 keys. The 69 clips on R2 are 1,368 MB; Al-Baqarah /
+      Juz 1 clips are 8 s of 1080p at 7–58 Mbps. **Done 2026-10-07:** 57
+      clips re-encoded and uploaded, 1,365 → 386 MB (−72%; Al-Baqarah 1,088
+      → 310 MB), VMAF min 88.1 / median 91.2, each verified on R2 by size and
+      played in the browser (Al-Fatihah 20.5 → 7.0 MB, Baqarah 08e 57.9 →
+      17.2 MB); 12 light clips (≤0.4 MB) left as they were. Backup of the
+      R2-only original (Al-Fatihah): `.media-work/originals/`; the rest are
+      the local masters in `public/videos/`. **28 referenced clips aren't on R2**
+      (404: `/videos/ayah/002/*`, Aal-Imran chapters 02a–10b) — the scene
+      stays on its image. Scene images are 2560px JPEGs of ~1 MB (WebP /
+      AVIF ≈ 40% smaller) — not done; Ya-Sin's clip is a 175 KB blue placeholder;
       (b) on a very slow line the install prompt can still arrive after the
       sheet opened (perf-slow: at 22 s) and swap the steps for the Install
       button — a 0.2 layout shift; (c) offline: no service worker, so the
