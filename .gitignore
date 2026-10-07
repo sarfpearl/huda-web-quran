@@ -35,3 +35,6 @@ scratch/
 # QA audio envelopes (scripts/qa/voice-match.cjs)
 /.qa-cache/
 .env*
+
+# Video re-encode work dir (scripts/tools/reencode-videos.mjs): R2 backups + encodes
+/.media-work
