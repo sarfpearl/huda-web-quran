@@ -35,19 +35,50 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isHome]);
 
-  // iOS Safari ignores user-scalable=no, so block its pinch gestures directly.
+  // iOS Safari ignores user-scalable=no, so block its pinch gestures directly
+  // — in the capture phase, so a control that stops a touch's propagation
+  // (seek ring, sheet handle, reading view) can't let a pinch through.
+  // Should the page still end up zoomed in (a pinch that began during a
+  // rotation, the keyboard closing), it is put back at 1× by re-applying the
+  // viewport tag, which makes Safari re-fit the page.
   useEffect(() => {
+    const opts = { passive: false, capture: true } as const;
     const block = (ev: Event) => ev.preventDefault();
     const blockPinch = (ev: TouchEvent) => {
       if (ev.touches.length > 1) ev.preventDefault();
     };
-    document.addEventListener("gesturestart", block, { passive: false });
-    document.addEventListener("gesturechange", block, { passive: false });
-    document.addEventListener("touchmove", blockPinch, { passive: false });
+    document.addEventListener("gesturestart", block, opts);
+    document.addEventListener("gesturechange", block, opts);
+    document.addEventListener("touchstart", blockPinch, opts);
+    document.addEventListener("touchmove", blockPinch, opts);
+
+    const vv = window.visualViewport;
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const refit = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (!vv || !meta || vv.scale <= 1.01) return;
+        // Not while typing: the keyboard's own scroll would jump.
+        const el = document.activeElement;
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
+        const content = meta.content;
+        meta.content = `${content.replace(/,?\s*maximum-scale=[^,]*/i, "")}, maximum-scale=1.0001`;
+        requestAnimationFrame(() => (meta.content = content));
+      }, 250);
+    };
+    vv?.addEventListener("resize", refit);
+    window.addEventListener("orientationchange", refit);
+    window.addEventListener("focusout", refit);
     return () => {
-      document.removeEventListener("gesturestart", block);
-      document.removeEventListener("gesturechange", block);
-      document.removeEventListener("touchmove", blockPinch);
+      document.removeEventListener("gesturestart", block, opts);
+      document.removeEventListener("gesturechange", block, opts);
+      document.removeEventListener("touchstart", blockPinch, opts);
+      document.removeEventListener("touchmove", blockPinch, opts);
+      vv?.removeEventListener("resize", refit);
+      window.removeEventListener("orientationchange", refit);
+      window.removeEventListener("focusout", refit);
+      clearTimeout(t);
     };
   }, []);
 

@@ -11,7 +11,7 @@
  *
  * Bump VERSION to drop every cache on the next visit.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const PAGES = `huda-pages-${VERSION}`;
 const STATIC = `huda-static-${VERSION}`;
 const DATA = `huda-data-${VERSION}`;

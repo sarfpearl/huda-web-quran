@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { afterSplash, finishStage } from "@/lib/onboarding";
 import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
 import { clock, currentWaqt, PRAYER_LABELS, regionDefaults, type AsrMadhab, type MethodId } from "@/lib/prayerTimes";
 import { PrayerTimesSheet, readPrayerPrefs, type PrayerPrefs } from "./PrayerTimesSheet";
+import { LocationAskSheet } from "./LocationAskSheet";
 
 // Place names as plain letters: "Gūduvāncheri" → "Guduvancheri" — the macrons
 // read as stray lines over the small label.
@@ -13,7 +14,8 @@ const plain = (name: string) =>
 
 // The last place found, kept so a reload doesn't ask again: iOS Safari
 // forgets a site's location permission between loads and would prompt every
-// time. Asked again only after a week, and never once denied.
+// time. Asked again only after a week, and never on its own once denied or
+// "Not now" (a tap on the time pill asks again).
 const PLACE_KEY = "huda-place";
 const PLACE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 interface SavedPlace {
@@ -59,11 +61,22 @@ export function TimeLocationWidget({
   const [region, setRegion] = useState<PlaceDetail | null>(null);
   const [prefs, setPrefs] = useState<PrayerPrefs>({});
   const [sheetOpen, setSheetOpen] = useState(false);
+  // The "what it's for" sheet before the browser's prompt; Allow / Not now go
+  // to the waiting first-open flow, or (a tap on the pill) ask right away.
+  const [askOpen, setAskOpen] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const askAnswer = useRef<((allow: boolean) => void) | null>(null);
+  const [ta, setTa] = useState(false);
 
   useEffect(() => {
     setMounted(true);
 
     setPrefs(readPrayerPrefs());
+    try {
+      setTa(localStorage.getItem("huda-translation-lang") === "ta");
+    } catch {
+      /* storage unavailable */
+    }
     const updateTime = () => {
       const now = new Date();
       const formatted = now.toLocaleTimeString("en-US", {
@@ -81,6 +94,42 @@ export function TimeLocationWidget({
     const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Where the device is → prayer times; its place name (OpenStreetMap) → the
+  // pill and the first-visit translation language.
+  const applyPosition = useCallback(async (position: GeolocationPosition) => {
+    try {
+      const { latitude, longitude } = position.coords;
+      const here = { lat: latitude, lon: longitude };
+      setCoords(here);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        // Where they are, for the first-visit translation language
+        // (country; in India the state, as an ISO 3166-2 code).
+        const detail: PlaceDetail = {
+          countryCode: data.address?.country_code,
+          stateCode: data.address?.["ISO3166-2-lvl4"],
+        };
+        window.dispatchEvent(new CustomEvent(PLACE_EVENT, { detail }));
+        setRegion(detail);
+        const city =
+          data.address?.suburb ||
+          data.address?.town ||
+          data.address?.city ||
+          data.address?.village ||
+          data.address?.county;
+        if (city) {
+          setLocation(plain(city));
+        }
+        savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now() });
+      }
+    } catch {
+      // Keep default location if reverse geocoding fails
+    }
   }, []);
 
   // Asked only once the splash is gone, and the next onboarding step (the
@@ -126,39 +175,9 @@ export function TimeLocationWidget({
       if (cancelled) return;
       if (wasAnswered) done();
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        (position) => {
           done();
-          try {
-            const { latitude, longitude } = position.coords;
-            const here = { lat: latitude, lon: longitude };
-            setCoords(here);
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-            );
-            if (res.ok) {
-              const data = await res.json();
-              // Where they are, for the first-visit translation language
-              // (country; in India the state, as an ISO 3166-2 code).
-              const detail: PlaceDetail = {
-                countryCode: data.address?.country_code,
-                stateCode: data.address?.["ISO3166-2-lvl4"],
-              };
-              window.dispatchEvent(new CustomEvent(PLACE_EVENT, { detail }));
-              setRegion(detail);
-              const city =
-                data.address?.suburb ||
-                data.address?.town ||
-                data.address?.city ||
-                data.address?.village ||
-                data.address?.county;
-              if (city) {
-                setLocation(plain(city));
-              }
-              savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now() });
-            }
-          } catch {
-            // Keep default location if reverse geocoding fails
-          }
+          void applyPosition(position);
         },
         (err) => {
           // Keep default location if permission denied. Without a timeout an
@@ -183,24 +202,68 @@ export function TimeLocationWidget({
         status = s;
         status?.addEventListener("change", onChange);
         const answered = status?.state === "granted" || status?.state === "denied";
-        // Android Chrome doesn't always fire "change", and once allowed the
-        // position can take a long time (no GPS fix indoors), so check the
-        // state every second while the prompt may be up.
-        if (status && !answered)
-          poll = setInterval(() => {
-            navigator.permissions
-              .query({ name: "geolocation" })
-              .then((s) => s.state === "granted" && done())
-              .catch(() => {});
-          }, 1000);
-        ask(answered);
+        if (answered) {
+          ask(true);
+          return;
+        }
+        // Not answered yet: first say what it's for (LocationAskSheet).
+        askAnswer.current = (allow) => {
+          if (!allow) {
+            savePlace({ denied: true, at: Date.now() });
+            done();
+            return;
+          }
+          // Android Chrome doesn't always fire "change", and once allowed the
+          // position can take a long time (no GPS fix indoors), so check the
+          // state every second while the prompt may be up.
+          if (status)
+            poll = setInterval(() => {
+              navigator.permissions
+                .query({ name: "geolocation" })
+                .then((s) => s.state === "granted" && done())
+                .catch(() => {});
+            }, 1000);
+          ask(false);
+        };
+        setAskOpen(true);
       });
     return () => {
       cancelled = true;
       clearInterval(poll);
       status?.removeEventListener("change", onChange);
     };
-  }, []);
+  }, [applyPosition]);
+
+  // A tap on the time pill while there's no location ("Not now", denied, or
+  // the lookup failed): the same sheet, then the browser's prompt. If the
+  // browser has it blocked, the sheet comes back saying where to turn it on.
+  const allowFromPill = (allow: boolean) => {
+    if (!allow) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => void applyPosition(position),
+      (err) => {
+        if (err.code !== err.PERMISSION_DENIED) return;
+        setBlocked(true);
+        askAnswer.current = allowFromPill;
+        setAskOpen(true);
+      },
+    );
+  };
+  const askFromPill = () => {
+    setBlocked(false);
+    askAnswer.current = allowFromPill;
+    setAskOpen(true);
+  };
+  const answerAsk = (allow: boolean) => {
+    setAskOpen(false);
+    const answer = askAnswer.current;
+    askAnswer.current = null;
+    // Synchronously, inside the tap: Safari only prompts from a user gesture.
+    answer?.(allow);
+  };
+  const askSheet = (
+    <LocationAskSheet open={askOpen} ta={ta} blocked={blocked} onAllow={() => answerAsk(true)} onLater={() => answerAsk(false)} />
+  );
 
   // The waqt now (owner's choice: the current prayer, from – to); the clock
   // when there's no location yet, or the sun doesn't rise / set (polar days).
@@ -228,15 +291,36 @@ export function TimeLocationWidget({
   const pill = `pointer-events-auto flex flex-col items-center justify-center shrink-0 rounded-full bg-black/[0.08] px-4 max-[359px]:px-2.5 sm:px-[2rem] py-1.5 sm:py-2 border border-white/15 backdrop-blur-[6px] shadow-lg text-center min-w-[70px] sm:min-w-[135px] min-h-11 sm:min-h-12 ${className}`;
 
   if (!waqt || !coords) {
-    return (
-      <div className={pill}>
+    const content = (
+      <>
         <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-tight drop-shadow-sm font-sans">
           {timeStr}
         </span>
         <span className="text-[9px] sm:text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 whitespace-nowrap">
           {location}
         </span>
-      </div>
+      </>
+    );
+    // No location: a tap explains and asks (prayer times + the place name).
+    if (!coords && "geolocation" in navigator)
+      return (
+        <>
+          <button
+            type="button"
+            onClick={askFromPill}
+            aria-label={`${timeStr}, ${location} — use my location for prayer times`}
+            className={`${pill} cursor-pointer hover:bg-black/20 active:scale-95 transition-all`}
+          >
+            {content}
+          </button>
+          {askSheet}
+        </>
+      );
+    return (
+      <>
+        <div className={pill}>{content}</div>
+        {askSheet}
+      </>
     );
   }
 

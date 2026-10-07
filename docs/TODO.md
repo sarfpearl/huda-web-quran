@@ -9,6 +9,27 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 chapter clips that were never rendered (those scenes show the image).
 Everything else is merged and live (#26 … #52).
 
+- [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
+      (1) tab icon showed the white app tile → favicon.ico / favicon.png /
+      favicon-192.png are now the logo alone on a clear background, from
+      `assets/brand/Logo_icon.png` (the 404 page already used the logo; the
+      moon was an old local build); (2) location: a sheet first says what it's
+      for (prayer times + the place name in the time pill), then the browser
+      asks; "Not now" doesn't ask again on its own — tapping the time pill
+      asks, and says where to turn it on if the browser has it blocked;
+      (3) the strip / card cut "ஆலு இம்ரான்" to "ஆலு …" → when both don't
+      fit, the Arabic name steps aside and the name shows whole; (4) reading
+      mode starts at 125% on phones / tablets (100% desktop; sizes 80–180%,
+      new key `huda:reader-scale-v2`); (5) zoom: pinch blocked in the capture
+      phase, and a page that still ends up zoomed is re-fitted to 1×;
+      (6) lock screen was blank → Media Session metadata set again on each
+      "playing" (iOS resets it per src) — checked in the iOS 26 simulator:
+      title + reciter + progress show; artwork falls back to the logo;
+      (7) reading-mode button: the line book turns gold (no filled icon);
+      (8) bottom sheets float with all four corners round; (9) audio session
+      "playback" so another app's sound (Instagram) pauses the recitation,
+      and the play button follows. **Check on the phone:** lock-screen
+      artwork + controls, Instagram interrupting, the zoom.
 - [x] **QA PR stack merged** (2026-10-07) — #26 … #45 into `main` (merge
       commits, in order); Vercel production deploy of `dd935e4` succeeded.
 - [x] **Checked live after deploy** (2026-10-07): `node scripts/qa/seo-share.cjs

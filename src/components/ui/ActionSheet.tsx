@@ -121,14 +121,16 @@ export function ActionSheet({
             aria-label={label}
             {...(keepAttr ? { [keepAttr]: "" } : {})}
             className={cn(
-              "fixed inset-x-0 bottom-0 z-[71] mx-auto flex max-h-[88dvh] w-full max-w-[520px] flex-col rounded-t-[28px] border-b-0 text-sand-50 outline-none",
+              // Floating, round on all four corners (owner: no flat bottom
+              // edge against the screen / browser bar), clear of the home indicator.
+              "fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-[71] mx-auto flex max-h-[86dvh] max-w-[520px] flex-col overflow-hidden rounded-[28px] text-sand-50 outline-none",
               PLAYER_GLASS,
               className,
             )}
             // Keyboard up: sit on top of it and fit the visible area.
             style={
               kb.bottom > 0
-                ? { bottom: kb.bottom, maxHeight: Math.round(kb.height * 0.92), height: "auto" }
+                ? { bottom: kb.bottom + 8, maxHeight: Math.round(kb.height * 0.92) - 8, height: "auto" }
                 : undefined
             }
             initial={{ y: "100%" }}
@@ -153,8 +155,8 @@ export function ActionSheet({
             <div
               className={cn(
                 "flex min-h-0 flex-1 flex-col px-4",
-                // The keyboard covers the home indicator, so no safe-area pad then.
-                flush ? "" : kb.bottom > 0 ? "pb-3" : "pb-[calc(env(safe-area-inset-bottom)+1rem)]",
+                // The sheet itself sits above the home indicator.
+                flush ? "" : kb.bottom > 0 ? "pb-3" : "pb-4",
               )}
             >
               {children}
