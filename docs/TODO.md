@@ -15,15 +15,18 @@ Everything else is merged and live (#26 … #52).
       seam; `--dry-run` prints prompts + cost, `--only 04b,05a` re-takes).
       Owner approved ≤ ~$20. Output: `public/videos/surah/003-aal-e-imran/`
       (git-ignored) + QA frames in `qa_frames/` (0 / 4 / 8 s).
-      **Reviewed OK:** 03a, 04a, 05b, 06b, 06c, 07a, 07b (grey scree pass, still camera), 08a (sandstone alcove with a sunbeam; a small cactus at the right edge — re-take only if the owner minds), 08b (stream), 09a (salt flat), 09b (yardangs at twilight), 10a (Milky Way over a ridge; seam SSIM 0.68 because the stars turn — fine at the 0.6 s fade), 10b (sea of dawn clouds). **First batch finished 2026-10-07: 16 ok, 0 failed.** **Rejected → re-take
-      with the already-updated prompts:** 04b (came out as Monument Valley's
-      "Mitten" butte), 05a and 06a (camera pushed in along the track /
-      valley). Only the 3 re-takes are left to generate.
+      **All 16 rendered (2026-10-07).** Reviewed OK: 03a, 04a, 05b, 06b, 06c,
+      07a, 07b, 08a (small cactus at the right edge), 08b (stream; a tiny stone
+      ruin at the right edge although the prompt says "no ruins"), 09a, 09b,
+      10a (night sky; only the stars move), 10b, and the re-takes 05a (small
+      lens-flare dot top-left) and 06a — all fixed camera, clean 0 s / 8 s seam.
+      **Owner to decide: 04b** — the re-take is a fixed camera now, but the
+      butte is again a thumb-and-mitten shape that looks like Monument Valley's
+      Mitten; re-take once more ($0.8) or keep? Nothing is encoded or uploaded
+      yet (R2 serves clips immutable for a year, so decide before upload).
       Review tip: SSIM(0 s, 4 s) low + changed object positions = camera
       moved; SSIM(0 s, 8 s) < ~0.8 = bad seam (rain / dust lower SSIM
-      without motion — look at the frames). **Next:** finish the batch
-      (`node scripts/generation/generate_vertex_imran_rest.mjs` skips clips
-      already on disk), re-take rejects with `--only`, then
+      without motion — look at the frames). **Next:** settle 04b (`--only 04b`), then
       `node scripts/tools/reencode-videos.mjs --new` (encode, VMAF ≥ 88) →
       its upload step (owner said: upload when done) → `node
       scripts/tools/video-manifest.mjs` → check Aal-Imran in the browser
