@@ -6,8 +6,8 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 
 - [ ] **Merge the QA PR stack (owner)** — #26 … #36 (Launch QA items 1–11),
       then #37 SEO → #38 performance → #39 accessibility → #40 share button →
-      #41 video re-encode script → #42 WebP scenes → #43 missing-video fix → #44 Back / 320px / install,
-      each based on the one before (top branch: `fix/back-closes-dialogs`). Vercel
+      #41 video re-encode script → #42 WebP scenes → #43 missing-video fix → #44 Back / 320px / install → #45 offline,
+      each based on the one before (top branch: `feat/offline`). Vercel
       deploys only from `main`. R2 media is already live (smaller clips, the
       WebPs uploaded), so #42 is safe to merge.
 - [ ] **After deploy, check live:** `node scripts/qa/seo-share.cjs` → 0
@@ -33,7 +33,7 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 - [ ] **Content (owner)** — 103 Surahs have no background clip (they show
       their image); new clips: render → `reencode-videos.mjs` →
       `video-manifest.mjs`.
-- [x] **Offline** (2026-10-07, `feat/offline`, local commit — not pushed) —
+- [x] **Offline** (2026-10-07, `feat/offline`, PR #45) —
       `public/sw.js`, registered in production only
       (`src/components/layout/ServiceWorker.tsx`): pages network-first →
       offline the same page, else the cached home, else a small "You're
