@@ -30,8 +30,14 @@ import { CheckIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 
-/** Reading mode's text sizes, × the default. */
-export const READER_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75];
+/** Reading mode's text sizes, × the base size. */
+export const READER_SCALES = [0.8, 0.9, 1, 1.15, 1.25, 1.4, 1.6, 1.8];
+
+/** The starting size: 125% on a phone / tablet (owner), 100% on a desktop. */
+export function defaultReaderScale(): number {
+  if (typeof window === "undefined") return 1;
+  return window.matchMedia("(max-width: 1023px), (pointer: coarse)").matches ? 1.25 : 1;
+}
 
 interface ImmersiveHeaderProps {
   visualMode?: "video" | "image";
@@ -43,8 +49,8 @@ interface ImmersiveHeaderProps {
   /** Ayah meaning (translation) visibility + toggle */
   showMeaning?: boolean;
   onToggleMeaning?: () => void;
-  /** Reading mode's text size (× default) + setter; shows the Aa control. */
-  textSize?: { value: number; onChange: (v: number) => void };
+  /** Reading mode's text size (× base) + setter + the device's default (Reset); shows the Aa control. */
+  textSize?: { value: number; onChange: (v: number) => void; initial: number };
   /** Tajweed colouring of the verse text + toggle */
   showTajweed?: boolean;
   onToggleTajweed?: () => void;
@@ -367,8 +373,8 @@ export function ImmersiveHeader({
             })()}
             <div className="mt-4 flex items-center justify-between text-xs text-sand-200/70">
               <span className="tabular-nums">{Math.round(textSize.value * 100)}%</span>
-              {textSize.value !== 1 && (
-                <button type="button" onClick={() => textSize.onChange(1)} className="font-semibold text-amber-300 hover:text-amber-200">
+              {textSize.value !== textSize.initial && (
+                <button type="button" onClick={() => textSize.onChange(textSize.initial)} className="font-semibold text-amber-300 hover:text-amber-200">
                   Reset
                 </button>
               )}

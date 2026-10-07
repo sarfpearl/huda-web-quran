@@ -28,8 +28,10 @@ export const metadata: Metadata = {
   ...shareMetadata({ title: siteConfig.title, description: siteConfig.description, url: siteConfig.url }),
   icons: {
     icon: [
-      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      // The logo alone on a clear background (assets/brand/Logo_icon.png):
+      // the white app tile (icon-192) showed as a white box in a dark tab bar.
+      { url: "/favicon.png?v=2", sizes: "64x64", type: "image/png" },
+      { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
     ],
     // iOS ignores SVG touch icons and falls back to a page screenshot.
     apple: "/apple-touch-icon.png",

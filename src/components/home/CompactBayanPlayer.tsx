@@ -103,6 +103,38 @@ interface CompactBayanPlayerProps {
   bookmark?: { on: boolean; onToggle: () => void } | null;
 }
 
+/**
+ * The name beside its Arabic title: the name comes first. When both don't fit
+ * on the line (a Tamil name in a phone's narrow strip — "ஆலு இம்ரான்" was
+ * cut to "ஆலு …"), the Arabic steps out (still measured, out of the flow)
+ * and the name gets the whole line; it only truncates if it alone is too long.
+ * The row's width must not depend on its content (flex-1 / full width).
+ */
+function useArabicFits(deps: unknown[]) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLElement>(null);
+  const arabicRef = useRef<HTMLSpanElement>(null);
+  const [fits, setFits] = useState(true);
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const check = () => {
+      const name = nameRef.current;
+      const arabic = arabicRef.current;
+      if (!name || !arabic) return;
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+      setFits(name.scrollWidth + gap + arabic.offsetWidth <= row.clientWidth + 0.5);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(row);
+    document.fonts?.ready.then(check);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return { rowRef, nameRef, arabicRef, arabicClass: fits ? "" : "pointer-events-none invisible absolute" };
+}
+
 export function CompactBayanPlayer({
   bayan,
   surahTracks,
@@ -305,6 +337,8 @@ export function CompactBayanPlayer({
     : bayan.category.name;
   // Surah names in Tamil script when Tamil is chosen.
   const displayTitle = ta && surah ? SURAH_NAMES[surah.number - 1]?.[2] ?? bayan.title : bayan.title;
+  const fullTitle = useArabicFits([displayTitle, surah?.arabicName]);
+  const stripTitle = useArabicFits([displayTitle, surah?.arabicName, footerSlot]);
   const currentSurah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
   const currentTime = isCurrentTrack ? player.currentTime : 0;
   const totalDuration = isCurrentTrack && player.duration > 0
@@ -789,17 +823,20 @@ export function CompactBayanPlayer({
             {L.nowPlaying}
           </span>
           <div
-            className={`flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
+            ref={fullTitle.rowRef}
+            className={`relative flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
             {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
           >
-            <h3 className={`truncate font-bold text-white tracking-tight ${ta && surah ? "font-tamil text-sm sm:text-base md:text-lg" : "font-sans text-base sm:text-lg md:text-xl"}`}>
+            <h3 ref={fullTitle.nameRef as React.RefObject<HTMLHeadingElement>} className={`truncate font-bold text-white tracking-tight ${ta && surah ? "font-tamil text-sm sm:text-base md:text-lg" : "font-sans text-base sm:text-lg md:text-xl"}`}>
               {displayTitle}
             </h3>
             {surah?.arabicName && (
               <span
+                ref={fullTitle.arabicRef}
                 lang="ar"
                 dir="rtl"
-                className="font-arabic text-base sm:text-lg font-bold text-emerald-300 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                aria-hidden={fullTitle.arabicClass ? true : undefined}
+                className={`font-arabic text-base sm:text-lg font-bold text-emerald-300 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${fullTitle.arabicClass}`}
               >
                 {surah.arabicName}
               </span>
@@ -1005,15 +1042,22 @@ export function CompactBayanPlayer({
   // steps (right) that the full card shows beside its cover.
   const footerStrip = (
     <div className="flex w-full min-w-0 items-center justify-between gap-3 text-[11px] sm:text-xs font-medium text-white">
-      <div className="flex min-w-0 items-center gap-2.5">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
       {footerLeading}
       <div
-        className={`flex min-w-0 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
+        ref={stripTitle.rowRef}
+        className={`relative flex min-w-0 flex-1 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
         {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
       >
-        <span className={`truncate font-semibold ${ta && surah ? "font-tamil" : ""}`}>{displayTitle}</span>
+        <span ref={stripTitle.nameRef} className={`truncate font-semibold ${ta && surah ? "font-tamil" : ""}`}>{displayTitle}</span>
         {surah?.arabicName && (
-          <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xs sm:text-sm text-emerald-300">
+          <span
+            ref={stripTitle.arabicRef}
+            lang="ar"
+            dir="rtl"
+            aria-hidden={stripTitle.arabicClass ? true : undefined}
+            className={`shrink-0 font-arabic text-xs sm:text-sm text-emerald-300 ${stripTitle.arabicClass}`}
+          >
             {surah.arabicName}
           </span>
         )}

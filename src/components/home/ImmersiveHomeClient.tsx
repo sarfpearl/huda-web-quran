@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
 import { ImmersiveBackground } from "./ImmersiveBackground";
-import { ImmersiveHeader, READER_SCALES } from "./ImmersiveHeader";
+import { ImmersiveHeader, READER_SCALES, defaultReaderScale } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
@@ -17,7 +17,7 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { detectScript, INDOPAK_ENABLED, isQuranScript, placeScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
+import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -83,6 +83,9 @@ import {
   PlayerStatsFrame,
   PlayerLikeButton,
 } from "./QuranEngagement";
+
+// Reading mode's text size (see readerScale below).
+const READER_SCALE_KEY = "huda:reader-scale-v2";
 
 /**
  * The Surah each Juz begins in (many Juz start mid-surah). Only Maher has a
@@ -785,20 +788,27 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   };
   const tajweedShown = showTajweed && quranScript !== "indopak";
 
-  // Reading mode's text size (× default), remembered per browser.
+  // Reading mode's text size (× base), remembered per browser. Starts at the
+  // device's default (125% on a phone / tablet). A new key from 2026-10-07:
+  // the old one held 100% / 115% picks made before that default existed.
   const [readerScale, setReaderScale] = useState(1);
+  const [readerScaleDefault, setReaderScaleDefault] = useState(1);
   useEffect(() => {
+    const initial = defaultReaderScale();
+    setReaderScaleDefault(initial);
+    let v = initial;
     try {
-      const v = Number(localStorage.getItem("huda:reader-scale"));
-      if (READER_SCALES.includes(v)) setReaderScale(v);
+      const saved = Number(localStorage.getItem(READER_SCALE_KEY));
+      if (READER_SCALES.includes(saved)) v = saved;
     } catch {
       /* storage unavailable */
     }
+    setReaderScale(v);
   }, []);
   const handleReaderScale = (v: number) => {
     setReaderScale(v);
     try {
-      localStorage.setItem("huda:reader-scale", String(v));
+      localStorage.setItem(READER_SCALE_KEY, String(v));
     } catch {
       /* storage unavailable */
     }
@@ -1295,7 +1305,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
-        textSize={readingActive ? { value: readerScale, onChange: handleReaderScale } : undefined}
+        textSize={readingActive ? { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault } : undefined}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -1330,11 +1340,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-pressed={readingMode}
             aria-label={readingMode ? "Exit reading mode" : "Reading mode"}
             data-tooltip={readingMode ? "Exit reading mode" : "Reading mode"}
-            // On: the filled book alone — no coloured ring (nor the focus ring
-            // a tap left on it).
-            className="pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 text-sand-100 shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none"
+            // On: the same line book, in gold (owner: no filled icon) — no
+            // coloured ring (nor the focus ring a tap left on it).
+            className={`pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none ${
+              readingMode ? "text-amber-300 hover:text-amber-200" : "text-sand-100 hover:text-white"
+            }`}
           >
-            {readingMode ? <BookOpenFilledIcon className="h-5 w-5" /> : <BookOpenIcon className="h-5 w-5" />}
+            <BookOpenIcon className="h-5 w-5" />
           </button>
         )}
         <TopicPickerModal

@@ -964,24 +964,52 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       }
     };
   }, []);
-  useEffect(() => {
+  // What the lock screen / Control Centre shows. iOS Safari drops metadata
+  // set before the <audio> starts (each new src resets "Now Playing" — the
+  // lock screen showed a blank card), so it is set again on every "playing"
+  // of the active element and the prelude, not only when the track changes.
+  const currentRef = useRef(current);
+  currentRef.current = current;
+  const applyMediaMetadata = useCallback(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
-    if (!current) {
+    const track = currentRef.current;
+    if (!track) {
       navigator.mediaSession.metadata = null;
       return;
     }
-    const reciter = resolveActiveReciter(current);
-    const art = current.coverImageUrl;
+    const reciter = resolveActiveReciter(track);
+    const art = track.coverImageUrl;
+    const abs = (u: string) => new URL(u, window.location.href).href;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: current.title,
-      artist: reciter?.displayName ?? current.speaker?.name ?? "",
+      title: track.title,
+      artist: reciter?.displayName ?? track.speaker?.name ?? "",
       album: "HuDa Web Quran",
+      // The scene, then the logo (same origin) if the scene can't be shown.
       // Scene covers are WebP (lib/data/quran); the type must match or Android skips it.
-      artwork: art
-        ? [{ src: new URL(art, window.location.href).href, sizes: "512x512", type: /\.webp(\?|$)/i.test(art) ? "image/webp" : "image/jpeg" }]
-        : [],
+      artwork: [
+        ...(art ? [{ src: abs(art), sizes: "512x512", type: /\.webp(\?|$)/i.test(art) ? "image/webp" : "image/jpeg" }] : []),
+        { src: abs("/icon-512.png"), sizes: "512x512", type: "image/png" },
+        { src: abs("/icon-192.png"), sizes: "192x192", type: "image/png" },
+      ],
     });
-  }, [current]);
+  }, []);
+  useEffect(() => {
+    applyMediaMetadata();
+  }, [current, applyMediaMetadata]);
+
+  // One recitation at a time: "playback" (not mixable) makes iOS pause this
+  // tab when another app — Instagram, a video — starts its sound, and pause
+  // that one when the recitation starts (Safari 17+; elsewhere a no-op).
+  useEffect(() => {
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session) {
+      try {
+        session.type = "playback";
+      } catch {
+        /* not supported */
+      }
+    }
+  }, []);
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     navigator.mediaSession.playbackState = current ? (isPlaying ? "playing" : "paused") : "none";
@@ -1340,6 +1368,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       if (!isPreludeRef.current) setIsPlaying(false);
     }),
     onPlaying: fromActive(() => {
+      applyMediaMetadata();
       if (!isPreludeRef.current) {
         clearTimeout(waitingTimerRef.current);
         setIsPlaying(true);
@@ -1379,7 +1408,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         preload="auto"
         onTimeUpdate={onPreludeTimeUpdate}
         onWaiting={() => { if (isPreludeRef.current) setIsLoading(true); }}
-        onPlaying={() => { if (isPreludeRef.current) setIsLoading(false); }}
+        onPlaying={() => {
+          applyMediaMetadata();
+          if (isPreludeRef.current) setIsLoading(false);
+        }}
+        // Paused from outside (another app's sound, a call): show play. Not
+        // when a switch already started it again, or it was emptied.
+        onPause={(e) => {
+          const el = e.currentTarget;
+          if (isPreludeRef.current && el.paused && !el.ended && el.getAttribute("src")) setIsPlaying(false);
+        }}
         onCanPlay={() => { if (isPreludeRef.current) setIsLoading(false); }}
         onEnded={onPreludeEnded}
         onError={onPreludeError}
