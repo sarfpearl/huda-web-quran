@@ -49,7 +49,7 @@ interface TimeLocationWidgetProps {
 
 export function TimeLocationWidget({
   className = "",
-  defaultLocation = "Guduvancheri",
+  defaultLocation = "",
 }: TimeLocationWidgetProps) {
   const [timeStr, setTimeStr] = useState<string>("");
   const [now, setNow] = useState<Date | null>(null);
@@ -281,9 +281,11 @@ export function TimeLocationWidget({
         <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-none">
           --:--
         </span>
-        <span className="text-[9px] sm:text-xs font-medium text-slate-300 tracking-wide mt-0.5 sm:mt-1 leading-none whitespace-nowrap">
-          {defaultLocation}
-        </span>
+        {defaultLocation && (
+          <span className="text-[9px] sm:text-xs font-medium text-slate-300 tracking-wide mt-0.5 sm:mt-1 leading-none whitespace-nowrap">
+            {defaultLocation}
+          </span>
+        )}
       </div>
     );
   }
@@ -296,9 +298,11 @@ export function TimeLocationWidget({
         <span className="whitespace-nowrap text-sm sm:text-lg font-extrabold text-white tracking-tight leading-tight drop-shadow-sm font-sans">
           {timeStr}
         </span>
-        <span className="text-[9px] sm:text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 whitespace-nowrap">
-          {location}
-        </span>
+        {location && (
+          <span className="text-[9px] sm:text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 whitespace-nowrap">
+            {location}
+          </span>
+        )}
       </>
     );
     // No location: a tap explains and asks (prayer times + the place name).
@@ -308,7 +312,7 @@ export function TimeLocationWidget({
           <button
             type="button"
             onClick={askFromPill}
-            aria-label={`${timeStr}, ${location} — use my location for prayer times`}
+            aria-label={`${timeStr}${location ? `, ${location}` : ""} — use my location for prayer times`}
             className={`${pill} cursor-pointer hover:bg-black/20 active:scale-95 transition-all`}
           >
             {content}
@@ -337,7 +341,7 @@ export function TimeLocationWidget({
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        aria-label={`${name} ${waqt.upcoming ? "starts at " + clock(waqt.start) : `${clock(waqt.start)} to ${clock(waqt.end)}`}, ${location} — prayer times`}
+        aria-label={`${name} ${waqt.upcoming ? "starts at " + clock(waqt.start) : `${clock(waqt.start)} to ${clock(waqt.end)}`}${location ? `, ${location}` : ""} — prayer times`}
         className={`${pill.replace("sm:px-[2rem]", "md:px-[2rem]")} cursor-pointer hover:bg-black/20 active:scale-95 transition-all`}
       >
         {/* Below md: the prayer, then its times (the place is in the sheet) —
@@ -351,9 +355,11 @@ export function TimeLocationWidget({
         <span className="md:hidden text-[11px] sm:text-xs font-semibold text-sand-100/90 tabular-nums leading-tight mt-0.5 whitespace-nowrap">
           {range}
         </span>
-        <span className="max-md:hidden text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 whitespace-nowrap">
-          {location}
-        </span>
+        {location && (
+          <span className="max-md:hidden text-xs font-medium text-slate-200/90 tracking-wide leading-tight mt-0.5 whitespace-nowrap">
+            {location}
+          </span>
+        )}
       </button>
       <PrayerTimesSheet
         open={sheetOpen}

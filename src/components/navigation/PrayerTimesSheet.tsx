@@ -68,7 +68,7 @@ export function PrayerTimesSheet({
   return (
     <ActionSheet open={open} onClose={onClose} label="Prayer times">
       <div className="px-5 pt-1 pb-2">
-        <h2 className="text-base font-bold text-sand-50">Prayer times · {place}</h2>
+        <h2 className="text-base font-bold text-sand-50">Prayer times{place ? ` · ${place}` : ""}</h2>
         <p className="text-xs text-sand-200/70">{date}</p>
       </div>
       <ul className="px-3 pb-2">
