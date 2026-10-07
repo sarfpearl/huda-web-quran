@@ -258,9 +258,10 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       the slider itself plays / pauses on Space; (6) Reduce Motion: framer
       animations ignored it (`MotionConfig reducedMotion="user"`; CSS ones
       already honoured it). Contrast: item 11 (the scene is darker now, 40%).
-      Touch targets: item 8. **Owner's call:** `user-scalable=no` /
-      `maximum-scale=1` (layout.tsx) and the pinch blocking (MainLayout) stop
-      zooming — WCAG 1.4.4 fails (axe: critical). Not changed: the Tajweed
+      Touch targets: item 8. **Known exception (owner's choice, 2026-10-07):**
+      `user-scalable=no` / `maximum-scale=1` (layout.tsx) and the pinch
+      blocking (MainLayout) stay — the app-like, no-zoom screen; WCAG 1.4.4
+      fails on purpose (axe `meta-viewport`, critical). Not changed: the Tajweed
       popover is non-modal (focus stays on its button); the background video
       still plays with Reduce Motion on (image mode is one tap away).
 
