@@ -76,12 +76,6 @@ export default function RootLayout({
         <SplashScreen />
         <ThemeProvider>
           <AudioPlayerProvider>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-primary-700 focus:px-4 focus:py-2 focus:text-sand-50"
-            >
-              Skip to content
-            </a>
             <MainLayout>{children}</MainLayout>
             <SurahListenCounter />
           </AudioPlayerProvider>

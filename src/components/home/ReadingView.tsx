@@ -712,7 +712,8 @@ export function ReadingView({
         <span aria-hidden="true" style={{ ...glyphStyle(page, tajweed, isActive), ...glyphInkPadding(code, page) }}>
           {code}
         </span>
-        <span className="sr-only">{text}</span>
+        {/* Trailing space: screen readers would run the words together. */}
+        <span className="sr-only">{`${text} `}</span>
       </>
     ) : (
       text

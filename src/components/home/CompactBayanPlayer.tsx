@@ -188,7 +188,7 @@ export function CompactBayanPlayer({
   // Shared cover: on switch, a copy of the artwork flies along a curve from the
   // full player's cover to the compact play button (and back).
   const fullCoverRef = useRef<HTMLDivElement>(null);
-  const compactCoverRef = useRef<HTMLButtonElement>(null);
+  const compactCoverRef = useRef<HTMLDivElement>(null);
   const [flight, setFlight] = useState<{ from: DOMRect; to: DOMRect; target: HTMLElement; fromRadius: number; toRadius: number; expand: boolean; id: number } | null>(null);
 
   const toggleCollapsed = (next: boolean, remember = true) => {
@@ -615,7 +615,9 @@ export function CompactBayanPlayer({
           ref={ringRef}
           role="slider"
           tabIndex={0}
-          aria-label="Seek"
+          // Space / Enter play or pause (onRingKeyDown); the cover button inside
+          // is for pointers only, hidden from screen readers (no nested control).
+          aria-label={isPlaying ? "Seek · Space to pause" : "Seek · Space to play"}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(ringPct)}
@@ -631,9 +633,8 @@ export function CompactBayanPlayer({
           onPointerCancel={endScrub}
           className="group relative h-16 w-16 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
         >
-          <button
-            type="button"
-            tabIndex={-1}
+          <div
+            aria-hidden="true"
             onClick={() => {
               if (suppressClickRef.current) {
                 suppressClickRef.current = false;
@@ -647,7 +648,6 @@ export function CompactBayanPlayer({
             // gets its own layer, which border-radius clipping alone misses
             // (its square corners showed around the circle).
             className={`${flight ? "invisible" : ""} absolute inset-[5px] sm:inset-[6px] overflow-hidden rounded-full [clip-path:circle(50%)] bg-gradient-to-br from-emerald-950 to-slate-900 cursor-pointer active:scale-95 transition-transform`}
-            aria-label={isPlaying ? "Pause" : "Play"}
             title={bayan.title}
           >
             {coverSrc ? (
@@ -672,7 +672,7 @@ export function CompactBayanPlayer({
                 <PlayIcon className="text-2xl ml-0.5" />
               )}
             </span>
-          </button>
+          </div>
           <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 36 36" aria-hidden="true">
             <circle cx="18" cy="18" r="16.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.4" />
             <circle
@@ -863,7 +863,7 @@ export function CompactBayanPlayer({
               const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
               player.setPlaybackRate?.(rates[nextIdx]);
             }}
-            aria-label="Playback Speed"
+            aria-label={`Playback speed ${player.playbackRate}×`}
             data-tooltip={`${L.speed} · ${player.playbackRate}x`}
             className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
@@ -912,6 +912,12 @@ export function CompactBayanPlayer({
               lastScrubAyahRef.current = ayahAtTime(currentTime);
             }}
             aria-label="Progress"
+            // Read as a time (or ayah), not raw seconds ("1056.34").
+            aria-valuetext={
+              isAyahSeq && ayahSeq
+                ? `Ayah ${ayahSeq.index + 1} of ${ayahSeq.total}`
+                : `${formatClock(currentTime)} of ${formatClock(totalDuration)}`
+            }
             className="quran-range relative z-20 h-5 w-full cursor-pointer appearance-none bg-transparent"
           />
         </div>

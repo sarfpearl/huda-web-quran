@@ -236,9 +236,34 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       site can't open offline (audio offline handling: item 4); (d) a Surah
       link preloads its recitation (~3 MB) before play — kept, so play is
       instant for someone who followed a link.
-- [ ] **14. Accessibility** — keyboard nav, focus states, screen-reader and
-      button labels, audio controls, contrast, Arabic readability, touch
-      targets ≥ 44 px, reduced motion.
+- [~] **14. Accessibility** (2026-10-07) — axe-core 4.10 (browser) on the
+      home screen, a Surah link, the 404 page and with each panel open
+      (content browser, reciter, translation, Tajweed, favourites, views,
+      comments): 0 violations except `meta-viewport` (below). Keyboard: every
+      control reachable, all 26+ have a visible focus outline. **Fixed:**
+      (1) the "Skip to content" link had no target on the home screen — now
+      "Skip to player" (focus moves to the player region; 404 / error pages:
+      "Skip to content" → `#main`), and the home is a `<main>` landmark;
+      (2) dialogs: focus didn't move into them, Tab escaped to the page behind,
+      and closing lost focus — `useDialogFocus` (`src/lib/useDialogFocus.ts`)
+      on the content browser / favourites, every ActionSheet, the reciter
+      popover and the install sheet: focus in, Tab trapped, Escape closes,
+      focus back to the opener; the content browser had no dialog role / name
+      (now `role="dialog"`, titled), its search box no label; (3) the Tajweed
+      glyph words read as one long word to screen readers (no spaces between
+      the hidden-glyph words' real text); (4) the progress bar announced raw
+      seconds ("1056.34") — now "0:07 of 0:46" / "Ayah 3 of 7"; the speed
+      button didn't say the speed ("Playback speed 1.25×"); (5) the compact
+      player's cover was a button inside the seek slider (nested control) —
+      the slider itself plays / pauses on Space; (6) Reduce Motion: framer
+      animations ignored it (`MotionConfig reducedMotion="user"`; CSS ones
+      already honoured it). Contrast: item 11 (the scene is darker now, 40%).
+      Touch targets: item 8. **Known exception (owner's choice, 2026-10-07):**
+      `user-scalable=no` / `maximum-scale=1` (layout.tsx) and the pinch
+      blocking (MainLayout) stay — the app-like, no-zoom screen; WCAG 1.4.4
+      fails on purpose (axe `meta-viewport`, critical). Not changed: the Tajweed
+      popover is non-modal (focus stays on its button); the background video
+      still plays with Reduce Motion on (image mode is one tap away).
 
 ## IndoPak script by region
 

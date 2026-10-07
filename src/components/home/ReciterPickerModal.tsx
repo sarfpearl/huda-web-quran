@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/quranReciters";
 import { ActionSheet, PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
+import { useDialogFocus } from "@/lib/useDialogFocus";
 
 interface ReciterPickerModalProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ export function ReciterPickerModal({
   const panelRef = useRef<HTMLDivElement>(null);
   // Phones get a bottom action sheet; larger screens keep the dropdown panel.
   const isMobile = useIsMobile();
+  // Desktop popover; on phones the ActionSheet manages focus itself.
+  useDialogFocus(isOpen && !isMobile, panelRef);
   const selectedItemRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
 
@@ -342,7 +345,7 @@ export function ReciterPickerModal({
       role="dialog"
       aria-modal="true"
       aria-label="Quran Reciter Selection"
-      className={`absolute top-14 right-0 w-96 z-50 overflow-hidden rounded-3xl ${PLAYER_GLASS} p-5 pb-0 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200`}
+      className={`absolute top-14 right-0 w-96 z-50 overflow-hidden rounded-3xl outline-none ${PLAYER_GLASS} p-5 pb-0 pointer-events-auto select-none animate-in fade-in zoom-in-95 duration-200`}
     >
       {body}
     </div>

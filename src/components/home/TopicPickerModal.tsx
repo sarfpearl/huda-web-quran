@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
 import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02 } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { useDialogFocus } from "@/lib/useDialogFocus";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
@@ -109,6 +110,19 @@ export function TopicPickerModal({
   // shows; the clip comes off once open so the panel's shadow isn't cut.
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  // Keyboard / screen reader: focus moves into the panel and stays there until
+  // it closes (then back to the button); Escape closes it.
+  const titleId = useId();
+  useDialogFocus(isOpen, panelRef, triggerRef);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (ev: KeyboardEvent) => {
+      // A sheet opened over the panel closes first (it handles its own Escape).
+      if (ev.key === "Escape" && !document.querySelector("[data-action-sheet]")) setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen]);
   // Header trigger: the panel's top-right corner is the button's top-right
   // corner on every screen (the header centres its buttons, so its padding
   // alone doesn't give it), kept there as the window resizes.
@@ -346,11 +360,15 @@ export function TopicPickerModal({
               transition={{ duration: 0.5, ease: "easeOut" }}
               onClick={() => setIsOpen(false)}
               className="pointer-events-auto fixed inset-0 z-50 bg-black/40 cursor-pointer"
+              aria-hidden="true"
             />
 
             {/* Right Slide-Over Panel */}
             <motion.div
               ref={setPanelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
               initial={{ "--reveal": 0 } as never}
               animate={{ "--reveal": 1 } as never}
               exit={{ "--reveal": 0, transition: { duration: 0.5, ease: [0.4, 0, 1, 1] } } as never}
@@ -366,7 +384,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6 [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 z-50 flex w-[88vw] max-w-md flex-col rounded-[28px] sm:rounded-[40px] ${PLAYER_GLASS} p-4 md:p-6 outline-none [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -386,7 +404,7 @@ export function TopicPickerModal({
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
                       {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Listen & Read"}
                     </span>
-                    <h3 className="text-xl font-black text-white tracking-tight">
+                    <h3 id={titleId} className="text-xl font-black text-white tracking-tight">
                       {isFavourites ? "Favourites" : showAbout ? "About HuDa Web Quran" : "Choose a Surah or Juz"}
                     </h3>
                   </div>
@@ -470,6 +488,7 @@ export function TopicPickerModal({
                           ? "Search Surah..."
                           : "Search Juz or page no..."
                       }
+                      aria-label={isFavourites ? "Search favourites" : activeTab === "surah" ? "Search Surah" : "Search Juz or page number"}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full rounded-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
