@@ -4,16 +4,16 @@
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
-- [ ] **Merge the QA PR stack (owner)** — #26 … #36 (Launch QA items 1–11),
-      then #37 SEO → #38 performance → #39 accessibility → #40 share button →
-      #41 video re-encode script → #42 WebP scenes → #43 missing-video fix → #44 Back / 320px / install → #45 offline,
-      each based on the one before (top branch: `feat/offline`). Vercel
-      deploys only from `main`. R2 media is already live (smaller clips, the
-      WebPs uploaded), so #42 is safe to merge.
-- [ ] **After deploy, check live:** `node scripts/qa/seo-share.cjs` → 0
-      failures; an unsent link (e.g. `/surah/36/4`) in WhatsApp shows
-      "Ya-Sin 36:4"; scenes load as `.webp`; going Al-Fatihah → An-Nisa leaves
-      no Al-Fatihah clip on screen.
+- [x] **QA PR stack merged** (2026-10-07) — #26 … #45 into `main` (merge
+      commits, in order); Vercel production deploy of `dd935e4` succeeded.
+- [x] **Checked live after deploy** (2026-10-07): `node scripts/qa/seo-share.cjs
+      https://huda-web-quran.vercel.app` → 0 failures; all 19 scene / thumbnail
+      requests are `.webp` (no `.jpg`); Al-Fatihah → An-Nisa shows An-Nisa's
+      image with no clip left on screen; the service worker is active and
+      controls the page.
+- [ ] **WhatsApp preview (owner, on a phone)** — send a fresh link (e.g.
+      `/surah/36/4`) in a chat: the card should say "Ya-Sin 36:4" with the
+      image (WhatsApp caches per URL; older links may keep the old card).
 - [ ] **Real phones (Launch QA item 4)** — lock screen / background playback,
       headphones / Bluetooth buttons, a call interrupting, Juz with the screen
       locked; iPhone Safari + Android Chrome (no iOS Simulator on this Mac).
