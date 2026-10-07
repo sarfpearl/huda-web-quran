@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
+import { useBackToClose } from "@/lib/useBackToClose";
 
 /** Same glass as the player card, so sheets read as part of it. */
 export const PLAYER_GLASS =
@@ -80,6 +81,7 @@ export function ActionSheet({
   const drag = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
   useDialogFocus(open, sheetRef);
+  useBackToClose(open, onClose);
   const kb = useKeyboardInset(open);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

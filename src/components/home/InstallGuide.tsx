@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
+import { useBackToClose } from "@/lib/useBackToClose";
 
 const DISMISSED_KEY = "huda-install-dismissed";
 // After "Not now", ask again in two weeks.
@@ -424,13 +425,22 @@ export function InstallGuide() {
     wasOpen.current = open;
   }, [open]);
 
+  // The layout is fixed when the sheet opens: an install prompt that arrives
+  // after that (a slow line) doesn't swap the steps for the Install card — the
+  // bottom button becomes Install instead, same size (no layout shift).
+  const promptLayoutRef = useRef<boolean | null>(null);
+  if (!open) promptLayoutRef.current = null;
+  else if (promptLayoutRef.current === null) promptLayoutRef.current = !!installEvent;
+  const promptLayout = !!installEvent && promptLayoutRef.current === true;
+  const lateInstall = !!installEvent && !promptLayout;
+
   // Auto-play the steps in a loop; picking a dot restarts the clock from there.
   const stepCount = env?.steps.length ?? 0;
   useEffect(() => {
-    if (!open || !stepCount || installEvent) return;
+    if (!open || !stepCount || promptLayout) return;
     const t = window.setTimeout(() => setStep((s) => (s + 1) % stepCount), STEP_MS);
     return () => window.clearTimeout(t);
-  }, [open, step, stepCount, installEvent]);
+  }, [open, step, stepCount, promptLayout]);
 
   const dismiss = () => {
     setOpen(false);
@@ -438,6 +448,9 @@ export function InstallGuide() {
       localStorage.setItem(DISMISSED_KEY, String(Date.now()));
     } catch {}
   };
+
+  // Back (Android) = "Not now" too, not leaving the site.
+  useBackToClose(open, dismiss);
 
   // Escape = "Not now".
   useEffect(() => {
@@ -507,7 +520,7 @@ export function InstallGuide() {
                 </button>
               </div>
 
-              {installEvent ? (
+              {promptLayout ? (
                 <>
                   <p className="mt-4 text-sm text-sand-200">Opens full-screen like an app — one tap to listen.</p>
                   <p className="font-tamil text-xs text-sand-300/85">ஒரே தொடுதலில், முழுத் திரையில் ஆப் போலத் திறக்கும்.</p>
@@ -574,13 +587,23 @@ export function InstallGuide() {
                 </>
               )}
 
-              <button
-                type="button"
-                onClick={dismiss}
-                className="mt-2 h-11 w-full rounded-full border border-white/15 text-sm text-sand-100 hover:bg-white/10"
-              >
-                {installEvent ? "Not now" : "Got it"} · <span className="font-tamil">{installEvent ? "பிறகு" : "சரி"}</span>
-              </button>
+              {lateInstall ? (
+                <button
+                  type="button"
+                  onClick={install}
+                  className="mt-2 h-11 w-full rounded-full bg-emerald-500 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+                >
+                  Install app · <span className="font-tamil">நிறுவவும்</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={dismiss}
+                  className="mt-2 h-11 w-full rounded-full border border-white/15 text-sm text-sand-100 hover:bg-white/10"
+                >
+                  {promptLayout ? "Not now" : "Got it"} · <span className="font-tamil">{promptLayout ? "பிறகு" : "சரி"}</span>
+                </button>
+              )}
             </div>
           </motion.div>
         </>

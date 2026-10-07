@@ -24,6 +24,19 @@
       "env": {
         "NEXT_DIST_DIR": ".next-prod"
       }
+    },
+    {
+      "name": "dev-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 3001,
+      "autoPort": true,
+      "env": {
+        "NEXT_DIST_DIR": ".next-dev-alt"
+      }
     }
   ]
 }
