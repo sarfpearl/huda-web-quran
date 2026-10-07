@@ -985,16 +985,20 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       return;
     }
     const reciter = resolveActiveReciter(track);
-    const art = track.coverImageUrl;
     const abs = (u: string) => new URL(u, window.location.href).href;
+    // The scene lives on R2 (cross-origin, full-size). The home-screen app's
+    // lock screen skips such artwork — and can then blank the whole card — so
+    // it goes through the site's own image optimizer: same origin, 512 px.
+    const cover = track.coverImageUrl;
+    const art = cover && /^https?:/i.test(cover) ? `/_next/image?url=${encodeURIComponent(cover)}&w=512&q=75` : cover;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: reciter?.displayName ?? track.speaker?.name ?? "",
       album: "HuDa Web Quran",
       // The scene, then the logo (same origin) if the scene can't be shown.
-      // Scene covers are WebP (lib/data/quran); the type must match or Android skips it.
+      // No `type`: the optimizer picks the format per device.
       artwork: [
-        ...(art ? [{ src: abs(art), sizes: "512x512", type: /\.webp(\?|$)/i.test(art) ? "image/webp" : "image/jpeg" }] : []),
+        ...(art ? [{ src: abs(art), sizes: "512x512" }] : []),
         { src: abs("/icon-512.png"), sizes: "512x512", type: "image/png" },
         { src: abs("/icon-192.png"), sizes: "192x192", type: "image/png" },
       ],

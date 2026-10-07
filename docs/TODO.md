@@ -30,6 +30,11 @@ Everything else is merged and live (#26 … #52).
       "playback" so another app's sound (Instagram) pauses the recitation,
       and the play button follows. **Check on the phone:** lock-screen
       artwork + controls, Instagram interrupting, the zoom.
+      **Update (2026-10-08, `fix/lockscreen-artwork`):** the home-screen app
+      still showed no photo / names → artwork now goes through same-origin
+      `/_next/image?w=512` instead of the cross-origin R2 WebP (guess: iOS
+      standalone drops the cross-origin image and blanks the card). Unverified
+      on a phone — owner to re-check after deploy.
 - [x] **QA PR stack merged** (2026-10-07) — #26 … #45 into `main` (merge
       commits, in order); Vercel production deploy of `dd935e4` succeeded.
 - [x] **Checked live after deploy** (2026-10-07): `node scripts/qa/seo-share.cjs
