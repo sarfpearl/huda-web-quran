@@ -54,7 +54,9 @@
  *
  * Cache note: R2 serves these with "max-age=31536000, immutable". Browsers
  * that already cached a clip keep the old (heavier, same-looking) copy; new
- * visitors get the small one. Nothing breaks either way.
+ * visitors get the small one. Nothing breaks either way — but when an upload
+ * changes what a clip SHOWS (a placeholder → the real scene), add or bump its
+ * key in src/lib/data/videoVersions.ts so everyone gets the new URL.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 

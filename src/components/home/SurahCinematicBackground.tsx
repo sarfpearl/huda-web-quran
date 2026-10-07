@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 import { quranImageUrl } from "@/lib/data/quran";
-import { mediaUrl } from "@/lib/media";
 import { hasVideo } from "@/lib/data/videoManifest";
+import { clipUrl } from "@/lib/data/videoVersions";
 import { refreshBackdrops } from "@/lib/refreshBackdrops";
 
 interface SurahCinematicBackgroundProps {
@@ -47,7 +47,7 @@ export function SurahCinematicBackground({
     if (!chosen) {
       chosen = resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
     }
-    return chosen ? mediaUrl(chosen) : null;
+    return chosen ? clipUrl(chosen) : null;
   }, [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]);
 
   // Only commit a clip once it has stayed wanted briefly — rapid ayah stepping
