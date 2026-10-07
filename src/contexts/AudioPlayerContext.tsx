@@ -575,11 +575,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setQueue(nextQueue);
       setCurrentIndex(index);
       pendingStartAtRef.current = opts?.startAt ?? null;
+      // Cueing isn't listening: the home screen cues Al-Fatihah on every open,
+      // which must not overwrite (or hide) where the listener left off.
       loadCurrent(nextQueue[index], false);
-      persistLast(nextQueue[index], readPositions()[bayan.id] ?? 0);
-      setContinueListening(null);
     },
-    [queue, loadCurrent, persistLast]
+    [queue, loadCurrent]
   );
 
   /**

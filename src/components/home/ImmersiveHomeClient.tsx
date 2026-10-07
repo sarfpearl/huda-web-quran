@@ -17,7 +17,7 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { detectScript, INDOPAK_ENABLED, isQuranScript, placeScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon } from "@/components/ui/Icon";
+import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -90,6 +90,15 @@ const JUZ_START_SURAH: Record<number, number> = {
   1: 1, 2: 2, 3: 2, 4: 3, 5: 4, 6: 4, 7: 5, 8: 6, 9: 7, 10: 8,
   11: 9, 12: 11, 13: 12, 14: 15, 15: 17, 16: 18, 17: 21, 18: 23, 19: 25, 20: 27,
   21: 29, 22: 33, 23: 36, 24: 39, 25: 41, 26: 46, 27: 51, 28: 58, 29: 67, 30: 78,
+};
+
+/** 75 → "1:15", 3725 → "1:02:05". */
+const formatClock = (sec: number) => {
+  const t = Math.max(0, Math.floor(sec));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const ss = String(t % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
 };
 
 export function ImmersiveHomeClient() {
@@ -993,6 +1002,20 @@ export function ImmersiveHomeClient() {
   };
   const bookmarkOn = readingActive ? pageBookmarks.length > 0 : onAirBookmarked;
   const mainBookmark = bookmarks[0] ?? null;
+  const showBookmarkPill = Boolean(mainBookmark && !onAirBookmarked);
+  // « Continue »: the Surah last listened to, where it was left (saved while
+  // playing — the Al-Fatihah cued on open doesn't count). Gone once anything
+  // is played.
+  const cl = player.continueListening;
+  const continueAt = cl && isSurahTrackId(cl.bayan.id) && cl.position >= 5 ? cl : null;
+  const showContinuePill = Boolean(continueAt);
+  const handleContinueListening = () => {
+    if (!continueAt) return;
+    const reciter = resolveActiveReciter(continueAt.bayan);
+    const tracks = getSurahTracksForReciter(reciter);
+    const track = tracks.find((t) => t.id === continueAt.bayan.id) ?? continueAt.bayan;
+    player.playBayan(track, tracks, { startAt: continueAt.position });
+  };
   // Open a bookmark: reading mode, reciting from its ayah.
   const handleOpenBookmark = (b: Bookmark) => {
     setReadingMode(true);
@@ -1249,20 +1272,36 @@ export function ImmersiveHomeClient() {
         )}
       </AnimatePresence>
 
-      {/* Main view: « Bookmark » back to the bookmarked ayah, in reading mode —
-          only while the recitation is stopped (a clean scene while it plays
-          or buffers to play)
-          and when the ayah on air isn't the bookmark itself. */}
+      {/* Main view: « Bookmark » back to the bookmarked ayah, in reading mode
+          (when the ayah on air isn't the bookmark itself), and « Continue »
+          where the last Surah listened to was left — only while the
+          recitation is stopped (a clean scene while it plays or buffers). */}
       <AnimatePresence>
-        {!readingActive && mainBookmark && !player.isPlaying && !player.isLoading && !onAirBookmarked && !engagement.composerOpen && (
+        {!readingActive && (showBookmarkPill || showContinuePill) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
           <motion.div
             key="main-bookmark"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30 flex justify-center px-4"
+            className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30 flex flex-wrap justify-center gap-2 px-4"
           >
+            {showContinuePill && continueAt && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  handleContinueListening();
+                }}
+                className="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
+              >
+                <PlayIcon className="text-emerald-300" />
+                <span>
+                  Continue · {continueAt.bayan.title} {formatClock(continueAt.position)}
+                </span>
+              </button>
+            )}
+            {showBookmarkPill && mainBookmark && (
             <button
               type="button"
               onClick={() => {
@@ -1277,6 +1316,7 @@ export function ImmersiveHomeClient() {
                 {mainBookmark.surah}:{mainBookmark.ayah}
               </span>
             </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
