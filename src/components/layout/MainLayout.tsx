@@ -56,18 +56,41 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       // 99% alpha, not opaque: iOS 26 Safari clips opaque fixed layers to the
       // inner viewport, leaving bars above/below; translucent ones go edge to edge.
       // Black, not slate: Safari tints its bars with this colour.
-      <div className="bleed-clear fixed inset-0 overflow-hidden font-sans select-none bg-black/[0.99]">
+      <main className="bleed-clear fixed inset-0 overflow-hidden font-sans select-none bg-black/[0.99]">
+        <SkipLink href="#player">Skip to player</SkipLink>
         {/* Full-screen homepage content */}
         {children}
-      </div>
+      </main>
     );
   }
 
   // Only the 404 / error pages render outside the immersive home.
   return (
-    <main id="main" className="app-shell mx-auto min-h-screen max-w-6xl px-4 sm:px-6">
+    <>
+      <SkipLink href="#main">Skip to content</SkipLink>
+      <main id="main" tabIndex={-1} className="app-shell mx-auto min-h-screen max-w-6xl px-4 sm:px-6 outline-none">
+        {children}
+      </main>
+    </>
+  );
+}
+
+/** First Tab stop: hidden until focused, then jumps past the header. */
+function SkipLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      onClick={(ev) => {
+        // Move focus too (not only scroll): the home screen never scrolls.
+        const target = document.querySelector<HTMLElement>(href);
+        if (!target) return;
+        ev.preventDefault();
+        target.focus();
+      }}
+      className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[300] focus:rounded-lg focus:bg-primary-700 focus:px-4 focus:py-2 focus:text-sand-50"
+    >
       {children}
-    </main>
+    </a>
   );
 }
 

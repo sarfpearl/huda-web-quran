@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useDialogFocus } from "@/lib/useDialogFocus";
 
 /** Same glass as the player card, so sheets read as part of it. */
 export const PLAYER_GLASS =
@@ -77,6 +78,8 @@ export function ActionSheet({
   flush?: boolean;
 }) {
   const drag = useDragControls();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(open, sheetRef);
   const kb = useKeyboardInset(open);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -108,13 +111,15 @@ export function ActionSheet({
           />
           <motion.div
             key="sheet"
+            ref={sheetRef}
+            data-action-sheet=""
             role="dialog"
             aria-modal="true"
             aria-labelledby={labelledBy}
             aria-label={label}
             {...(keepAttr ? { [keepAttr]: "" } : {})}
             className={cn(
-              "fixed inset-x-0 bottom-0 z-[71] mx-auto flex max-h-[88dvh] w-full max-w-[520px] flex-col rounded-t-[28px] border-b-0 text-sand-50",
+              "fixed inset-x-0 bottom-0 z-[71] mx-auto flex max-h-[88dvh] w-full max-w-[520px] flex-col rounded-t-[28px] border-b-0 text-sand-50 outline-none",
               PLAYER_GLASS,
               className,
             )}

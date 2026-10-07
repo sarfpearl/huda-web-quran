@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
 import { ImmersiveBackground } from "./ImmersiveBackground";
 import { ImmersiveHeader, READER_SCALES } from "./ImmersiveHeader";
@@ -1153,6 +1153,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   );
 
   return (
+    // Reduce Motion (OS setting): framer animations keep their fades but drop
+    // the slides, scales and morphs (CSS animations: globals.css).
+    <MotionConfig reducedMotion="user">
     <div
       ref={sceneRef}
       // 99% alpha: iOS 26 Safari clips opaque fixed layers short of its bars.
@@ -1374,10 +1377,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         )}
       </AnimatePresence>
 
-      {/* Bottom Floating Player */}
+      {/* Bottom Floating Player — the skip link's target (MainLayout) */}
       <div
         data-player-dock
-        className="absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none"
+        id="player"
+        role="region"
+        aria-label="Player"
+        tabIndex={-1}
+        className="outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none"
       >
         {notice && !keyboardOpen && (
           <div
@@ -1533,6 +1540,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />
     </div>
+    </MotionConfig>
   );
 }
 

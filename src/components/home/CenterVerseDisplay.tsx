@@ -185,7 +185,9 @@ const QuranWord = memo(function QuranWord({
           <span aria-hidden="true" style={{ ...glyphStyle(glyphPage, tajweed, active), ...glyphInkPadding(glyphCode, glyphPage) }}>
             {glyphCode}
           </span>
-          <span className="sr-only">{text}</span>
+          {/* Trailing space: the words are separate boxes, so without it a
+              screen reader reads the ayah as one long word. */}
+          <span className="sr-only">{`${text} `}</span>
         </>
       ) : (
         text

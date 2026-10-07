@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { afterStage, finishStage } from "@/lib/onboarding";
+import { useDialogFocus } from "@/lib/useDialogFocus";
 
 const DISMISSED_KEY = "huda-install-dismissed";
 // After "Not now", ask again in two weeks.
@@ -377,6 +378,8 @@ export function InstallGuide() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const installEvent = useInstallPrompt();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(open, sheetRef);
 
   useEffect(() => {
     if (isStandalone()) {
@@ -436,6 +439,15 @@ export function InstallGuide() {
     } catch {}
   };
 
+  // Escape = "Not now".
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && dismiss();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const install = async () => {
     if (await promptInstall()) setOpen(false);
     else dismiss();
@@ -458,10 +470,11 @@ export function InstallGuide() {
           />
           <motion.div
             key="install-sheet"
+            ref={sheetRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="install-guide-title"
-            className="absolute inset-x-0 bottom-0 z-[61] mx-auto w-full max-w-[480px] px-3 pb-[calc(max(env(safe-area-inset-bottom),var(--vv-bottom,0px))+0.75rem)]"
+            className="absolute inset-x-0 bottom-0 z-[61] mx-auto w-full max-w-[480px] px-3 outline-none pb-[calc(max(env(safe-area-inset-bottom),var(--vv-bottom,0px))+0.75rem)]"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
