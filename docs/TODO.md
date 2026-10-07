@@ -4,6 +4,11 @@
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
+**Still open (2026-10-07, end of day):** the rest of the real-phone checks
+(below); IndoPak font licence (no reply yet — stays dev-only); 16 Aal-Imran
+chapter clips that were never rendered (those scenes show the image).
+Everything else is merged and live (#26 … #52).
+
 - [x] **QA PR stack merged** (2026-10-07) — #26 … #45 into `main` (merge
       commits, in order); Vercel production deploy of `dd935e4` succeeded.
 - [x] **Checked live after deploy** (2026-10-07): `node scripts/qa/seo-share.cjs
@@ -21,7 +26,10 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       service worker started after the page's JS / data had loaded, so none of
       it was cached; the page now hands those URLs to the worker (checked:
       fresh profile, one visit to /surah/36, server stopped → it opens, ayahs
-      and reading mode work). **Still to check on phones:** lock screen /
+      and reading mode work); (c) dotted circles on 38:6 — when the glyph
+      data (QPC text) hadn't loaded, the Tanzil fallback text was drawn in the
+      Hafs font; that fallback now uses Amiri (`.quran-tanzil`). Merged as #48,
+      checked live. **Still to check on phones:** lock screen /
       background playback and controls, headphone / Bluetooth buttons, a call
       interrupting, a Juz with the screen locked (pick the Juz first: Surah /
       Juz list → Juz → Juz 30 → play, then lock), home-screen app, Android Back.
@@ -47,7 +55,13 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       Al-Asr, Al-Ikhlas, Al-Falaq, An-Nas — backups in
       `.media-work/originals/`). Manifest 62 → 171 clips: every Surah now has
       a clip; still missing only 16 of Aal-Imran's 20 chapter clips (they show
-      the image). Masters in `public/videos/` (git-ignored).
+      the image). Masters in `public/videos/` (git-ignored). Merged as #51;
+      the 9 replaced clips are versioned (`?v=2`, `src/lib/data/videoVersions.ts`,
+      #52) because R2 serves clips immutable for a year — checked live (Al-Mulk
+      loads `067-al-mulk.mp4?v=2`, neighbours unversioned). The old branch was
+      deleted after the recovery (was `e575c56`); its generation scripts and
+      `docs/REAL_FOOTAGE_LICENSES.md` (Mixkit sources for the ayah clips) are
+      in `main`.
 - [x] **Offline** (2026-10-07, `feat/offline`, PR #45) —
       `public/sw.js`, registered in production only
       (`src/components/layout/ServiceWorker.tsx`): pages network-first →
