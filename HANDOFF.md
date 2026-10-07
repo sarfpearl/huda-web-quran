@@ -95,8 +95,8 @@
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
-- [ ] **Before launch:** clear Supabase test data (`truncate public.quran_listens, public.quran_presence;`), and later harden anonymous counts against abuse — see `docs/TODO.md`.
-- [ ] Optional cleanup (owner's call): old Bayan tables (`categories`, `speakers`, `bayan`, `bayan_plays`) and storage buckets (`bayan-audio`, `bayan-images`, `speaker-images`) still exist in the live Supabase DB. R2 still holds `assets/images/bayan/*.jpg`; only `bayan/quran.jpg` is used (Quran fallback cover).
+- [x] Supabase test data cleared (2026-10-07). [ ] Still open: harden anonymous counts against abuse — see `docs/TODO.md`.
+- [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
 
 ### Done (2026-10-05 → 10-06)
 - [x] Production R2 media issue (`.r2.dev4f` typo) resolved and verified live (§3).
