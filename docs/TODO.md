@@ -9,6 +9,25 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 chapter clips that were never rendered (those scenes show the image).
 Everything else is merged and live (#26 … #52).
 
+- [~] **Aal-Imran's 16 missing chapter clips** (2026-10-07, branch
+      `feat/imran-clips`) — `scripts/generation/generate_vertex_imran_rest.mjs`
+      (Veo 3.1 Fast on Vertex, 1080p, 8 s, no audio, fixed camera, 0.6 s loop
+      seam; `--dry-run` prints prompts + cost, `--only 04b,05a` re-takes).
+      Owner approved ≤ ~$20. Output: `public/videos/surah/003-aal-e-imran/`
+      (git-ignored) + QA frames in `qa_frames/` (0 / 4 / 8 s).
+      **Reviewed OK:** 03a, 04a, 05b, 06b, 06c, 07a. **Rejected → re-take
+      with the already-updated prompts:** 04b (came out as Monument Valley's
+      "Mitten" butte), 05a and 06a (camera pushed in along the track /
+      valley). 07b … 10b were still rendering at 17:35 — check each.
+      Review tip: SSIM(0 s, 4 s) low + changed object positions = camera
+      moved; SSIM(0 s, 8 s) < ~0.8 = bad seam (rain / dust lower SSIM
+      without motion — look at the frames). **Next:** finish the batch
+      (`node scripts/generation/generate_vertex_imran_rest.mjs` skips clips
+      already on disk), re-take rejects with `--only`, then
+      `node scripts/tools/reencode-videos.mjs --new` (encode, VMAF ≥ 88) →
+      its upload step (owner said: upload when done) → `node
+      scripts/tools/video-manifest.mjs` → check Aal-Imran in the browser
+      (chapters 33–200 play their clip) → PR.
 - [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
       favicon-192.png are now the logo alone on a clear background, from
