@@ -32,7 +32,7 @@ export function useIsMobile() {
  * the visible height. iOS leaves fixed elements behind the keyboard, so a sheet
  * with a text field lifts itself by this much.
  */
-function useKeyboardInset(active: boolean) {
+export function useKeyboardInset(active: boolean) {
   const [inset, setInset] = useState({ bottom: 0, height: 0 });
   useEffect(() => {
     const vv = window.visualViewport;

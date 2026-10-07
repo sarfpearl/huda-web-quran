@@ -15,7 +15,7 @@ import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
-import { detectScript, INDOPAK_ENABLED, isQuranScript, placeScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
+import { INDOPAK_ENABLED, isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";

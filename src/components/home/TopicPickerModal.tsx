@@ -9,7 +9,7 @@ import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIco
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
-import { PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -111,6 +111,8 @@ export function TopicPickerModal({
   // shows; the clip comes off once open so the panel's shadow isn't cut.
   const triggerRef = useRef<HTMLButtonElement>(null);
   const isMobile = useIsMobile();
+  // Phone sheet with a search box: sit on top of the on-screen keyboard.
+  const kb = useKeyboardInset(isOpen && isMobile);
   const panelRef = useRef<HTMLDivElement | null>(null);
   // Keyboard / screen reader: focus moves into the panel and stays there until
   // it closes (then back to the button); Escape closes it.
@@ -372,6 +374,11 @@ export function TopicPickerModal({
               role="dialog"
               aria-modal="true"
               aria-labelledby={titleId}
+              style={
+                isMobile && kb.bottom > 0
+                  ? { bottom: kb.bottom, height: "auto", maxHeight: Math.round(kb.height * 0.92) }
+                  : undefined
+              }
               {...(isMobile
                 ? {
                     // Phones / tablets: a bottom sheet docked to the bottom edge.

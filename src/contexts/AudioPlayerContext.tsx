@@ -1003,6 +1003,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     applyMediaMetadata();
   }, [current, applyMediaMetadata]);
+  // Pending retries must not outlive the provider.
+  useEffect(() => () => metaRetryRef.current.forEach(clearTimeout), []);
   // Locking the phone is when the lock screen reads it: set it as the page hides.
   useEffect(() => {
     const onHide = () => {
