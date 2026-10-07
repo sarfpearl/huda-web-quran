@@ -1,0 +1,40 @@
+{
+  "summary": {
+    "surahs": 114,
+    "ayahs": 6236,
+    "arabicTextChecked": 6236,
+    "glyphWordsChecked": 77430,
+    "translationLanguages": [
+      "en",
+      "ta",
+      "bn",
+      "fr",
+      "hi",
+      "id",
+      "ml",
+      "ms",
+      "tr",
+      "ur"
+    ],
+    "mushafPages": 604,
+    "juz": 30,
+    "failures": 0,
+    "failuresByCategory": {},
+    "englishNameSpellingVsQuranCom": 12
+  },
+  "failures": [],
+  "englishNameSpellingVsQuranCom": [
+    "3: Aal-Imran / Ali 'Imran",
+    "20: Ta-Ha / Taha",
+    "21: Al-Anbiya / Al-Anbya",
+    "29: Al-Ankabut / Al-'Ankabut",
+    "42: Ash-Shura / Ash-Shuraa",
+    "58: Al-Mujadilah / Al-Mujadila",
+    "61: As-Saff / As-Saf",
+    "80: Abasa / 'Abasa",
+    "93: Ad-Duha / Ad-Duhaa",
+    "96: Al-Alaq / Al-'Alaq",
+    "100: Al-Adiyat / Al-'Adiyat",
+    "103: Al-Asr / Al-'Asr"
+  ]
+}

@@ -528,7 +528,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
   },
   3: {
     surahNumber: 3,
-    name: "Aal-e-Imran",
+    name: "Aal-Imran",
     arabicName: "آل عمران",
     verses: 200,
     revelation: "Medinan",

@@ -20,6 +20,7 @@ import {
 } from "@/lib/data/service";
 import { getJuzAyahPairs } from "@/lib/data/quran";
 import { MUSHAF_PAGE_COUNT, mushafPageOf } from "@/lib/data/mushafPages";
+import { searchSurahs } from "@/lib/data/surahSearch";
 import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
 import { compactCount } from "./QuranEngagement";
@@ -252,15 +253,7 @@ export function TopicPickerModal({
     );
   });
 
-  const filteredSurah = QURAN_SURAHS.filter((s) => {
-    if (!q) return true;
-    return (
-      s.name.toLowerCase().includes(q) ||
-      s.arabicName.includes(searchQuery.trim()) ||
-      String(s.number).includes(q) ||
-      s.theme.toLowerCase().includes(q)
-    );
-  });
+  const filteredSurah = searchSurahs(QURAN_SURAHS, searchQuery);
 
   const renderSurahCard = (s: (typeof QURAN_SURAHS)[number]) => {
     const isTrackCurrent = player.current?.id === `quran-surah-${s.number}`;
