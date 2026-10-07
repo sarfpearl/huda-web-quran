@@ -183,15 +183,9 @@ export function CompactBayanPlayer({
 
   const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
 
-  // Collapsed = compact pill (cover + transport). Remembered per viewer on
-  // larger screens; phones always open on the full player (see below).
+  // Collapsed = compact pill (cover + transport). Every screen size opens on the
+  // full player; it shrinks to the pill once playback starts (see below).
   const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => {
-    if (window.matchMedia(SMALL_SCREEN).matches) return;
-    try {
-      setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
-    } catch {}
-  }, []);
   useEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
