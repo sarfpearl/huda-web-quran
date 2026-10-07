@@ -6,6 +6,7 @@
  */
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
 import { mediaUrl } from "@/lib/media";
+import { hasVideo } from "./videoManifest";
 
 export interface SurahChapter {
   id: number;
@@ -553,7 +554,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "The Illusions of Worldly Wealth vs The Eternal Gardens",
         mood: "arid silt basin vs oasis greenery, early morning",
         visualConcept: "Contrast between dry alluvium and sheltered mountain oasis greenery under crisp morning sunlight.",
-        videoPath: "/videos/surah/003-aal-e-imran/02a-illusions-of-worldly-wealth-and-eternal-gardens.mp4",
+        videoPath: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
         timeRange: [0.045, 0.085],
       },
       {
@@ -563,7 +564,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "The Supreme Testimony of Tawhid (Shahidallah)",
         mood: "monolithic limestone plateau, midday solar clarity",
         visualConcept: "Vast high-altitude limestone plateau under midday balanced clear sky, reflecting sheer clarity.",
-        videoPath: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid.mp4",
+        videoPath: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
         timeRange: [0.085, 0.125],
       },
       {
@@ -573,7 +574,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "The Sovereign Kingdom, Night & Day Alternation (Malik al-Mulk)",
         mood: "Tuwaiq escarpment, crepuscular twilight transition",
         visualConcept: "Vast desert escarpment under an immense sky witnessing the peaceful alternation of twilight into dawn.",
-        videoPath: "/videos/surah/003-aal-e-imran/02c-sovereign-kingdom-and-cosmic-alternation.mp4",
+        videoPath: "/videos/surah/003-aal-e-imran/02c-the-supreme-sovereign-and-cosmic-order.mp4",
         timeRange: [0.125, 0.160],
       },
       {
@@ -1057,18 +1058,24 @@ export function getSurahVisualData(surahNum: number): SurahVisualData {
 /**
  * Resolves the currently active video path based on playback progress.
  */
+/**
+ * The clip for this point of the Surah, or null when it has none on R2
+ * (videoManifest) — most Surahs; the scene then shows the Surah's image. A
+ * chapter without its own clip doesn't borrow another chapter's.
+ */
 export function resolveSurahVideoPath(
   surahNum: number,
   currentTime: number,
   totalDuration: number
-): string {
+): string | null {
+  const pick = (p: string | undefined) => (hasVideo(p) ? mediaUrl(p) : null);
   const data = getSurahVisualData(surahNum);
   if (!data.isMultiChapter || data.chapters.length <= 1 || totalDuration <= 0) {
-    return mediaUrl(data.masterVideoPath);
+    return pick(data.masterVideoPath);
   }
   const progress = Math.min(Math.max(currentTime / totalDuration, 0), 1);
   const activeChapter = data.chapters.find(
     (c) => progress >= c.timeRange[0] && progress < c.timeRange[1]
   );
-  return mediaUrl(activeChapter?.videoPath ?? data.chapters[0].videoPath);
+  return pick(activeChapter?.videoPath ?? data.chapters[0].videoPath);
 }

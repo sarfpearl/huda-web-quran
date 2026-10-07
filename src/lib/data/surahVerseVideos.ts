@@ -13,6 +13,7 @@
  */
 
 import { mediaUrl } from "@/lib/media";
+import { hasVideo } from "./videoManifest";
 
 export interface SurahVerseVideo {
   surahNumber: number;
@@ -421,7 +422,8 @@ export function getAyahVideo(surahNumber: number, ayahNumber: number): SurahVers
 
   // Direct exact match only — NO fallback ranges permitted
   const exact = surahMap[ayahNumber];
-  if (exact && exact.status === "APPROVED") {
+  // …and only a clip that exists on R2 (videoManifest).
+  if (exact && exact.status === "APPROVED" && hasVideo(exact.videoPath)) {
     return {
       ...exact,
       videoPath: mediaUrl(exact.videoPath),
