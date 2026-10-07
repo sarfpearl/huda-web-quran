@@ -11,9 +11,44 @@ export const siteConfig = {
   url: (
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
   ).replace(/\/$/, ""),
-  locale: "ta_IN",
+  // The UI and share text are English (translations are per-visitor).
+  locale: "en_US",
   themeColor: "#1a5140",
 } as const;
+
+/** The link-preview card (src/app/opengraph-image.jpg, 1200×675). */
+const shareImage = {
+  url: "/opengraph-image.jpg",
+  width: 1200,
+  height: 675,
+  type: "image/jpeg",
+  alt: "HuDa Web Quran — Guidance for every moment",
+};
+
+/**
+ * Open Graph + X card for a page. Next replaces a parent's `openGraph` /
+ * `twitter` object wholesale (no deep merge), so a page that sets only its
+ * title would lose the image, site name and large card — always build both here.
+ */
+export function shareMetadata(page: { title: string; description: string; url: string }) {
+  return {
+    openGraph: {
+      type: "website" as const,
+      siteName: siteConfig.fullName,
+      locale: siteConfig.locale,
+      title: page.title,
+      description: page.description,
+      url: page.url,
+      images: [shareImage],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title: page.title,
+      description: page.description,
+      images: [shareImage],
+    },
+  };
+}
 
 /** Build an absolute URL from a site-relative path. */
 export function absoluteUrl(path: string): string {
