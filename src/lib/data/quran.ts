@@ -29,6 +29,8 @@ for (const entry of SURAH_METADATA_LIST) {
   SURAH_SLUG_MAP[entry.num] = entry.slug;
 }
 
+// Scene images are WebP (~75% smaller than the 2560px JPEGs, which stay on R2
+// beside them; scripts/tools/webp-images.mjs makes and uploads them).
 export function quranImageUrl(
   kind: "surah" | "juz",
   num: number
@@ -36,10 +38,10 @@ export function quranImageUrl(
   if (kind === "surah") {
     const pad = String(num).padStart(3, "0");
     const slug = SURAH_SLUG_MAP[num] || `surah-${num}`;
-    return mediaUrl(`/assets/images/surah/${pad}-${slug}.jpg?v=23`);
+    return mediaUrl(`/assets/images/surah/${pad}-${slug}.webp?v=1`);
   }
   const pad = String(num).padStart(2, "0");
-  return mediaUrl(`/assets/images/quran/juz-${pad}.jpg?v=5`);
+  return mediaUrl(`/assets/images/quran/juz-${pad}.webp?v=1`);
 }
 
 /** 320px list thumbnail on R2, served directly (no Vercel image optimizer). */
@@ -50,10 +52,10 @@ export function quranThumbUrl(
   if (kind === "surah") {
     const pad = String(num).padStart(3, "0");
     const slug = SURAH_SLUG_MAP[num] || `surah-${num}`;
-    return mediaUrl(`/assets/images/surah/thumbs/${pad}-${slug}.jpg?v=1`);
+    return mediaUrl(`/assets/images/surah/thumbs/${pad}-${slug}.webp?v=1`);
   }
   const pad = String(num).padStart(2, "0");
-  return mediaUrl(`/assets/images/quran/thumbs/juz-${pad}.jpg?v=1`);
+  return mediaUrl(`/assets/images/quran/thumbs/juz-${pad}.webp?v=1`);
 }
 
 /** Public shape consumed by the Quran picker UI. */
