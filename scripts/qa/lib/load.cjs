@@ -8,6 +8,18 @@ const fs = require("fs");
 const Module = require("module");
 
 const ROOT = path.resolve(__dirname, "../../..");
+
+// The app's public env (NEXT_PUBLIC_MEDIA_BASE_URL → R2 media URLs), as
+// Next.js loads it; without it media paths stay relative and every R2 file
+// (e.g. Maher's full-Juz audio) reads as unreachable.
+for (const f of [".env.local", ".env"]) {
+  const p = path.join(ROOT, f);
+  if (!fs.existsSync(p)) continue;
+  for (const line of fs.readFileSync(p, "utf8").split("\n")) {
+    const m = line.match(/^\s*(NEXT_PUBLIC_[A-Z0-9_]+)\s*=\s*"?([^"\r]*)"?\s*$/);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+  }
+}
 const { transform } = require(path.join(ROOT, "node_modules/sucrase"));
 
 const origResolve = Module._resolveFilename;

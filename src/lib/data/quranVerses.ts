@@ -1203,6 +1203,9 @@ export function getEffectiveWords(verse: AyahVerse | RecitationSegment | AyahSyn
  * Strict rule: Exact word-level timing is ONLY evaluated when isExactWordTimingAllowed is true.
  * For all other reciters/recordings, it returns hasWordTiming: false, activeWord: null, activeWordIndex: -1.
  */
+/** Seconds the last word stays lit after its ayah ends (a pause follows). */
+const LAST_WORD_HOLD = 0.5;
+
 export function getVoiceProgressInSegment(
   segment: RecitationSegment | AyahVerse | AyahSync | null | undefined,
   currentTime: number,
@@ -1293,7 +1296,7 @@ export function getVoiceProgressInSegment(
     // After the last segment: hold the final word while still within the verse.
     const lastSeg = rawSegs[rawSegs.length - 1];
     const toBound = typeof tTo === "number" ? tTo : lastSeg.endTime;
-    if (currentTime >= lastSeg.endTime && currentTime < toBound + 0.5) {
+    if (currentTime >= lastSeg.endTime && currentTime < toBound + LAST_WORD_HOLD) {
       const idx = clampIdx(lastSeg.wordIndex);
       return { progress: 1, activeWordIndex: idx, activeWord: words[idx] ?? null, hasWordTiming: true };
     }
@@ -1327,7 +1330,7 @@ export function getVoiceProgressInSegment(
 
   // After last word voice finishes: if still within verse bounds, keep last word active
   const toBound = typeof tTo === "number" ? tTo : lastWord.endTime;
-  if (currentTime >= lastWord.endTime && currentTime < toBound + 0.5) {
+  if (currentTime >= lastWord.endTime && currentTime < toBound + LAST_WORD_HOLD) {
     return { progress: 1, activeWordIndex: totalWords - 1, activeWord: lastWord, hasWordTiming: true };
   }
 
@@ -1386,6 +1389,53 @@ export function ayahClipTimeOf(verse: AyahVerse | null | undefined, surahTime: n
   const dur = clipDuration > 0 ? clipDuration : winDur;
   if (Math.abs(dur / winDur - 1) > JUZ_CLIP_TOLERANCE) return null;
   return Math.min(dur, Math.max(0, (surahTime - win.start) * (dur / winDur)));
+}
+
+/**
+ * The first moment after `t` at which the highlighted word can change: the
+ * next start or end of a word segment, or the end of the ayah / segment.
+ * Null when nothing in it changes after `t`. Fed to the player's
+ * setTimeBoundary so a word lights up on the frame its voice starts.
+ */
+export function nextWordBoundary(
+  segment: RecitationSegment | AyahVerse | null | undefined,
+  t: number
+): number | null {
+  if (!segment) return null;
+  let next = Infinity;
+  const consider = (x: number | undefined) => {
+    if (typeof x === "number" && x > t && x < next) next = x;
+  };
+  for (const w of segment.wordSegments ?? []) {
+    consider(w.startTime);
+    consider(w.endTime);
+  }
+  if (!segment.wordSegments?.length)
+    for (const w of segment.words ?? []) {
+      consider(w.startTime);
+      consider(w.endTime);
+    }
+  const end = "timestampTo" in segment ? segment.timestampTo : "endTime" in segment ? segment.endTime : undefined;
+  consider(end);
+  // The held last word goes out LAST_WORD_HOLD after the end.
+  if (typeof end === "number") consider(end + LAST_WORD_HOLD);
+  return Number.isFinite(next) ? next : null;
+}
+
+/**
+ * nextWordBoundary over a whole timeline: when nothing in the active segment
+ * changes after `t` (a pause between two ayahs — e.g. Dosari's timings leave
+ * gaps), the next change is the next segment's start.
+ */
+export function nextTimelineBoundary(
+  segments: RecitationSegment[],
+  segment: RecitationSegment | null | undefined,
+  t: number
+): number | null {
+  const inSegment = nextWordBoundary(segment, t);
+  const nextStart = segments.find((s) => s.startTime > t)?.startTime ?? null;
+  if (inSegment === null) return nextStart;
+  return nextStart === null ? inSegment : Math.min(inSegment, nextStart);
 }
 
 /** Backward-compatible alias for getVoiceProgressInSegment */
