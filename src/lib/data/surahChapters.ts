@@ -5,8 +5,8 @@
  * and progression of its verses, mapping to cinematic video journeys.
  */
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
-import { mediaUrl } from "@/lib/media";
 import { hasVideo } from "./videoManifest";
+import { clipUrl } from "./videoVersions";
 
 export interface SurahChapter {
   id: number;
@@ -1068,7 +1068,7 @@ export function resolveSurahVideoPath(
   currentTime: number,
   totalDuration: number
 ): string | null {
-  const pick = (p: string | undefined) => (hasVideo(p) ? mediaUrl(p) : null);
+  const pick = (p: string | undefined) => (p && hasVideo(p) ? clipUrl(p) : null);
   const data = getSurahVisualData(surahNum);
   if (!data.isMultiChapter || data.chapters.length <= 1 || totalDuration <= 0) {
     return pick(data.masterVideoPath);
