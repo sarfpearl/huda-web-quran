@@ -20,10 +20,12 @@ Everything else is merged and live (#26 … #52).
       ruin at the right edge although the prompt says "no ruins"), 09a, 09b,
       10a (night sky; only the stars move), 10b, and the re-takes 05a (small
       lens-flare dot top-left) and 06a — all fixed camera, clean 0 s / 8 s seam.
-      **Owner to decide: 04b** — the re-take is a fixed camera now, but the
-      butte is again a thumb-and-mitten shape that looks like Monument Valley's
-      Mitten; re-take once more ($0.8) or keep? Nothing is encoded or uploaded
-      yet (R2 serves clips immutable for a year, so decide before upload).
+      **04b take 3** (low sandstone escarpment + dunes, no butte — the
+      Mitten look is gone): 0 s = 8 s (clean seam) but at 4 s the whole frame
+      sits ~35 px higher (a slow tilt / bob that returns) — owner to decide
+      keep or re-take ($0.8; a timed-out first attempt may have been billed
+      twice). Nothing is encoded or uploaded yet (R2 serves clips immutable
+      for a year, so decide before upload).
       Review tip: SSIM(0 s, 4 s) low + changed object positions = camera
       moved; SSIM(0 s, 8 s) < ~0.8 = bad seam (rain / dust lower SSIM
       without motion — look at the frames). **Next:** settle 04b (`--only 04b`), then

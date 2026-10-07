@@ -55,9 +55,10 @@ const CLIPS = [
   {
     id: "04b", name: "04b-the-sincere-disciples-and-elevation-of-isa", verses: "52–63",
     // Take 1 came out as Monument Valley's "Mitten" butte (USA) with a
-    // thumb-shaped spur — the look 02c already had to rule out.
-    scene: "In the Hisma desert of north-western Saudi Arabia near AlUla, a single, isolated natural sandstone pillar rises from a flat sea of soft orange sand into a clear, deep azure sky, seen from a distance so the whole pillar stands in the centre of the frame. The pillar is one solid, smooth, wind-rounded column of layered rose and ochre sandstone with a rounded top, wider at its base, with no side spurs. Warm late-morning sunlight; fine sand drifts slowly across the flat ground at its base; a few dry desert shrubs move in the wind.",
-    negativeExtra: "No other towers, no arches, no clouds touching the pillar, no mitten shape, no thumb-shaped spur, no side fingers or horns, no American Southwest, no Monument Valley. ",
+    // thumb-shaped spur; take 2 (single pillar, no spurs) still grew a thumb.
+    // Take 3 drops the isolated butte altogether: a long low escarpment.
+    scene: "In the Hisma desert of north-western Saudi Arabia, a wide, low view across rolling soft orange sand dunes toward a long, low, flat-topped sandstone escarpment that runs horizontally across the whole frame in the distance, its smooth wind-worn face in layers of rose and ochre, under a clear, deep azure sky. Warm late-morning sunlight; fine sand drifts slowly across the dune crests in the foreground; a few dry desert shrubs move in the wind.",
+    negativeExtra: "No isolated tower, no single standing rock, no pillar, no butte, no mitten shape, no thumb or finger shaped rock, no arches, no clouds, no American Southwest, no Monument Valley. ",
   },
   {
     id: "05a", name: "05a-the-common-word-of-pure-monotheism", verses: "64–80",
