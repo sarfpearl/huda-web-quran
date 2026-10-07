@@ -5,6 +5,7 @@ import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapt
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 import { quranImageUrl } from "@/lib/data/quran";
 import { mediaUrl } from "@/lib/media";
+import { hasVideo } from "@/lib/data/videoManifest";
 import { refreshBackdrops } from "@/lib/refreshBackdrops";
 
 interface SurahCinematicBackgroundProps {
@@ -40,7 +41,7 @@ export function SurahCinematicBackground({
         const chapterForVerse = surahData.chapters.find(
           (c) => ayahNumber >= c.fromVerse && ayahNumber <= c.toVerse
         );
-        if (chapterForVerse?.videoPath) chosen = chapterForVerse.videoPath;
+        if (hasVideo(chapterForVerse?.videoPath)) chosen = chapterForVerse!.videoPath;
       }
     }
     if (!chosen) {
@@ -75,7 +76,13 @@ export function SurahCinematicBackground({
 
   // When stableVideo changes, load it into the idle slot without blanking the active slot
   useEffect(() => {
-    if (!stableVideo) return;
+    // No clip for this Surah / point (videoManifest): drop both slots so the
+    // Surah's image shows — the previous Surah's clip must not stay on top.
+    if (!stableVideo) {
+      if (slotA.src) setSlotA({ src: null, loaded: false });
+      if (slotB.src) setSlotB({ src: null, loaded: false });
+      return;
+    }
 
     const currentSrc = activeSlot === 0 ? slotA.src : slotB.src;
     if (stableVideo === currentSrc) return;

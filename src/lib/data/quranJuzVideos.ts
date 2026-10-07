@@ -31,6 +31,7 @@ export const JUZ_VIDEOS: Record<number, JuzVideoConfig> = {
 };
 
 import { mediaUrl } from "@/lib/media";
+import { hasVideo } from "./videoManifest";
 
 export function getJuzVideo(juzNumber: number): JuzVideoConfig | null {
   return JUZ_VIDEOS[juzNumber] || null;
@@ -38,7 +39,7 @@ export function getJuzVideo(juzNumber: number): JuzVideoConfig | null {
 
 export function getJuzVideoPath(juzNumber: number): string | null {
   const path = JUZ_VIDEOS[juzNumber]?.videoPath;
-  return path ? mediaUrl(path) : null;
+  return path && hasVideo(path) ? mediaUrl(path) : null;
 }
 
 export function getJuzPlaylist(juzNumber: number): string[] {
