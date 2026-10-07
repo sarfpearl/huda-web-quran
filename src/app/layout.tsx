@@ -7,6 +7,7 @@ import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SurahListenCounter } from "@/components/player/SurahListenCounter";
 import { SplashScreen } from "@/components/layout/SplashScreen";
+import { ServiceWorker } from "@/components/layout/ServiceWorker";
 
 
 export const metadata: Metadata = {
@@ -78,6 +79,7 @@ export default function RootLayout({
           <AudioPlayerProvider>
             <MainLayout>{children}</MainLayout>
             <SurahListenCounter />
+            <ServiceWorker />
           </AudioPlayerProvider>
         </ThemeProvider>
       </body>

@@ -32,7 +32,20 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       servers on one `.next` turn pages into 404s.
 - [ ] **Content (owner)** — 103 Surahs have no background clip (they show
       their image); new clips: render → `reencode-videos.mjs` →
-      `video-manifest.mjs`. No offline support (no service worker).
+      `video-manifest.mjs`.
+- [x] **Offline** (2026-10-07, `feat/offline`, local commit — not pushed) —
+      `public/sw.js`, registered in production only
+      (`src/components/layout/ServiceWorker.tsx`): pages network-first →
+      offline the same page, else the cached home, else a small "You're
+      offline" page; `/_next/static` + `/fonts` cache-first; `/data`
+      network-first (a fix reaches everyone at once); scenes / thumbnails /
+      icons cache-first (newest 80; R2 has no CORS, so they're opaque
+      entries). Audio, video, Supabase, `/admin` untouched. Checked on the
+      prod build: server stopped → `/surah/36/4` opens, 36:5 shows in
+      Tajweed glyphs with its scene; a changed sw.js updates in place;
+      `/admin/comments` not cached. Only Surahs opened before work offline,
+      and recitation needs the connection. Bump `VERSION` in sw.js to drop
+      all caches.
 
 - [x] **Remove unused R2 keys from Vercel** (done 2026-10-06) — `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are in Vercel (Project → Settings → Environments → Production) but only the local `scripts/tools/upload-to-r2.mjs` uses them; the app never reads them. Delete both there; keep them in `.env.local`. Owner does this in the Vercel dashboard.
 - [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com). Until then IndoPak stays development-only. Steps once granted: see *IndoPak script by region* below.
@@ -283,8 +296,8 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       returns 200), scene + cover + list thumbnails checked in the browser; Ya-Sin's clip is a 175 KB blue placeholder;
       (b) ~~on a very slow line the install prompt could arrive after the
       sheet opened and swap the steps~~ fixed 2026-10-07 (the bottom button
-      becomes Install instead); (c) offline: no service worker, so the
-      site can't open offline (audio offline handling: item 4); (d) a Surah
+      becomes Install instead); (c) offline: service worker added
+      2026-10-07 (see Open items); (d) a Surah
       link preloads its recitation (~3 MB) before play — kept, so play is
       instant for someone who followed a link.
 - [~] **14. Accessibility** (2026-10-07) — axe-core 4.10 (browser) on the
