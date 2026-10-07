@@ -1,8 +1,29 @@
 # TODO
 
-## Open items (2026-10-06)
+## Open items (updated 2026-10-07)
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
+
+- [ ] **Merge the QA PR stack (owner)** — #26 … #36 (Launch QA items 1–11),
+      then #37 SEO → #38 performance → #39 accessibility → #40 share button →
+      #41 video re-encode script → #42 WebP scenes → #43 missing-video fix,
+      each based on the one before (top branch: `fix/missing-videos`). Vercel
+      deploys only from `main`. R2 media is already live (smaller clips, the
+      WebPs uploaded), so #42 is safe to merge.
+- [ ] **After deploy, check live:** `node scripts/qa/seo-share.cjs` → 0
+      failures; an unsent link (e.g. `/surah/36/4`) in WhatsApp shows
+      "Ya-Sin 36:4"; scenes load as `.webp`; going Al-Fatihah → An-Nisa leaves
+      no Al-Fatihah clip on screen.
+- [ ] **Real phones (Launch QA item 4)** — lock screen / background playback,
+      headphones / Bluetooth buttons, a call interrupting, Juz with the screen
+      locked; iPhone Safari + Android Chrome (no iOS Simulator on this Mac).
+- [ ] **Small code follow-ups** — Back on Android closes an open picker
+      instead of leaving the site; 404 page polish (item 7, skipped for now);
+      header search button clipped at 320px; Juz share link untested in the
+      browser; install sheet can still swap on a very slow line (item 13 b).
+- [ ] **Content (owner)** — 103 Surahs have no background clip (they show
+      their image); new clips: render → `reencode-videos.mjs` →
+      `video-manifest.mjs`. No offline support (no service worker).
 
 - [x] **Remove unused R2 keys from Vercel** (done 2026-10-06) — `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are in Vercel (Project → Settings → Environments → Production) but only the local `scripts/tools/upload-to-r2.mjs` uses them; the app never reads them. Delete both there; keep them in `.env.local`. Owner does this in the Vercel dashboard.
 - [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com). Until then IndoPak stays development-only. Steps once granted: see *IndoPak script by region* below.
