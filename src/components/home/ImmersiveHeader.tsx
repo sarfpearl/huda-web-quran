@@ -190,7 +190,7 @@ export function ImmersiveHeader({
                 : "Translation: off — choose a language"
             }
             data-tooltip={language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
-            className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+            className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
@@ -223,7 +223,7 @@ export function ImmersiveHeader({
               aria-checked={showMeaning}
               aria-label={showMeaning ? "Translation on — turn off (Arabic only)" : "Translation off — turn on"}
               onClick={() => onToggleMeaning?.()}
-              className="flex items-center gap-2 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium text-sand-200 transition-colors hover:bg-white/5 cursor-pointer"
+              className="tap-44 flex items-center gap-2 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium text-sand-200 transition-colors hover:bg-white/5 cursor-pointer"
             >
               {showMeaning ? "On" : "Off"}
               <span
@@ -242,7 +242,7 @@ export function ImmersiveHeader({
               type="button"
               onClick={() => setTranslationSheetOpen(false)}
               aria-label="Close translation languages"
-              className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
+              className="tap-44 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -394,7 +394,7 @@ export function ImmersiveHeader({
               aria-haspopup="dialog"
               aria-label={language === "ta" ? "தஜ்வீத்" : "Tajweed"}
               data-tooltip={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
-              className={`pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+              className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
                 showTajweed ? "text-amber-300" : "text-white/60"
               }`}
             >
@@ -529,7 +529,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={onToggleVisualMode}
-            className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+            className="tap-44 pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
             title={
               visualMode === "video"
                 ? "Video Mode Active (Click to switch to Image Mode)"

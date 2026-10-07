@@ -111,9 +111,21 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       browser. **Not done (owner skipped for now):** Back closing modals
       (Back on Android leaves the site while a picker is open); 404 polish
       (site title + splash on the 404 page).
-- [ ] **8. Responsive** — 1440 / 1280 / 1024, 768 / 820, 390 / 393 / 412 /
-      430 px: no horizontal scroll, player fits, Arabic doesn't overflow,
-      tap targets, header, cards, modals, translation, reciter selector.
+- [x] **8. Responsive** (2026-10-06) — `scripts/qa/responsive-check.js` at
+      1440 / 1280 / 1024 / 820 / 768 / 430 / 412 / 393 / 390 px, on the home
+      screen with an ayah on screen, the content browser, the reciter picker
+      and the translation picker: no horizontal scroll, nothing past the
+      screen edge, no Arabic word overflowing, player inside the screen —
+      at every width. **Fixed: small tap targets** — a `.tap-44` utility
+      (globals.css: an invisible ≥44×44 hit area, looks unchanged) on the
+      translation and Tajweed buttons, their on/off switch and close, the
+      reciter picker's close, the content browser's close, previous / next
+      ayah, like, shuffle, speed, mute and the live / views / comments
+      counts (17px tall). Left as they are: the header's round buttons are
+      40×40 below 400px (44 above; they'd no longer fit the row, and the
+      reciter avatar clips a hit area), the ayah pill's « » are 36px (its
+      pill clips), the progress bar is 20px tall; all pass WCAG 2.2 AA's
+      24px minimum. Dense icon rows overlap each other's hit areas a little.
 - [ ] **9. Waqt (prayer) time in the header widget** — replace the clock +
       location pill (`src/components/navigation/TimeLocationWidget.tsx`) with
       the prayer time for that location. Agree the details with the owner first.
