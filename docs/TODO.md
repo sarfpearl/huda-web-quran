@@ -163,6 +163,8 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       (WebKit GPU-crash workaround), so it's weaker there — now a soft dark
       oval scrim sits behind the ayah (`.quran-verse-scrim`, 55% at the
       centre fading to 0 at the text block's edge), in both Tajweed and plain.
+      **Changed (owner, 2026-10-07):** the oval scrim is gone; instead an even
+      20% black over the whole scene (was a 35–55% radial).
 - [x] **11. Light / dark mode** (2026-10-07) — the Quran home is always the
       dark scene (no theme toggle is rendered); only the 404 / error and
       admin pages follow the system theme (404 checked light + dark).

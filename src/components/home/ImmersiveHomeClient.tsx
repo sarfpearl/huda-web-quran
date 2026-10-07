@@ -1175,11 +1175,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         visualMode={visualMode}
       />
 
-      {/* Scrim over every background so the verse reads clearly on any scene,
-          bright ones too — the Tajweed glyph words carry no text shadow on
-          WebKit. Darker towards the edges, where the header and player sit. */}
+      {/* An even 20% black over every background (owner's choice, 2026-10-07:
+          no dark patch behind the ayah any more). */}
       <div
-        className="absolute inset-0 z-[1] pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.35),rgba(0,0,0,0.55))]"
+        className="absolute inset-0 z-[1] pointer-events-none bg-black/20"
         aria-hidden="true"
       />
 

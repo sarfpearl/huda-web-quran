@@ -296,14 +296,6 @@
   }
 
   /* Quran Center Display Text Legibility */
-  /* A soft dark oval behind the ayah (owner's choice, 2026-10-07): over a
-     bright scene — a sunlit sky, leaves — the Tajweed colours (made for a
-     black page) and the white letters lost contrast, most on iPhone, where
-     glyph words get no text shadow. Fades to nothing at the text block's
-     edge, so the scroll pane never cuts it. */
-  .quran-verse-scrim {
-    background-image: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.42) 65%, rgba(0, 0, 0, 0));
-  }
   .quran-arabic-shadow {
     /* Crisp, tight contrast for the fine Uthmanic strokes — legible on the video
        background without a heavy glow that thickens/blurs the calligraphy. */
@@ -618,4 +610,16 @@ textarea,
    as boxes, which is why IndoPak stays development-only for now. */
 .font-arabic.quran-indopak {
   font-family: 'IndoPak', var(--font-naskh), 'Uthmanic Hafs', serif;
+}
+
+/* Full player: the cover is left out only when the card is narrower than
+   300px (it would squeeze the title and the Ayat pill), not by screen width.
+   The query sees the content box — 300px card minus its px-4 (2 × 16px). */
+.player-full {
+  container: player-full / inline-size;
+}
+@container player-full (max-width: 267.98px) {
+  .player-cover {
+    display: none;
+  }
 }
