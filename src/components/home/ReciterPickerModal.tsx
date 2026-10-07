@@ -224,7 +224,7 @@ export function ReciterPickerModal({
           <p className={`text-xs font-semibold ${syncFilter === "word" ? "text-emerald-300" : "text-amber-300"}`}>
             {syncFilter === "word" ? "Continues from the same ayah" : "Starts again from Ayah 1"}
           </p>
-          <p className="mt-0.5 text-[11px] leading-snug text-sand-300/80">
+          <p className="mt-0.5 text-[10px] leading-snug text-sand-50/90">
             {syncFilter === "word"
               ? "Change the reciter anytime — the recitation carries on from where you are."
               : `If you change to one of these reciters, the ${isJuz ? "Juz" : "Surah"} will play again from the beginning.`}

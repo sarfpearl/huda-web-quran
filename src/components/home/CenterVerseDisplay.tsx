@@ -98,19 +98,19 @@ function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSS
         <h2
           dir="rtl"
           lang="ar"
-          className="font-arabic font-normal text-amber-300 leading-[1.6] sm:leading-[1.6] md:leading-[1.6] lg:leading-[1.6] quran-arabic-shadow [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl"
+          className="font-arabic font-normal text-amber-300 leading-[1.6] sm:leading-[1.6] md:leading-[1.6] lg:leading-[1.6] quran-arabic-shadow [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)] text-6xl sm:text-6xl md:text-7xl lg:text-8xl"
         >
           السَّلَامُ عَلَيْكُمْ
         </h2>
         <p
           lang={language}
-          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-white text-2xl sm:text-3xl md:text-4xl tracking-wide quran-translation-shadow`}
+          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-white text-2xl sm:text-2xl md:text-3xl tracking-wide quran-translation-shadow`}
         >
           {g.line}
         </p>
         <p
           lang={language}
-          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-sand-50/75 text-base sm:text-lg md:text-xl tracking-wide quran-translation-shadow`}
+          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-sand-50/75 text-base sm:text-base md:text-lg tracking-wide quran-translation-shadow`}
         >
           {g.meaning}
         </p>

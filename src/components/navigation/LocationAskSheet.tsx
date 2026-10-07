@@ -24,8 +24,8 @@ export function LocationAskSheet({
 }) {
   const t = ta ? TA : EN;
   return (
-    <ActionSheet open={open} onClose={onLater} label={t.title}>
-      <div className={`px-5 pt-1 pb-5 ${ta ? "font-tamil" : ""}`}>
+    <ActionSheet open={open} onClose={onLater} label={t.title} flush>
+      <div className={`px-5 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${ta ? "font-tamil" : ""}`}>
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-emerald-300" aria-hidden="true">
             <PinIcon />

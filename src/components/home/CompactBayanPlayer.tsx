@@ -762,7 +762,7 @@ export function CompactBayanPlayer({
     <div
       ref={fullRef}
       aria-hidden={collapsed}
-      className={`${viewPos(!collapsed)} ${viewBase} ${collapsed ? viewHidden : viewShown} player-full w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[680px] px-4 py-4 sm:px-6 sm:py-6`}
+      className={`${viewPos(!collapsed)} ${viewBase} ${collapsed ? viewHidden : viewShown} player-full w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[600px] px-4 py-4 sm:px-6 sm:py-6`}
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}
       {/* Upper Section — Artwork + Track Info + Action Buttons */}
@@ -821,7 +821,7 @@ export function CompactBayanPlayer({
             className={`relative flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
             {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
           >
-            <h3 ref={fullTitle.nameRef as React.RefObject<HTMLHeadingElement>} className={`truncate font-bold text-white tracking-tight ${ta && surah ? "font-tamil text-sm sm:text-base md:text-lg" : "font-sans text-base sm:text-lg md:text-xl"}`}>
+            <h3 ref={fullTitle.nameRef as React.RefObject<HTMLHeadingElement>} className={`truncate font-bold text-white tracking-tight ${ta && surah ? "font-tamil text-sm sm:text-base md:text-base" : "font-sans text-base sm:text-base md:text-lg"}`}>
               {displayTitle}
             </h3>
             {surah?.arabicName && (
@@ -830,7 +830,7 @@ export function CompactBayanPlayer({
                 lang="ar"
                 dir="rtl"
                 aria-hidden={fullTitle.arabicClass ? true : undefined}
-                className={`font-arabic text-base sm:text-lg font-bold text-emerald-300 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${fullTitle.arabicClass}`}
+                className={`font-arabic text-base sm:text-base font-bold text-emerald-300 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${fullTitle.arabicClass}`}
               >
                 {surah.arabicName}
               </span>
@@ -838,7 +838,7 @@ export function CompactBayanPlayer({
           </div>
           {/* Tamil: taller line + a little padding, so truncate's overflow clip
               doesn't cut the vowel signs above and below the letters. */}
-          <p className={`truncate text-xs sm:text-sm font-medium text-emerald-400 mt-0.5 ${ta ? "font-tamil leading-relaxed py-0.5" : ""}`}>
+          <p className={`truncate text-xs font-medium text-emerald-400 mt-0.5 ${ta ? "font-tamil leading-relaxed py-0.5" : ""}`}>
             {categoryLine}
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}

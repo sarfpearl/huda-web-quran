@@ -403,15 +403,19 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
       let left = 0;
       let right = 0;
       if (view) {
-        const r = view.getBoundingClientRect();
+        // Layout sizes, not rects: the views are centred in the card, and a
+        // rect would include the transform mid-crossfade (a transient value
+        // that nothing re-measured, leaving the strip padded ~190px).
         const cs = getComputedStyle(view);
-        left = Math.max(0, r.left + parseFloat(cs.paddingLeft) - c.left);
-        right = Math.max(0, c.right - (r.right - parseFloat(cs.paddingRight)));
+        const side = Math.max(0, (card.clientWidth - view.offsetWidth) / 2);
+        left = side + parseFloat(cs.paddingLeft);
+        right = side + parseFloat(cs.paddingRight);
       }
       // The compact pill is rounder than the full card; the frame's bottom
       // corners follow it so the two outlines never split into a double line.
       const radius = parseFloat(getComputedStyle(card).borderBottomLeftRadius) || 0;
-      setGeo({ width: Math.round(c.width), left: Math.round(left), right: Math.round(right), radius });
+      const next = { width: Math.round(c.width), left: Math.round(left), right: Math.round(right), radius };
+      setGeo((g) => (g && g.width === next.width && g.left === next.left && g.right === next.right && g.radius === next.radius ? g : next));
     };
     const ro = new ResizeObserver(measure);
     const sync = () => {
@@ -425,7 +429,7 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
     };
     sync();
     const mo = new MutationObserver(sync);
-    mo.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-hidden"] });
+    mo.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-hidden", "class", "style"] });
     // The shell animates its size after a switch; re-measure once it settles.
     wrap.addEventListener("transitionend", measure);
     return () => {
@@ -443,7 +447,10 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
  * and back down once the strip is as wide as the level below needed — the
  * width it overflowed at — so it never flickers between two levels.
  */
-function useFitLevel(ref: RefObject<HTMLElement>, max: number) {
+function useFitLevel(ref: RefObject<HTMLElement>, max: number, padFor: (level: number) => number) {
+  const padRef = useRef(padFor);
+  padRef.current = padFor;
+  const pad = padFor(0);
   const [level, setLevel] = useState(0);
   const levelRef = useRef(0);
   const needs = useRef<number[]>([]);
@@ -455,9 +462,11 @@ function useFitLevel(ref: RefObject<HTMLElement>, max: number) {
       if (el.clientWidth <= 0) return;
       let next = l;
       if (el.scrollWidth > el.clientWidth + 1 && l < max) {
-        needs.current[l] = el.scrollWidth;
+        // Content width only: the side padding changes with the level, so a
+        // raw scrollWidth would never compare right after it shrinks.
+        needs.current[l] = el.scrollWidth - padRef.current(l);
         next = l + 1;
-      } else if (l > 0 && el.clientWidth >= (needs.current[l - 1] ?? Infinity)) {
+      } else if (l > 0 && el.clientWidth - padRef.current(l - 1) >= (needs.current[l - 1] ?? Infinity)) {
         next = l - 1;
       }
       if (next !== l) {
@@ -471,7 +480,7 @@ function useFitLevel(ref: RefObject<HTMLElement>, max: number) {
     for (const c of el.children) ro.observe(c);
     measure();
     return () => ro.disconnect();
-  }, [ref, max, level]);
+  }, [ref, max, level, pad]);
   return level;
 }
 
@@ -946,7 +955,8 @@ export function PlayerStatsFrame({
   // turn, the "Live" word and wide gaps, then the Live button (its count is in
   // the views details too), then the extra edge room — never overflows.
   const topStripRef = useRef<HTMLDivElement>(null);
-  const fit = useFitLevel(topStripRef, 3);
+  const fullPad = stripInsets.paddingLeft + stripInsets.paddingRight;
+  const fit = useFitLevel(topStripRef, 3, (l) => (l >= 3 ? 16 + 2 * inset : fullPad));
   const topInsets = fit >= 3 ? { paddingLeft: 8 + inset, paddingRight: 8 + inset } : stripInsets;
 
   const toggleViews = () => {
