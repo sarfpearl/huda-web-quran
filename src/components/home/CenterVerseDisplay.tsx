@@ -321,7 +321,10 @@ export function CenterVerseDisplay({
         if (texts.length === 0) return;
         texts.forEach((t) => (t.style.fontSize = ""));
         const bases = texts.map((t) => parseFloat(getComputedStyle(t).fontSize));
-        const mins = texts.map((t, j) => Math.min(bases[j], Number(t.dataset.fitMin) || 0));
+        // The readable floor holds even when the length class starts smaller
+        // (a long ayah's text-lg = 18px on phones): 2:282 shrank to 18px and
+        // still scrolled — too small for the Tajweed marks.
+        const mins = texts.map((t, j) => Number(t.dataset.fitMin) || bases[j]);
         // Growth cap depends on screen size: medium on phones, larger on
         // tablets, full on desktop (data-fit-max-mobile / -tablet / -max).
         const vw = window.innerWidth;
@@ -672,7 +675,7 @@ export function CenterVerseDisplay({
             data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic ${indoPak ? "quran-indopak" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic ${indoPak ? "quran-indopak" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow quran-verse-scrim max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
               <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">
