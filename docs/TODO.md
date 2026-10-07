@@ -57,11 +57,10 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 
 - [x] **Remove unused R2 keys from Vercel** (done 2026-10-06) — `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are in Vercel (Project → Settings → Environments → Production) but only the local `scripts/tools/upload-to-r2.mjs` uses them; the app never reads them. Delete both there; keep them in `.env.local`. Owner does this in the Vercel dashboard.
 - [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com); no reply yet (2026-10-07). Owner's choice: IndoPak stays development-only until then (not offered in production even as an opt-in — without the font ~1,383 waqf marks show as boxes). Steps once granted: see *IndoPak script by region* below.
-- [ ] **Clear Supabase test data before launch** — `truncate public.quran_listens, public.quran_presence;` in the Supabase SQL editor (add `public.quran_likes, public.quran_comments` to wipe those too). See *Quran views · live · comments · likes* below.
+- [x] **Supabase test data cleared** (owner, 2026-10-07) — `quran_listens`, `quran_presence`, `quran_ip_viewers`, `quran_likes`, `quran_comments`, `quran_comment_likes` truncated (all 0); checked live: view counts `{}`, comments `total: 0`.
 - [x] **Admin login turned on (2026-10-06)** — migration `20261006120000_admin_login_moderation.sql` run, sign-ups off, URL Configuration set, admin added; verified live (signed in, comments load). Admin = `sarf.pearl@gmail.com`. Supabase's built-in email only sends to the org's team members and ~2 emails/hour; add custom SMTP (e.g. Resend) before adding other admins. If a link lands on `localhost:3000`, the Site URL / Redirect URLs in Auth → URL Configuration are wrong.
-- [ ] **Old Bayan DB tables (owner's call)** — the Bayan section was removed from the app on 2026-10-06, but the live Supabase DB still has the tables `categories`, `speakers`, `bayan`, `bayan_plays` and the storage buckets `bayan-audio`, `bayan-images`, `speaker-images`. Nothing reads them. Back up first if the data matters, then drop them, e.g.
-  `drop table if exists public.bayan_plays, public.bayan, public.speakers, public.categories cascade;`
-  and delete the three buckets in Supabase Storage. Keep `public.admins` / `public.is_admin()` — comment moderation needs them. R2 also still holds unused `assets/images/bayan/*.jpg` (keep `bayan/quran.jpg`, the Quran fallback cover).
+- [x] **Old Bayan DB tables dropped** (owner, 2026-10-07) — `bayan`, `bayan_plays`, `speakers`, `categories` were empty and are gone (anon REST → PGRST205). `public.admins` / `public.is_admin()` kept.
+- [x] **Old Bayan storage buckets** — none left: Supabase → Storage shows no buckets (owner, 2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg` (keep `bayan/quran.jpg`, the Quran fallback cover).
 
 ## Launch QA (2026-10-06) — work top to bottom, one at a time
 
@@ -373,11 +372,7 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
 
 ## Quran views · live · comments · likes (Supabase)
 
-- [ ] **Clear test data before launch** — once testing is finished, run in the
-      Supabase SQL editor:
-      `truncate public.quran_listens, public.quran_presence;`
-      (keeps likes and comments; add `public.quran_likes, public.quran_comments`
-      to wipe those too).
+- [x] **Clear test data before launch** — done 2026-10-07 (see Open items).
 - [x] **Per-IP limits** (`supabase/migrations/20261006150000_quran_ip_limits.sql`) —
       one IP can bring in at most 30 new browser ids a day (over that, a new id
       gets no view / live / like row) and post at most 20 comments an hour.
