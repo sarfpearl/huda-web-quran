@@ -167,12 +167,12 @@ export function ImmersiveHeader({
       : qaHud;
 
   return (
-    <header data-scene-header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border">
+    <header data-scene-header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1 min-[360px]:gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border">
       {/* Top Left Time & Location */}
       <TimeLocationWidget />
 
       {/* Top Right Header Controls */}
-      <div ref={controlsRef} className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <div ref={controlsRef} className="flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2 shrink-0">
         <HoverTooltips container={controlsRef} placement="bottom" selector="[data-tooltip]" />
         {/* QA HUD pill (leading, before the language toggle) */}
         {qaHudControlled}
@@ -190,7 +190,7 @@ export function ImmersiveHeader({
                 : "Translation: off — choose a language"
             }
             data-tooltip={language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
-            className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+            className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
               showMeaning ? "text-amber-300" : "text-white/60"
             }`}
           >
@@ -312,7 +312,7 @@ export function ImmersiveHeader({
             aria-haspopup="dialog"
             aria-label={`Text size: ${Math.round(textSize.value * 100)}% — change`}
             title="Text size"
-            className="pointer-events-auto flex items-center justify-center h-10 min-[400px]:h-11 sm:h-12 px-3 min-[400px]:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white transition-all active:scale-90 cursor-pointer hover:bg-black/20 hover:border-white/30"
+            className="pointer-events-auto flex items-center justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-3 min-[400px]:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white transition-all active:scale-90 cursor-pointer hover:bg-black/20 hover:border-white/30"
           >
             <span aria-hidden="true" className="font-semibold leading-none">
               <span className="text-[0.8rem]">A</span>
@@ -394,7 +394,7 @@ export function ImmersiveHeader({
               aria-haspopup="dialog"
               aria-label={language === "ta" ? "தஜ்வீத்" : "Tajweed"}
               data-tooltip={language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
-              className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
+              className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
                 showTajweed ? "text-amber-300" : "text-white/60"
               }`}
             >
@@ -473,7 +473,7 @@ export function ImmersiveHeader({
             ref={reciterTriggerRef}
             type="button"
             onClick={handleToggleReciterSelector}
-            className="pointer-events-auto relative grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
+            className="pointer-events-auto relative grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
             data-tooltip={`Reciter · ${selectedReciter.displayName}`}
             aria-label={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
             aria-expanded={isReciterSelectorOpen}
@@ -529,7 +529,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={onToggleVisualMode}
-            className="tap-44 pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
+            className="tap-44 pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
             title={
               visualMode === "video"
                 ? "Video Mode Active (Click to switch to Image Mode)"

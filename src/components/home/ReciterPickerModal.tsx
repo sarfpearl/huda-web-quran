@@ -11,6 +11,7 @@ import {
 import { ActionSheet, PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { useDialogFocus } from "@/lib/useDialogFocus";
+import { useBackToClose } from "@/lib/useBackToClose";
 
 interface ReciterPickerModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export function ReciterPickerModal({
   const isMobile = useIsMobile();
   // Desktop popover; on phones the ActionSheet manages focus itself.
   useDialogFocus(isOpen && !isMobile, panelRef);
+  useBackToClose(isOpen && !isMobile, onClose);
   const selectedItemRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
 

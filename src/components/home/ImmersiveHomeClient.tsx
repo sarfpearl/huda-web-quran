@@ -1140,6 +1140,18 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     document.title = `${deepLinkMeta(playingLink).title} · ${siteConfig.name}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playingPath]);
+  // Back closing a dialog (useBackToClose) lands on the entry under it, whose
+  // address is where playback was when the dialog opened — put the current one back.
+  const playingPathRef = useRef(playingPath);
+  playingPathRef.current = playingPath;
+  useEffect(() => {
+    const onPop = () => {
+      const path = playingPathRef.current;
+      if (path && window.location.pathname !== path) window.history.replaceState(null, "", path + window.location.search);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   // Ayah meaning (translation) is OFF on every page load; the toggle only
   // applies to the current session.
@@ -1298,7 +1310,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             data-tooltip={readingMode ? "Exit reading mode" : "Reading mode"}
             // On: the filled book alone — no coloured ring (nor the focus ring
             // a tap left on it).
-            className="pointer-events-auto grid h-10 w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 text-sand-100 shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none"
+            className="pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 text-sand-100 shadow-lg hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none"
           >
             {readingMode ? <BookOpenFilledIcon className="h-5 w-5" /> : <BookOpenIcon className="h-5 w-5" />}
           </button>

@@ -6,8 +6,8 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 
 - [ ] **Merge the QA PR stack (owner)** — #26 … #36 (Launch QA items 1–11),
       then #37 SEO → #38 performance → #39 accessibility → #40 share button →
-      #41 video re-encode script → #42 WebP scenes → #43 missing-video fix,
-      each based on the one before (top branch: `fix/missing-videos`). Vercel
+      #41 video re-encode script → #42 WebP scenes → #43 missing-video fix → #44 Back / 320px / install,
+      each based on the one before (top branch: `fix/back-closes-dialogs`). Vercel
       deploys only from `main`. R2 media is already live (smaller clips, the
       WebPs uploaded), so #42 is safe to merge.
 - [ ] **After deploy, check live:** `node scripts/qa/seo-share.cjs` → 0
@@ -17,10 +17,19 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 - [ ] **Real phones (Launch QA item 4)** — lock screen / background playback,
       headphones / Bluetooth buttons, a call interrupting, Juz with the screen
       locked; iPhone Safari + Android Chrome (no iOS Simulator on this Mac).
-- [ ] **Small code follow-ups** — Back on Android closes an open picker
-      instead of leaving the site; 404 page polish (item 7, skipped for now);
-      header search button clipped at 320px; Juz share link untested in the
-      browser; install sheet can still swap on a very slow line (item 13 b).
+- [x] **Small code follow-ups** (2026-10-07, `fix/back-closes-dialogs`) —
+      Back (Android button, browser back, iOS swipe) now closes the open
+      sheet / content browser / reciter picker / install guide instead of
+      leaving the site (`src/lib/useBackToClose.ts`: a same-URL history entry
+      per open dialog; the address keeps following the playing ayah);
+      header fits at 320px (round buttons 36px and tighter gaps below 360px —
+      search was 23px off-screen); Juz share checked in the browser
+      (`/juz/30`, share sheet + copied link); an install prompt arriving after
+      the sheet opened no longer swaps the steps — the bottom button becomes
+      "Install app" (same height, 0 layout shift). **Still open:** 404 page
+      polish (item 7, owner skipped). Local dev beside another `next dev`:
+      the "dev-alt" launch config (`NEXT_DIST_DIR=.next-dev-alt`) — two dev
+      servers on one `.next` turn pages into 404s.
 - [ ] **Content (owner)** — 103 Surahs have no background clip (they show
       their image); new clips: render → `reencode-videos.mjs` →
       `video-manifest.mjs`. No offline support (no service worker).
@@ -129,8 +138,7 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       title follow the Surah / ayah or Juz (`replaceState`), so refresh or
       sharing comes back to it; "/" still opens on Al-Fatihah and stays "/"
       until something plays; a link visit skips the auto-opening content
-      browser. **Not done (owner skipped for now):** Back closing modals
-      (Back on Android leaves the site while a picker is open); 404 polish
+      browser. **Not done (owner skipped for now):** 404 polish
       (site title + splash on the 404 page).
 - [x] **8. Responsive** (2026-10-06) — `scripts/qa/responsive-check.js` at
       1440 / 1280 / 1024 / 820 / 768 / 430 / 412 / 393 / 390 px, on the home
@@ -273,9 +281,9 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       .webp (`quranImageUrl` / `quranThumbUrl`). **Uploaded 2026-10-07:** all
       288 on R2 (`image/webp`, verified by size; every URL the app builds
       returns 200), scene + cover + list thumbnails checked in the browser; Ya-Sin's clip is a 175 KB blue placeholder;
-      (b) on a very slow line the install prompt can still arrive after the
-      sheet opened (perf-slow: at 22 s) and swap the steps for the Install
-      button — a 0.2 layout shift; (c) offline: no service worker, so the
+      (b) ~~on a very slow line the install prompt could arrive after the
+      sheet opened and swap the steps~~ fixed 2026-10-07 (the bottom button
+      becomes Install instead); (c) offline: no service worker, so the
       site can't open offline (audio offline handling: item 4); (d) a Surah
       link preloads its recitation (~3 MB) before play — kept, so play is
       instant for someone who followed a link.
