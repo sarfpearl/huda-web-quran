@@ -49,6 +49,7 @@ import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { SURAH_NAMES } from "@/lib/data/surahNames";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
 import { VoiceBars } from "@/components/player/VoiceBars";
+import { useOnline } from "@/lib/useOnline";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
@@ -140,7 +141,11 @@ export function CompactBayanPlayer({
   const isCurrentTrack = player.current?.id === bayan.id;
   const isPlaying = isCurrentTrack && player.isPlaying;
   const isLoading = isCurrentTrack && player.isLoading;
-  const errorMsg = isCurrentTrack ? player.error : null;
+  // Offline, a new Surah just spins (iOS doesn't even report an error): say why.
+  const online = useOnline();
+  const errorMsg = isCurrentTrack
+    ? player.error ?? (!online && player.isLoading ? (ta ? "இணையம் இல்லை — இணைந்ததும் ஒலிக்கும்" : "No internet — plays once you're back online") : null)
+    : null;
   const isQuran = isQuranTrack(bayan.id) || Boolean(activeSurah) || bayan.category?.slug === "quran" || bayan.category?.slug === "quran-recitation";
   const surah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
 

@@ -11,12 +11,20 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       requests are `.webp` (no `.jpg`); Al-Fatihah → An-Nisa shows An-Nisa's
       image with no clip left on screen; the service worker is active and
       controls the page.
-- [ ] **WhatsApp preview (owner, on a phone)** — send a fresh link (e.g.
-      `/surah/36/4`) in a chat: the card should say "Ya-Sin 36:4" with the
-      image (WhatsApp caches per URL; older links may keep the old card).
-- [ ] **Real phones (Launch QA item 4)** — lock screen / background playback,
-      headphones / Bluetooth buttons, a call interrupting, Juz with the screen
-      locked; iPhone Safari + Android Chrome (no iOS Simulator on this Mac).
+- [x] **WhatsApp preview** (owner, 2026-10-07) — a Surah link shows the card
+      with the image, title and description.
+- [~] **Real phones (Launch QA item 4)** — owner's first pass (2026-10-07):
+      **Fixed** (`fix/offline-feedback`): (a) offline, the next Surah just
+      spun with no message — now a notice "No internet connection… continues
+      once you're back online" (and "Back online"), plus the same line in the
+      expanded player; (b) the site didn't open offline — on a first visit the
+      service worker started after the page's JS / data had loaded, so none of
+      it was cached; the page now hands those URLs to the worker (checked:
+      fresh profile, one visit to /surah/36, server stopped → it opens, ayahs
+      and reading mode work). **Still to check on phones:** lock screen /
+      background playback and controls, headphone / Bluetooth buttons, a call
+      interrupting, a Juz with the screen locked (pick the Juz first: Surah /
+      Juz list → Juz → Juz 30 → play, then lock), home-screen app, Android Back.
 - [x] **Small code follow-ups** (2026-10-07, `fix/back-closes-dialogs`) —
       Back (Android button, browser back, iOS swipe) now closes the open
       sheet / content browser / reciter picker / install guide instead of
@@ -48,7 +56,7 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       all caches.
 
 - [x] **Remove unused R2 keys from Vercel** (done 2026-10-06) — `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are in Vercel (Project → Settings → Environments → Production) but only the local `scripts/tools/upload-to-r2.mjs` uses them; the app never reads them. Delete both there; keep them in `.env.local`. Owner does this in the Vercel dashboard.
-- [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com). Until then IndoPak stays development-only. Steps once granted: see *IndoPak script by region* below.
+- [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com); no reply yet (2026-10-07). Owner's choice: IndoPak stays development-only until then (not offered in production even as an opt-in — without the font ~1,383 waqf marks show as boxes). Steps once granted: see *IndoPak script by region* below.
 - [ ] **Clear Supabase test data before launch** — `truncate public.quran_listens, public.quran_presence;` in the Supabase SQL editor (add `public.quran_likes, public.quran_comments` to wipe those too). See *Quran views · live · comments · likes* below.
 - [x] **Admin login turned on (2026-10-06)** — migration `20261006120000_admin_login_moderation.sql` run, sign-ups off, URL Configuration set, admin added; verified live (signed in, comments load). Admin = `sarf.pearl@gmail.com`. Supabase's built-in email only sends to the org's team members and ~2 emails/hour; add custom SMTP (e.g. Resend) before adding other admins. If a link lands on `localhost:3000`, the Site URL / Redirect URLs in Auth → URL Configuration are wrong.
 - [ ] **Old Bayan DB tables (owner's call)** — the Bayan section was removed from the app on 2026-10-06, but the live Supabase DB still has the tables `categories`, `speakers`, `bayan`, `bayan_plays` and the storage buckets `bayan-audio`, `bayan-images`, `speaker-images`. Nothing reads them. Back up first if the data matters, then drop them, e.g.
@@ -381,8 +389,8 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
       comment likes were broken on the live site until then). Checked live: IP
       comes from `cf-connecting-ip`; forged `X-Forwarded-For` / `X-Real-IP`
       don't change it, a forged `CF-Connecting-IP` is refused by Cloudflare.
-- [ ] **Drop the temporary probe** (owner, SQL editor):
-      `drop function if exists public.quran_ip_probe();`
+- [x] **Drop the temporary probe** — gone on the live DB (anon RPC → PGRST202,
+      checked 2026-10-07).
 - [ ] **Later, if spam still gets through:** Cloudflare Turnstile on comments.
 - [x] **Admin login** — `/admin/comments` signs in with an email magic link
       (Supabase Auth); only users in `public.admins` can moderate. The

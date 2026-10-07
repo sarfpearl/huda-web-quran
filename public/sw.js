@@ -97,6 +97,39 @@ async function offlinePage(request) {
   return new Response(OFFLINE_HTML, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 
+// The page's own files from before this worker controlled it (the first visit
+// loads its JS, fonts and Surah data before the worker is ready): the page
+// sends their URLs and they are cached now, so the very next open works offline.
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "cache-urls" || !Array.isArray(data.urls)) return;
+  event.waitUntil(
+    (async () => {
+      for (const href of data.urls.slice(0, 300)) {
+        try {
+          const url = new URL(href, self.location.origin);
+          if (url.origin !== self.location.origin) continue;
+          const name = url.pathname.startsWith("/data/")
+            ? DATA
+            : url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/fonts/")
+              ? STATIC
+              : null;
+          const page = data.page && href === data.page;
+          if (!name && !page) continue;
+          const cacheName = page ? PAGES : name;
+          const key = page ? url.origin + url.pathname : url.href;
+          const cache = await caches.open(cacheName);
+          if (await cache.match(key)) continue;
+          const response = await fetch(key, page ? undefined : { credentials: "same-origin" });
+          if (response.ok) await cache.put(key, response);
+        } catch {
+          /* offline or blocked: skip */
+        }
+      }
+    })(),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
