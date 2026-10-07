@@ -612,6 +612,14 @@ textarea,
    QuranWBW grants permission (docs/TODO.md). Until then Noto Naskh Arabic
    (OFL) draws it — a few words use that font's private-use marks and show
    as boxes, which is why IndoPak stays development-only for now. */
+/* Tanzil-encoded fallback text (src/lib/data verses) — only while the QPC
+   text isn't there: the Hafs font draws its U+06DF (small rounded zero) as a
+   dotted circle; Amiri draws it properly. */
+.font-arabic.quran-tanzil,
+.font-arabic .quran-tanzil {
+  font-family: var(--font-amiri), 'Traditional Arabic', serif;
+}
+
 .font-arabic.quran-indopak {
   font-family: 'IndoPak', var(--font-naskh), 'Uthmanic Hafs', serif;
 }

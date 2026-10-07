@@ -612,6 +612,10 @@ export function CenterVerseDisplay({
     : tjRef && qpcVerse?.key === tjKey && qpcVerse.verse.w.length
     ? qpcVerse.verse.w.map(([, , text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime }))
     : wordsToRender;
+  // Neither the glyphs nor the QPC text yet (glyph data still loading, or
+  // offline for a Surah not opened before): the Tanzil-encoded text, which
+  // the Hafs font draws with dotted circles for U+06DF — use Amiri for it.
+  const tanzilFallback = !indoPak && displayWords === wordsToRender;
   wordsRef.current = wordsToRender;
   audioIdxRef.current = activeWordIndex;
   // Only ONE word is current: the tapped one until the audio moves off the word
@@ -679,7 +683,7 @@ export function CenterVerseDisplay({
             data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic ${indoPak ? "quran-indopak" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic ${indoPak ? "quran-indopak" : ""} ${tanzilFallback ? "quran-tanzil" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
               <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">

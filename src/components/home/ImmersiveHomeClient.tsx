@@ -75,6 +75,7 @@ import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { isWebKit } from "@/lib/data/quranGlyphs";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
 import { useIsMobile } from "@/components/ui/ActionSheet";
+import { useOnline } from "@/lib/useOnline";
 import {
   useQuranEngagement,
   quranContentOf,
@@ -188,6 +189,27 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     const t = setTimeout(() => setNotice(null), 4500);
     return () => clearTimeout(t);
   }, [notice]);
+
+  // Offline: what's loaded keeps playing, but the next Surah / ayah file can't
+  // load — it just spins (iOS doesn't even fire an error). Say why, and say so
+  // again when the connection is back (the player resumes by itself).
+  const online = useOnline();
+  const waitingOffline = !online && player.isLoading;
+  const waitedOfflineRef = useRef(false);
+  useEffect(() => {
+    if (waitingOffline) {
+      waitedOfflineRef.current = true;
+      showNotice(
+        language === "ta"
+          ? "இணையம் இல்லை. இணைப்பு வந்ததும் ஓதல் தொடரும்."
+          : "No internet connection. The recitation continues once you're back online.",
+      );
+    } else if (online && waitedOfflineRef.current) {
+      waitedOfflineRef.current = false;
+      showNotice(language === "ta" ? "இணையம் மீண்டும் இணைந்தது" : "Back online");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingOffline, online]);
 
 
   // Selected track (defaults to Surah 1: Al-Fatihah, or active player track / category track)

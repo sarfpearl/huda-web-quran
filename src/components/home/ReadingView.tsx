@@ -750,7 +750,9 @@ export function ReadingView({
         </Fragment>
       ));
     } else {
-      words = v ? ayahText(ref, v) : null;
+      // No glyph data (offline, still loading): Tanzil-encoded text — Amiri,
+      // not the Hafs font's dotted circles for U+06DF (globals.css).
+      words = v ? indoPak ? ayahText(ref, v) : <span className="quran-tanzil">{ayahText(ref, v)}</span> : null;
     }
     return (
       <Fragment key={key}>
