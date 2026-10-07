@@ -28,6 +28,16 @@
  *      node scripts/tools/reencode-videos.mjs --upload --execute  (uploads)
  *        Uploads the encoded files that passed (≥ 20% smaller + VMAF ≥ --vmaf).
  *
+ * New clips (rendered masters in public/videos/, not on R2 yet):
+ *   node scripts/tools/reencode-videos.mjs --new            inventory
+ *   node scripts/tools/reencode-videos.mjs --new --encode
+ *   node scripts/tools/reencode-videos.mjs --new --upload [--execute]
+ *     Keys = every clip path the video registries can resolve (as
+ *     video-manifest.mjs) that has a local master and is either missing on R2
+ *     or only a placeholder there (R2 copy < 1 MB while the master is > 2 MB).
+ *     The master is the source; it passes on VMAF alone. Then re-run
+ *     video-manifest.mjs so the app starts asking for them.
+ *
  * Options:
  *   --only=<substring>     only paths containing it (e.g. --only=002-al-baqarah)
  *   --vmaf=88              quality target (VMAF 0–100, vs the source); default 88
@@ -52,7 +62,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
+// The real fetch: registryVideos() loads scripts/qa/lib/load.cjs, which
+// replaces the global one (see video-manifest.mjs's nativeFetch).
+const nativeFetch = globalThis.fetch;
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const WORK = path.join(ROOT, ".media-work");
 const ORIGINALS = path.join(WORK, "originals");
@@ -68,6 +82,7 @@ const opt = (name, def) => {
   return a ? a.slice(name.length + 3) : def;
 };
 const MODE = flag("upload") ? "upload" : flag("encode") ? "encode" : "inventory";
+const NEW = flag("new");
 const EXECUTE = flag("execute");
 const FORCE = flag("force");
 const ONLY = opt("only", "");
@@ -149,14 +164,36 @@ function referencedVideos() {
   return [...found].filter((p) => !p.includes("${") && (!ONLY || p.includes(ONLY))).sort();
 }
 
+/** Every clip path the video registries can resolve (same set as video-manifest.mjs). */
+function registryVideos() {
+  const require = createRequire(import.meta.url);
+  require(path.join(ROOT, "scripts/qa/lib/load.cjs"));
+  const { SURAH_CHAPTERS_REGISTRY, getSurahVisualData } = require(path.join(ROOT, "src/lib/data/surahChapters.ts"));
+  const { SURAH_VERSE_VIDEOS_REGISTRY } = require(path.join(ROOT, "src/lib/data/surahVerseVideos.ts"));
+  const { JUZ_VIDEOS } = require(path.join(ROOT, "src/lib/data/quranJuzVideos.ts"));
+  const found = new Set();
+  const add = (p) => p && p.startsWith("/videos/") && found.add(p);
+  for (let s = 1; s <= 114; s++) {
+    const d = SURAH_CHAPTERS_REGISTRY[s] ?? getSurahVisualData(s);
+    add(d.masterVideoPath);
+    d.chapters.forEach((c) => add(c.videoPath));
+  }
+  for (const ayahs of Object.values(SURAH_VERSE_VIDEOS_REGISTRY)) for (const v of Object.values(ayahs)) add(v.videoPath);
+  for (const j of Object.values(JUZ_VIDEOS)) {
+    add(j.videoPath);
+    (j.playlist ?? []).forEach(add);
+  }
+  return [...found].filter((p) => !ONLY || p.includes(ONLY)).sort();
+}
+
 async function remoteSize(key) {
-  const res = await fetch(PUBLIC_R2 + key, { method: "HEAD" });
+  const res = await nativeFetch(PUBLIC_R2 + key, { method: "HEAD" });
   return res.ok ? Number(res.headers.get("content-length")) : null;
 }
 
 async function download(key, dest) {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  const res = await fetch(PUBLIC_R2 + key);
+  const res = await nativeFetch(PUBLIC_R2 + key);
   if (!res.ok) throw new Error(`download ${key}: HTTP ${res.status}`);
   const tmp = dest + ".part";
   fs.writeFileSync(tmp, Buffer.from(await res.arrayBuffer()));
@@ -205,12 +242,15 @@ function saveReport(report) {
 
 // ── 1. inventory ─────────────────────────────────────────────────────────────
 async function inventory() {
-  const keys = referencedVideos();
+  const keys = NEW ? registryVideos() : referencedVideos();
   const rows = [];
   for (const key of keys) {
     const local = path.join(ROOT, "public", key);
     const localSize = fs.existsSync(local) ? fs.statSync(local).size : null;
+    if (NEW && localSize === null) continue;
     const r2Size = await remoteSize(key);
+    // --new: only what R2 lacks, or holds just a placeholder of.
+    if (NEW && r2Size !== null && !(r2Size < 1e6 && localSize > 2e6)) continue;
     rows.push({ key, local: localSize !== null ? local : null, localSize, r2Size });
   }
   return rows;
@@ -245,13 +285,14 @@ async function encodeOne(row, report) {
   const out = path.join(ENCODED, key);
   const prev = report[key];
   if (!FORCE && prev?.encoded && fs.existsSync(out)) return;
-  if (row.r2Size === null) {
+  if (row.r2Size === null && !NEW) {
     report[key] = { why: "not on R2 (the app gets a 404)" };
     return;
   }
-  // Source: the local master if it is the file R2 has, else R2's copy (kept
-  // in .media-work/originals as the backup of what is being replaced).
-  const src = row.local && row.localSize === row.r2Size ? row.local : path.join(ORIGINALS, key);
+  // Source: the local master if it is the file R2 has (or, --new, the master
+  // being added), else R2's copy (kept in .media-work/originals as the backup
+  // of what is being replaced).
+  const src = row.local && (NEW || row.localSize === row.r2Size) ? row.local : path.join(ORIGINALS, key);
   if (src !== row.local && !fs.existsSync(src)) {
     process.stdout.write(`↓ ${key}\n`);
     await download(key, src);
@@ -274,13 +315,22 @@ async function encodeOne(row, report) {
     best = { ...r, rate };
     if (r.vmaf >= MIN_VMAF) break;
   }
+  if (!best && NEW && info.codec === "h264") {
+    // Already light: ship the master itself, just muted and faststart.
+    await run("ffmpeg", ["-y", "-v", "error", "-i", src, "-map", "0:v:0", "-an", "-c:v", "copy", "-movflags", "+faststart", "-tag:v", "avc1", out]);
+    const size = fs.statSync(out).size;
+    report[key] = { encoded: true, src: path.relative(ROOT, src), width: info.width, height: info.height, duration: info.duration, audio: info.audio, srcBitrate: info.bitrate, srcSize, rate: "copy", outSize: size, outBitrate: Math.round((size * 8) / info.duration), vmaf: 100, pass: true, uploaded: false };
+    process.stdout.write(`  ✓ already light: ${mb(srcSize)} → ${mb(size)} (copied, muted)\n`);
+    return;
+  }
   if (!best) {
     report[key] = { encoded: false, srcSize, srcBitrate: info.bitrate, width: info.width, height: info.height, why: "already light (no rung below its bitrate)" };
     process.stdout.write("  – already light, kept as is\n");
     return;
   }
   fs.renameSync(best.file, out);
-  const smaller = best.size < srcSize * 0.8;
+  // A new clip replaces nothing worth keeping: it only has to look right.
+  const smaller = NEW || best.size < srcSize * 0.8;
   const pass = smaller && best.vmaf >= MIN_VMAF;
   report[key] = {
     encoded: true,
@@ -353,6 +403,11 @@ const missing = rows.filter((r) => r.r2Size === null);
 
 if (MODE === "inventory") {
   let total = 0;
+  if (NEW) {
+    for (const r of rows) console.log(`${mb(r.localSize).padStart(9)}  ${r.r2Size === null ? "new        " : `R2 ${mb(r.r2Size)} placeholder`}  ${r.key}`);
+    console.log(`\n${rows.length} new clips (local masters), ${mb(rows.reduce((a, r) => a + r.localSize, 0))}. Next: --new --encode.`);
+    process.exit(0);
+  }
   for (const r of rows) {
     if (r.r2Size === null) continue;
     total += r.r2Size;
