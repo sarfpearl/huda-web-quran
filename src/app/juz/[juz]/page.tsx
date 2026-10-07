@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ImmersiveHomeClient } from "@/components/home/ImmersiveHomeClient";
 import { deepLinkMeta, deepLinkPath, parseJuzLink } from "@/lib/deepLink";
 import { deepLinkJsonLd } from "@/lib/structuredData";
-import { absoluteUrl, shareMetadata } from "@/lib/site";
+import { absoluteUrl, notFoundMetadata, shareMetadata } from "@/lib/site";
 
 type Props = { params: { juz: string } };
 
@@ -14,7 +14,7 @@ export function generateStaticParams() {
 
 export function generateMetadata({ params }: Props): Metadata {
   const link = parseJuzLink(params.juz);
-  if (!link) return {};
+  if (!link) return notFoundMetadata;
   const { title, description } = deepLinkMeta(link);
   const url = absoluteUrl(deepLinkPath(link));
   return { title, description, alternates: { canonical: url }, ...shareMetadata({ title, description, url }) };

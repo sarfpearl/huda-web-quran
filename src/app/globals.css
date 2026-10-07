@@ -469,6 +469,10 @@
   color: #e9e2d3;
   transition: opacity 0.5s ease, visibility 0s linear 0.5s;
 }
+/* The 404 page has nothing to load: no splash. */
+html:has([data-not-found]) #huda-splash {
+  display: none;
+}
 .huda-ready #huda-splash {
   opacity: 0;
   visibility: hidden;
