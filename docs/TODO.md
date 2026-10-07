@@ -230,9 +230,13 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       (2026-10-07; inventory → `--encode` → `--upload --execute`): each clip
       climbs a bitrate ladder until VMAF ≥ 88 vs its source, audio stripped,
       faststart, same R2 keys. The 69 clips on R2 are 1,368 MB; Al-Baqarah /
-      Juz 1 clips are 8 s of 1080p at 7–58 Mbps. Samples: Al-Fatihah 20.5 →
-      7.0 MB, Juz 1-04 37.2 → 6.4 MB, Baqarah 01 10.9 → 3.2 MB, Baqarah 08e
-      (palms in wind) 57.9 → 17.2 MB. **28 referenced clips aren't on R2**
+      Juz 1 clips are 8 s of 1080p at 7–58 Mbps. **Done 2026-10-07:** 57
+      clips re-encoded and uploaded, 1,365 → 386 MB (−72%; Al-Baqarah 1,088
+      → 310 MB), VMAF min 88.1 / median 91.2, each verified on R2 by size and
+      played in the browser (Al-Fatihah 20.5 → 7.0 MB, Baqarah 08e 57.9 →
+      17.2 MB); 12 light clips (≤0.4 MB) left as they were. Backup of the
+      R2-only original (Al-Fatihah): `.media-work/originals/`; the rest are
+      the local masters in `public/videos/`. **28 referenced clips aren't on R2**
       (404: `/videos/ayah/002/*`, Aal-Imran chapters 02a–10b) — the scene
       stays on its image. Scene images are 2560px JPEGs of ~1 MB (WebP /
       AVIF ≈ 40% smaller) — not done; Ya-Sin's clip is a 175 KB blue placeholder;
