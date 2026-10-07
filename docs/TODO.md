@@ -38,9 +38,16 @@ Start here in a new conversation. Details for each are further down or in `HANDO
       item 7. Local dev beside another `next dev`:
       the "dev-alt" launch config (`NEXT_DIST_DIR=.next-dev-alt`) — two dev
       servers on one `.next` turn pages into 404s.
-- [ ] **Content (owner)** — 103 Surahs have no background clip (they show
-      their image); new clips: render → `reencode-videos.mjs` →
-      `video-manifest.mjs`.
+- [x] **Surah clips** (2026-10-07) — 104 rendered Surah clips + 8 Al-Baqarah
+      ayah clips were sitting only in the unmerged 2026-09-11 branch
+      `feat/multi-reciter-word-sync` (never uploaded). Encoded with
+      `reencode-videos.mjs --new` (VMAF ≥ 88, one ayah clip 87.7; 763 → 376 MB)
+      and uploaded (118/118 verified by size); 9 of them replaced the blue
+      placeholders on R2 (Ya-Sin, Ar-Rahman, Al-Mulk, Al-Buruj, Ash-Shams,
+      Al-Asr, Al-Ikhlas, Al-Falaq, An-Nas — backups in
+      `.media-work/originals/`). Manifest 62 → 171 clips: every Surah now has
+      a clip; still missing only 16 of Aal-Imran's 20 chapter clips (they show
+      the image). Masters in `public/videos/` (git-ignored).
 - [x] **Offline** (2026-10-07, `feat/offline`, PR #45) —
       `public/sw.js`, registered in production only
       (`src/components/layout/ServiceWorker.tsx`): pages network-first →
