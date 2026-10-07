@@ -17,7 +17,7 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { detectScript, INDOPAK_ENABLED, isQuranScript, placeScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon } from "@/components/ui/Icon";
+import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookOpenFilledIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -1147,6 +1147,36 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     setShowTranslation((prev) => !prev);
   };
 
+  // Share: the Surah at the ayah on screen (/surah/36/3), or the Juz (/juz/30)
+  // — the link opens there, with its own preview card. Phones get the system
+  // share sheet; elsewhere the link is copied.
+  const shareLink: DeepLink | null =
+    isJuz && activeJuz
+      ? { kind: "juz", juz: activeJuz.id }
+      : activeSurah
+        ? { kind: "surah", surah: activeSurah.number, ayah: onAirAyah?.ayah ?? 1 }
+        : null;
+  const handleShare = async () => {
+    if (!shareLink) return;
+    haptic();
+    const url = `${window.location.origin}${deepLinkPath(shareLink)}`;
+    const title = deepLinkMeta(shareLink).title;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `${title} · ${siteConfig.name}`, text: title, url });
+      } catch {
+        /* closed the share sheet */
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      showNotice(language === "ta" ? `இணைப்பு நகலெடுக்கப்பட்டது · ${title}` : `Link copied · ${title}`);
+    } catch {
+      showNotice(url);
+    }
+  };
+
   const installGuideButton = (
     // Very narrow screens: left out so the player's strips fit.
     <InstallGuideButton className="max-[369px]:hidden relative grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-base sm:text-lg text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']" />
@@ -1450,6 +1480,17 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 className={`pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer ${bookmarkOn ? "text-amber-300" : "text-sand-200"}`}
               >
                 {bookmarkOn ? <BookmarkIcon filled className="text-base sm:text-lg" /> : <BookmarkAddIcon className="text-base sm:text-lg" />}
+              </button>
+            )}
+            {shareLink && (
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label={language === "ta" ? "பகிர்" : "Share"}
+                data-tooltip={language === "ta" ? "பகிர்" : "Share"}
+                className="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
+              >
+                <ShareIcon className="text-base sm:text-lg" />
               </button>
             )}
             </div>
