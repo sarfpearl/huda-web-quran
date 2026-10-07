@@ -5,34 +5,20 @@
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
 **Still open (2026-10-07, end of day):** the rest of the real-phone checks
-(below); IndoPak font licence (no reply yet — stays dev-only); 16 Aal-Imran
-chapter clips that were never rendered (those scenes show the image).
+(below); IndoPak font licence (no reply yet — stays dev-only); Aal-Imran's 16
+chapter clips are rendered + uploaded, waiting for the PR.
 Everything else is merged and live (#26 … #52).
 
-- [~] **Aal-Imran's 16 missing chapter clips** (2026-10-07, branch
-      `feat/imran-clips`) — `scripts/generation/generate_vertex_imran_rest.mjs`
-      (Veo 3.1 Fast on Vertex, 1080p, 8 s, no audio, fixed camera, 0.6 s loop
-      seam; `--dry-run` prints prompts + cost, `--only 04b,05a` re-takes).
-      Owner approved ≤ ~$20. Output: `public/videos/surah/003-aal-e-imran/`
-      (git-ignored) + QA frames in `qa_frames/` (0 / 4 / 8 s).
-      **All 16 rendered (2026-10-07).** Reviewed OK: 03a, 04a, 05b, 06b, 06c,
-      07a, 07b, 08a (small cactus at the right edge), 08b (stream; a tiny stone
-      ruin at the right edge although the prompt says "no ruins"), 09a, 09b,
-      10a (night sky; only the stars move), 10b, and the re-takes 05a (small
-      lens-flare dot top-left) and 06a — all fixed camera, clean 0 s / 8 s seam.
-      **04b take 3** (low sandstone escarpment + dunes, no butte — the
-      Mitten look is gone): 0 s = 8 s (clean seam) but at 4 s the whole frame
-      sits ~35 px higher (a slow tilt / bob that returns) — owner to decide
-      keep or re-take ($0.8; a timed-out first attempt may have been billed
-      twice). Nothing is encoded or uploaded yet (R2 serves clips immutable
-      for a year, so decide before upload).
-      Review tip: SSIM(0 s, 4 s) low + changed object positions = camera
-      moved; SSIM(0 s, 8 s) < ~0.8 = bad seam (rain / dust lower SSIM
-      without motion — look at the frames). **Next:** settle 04b (`--only 04b`), then
-      `node scripts/tools/reencode-videos.mjs --new` (encode, VMAF ≥ 88) →
-      its upload step (owner said: upload when done) → `node
-      scripts/tools/video-manifest.mjs` → check Aal-Imran in the browser
-      (chapters 33–200 play their clip) → PR.
+- [x] **Aal-Imran's 16 missing chapter clips** (2026-10-07, branch
+      `feat/imran-clips`) — rendered with `scripts/generation/generate_vertex_imran_rest.mjs`
+      (Veo 3.1 Fast, 1080p, 8 s, fixed camera; ~$16–17 of the approved ≤ $20),
+      encoded (`reencode-videos.mjs --new`, VMAF ≥ 88, 230 MB → 106 MB) and
+      uploaded to R2 (16/16); manifest 171 → 187 clips, 0 named-but-missing.
+      04b is take 3 (low escarpment + dunes; the first two came out as
+      Monument Valley's Mitten) — owner chose to keep it although the frame
+      bobs ~35 px at 4 s. Masters stay in `public/videos/surah/003-aal-e-imran/`
+      (git-ignored). **Left:** open the PR, then after the deploy check
+      Aal-Imran chapters 33–200 play their clip in the browser.
 - [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
       favicon-192.png are now the logo alone on a clear background, from
