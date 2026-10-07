@@ -60,7 +60,7 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 - [x] **Supabase test data cleared** (owner, 2026-10-07) — `quran_listens`, `quran_presence`, `quran_ip_viewers`, `quran_likes`, `quran_comments`, `quran_comment_likes` truncated (all 0); checked live: view counts `{}`, comments `total: 0`.
 - [x] **Admin login turned on (2026-10-06)** — migration `20261006120000_admin_login_moderation.sql` run, sign-ups off, URL Configuration set, admin added; verified live (signed in, comments load). Admin = `sarf.pearl@gmail.com`. Supabase's built-in email only sends to the org's team members and ~2 emails/hour; add custom SMTP (e.g. Resend) before adding other admins. If a link lands on `localhost:3000`, the Site URL / Redirect URLs in Auth → URL Configuration are wrong.
 - [x] **Old Bayan DB tables dropped** (owner, 2026-10-07) — `bayan`, `bayan_plays`, `speakers`, `categories` were empty and are gone (anon REST → PGRST205). `public.admins` / `public.is_admin()` kept.
-- [ ] **Old Bayan storage buckets (owner, dashboard)** — delete `bayan-audio`, `bayan-images`, `speaker-images` in Supabase → Storage (SQL can't). R2 still holds unused `assets/images/bayan/*.jpg` (keep `bayan/quran.jpg`, the Quran fallback cover).
+- [x] **Old Bayan storage buckets** — none left: Supabase → Storage shows no buckets (owner, 2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg` (keep `bayan/quran.jpg`, the Quran fallback cover).
 
 ## Launch QA (2026-10-06) — work top to bottom, one at a time
 
