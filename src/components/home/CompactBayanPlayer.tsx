@@ -775,7 +775,7 @@ export function CompactBayanPlayer({
 
         {/* Track Info — NOW PLAYING · Title · Arabic Name · Reciter/Speaker · Category */}
         <div className={`min-w-0 flex-1 flex flex-col ${hasAyahPill ? "justify-between" : "justify-center"}`}>
-          <span className={`text-[10px] sm:text-xs font-semibold text-sand-300/50 uppercase ${ta ? "font-tamil tracking-normal" : "tracking-widest"}`}>
+          <span className={`text-[10px] sm:text-xs font-semibold text-sand-300/70 uppercase ${ta ? "font-tamil tracking-normal" : "tracking-widest"}`}>
             {L.nowPlaying}
           </span>
           <div

@@ -111,6 +111,14 @@
     overscroll-behavior: none;
   }
 
+  /* The immersive home is always the dark scene, whatever the system theme:
+     native controls (the prayer sheet's <select> list, form fields) and the
+     sheets portalled into <body> draw dark too. (On <body>: <html> carries an
+     inline color-scheme from the theme script.) */
+  html.screen-locked body {
+    color-scheme: dark;
+  }
+
   /* Fallback colour Safari paints behind its bars */
   html.screen-locked,
   html.screen-locked body {
