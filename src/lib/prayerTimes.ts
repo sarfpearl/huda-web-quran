@@ -51,11 +51,11 @@ const COUNTRY_METHOD: Record<string, MethodId> = {
 };
 
 // Asr by region: Hanafi where most Muslims follow it; Shafi'i (the standard
-// shadow = length) elsewhere. India goes by state: the south-west coast,
-// Tamil Nadu and Puducherry, Lakshadweep → Shafi'i (owner's choice); the rest
-// of India → Hanafi.
+// shadow = length) elsewhere. India goes by state: Kerala, Puducherry and
+// Lakshadweep → Shafi'i; Tamil Nadu and the rest of India → Hanafi (owner's
+// choice: most people there follow Hanafi).
 const HANAFI_COUNTRIES = new Set(["pk", "bd", "af", "np", "tr", "uz", "kz", "tj", "kg", "tm", "az", "ba", "al", "xk", "mk"]);
-const SHAFII_INDIA_STATES = new Set(["IN-KL", "IN-TN", "IN-PY", "IN-LD"]);
+const SHAFII_INDIA_STATES = new Set(["IN-KL", "IN-PY", "IN-LD"]);
 
 export function regionDefaults(countryCode?: string | null, stateCode?: string | null): { method: MethodId; asr: AsrMadhab } {
   const cc = countryCode?.toLowerCase() ?? "";
