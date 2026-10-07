@@ -976,7 +976,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       title: current.title,
       artist: reciter?.displayName ?? current.speaker?.name ?? "",
       album: "HuDa Web Quran",
-      artwork: art ? [{ src: new URL(art, window.location.href).href, sizes: "512x512", type: "image/jpeg" }] : [],
+      // Scene covers are WebP (lib/data/quran); the type must match or Android skips it.
+      artwork: art
+        ? [{ src: new URL(art, window.location.href).href, sizes: "512x512", type: /\.webp(\?|$)/i.test(art) ? "image/webp" : "image/jpeg" }]
+        : [],
     });
   }, [current]);
   useEffect(() => {
