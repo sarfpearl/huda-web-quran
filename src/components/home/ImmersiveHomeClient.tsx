@@ -129,6 +129,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     [selectedReciter]
   );
 
+  // A reload (F5 / pull-to-refresh) of a deep link the app itself wrote while
+  // playing lands on the plain home screen; opening a shared link still cues it.
+  useEffect(() => {
+    if (!deepLink) return;
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type === "reload") window.location.replace("/");
+  }, [deepLink]);
+
   // Load persisted preferences ONCE on mount. This must NOT depend on
   // `selectedReciter`: re-running it re-applies the saved reciter from
   // localStorage, which fights the track-sync effect below (that forces the
