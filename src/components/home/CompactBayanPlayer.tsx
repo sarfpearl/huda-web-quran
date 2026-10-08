@@ -932,6 +932,7 @@ export function CompactBayanPlayer({
           {/* Interactive Range Input with Voice-Matched Golden Thumb for Quran */}
           <input
             type="range"
+            name="progress"
             min={0}
             max={isAyahSeq && ayahSeq ? ayahSeq.total - 1 : (totalDuration || 1)}
             step={1}
@@ -1169,6 +1170,7 @@ function VolumeControl({
         </div>
         <input
           type="range"
+          name="volume"
           min={0}
           max={1}
           step={0.01}
