@@ -207,6 +207,8 @@ export function CompactBayanPlayer({
     const active = collapsed ? compactRef.current : fullRef.current;
     const inactive = collapsed ? fullRef.current : compactRef.current;
     if (!active) return;
+    // `inert` hides the inactive view from assistive tech and the tab order. It
+    // replaces aria-hidden, which Chrome blocks while a button inside has focus.
     active.inert = false;
     if (inactive) inactive.inert = true;
     const measure = () => setShellSize({ w: active.offsetWidth, h: active.offsetHeight });
@@ -627,7 +629,6 @@ export function CompactBayanPlayer({
   const compactView = (
       <div
         ref={compactRef}
-        aria-hidden={!collapsed}
         className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
@@ -761,7 +762,6 @@ export function CompactBayanPlayer({
   const fullView = (
     <div
       ref={fullRef}
-      aria-hidden={collapsed}
       className={`${viewPos(!collapsed)} ${viewBase} ${collapsed ? viewHidden : viewShown} player-full w-[calc(100vw-2rem)] sm:w-[80dvw] max-w-[600px] px-4 py-4 sm:px-6 sm:py-6`}
     >
       {/* iOS Liquid Glass surface — single unified glass (Glass.svg tint + inner-shadow rim) */}

@@ -346,7 +346,7 @@ const SendIcon = ({ className }: { className?: string }) => (
 const LiveDot = ({ on }: { on: boolean }) => (
   <span
     className={cn(
-      "h-2 w-2 shrink-0 rounded-full",
+      "h-3 w-3 shrink-0 rounded-full",
       on ? "bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.9)]" : "bg-sand-300/50"
     )}
   />
