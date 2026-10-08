@@ -6,15 +6,6 @@
  * highlighting from mismatched timings would show the wrong words.
  */
 export const WORD_SYNC_UNAVAILABLE: Record<string, Record<number, string>> = {
-  "sudais": {
-    "3": "the streamed recording is 58s longer than the one its word timings describe",
-    "4": "the streamed recording is 98s shorter than the one its word timings describe",
-    "5": "the streamed recording is 38s longer than the one its word timings describe",
-    "28": "the streamed recording is 9s longer than the one its word timings describe",
-    "29": "the streamed recording is 9s longer than the one its word timings describe",
-    "86": "5 of 16 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-    "94": "6 of 8 ayahs' word boundaries are off the streamed recording (drifting recording)"
-  },
   "alafasy": {
     "14": "the streamed recording is 12s longer than the one its word timings describe",
     "37": "98 of 181 ayah boundaries miss the streamed recording's pauses (drifting recording)",
