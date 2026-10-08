@@ -1,11 +1,11 @@
 {
  "summary": {
-  "generated": "2026-10-08T13:39:36.236Z",
-  "secs": 62,
+  "generated": "2026-10-08T14:09:52.553Z",
+  "secs": 66,
   "totals": {
    "ayahs": 6236,
    "words": 77430,
-   "timingSegments": 714949,
+   "timingSegments": 715692,
    "wordTextMatch": 77392,
    "wordTextMismatch": 0
   },
@@ -13,53 +13,31 @@
    "reciters": 9,
    "wordSyncSurahs": {
     "sudais": 114,
-    "alafasy": 109,
-    "dosari": 112,
-    "abdulbaset": 113,
-    "minshawi": 113,
+    "alafasy": 114,
+    "dosari": 114,
+    "abdulbaset": 114,
+    "minshawi": 114,
     "hussary": 114,
     "shuraim": 114,
-    "shatri": 111,
-    "tunaiji": 110
+    "shatri": 114,
+    "tunaiji": 114
    },
    "audioOnlySurahs": {
     "sudais": [],
-    "alafasy": [
-     14,
-     37,
-     78,
-     82,
-     91
-    ],
-    "dosari": [
-     50,
-     92
-    ],
-    "abdulbaset": [
-     2
-    ],
-    "minshawi": [
-     13
-    ],
+    "alafasy": [],
+    "dosari": [],
+    "abdulbaset": [],
+    "minshawi": [],
     "hussary": [],
     "shuraim": [],
-    "shatri": [
-     17,
-     41,
-     59
-    ],
-    "tunaiji": [
-     10,
-     13,
-     14,
-     72
-    ]
+    "shatri": [],
+    "tunaiji": []
    },
-   "wordsSyncedMeasured": 674458,
+   "wordsSyncedMeasured": 690442,
    "wordsSyncedEstimated": 1613,
-   "wordsUnsynced": 4797,
+   "wordsUnsynced": 4820,
    "unsyncedReasons": {
-    "word boundaries line up with the recording only at Xs": 1555,
+    "word boundaries line up with the recording only at Xs": 1578,
     "too few word segments (under half the words)": 2652,
     "word timings overlap the next ayah by Xs": 113,
     "word timings overlap the previous ayah by Xs": 134,
@@ -68,15 +46,15 @@
     "no word segments in source": 47,
     "word segments out of recitation order": 21
    },
-   "ayahsWithoutWordTiming": 270,
+   "ayahsWithoutWordTiming": 273,
    "voiceMatchPct": 100,
    "invalidTimingRanges": 0,
    "transitions": {
-    "checks": 54730,
+    "checks": 55851,
     "failures": 0
    },
    "seek": {
-    "checks": 55000,
+    "checks": 56124,
     "failures": 0
    }
   },
@@ -85,15 +63,15 @@
    "mismatches": 0
   },
   "timingRepairsApplied": {
-   "misaligned": 72,
-   "forced-alignment": 7,
-   "displaced-shift": 47,
+   "misaligned": 75,
+   "forced-alignment": 23,
+   "displaced-shift": 43,
    "zero-based-index": 1,
    "embedded-prelude": 77
   },
   "juz": {
    "ayahsCovered": 6236,
-   "ayahsWithWordSync": 49577,
+   "ayahsWithWordSync": 49628,
    "voiceMatchPct": 100,
    "reciterJuzSupport": {
     "sudais": true,
@@ -187,11 +165,11 @@
   },
   "acoustic": {
    "scanned": 1026,
-   "match": 832,
+   "match": 847,
    "inconclusive": 179,
-   "mismatch": 15,
+   "mismatch": 0,
    "boundaries": 55098,
-   "badBoundaries": 1170
+   "badBoundaries": 820
   },
   "perReciter": {
    "sudais": {
@@ -203,56 +181,56 @@
     "measured": 77354,
     "estimated": 38,
     "unsynced": 38,
-    "voiceSamples": 3696964,
-    "voiceMatch": 3696964
+    "voiceSamples": 3696943,
+    "voiceMatch": 3696943
    },
    "alafasy": {
     "surahs": 114,
-    "wordSyncSurahs": 109,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
     "ayahsNoWordTiming": 54,
     "words": 77430,
-    "measured": 74716,
+    "measured": 76714,
     "estimated": 218,
     "unsynced": 498,
-    "voiceSamples": 5091420,
-    "voiceMatch": 5091420
+    "voiceSamples": 5241352,
+    "voiceMatch": 5241352
    },
    "dosari": {
     "surahs": 114,
-    "wordSyncSurahs": 112,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
     "ayahsNoWordTiming": 0,
     "words": 77430,
-    "measured": 76969,
+    "measured": 77413,
     "estimated": 17,
     "unsynced": 0,
-    "voiceSamples": 4452587,
-    "voiceMatch": 4452587
+    "voiceSamples": 4488084,
+    "voiceMatch": 4488084
    },
    "abdulbaset": {
     "surahs": 114,
-    "wordSyncSurahs": 113,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
     "ayahsNoWordTiming": 135,
     "words": 77430,
-    "measured": 68431,
+    "measured": 74547,
     "estimated": 244,
     "unsynced": 2641,
-    "voiceSamples": 4787549,
-    "voiceMatch": 4787549
+    "voiceSamples": 5242475,
+    "voiceMatch": 5242475
    },
    "minshawi": {
     "surahs": 114,
-    "wordSyncSurahs": 113,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
     "ayahsNoWordTiming": 8,
     "words": 77430,
-    "measured": 76431,
+    "measured": 77284,
     "estimated": 69,
     "unsynced": 77,
-    "voiceSamples": 4910781,
-    "voiceMatch": 4910781
+    "voiceSamples": 4964933,
+    "voiceMatch": 4964933
    },
    "hussary": {
     "surahs": 114,
@@ -280,31 +258,31 @@
    },
    "shatri": {
     "surahs": 114,
-    "wordSyncSurahs": 111,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
-    "ayahsNoWordTiming": 39,
+    "ayahsNoWordTiming": 42,
     "words": 77430,
-    "measured": 73253,
+    "measured": 76025,
     "estimated": 370,
-    "unsynced": 1015,
-    "voiceSamples": 4058937,
-    "voiceMatch": 4058937
+    "unsynced": 1038,
+    "voiceSamples": 4212299,
+    "voiceMatch": 4212299
    },
    "tunaiji": {
     "surahs": 114,
-    "wordSyncSurahs": 110,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
     "ayahsNoWordTiming": 13,
     "words": 77430,
-    "measured": 72809,
+    "measured": 76610,
     "estimated": 581,
     "unsynced": 239,
-    "voiceSamples": 4589130,
-    "voiceMatch": 4589130
+    "voiceSamples": 4819184,
+    "voiceMatch": 4819184
    }
   },
   "failuresBySeverity": {
-   "INFO ayah-no-word-timing": 270,
+   "INFO ayah-no-word-timing": 273,
    "INFO juz-unavailable": 1
   }
  },
@@ -2236,6 +2214,30 @@
    "surah": 16,
    "ayah": 92,
    "detail": "too few word segments (under half the words)"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 17,
+   "ayah": 48,
+   "detail": "word boundaries line up with the recording only at -1.48s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 17,
+   "ayah": 49,
+   "detail": "word boundaries line up with the recording only at -1.48s"
+  },
+  {
+   "category": "ayah-no-word-timing",
+   "severity": "INFO",
+   "reciter": "shatri",
+   "surah": 17,
+   "ayah": 50,
+   "detail": "word boundaries line up with the recording only at -1.48s"
   },
   {
    "category": "ayah-no-word-timing",

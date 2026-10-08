@@ -1,35 +1,19 @@
 {
  "summary": {
-  "generated": "2026-10-08T11:51:18.257Z",
+  "generated": "2026-10-08T14:08:34.362Z",
   "rules": {
    "maxDurationDriftSeconds": 2,
    "verdict": "scripts/qa/lib/acoustic.cjs streamVerdict"
   },
   "scanned": 1026,
   "expected": 1026,
-  "match": 832,
+  "match": 847,
   "inconclusive": 179,
-  "mismatch": 15,
+  "mismatch": 0,
   "noAudio": 0,
   "boundaries": 55098,
-  "badBoundaries": 1170,
-  "streamsMismatched": [
-   "alafasy/14: the streamed recording is 12s longer than the one its word timings describe",
-   "alafasy/37: 98 of 181 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "alafasy/82: the streamed recording is 19s longer than the one its word timings describe",
-   "alafasy/78: 19 of 39 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "alafasy/91: the streamed recording doesn't match its word timings (their word boundaries line up with it only at +0.38s)",
-   "tunaiji/72: the streamed recording is 19s longer than the one its word timings describe",
-   "tunaiji/14: 13 of 51 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "tunaiji/13: 13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "shatri/41: the streamed recording is 7s longer than the one its word timings describe",
-   "tunaiji/10: the streamed recording is 17s shorter than the one its word timings describe",
-   "dosari/92: the streamed recording is 9s shorter than the one its word timings describe",
-   "shatri/17: 38 of 110 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "dosari/50: the streamed recording is 15s shorter than the one its word timings describe",
-   "minshawi/13: 13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "abdulbaset/2: the streamed recording is 1030s longer than the one its word timings describe"
-  ]
+  "badBoundaries": 820,
+  "streamsMismatched": []
  },
  "streams": [
   {
@@ -68,13 +52,13 @@
    "status": "match",
    "reason": null,
    "drift": -0.12,
-   "badBoundaries": 2,
+   "badBoundaries": 1,
    "boundaries": 175,
    "whole": {
     "bestShift": 0.16,
     "zBest": 6.59,
-    "z0": -5.28,
-    "n": 3746
+    "z0": -5.26,
+    "n": 3885
    }
   },
   {
@@ -87,9 +71,9 @@
    "boundaries": 119,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 6.82,
-    "z0": -4.48,
-    "n": 2803
+    "zBest": 6.77,
+    "z0": -4.44,
+    "n": 2933
    }
   },
   {
@@ -357,9 +341,9 @@
    "boundaries": 87,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 6.34,
-    "z0": -5.01,
-    "n": 1429
+    "zBest": 6.38,
+    "z0": -4.88,
+    "n": 1470
    }
   },
   {
@@ -402,9 +386,9 @@
    "boundaries": 68,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 5.75,
-    "z0": -4.14,
-    "n": 975
+    "zBest": 5.79,
+    "z0": -4.08,
+    "n": 985
    }
   },
   {
@@ -1700,16 +1684,16 @@
   {
    "r": "alafasy",
    "s": 14,
-   "status": "mismatch",
-   "reason": "the streamed recording is 12s longer than the one its word timings describe",
-   "drift": 11.56,
-   "badBoundaries": 5,
+   "status": "match",
+   "reason": null,
+   "drift": -0.44,
+   "badBoundaries": 0,
    "boundaries": 51,
    "whole": {
-    "bestShift": -1.48,
-    "zBest": -3.5,
-    "z0": -1.81,
-    "n": 884
+    "bestShift": 0.16,
+    "zBest": 6.07,
+    "z0": -3.43,
+    "n": 885
    }
   },
   {
@@ -1955,16 +1939,16 @@
   {
    "r": "alafasy",
    "s": 37,
-   "status": "mismatch",
-   "reason": "98 of 181 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "drift": 0.98,
-   "badBoundaries": 98,
+   "status": "match",
+   "reason": null,
+   "drift": -0.02,
+   "badBoundaries": 1,
    "boundaries": 181,
    "whole": {
-    "bestShift": -2.56,
-    "zBest": 2.65,
-    "z0": 0.56,
-    "n": 864
+    "bestShift": 0.14,
+    "zBest": 5.24,
+    "z0": -3.82,
+    "n": 863
    }
   },
   {
@@ -2630,15 +2614,15 @@
   {
    "r": "alafasy",
    "s": 82,
-   "status": "mismatch",
-   "reason": "the streamed recording is 19s longer than the one its word timings describe",
-   "drift": 18.82,
-   "badBoundaries": 5,
+   "status": "match",
+   "reason": null,
+   "drift": -0.18,
+   "badBoundaries": 0,
    "boundaries": 18,
    "whole": {
-    "bestShift": 1.48,
-    "zBest": 2.4,
-    "z0": -1.64,
+    "bestShift": 0.14,
+    "zBest": 3.67,
+    "z0": -2.86,
     "n": 79
    }
   },
@@ -2660,16 +2644,16 @@
   {
    "r": "alafasy",
    "s": 78,
-   "status": "mismatch",
-   "reason": "19 of 39 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "drift": 1.06,
-   "badBoundaries": 19,
+   "status": "inconclusive",
+   "reason": null,
+   "drift": 0.06,
+   "badBoundaries": 0,
    "boundaries": 39,
    "whole": {
-    "bestShift": 2.3,
-    "zBest": 3.09,
-    "z0": 1.67,
-    "n": 180
+    "bestShift": 0.16,
+    "zBest": 4.1,
+    "z0": -1.83,
+    "n": 178
    }
   },
   {
@@ -2825,15 +2809,15 @@
   {
    "r": "alafasy",
    "s": 91,
-   "status": "mismatch",
-   "reason": "the streamed recording doesn't match its word timings (their word boundaries line up with it only at +0.38s)",
+   "status": "match",
+   "reason": null,
    "drift": 0.04,
-   "badBoundaries": 1,
+   "badBoundaries": 0,
    "boundaries": 14,
    "whole": {
-    "bestShift": 0.38,
-    "zBest": -4.32,
-    "z0": -1.18,
+    "bestShift": -0.04,
+    "zBest": -5.34,
+    "z0": -5.34,
     "n": 53
    }
   },
@@ -3507,9 +3491,9 @@
    "boundaries": 199,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 6.6,
-    "z0": -4.87,
-    "n": 3480
+    "zBest": 6.64,
+    "z0": -4.86,
+    "n": 3607
    }
   },
   {
@@ -4850,16 +4834,16 @@
   {
    "r": "tunaiji",
    "s": 72,
-   "status": "mismatch",
-   "reason": "the streamed recording is 19s longer than the one its word timings describe",
-   "drift": 18.78,
-   "badBoundaries": 8,
+   "status": "match",
+   "reason": null,
+   "drift": -0.22,
+   "badBoundaries": 0,
    "boundaries": 27,
    "whole": {
-    "bestShift": -1.82,
-    "zBest": 3.45,
-    "z0": -0.78,
-    "n": 282
+    "bestShift": 0.16,
+    "zBest": 4.97,
+    "z0": -4.12,
+    "n": 284
    }
   },
   {
@@ -4970,16 +4954,16 @@
   {
    "r": "tunaiji",
    "s": 14,
-   "status": "mismatch",
-   "reason": "13 of 51 ayah boundaries miss the streamed recording's pauses (drifting recording)",
+   "status": "match",
+   "reason": null,
    "drift": -0.08,
-   "badBoundaries": 13,
+   "badBoundaries": 0,
    "boundaries": 51,
    "whole": {
-    "bestShift": 2.54,
-    "zBest": 2.65,
-    "z0": -0.55,
-    "n": 593
+    "bestShift": 0.16,
+    "zBest": 5.86,
+    "z0": -4.14,
+    "n": 838
    }
   },
   {
@@ -5105,16 +5089,16 @@
   {
    "r": "tunaiji",
    "s": 13,
-   "status": "mismatch",
-   "reason": "13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)",
+   "status": "match",
+   "reason": null,
    "drift": 0.12,
-   "badBoundaries": 13,
+   "badBoundaries": 0,
    "boundaries": 42,
    "whole": {
-    "bestShift": 0.86,
-    "zBest": -2.81,
-    "z0": -0.91,
-    "n": 862
+    "bestShift": 0.16,
+    "zBest": 5.8,
+    "z0": -4.46,
+    "n": 868
    }
   },
   {
@@ -6020,16 +6004,16 @@
   {
    "r": "shatri",
    "s": 59,
-   "status": "inconclusive",
+   "status": "match",
    "reason": null,
    "drift": -0.06,
-   "badBoundaries": 5,
+   "badBoundaries": 1,
    "boundaries": 23,
    "whole": {
-    "bestShift": 1.26,
-    "zBest": -2.57,
-    "z0": 1.08,
-    "n": 467
+    "bestShift": 0.16,
+    "zBest": 5.19,
+    "z0": -4.29,
+    "n": 481
    }
   },
   {
@@ -6680,16 +6664,16 @@
   {
    "r": "shatri",
    "s": 41,
-   "status": "mismatch",
-   "reason": "the streamed recording is 7s longer than the one its word timings describe",
-   "drift": 6.74,
-   "badBoundaries": 5,
+   "status": "match",
+   "reason": null,
+   "drift": -0.26,
+   "badBoundaries": 0,
    "boundaries": 53,
    "whole": {
-    "bestShift": 2.32,
-    "zBest": -2.78,
-    "z0": -1.88,
-    "n": 860
+    "bestShift": 0.16,
+    "zBest": 5.91,
+    "z0": -4.58,
+    "n": 869
    }
   },
   {
@@ -6935,16 +6919,16 @@
   {
    "r": "tunaiji",
    "s": 10,
-   "status": "mismatch",
-   "reason": "the streamed recording is 17s shorter than the one its word timings describe",
-   "drift": -17.14,
-   "badBoundaries": 32,
+   "status": "match",
+   "reason": null,
+   "drift": -0.14,
+   "badBoundaries": 0,
    "boundaries": 108,
    "whole": {
-    "bestShift": 1.14,
-    "zBest": -2.97,
-    "z0": -1.53,
-    "n": 1878
+    "bestShift": 0.16,
+    "zBest": 5.21,
+    "z0": -4.91,
+    "n": 1877
    }
   },
   {
@@ -7445,16 +7429,16 @@
   {
    "r": "dosari",
    "s": 92,
-   "status": "mismatch",
-   "reason": "the streamed recording is 9s shorter than the one its word timings describe",
-   "drift": -9.4,
-   "badBoundaries": 7,
+   "status": "match",
+   "reason": null,
+   "drift": -0.4,
+   "badBoundaries": 3,
    "boundaries": 20,
    "whole": {
-    "bestShift": -0.62,
-    "zBest": 2.65,
-    "z0": -1.56,
-    "n": 63
+    "bestShift": 0.14,
+    "zBest": 3.62,
+    "z0": 2.53,
+    "n": 70
    }
   },
   {
@@ -7865,16 +7849,16 @@
   {
    "r": "shatri",
    "s": 17,
-   "status": "mismatch",
-   "reason": "38 of 110 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "drift": 0.54,
-   "badBoundaries": 38,
+   "status": "match",
+   "reason": null,
+   "drift": -0.46,
+   "badBoundaries": 0,
    "boundaries": 110,
    "whole": {
-    "bestShift": -1.64,
-    "zBest": 2.85,
-    "z0": -1.2,
-    "n": 1620
+    "bestShift": 0.16,
+    "zBest": 6.22,
+    "z0": -2.58,
+    "n": 1624
    }
   },
   {
@@ -8090,16 +8074,16 @@
   {
    "r": "dosari",
    "s": 50,
-   "status": "mismatch",
-   "reason": "the streamed recording is 15s shorter than the one its word timings describe",
-   "drift": -15.18,
-   "badBoundaries": 14,
+   "status": "match",
+   "reason": null,
+   "drift": -0.18,
+   "badBoundaries": 0,
    "boundaries": 44,
    "whole": {
-    "bestShift": 0.18,
-    "zBest": 3.45,
-    "z0": -3.39,
-    "n": 425
+    "bestShift": 0.16,
+    "zBest": 5.12,
+    "z0": -4.49,
+    "n": 487
    }
   },
   {
@@ -14765,16 +14749,16 @@
   {
    "r": "minshawi",
    "s": 13,
-   "status": "mismatch",
-   "reason": "13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)",
+   "status": "match",
+   "reason": null,
    "drift": 0,
-   "badBoundaries": 13,
+   "badBoundaries": 0,
    "boundaries": 42,
    "whole": {
-    "bestShift": -0.26,
-    "zBest": 2.9,
-    "z0": -1.35,
-    "n": 882
+    "bestShift": 0.16,
+    "zBest": 6.01,
+    "z0": -3.47,
+    "n": 878
    }
   },
   {
@@ -15320,16 +15304,16 @@
   {
    "r": "abdulbaset",
    "s": 2,
-   "status": "mismatch",
-   "reason": "the streamed recording is 1030s longer than the one its word timings describe",
-   "drift": 1029.84,
-   "badBoundaries": 79,
+   "status": "match",
+   "reason": null,
+   "drift": -0.16,
+   "badBoundaries": 1,
    "boundaries": 285,
    "whole": {
-    "bestShift": 2.12,
-    "zBest": -3.18,
-    "z0": 0.83,
-    "n": 6380
+    "bestShift": 0.18,
+    "zBest": 5.64,
+    "z0": -4.03,
+    "n": 6365
    }
   },
   {
