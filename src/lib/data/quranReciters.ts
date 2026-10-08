@@ -8,6 +8,7 @@
 
 import { AUDIO_ONLY_AVAILABLE_SURAHS } from "./reciterAvailability";
 import { WORD_SYNC_UNAVAILABLE } from "./wordSyncAvailability";
+import { CBR_AUDIO } from "./cbrAudio";
 import { mediaUrl } from "@/lib/media";
 
 export interface QuranReciter {
@@ -894,6 +895,18 @@ export function resolveActiveReciter(
 }
 
 export function buildReciterSurahUrl(reciter: QuranReciter, surahNumber: number): string {
+  // VBR masters re-encoded to CBR on our R2 (scripts/tools/cbr-audio.mjs):
+  // Chromium seeks a VBR MP3 through its 100-point Xing table and lands up to
+  // ~14s away from the reported currentTime, so after a seek the highlight ran
+  // ahead of / behind the voice. CBR seeks exactly; same recording, same timings.
+  if (CBR_AUDIO[reciter.id]?.includes(surahNumber)) {
+    return mediaUrl(`/audio/quran-cbr/${reciter.id}/${surahNumber}.mp3`);
+  }
+  return reciterSourceUrl(reciter, surahNumber);
+}
+
+/** The reciter's original stream for a Surah (quranicaudio.com master or mp3quran.net). */
+export function reciterSourceUrl(reciter: QuranReciter, surahNumber: number): string {
   // Reciters with QDC word-timing stream the paired quranicaudio.com master so
   // that voice and word highlights stay in exact sync.
   if (reciter.qdcAudioTemplate) {
