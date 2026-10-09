@@ -1,7 +1,7 @@
 {
  "summary": {
-  "generated": "2026-10-08T20:07:07.833Z",
-  "secs": 67,
+  "generated": "2026-10-09T06:56:10.719Z",
+  "secs": 64,
   "totals": {
    "ayahs": 6236,
    "words": 77430,
@@ -169,7 +169,7 @@
    "inconclusive": 179,
    "mismatch": 0,
    "boundaries": 55098,
-   "badBoundaries": 822
+   "badBoundaries": 820
   },
   "perReciter": {
    "sudais": {

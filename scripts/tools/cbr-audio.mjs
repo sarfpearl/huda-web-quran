@@ -12,11 +12,16 @@
  * recording, so the word timings stay valid — and served from R2 at
  * /audio/quran-cbr/<reciter>/<surah>.mp3.
  *
+ * "VBR" = a Xing/VBRI header (18 of the 1026 Word Sync masters). Masters
+ * tagged "Info" mix frame bitrates too (most of Hussary and Tunaiji) but
+ * Chromium seeks them within 0.05s, measured — they need no copy.
+ *
  *   1. node scripts/tools/cbr-audio.mjs                    inventory: which masters are VBR
  *   2. node scripts/tools/cbr-audio.mjs --encode           download + encode + verify (local only)
  *   3. node scripts/tools/cbr-audio.mjs --upload           (dry run)
  *      node scripts/tools/cbr-audio.mjs --upload --execute (uploads)
  *   4. node scripts/tools/cbr-audio.mjs --manifest         src/lib/data/cbrAudio.ts + timing audioUrl
+ *      node scripts/tools/cbr-audio.mjs --prune [--execute]   delete R2 copies no longer needed
  *
  * Verify (step 2): the CBR file's duration matches the master's (±0.06s) and
  * its waveform lines up with the master's at three points (lag ≤ 50 ms,
@@ -49,7 +54,7 @@ const opt = (n, d) => {
   const a = argv.find((x) => x.startsWith(`--${n}=`));
   return a ? a.slice(n.length + 3) : d;
 };
-const MODE = flag("upload") ? "upload" : flag("encode") ? "encode" : flag("manifest") ? "manifest" : "inventory";
+const MODE = flag("upload") ? "upload" : flag("encode") ? "encode" : flag("manifest") ? "manifest" : flag("prune") ? "prune" : "inventory";
 const EXECUTE = flag("execute");
 const FORCE = flag("force");
 const ONLY = opt("only", "") ? opt("only", "").split(",") : null;
@@ -109,7 +114,7 @@ async function head(url) {
   }
 }
 
-// ── VBR detection: frame bitrates of the first 128 KB + the Xing/Info tag ────
+// ── VBR detection: the Xing / VBRI / Info tag of the first frame ────────────
 const BITRATES = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
 async function inspect(url) {
   const r = await fetch(url, { headers: { Range: "bytes=0-131071" } });
@@ -136,7 +141,10 @@ async function inspect(url) {
   }
   const tagArea = b.subarray(off, off + 3000).toString("latin1");
   const tag = tagArea.includes("Xing") ? "Xing" : tagArea.includes("VBRI") ? "VBRI" : tagArea.includes("Info") ? "Info" : "none";
-  return { vbr: rates.size > 1 || tag === "Xing" || tag === "VBRI", tag, rates: [...rates].sort((x, y) => x - y) };
+  // Only a Xing/VBRI (VBR) header makes Chromium seek through the coarse TOC.
+  // Masters tagged "Info" (Hussary, Tunaiji) mix frame bitrates too, yet
+  // Chromium seeks them within 0.05s (measured): they stay on quranicaudio.
+  return { vbr: tag === "Xing" || tag === "VBRI", tag, rates: [...rates].sort((x, y) => x - y) };
 }
 
 function jobs() {
@@ -269,11 +277,35 @@ async function upload(rep) {
   });
 }
 
+// ── prune: remove R2 copies of masters that turned out not to need one ───────
+async function prune(rep) {
+  const extra = Object.entries(rep).filter(([id, x]) => x.uploaded && !x.vbr && wanted(...id.split("/")));
+  if (!extra.length) return console.log("Nothing to prune.");
+  console.log(`${extra.length} R2 copies of non-VBR masters${EXECUTE ? "" : " — DRY RUN (add --execute to delete)"}`);
+  if (!EXECUTE) return extra.slice(0, 10).forEach(([id]) => console.log(`  ${KEY(...id.split("/"))}`));
+  const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = process.env;
+  const { S3Client, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
+  });
+  const bucket = process.env.R2_BUCKET_NAME || "huda-quran-media";
+  const base = mediaUrl("/").replace(/\/$/, "");
+  await pool(extra, 6, async ([id, x]) => {
+    const key = KEY(...id.split("/"));
+    await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key.replace(/^\//, "") }));
+    x.uploaded = false;
+    console.log(`  ${(await head(base + key)) === null ? "✓ removed" : "✗ still served (CDN cache?)"} ${key}`);
+    saveReport(rep);
+  });
+}
+
 // ── manifest: the app's list + each timing file's audioUrl ───────────────────
 function manifest(rep) {
   const by = {};
   for (const [id, x] of Object.entries(rep)) {
-    if (!x.uploaded) continue;
+    if (!x.uploaded || !x.vbr) continue;
     const [r, s] = id.split("/");
     (by[r] ??= []).push(Number(s));
   }
@@ -302,7 +334,21 @@ export const CBR_AUDIO: Record<string, number[]> = {${body ? `\n${body}\n` : ""}
       n++;
     }
   }
-  console.log(`cbrAudio.ts: ${Object.values(by).reduce((a, l) => a + l.length, 0)} streams · ${n} timing files repointed.`);
+  // A stream no longer listed goes back to its master.
+  let back = 0;
+  for (const [id, x] of Object.entries(rep)) {
+    const [r, s] = id.split("/");
+    if (by[r]?.includes(Number(s))) continue;
+    const f = path.join(ROOT, "public/data/quran-timings", r, `${s}.json`);
+    if (!fs.existsSync(f)) continue;
+    const d = JSON.parse(fs.readFileSync(f, "utf8"));
+    if (!d.sourceAudioUrl) continue;
+    d.audioUrl = d.sourceAudioUrl;
+    delete d.sourceAudioUrl;
+    fs.writeFileSync(f, JSON.stringify(d));
+    back++;
+  }
+  console.log(`cbrAudio.ts: ${Object.values(by).reduce((a, l) => a + l.length, 0)} streams · ${n} timing files repointed · ${back} back on their master.`);
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -337,6 +383,8 @@ if (MODE === "inventory") {
   console.log(`${v.filter((x) => x.verified).length}/${v.length} verified · CBR ${mb(v.reduce((a, x) => a + (x.size ?? 0), 0))}. Next: --upload`);
 } else if (MODE === "upload") {
   await upload(rep);
+} else if (MODE === "prune") {
+  await prune(rep);
 } else {
   manifest(rep);
 }
