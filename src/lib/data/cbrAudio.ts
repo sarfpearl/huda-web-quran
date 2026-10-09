@@ -13,3 +13,6 @@ export const CBR_AUDIO: Record<string, number[]> = {
   "sudais": [3, 4, 5, 27, 28, 29],
   "tunaiji": [14, 72]
 };
+
+/** "<reciter>/<surah>" → version of a re-uploaded copy (the URL gets ?v=N). */
+export const CBR_AUDIO_VERSION: Record<string, number> = {};

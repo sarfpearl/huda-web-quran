@@ -8,7 +8,7 @@
 
 import { AUDIO_ONLY_AVAILABLE_SURAHS } from "./reciterAvailability";
 import { WORD_SYNC_UNAVAILABLE } from "./wordSyncAvailability";
-import { CBR_AUDIO } from "./cbrAudio";
+import { CBR_AUDIO, CBR_AUDIO_VERSION } from "./cbrAudio";
 import { mediaUrl } from "@/lib/media";
 
 export interface QuranReciter {
@@ -900,9 +900,22 @@ export function buildReciterSurahUrl(reciter: QuranReciter, surahNumber: number)
   // ~14s away from the reported currentTime, so after a seek the highlight ran
   // ahead of / behind the voice. CBR seeks exactly; same recording, same timings.
   if (CBR_AUDIO[reciter.id]?.includes(surahNumber)) {
-    return mediaUrl(`/audio/quran-cbr/${reciter.id}/${surahNumber}.mp3`);
+    // ?v=N once a copy is re-uploaded: the R2 objects are cached as immutable.
+    const v = CBR_AUDIO_VERSION[`${reciter.id}/${surahNumber}`];
+    return mediaUrl(`/audio/quran-cbr/${reciter.id}/${surahNumber}.mp3${v ? `?v=${v}` : ""}`);
   }
   return reciterSourceUrl(reciter, surahNumber);
+}
+
+/**
+ * The original master behind an R2 CBR copy (null for any other URL). The
+ * player falls back to it when the copy fails to load: the same recording,
+ * so the word timings still fit — only Chromium's seek accuracy is lost.
+ */
+export function cbrMasterUrl(url: string): string | null {
+  const m = /\/audio\/quran-cbr\/([^/]+)\/(\d+)\.mp3(?:\?|$)/.exec(url);
+  const reciter = m ? QURAN_RECITERS.find((r) => r.id === m[1]) : undefined;
+  return m && reciter ? reciterSourceUrl(reciter, Number(m[2])) : null;
 }
 
 /** The reciter's original stream for a Surah (quranicaudio.com master or mp3quran.net). */
