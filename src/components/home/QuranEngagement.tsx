@@ -1041,6 +1041,8 @@ export function PlayerStatsFrame({
         <div className="overflow-y-auto">{viewsBody}</div>
       </ActionSheet>
     <div
+      data-player-frame={show || undefined}
+      data-footer={withFooter || undefined}
       className={cn(
         "pointer-events-auto relative flex max-w-full flex-col transition-[border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
         show &&

@@ -160,6 +160,16 @@
     }
   }
 
+  /* iPhone home-screen app (MainLayout sets --screen-corner): the player's
+     bottom corners sit 1rem in from the screen's — keep them concentric. The
+     stats frame reads the card's radius, and with the bottom strip open it is
+     the frame's own corners that face the screen edge. */
+  html.iphone-app [data-player-shell]:not([data-footer] [data-player-shell]),
+  html.iphone-app [data-player-frame] {
+    border-bottom-left-radius: max(28px, calc(var(--screen-corner) - 1rem));
+    border-bottom-right-radius: max(28px, calc(var(--screen-corner) - 1rem));
+  }
+
   body {
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));
