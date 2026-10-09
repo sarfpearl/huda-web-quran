@@ -148,6 +148,16 @@
     :root {
       --header-gap: 2.75rem;
     }
+    /* black-translucent status bar: the layout viewport comes up a status bar
+       short and iOS clips the locked page there, leaving a black strip at the
+       bottom (iPad, windowed or full screen). Grow the document by the inset. */
+    html.screen-locked,
+    html.screen-locked body {
+      height: calc(100% + env(safe-area-inset-top));
+    }
+    html.screen-locked body {
+      bottom: auto;
+    }
   }
 
   body {
