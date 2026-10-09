@@ -54,8 +54,8 @@ interface ReadingViewProps {
   script?: QuranScript;
   /** Word being recited in the active ayah (0-based, -1 = none). */
   activeWordIndex?: number;
-  /** Tap a word → recite from its start. */
-  onSeekWord?: (surah: number, ayah: number, startTime: number) => void;
+  /** Tap a word → recite from its start (`verse`: its ayah, with the timings). */
+  onSeekWord?: (surah: number, ayah: number, startTime: number, verse: AyahVerse) => void;
   /** Mushaf page at the top of the view, as the reader scrolls (`byHand`: since the last page step). */
   onVisiblePageChange?: (page: number, byHand: boolean) => void;
   /** Bump `n` to open `page` at the top of the view (a page step). */
@@ -76,6 +76,9 @@ interface ReadingViewProps {
   onVisibleAyahChange?: (r: AyahRef) => void;
   /** Bookmarked ayahs ("surah:ayah") whose mark is on screen. */
   onBookmarksInViewChange?: (keys: string[]) => void;
+  /** Tap on the dimmed text around it (the rest of the first / last page):
+   *  say why it's dimmed — the Surah / Juz starts or ends mid-page. */
+  onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -132,6 +135,7 @@ export function ReadingView({
   bookmarks = [],
   onVisibleAyahChange,
   onBookmarksInViewChange,
+  onContextTap,
 }: ReadingViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rangesKey = ranges.map((r) => `${r.surah}:${r.from}-${r.to}`).join(",");
@@ -479,6 +483,25 @@ export function ReadingView({
     if (!marks.length) inViewCbRef.current?.([]);
     return () => io.disconnect();
   }, [pages, bookmarksKey]);
+  // A bookmark just placed (the player's 🔖): its ayah can start above the
+  // faded top edge (the first ayah still showing is often only its last
+  // line), so the mark wasn't seen — bring the ayah's start into view.
+  const prevMarksRef = useRef(bookmarksKey);
+  useEffect(() => {
+    const before = new Set(prevMarksRef.current.split(",").filter(Boolean));
+    prevMarksRef.current = bookmarksKey;
+    const el = scrollRef.current;
+    const added = [...bookmarkKeys].find((k) => !before.has(k));
+    const mark = el && added ? el.querySelector<HTMLElement>(`[data-bookmark="${added}"]`) : null;
+    if (!el || !mark) return;
+    const box = el.getBoundingClientRect();
+    const r = mark.getBoundingClientRect();
+    if (r.top >= box.top + 64 && r.bottom <= box.bottom - 24) return;
+    stopFollow(el);
+    userScrollAtRef.current = Date.now();
+    awayRef.current = true;
+    el.scrollTo({ top: el.scrollTop + r.top - box.top - 72, behavior: "smooth" });
+  }, [bookmarksKey, pages]); // eslint-disable-line react-hooks/exhaustive-deps
   const inView = (r: AyahRef | null) =>
     Boolean(r && plan.all.some(({ ref, ctx }) => ctx === "cur" && ref.surah === r.surah && ref.ayah === r.ayah));
 
@@ -701,7 +724,7 @@ export function ReadingView({
         ? (ev: React.MouseEvent) => {
             ev.stopPropagation();
             if (window.getSelection()?.toString()) return;
-            onSeekWord!(r.surah, r.ayah, t!.startTime);
+            onSeekWord!(r.surah, r.ayah, t!.startTime, v!);
           }
         : undefined,
     };
@@ -758,9 +781,13 @@ export function ReadingView({
       <Fragment key={key}>
         <span
           data-key={live ? k : undefined}
-          onClick={live && onSeekAyah ? () => onSeekAyah(ref.surah, ref.ayah) : undefined}
+          onClick={
+            live
+              ? onSeekAyah && (() => onSeekAyah(ref.surah, ref.ayah))
+              : onContextTap && (() => onContextTap(ref, ctx as "prev" | "next"))
+          }
           aria-hidden={live ? undefined : true}
-          className={live ? (onSeekAyah ? "cursor-pointer" : undefined) : "opacity-35 pointer-events-none select-none"}
+          className={live ? (onSeekAyah ? "cursor-pointer" : undefined) : `opacity-35 select-none ${onContextTap ? "cursor-help" : "pointer-events-none"}`}
         >
           {bookmarked && (
             <span
@@ -818,7 +845,8 @@ export function ReadingView({
       <div
         key={key}
         aria-hidden={ctx === "cur" ? undefined : true}
-        className={`px-3 pt-8 pb-5 sm:px-4 text-center ${ctx === "cur" ? "" : "opacity-35 select-none"}`}
+        onClick={ctx !== "cur" && onContextTap ? () => onContextTap({ surah, ayah: 1 }, ctx) : undefined}
+        className={`px-3 pt-8 pb-5 sm:px-4 text-center ${ctx === "cur" ? "" : `opacity-35 select-none ${onContextTap ? "cursor-help" : ""}`}`}
       >
         <SurahBanner surah={surah} />
         {hasBismillah(surah) && (

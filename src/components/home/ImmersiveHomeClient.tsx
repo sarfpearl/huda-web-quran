@@ -895,14 +895,60 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       if (i >= 0) player.jumpToAyah(i);
     }
   };
-  const handleReaderSeekWord = (surah: number, ayah: number, startTime: number) => {
+  const handleReaderSeekWord = (surah: number, ayah: number, startTime: number, verse: AyahVerse) => {
     if (readingSurah !== null) {
       const seg = segments.find((sg) => sg.type === "ayah" && sg.ayahNumber === ayah);
       player.seek(Math.max(startTime, (seg?.startTime ?? 0) + 0.02));
+    } else if (player.ayahSequence) {
+      // Per-ayah Juz: from the tapped word, not the ayah's start — in the
+      // clip now playing, or the tapped ayah's clip once it has loaded.
+      const i = juzIndexOf(surah, ayah);
+      if (i < 0) return;
+      if (i === player.ayahSequence.index && !player.ayahSequence.preType) {
+        const at = ayahClipTimeOf(verse, startTime, player.duration);
+        if (at !== null) player.seek(at);
+        else player.jumpToAyah(i);
+      } else {
+        player.jumpToAyah(i, (dur) => ayahClipTimeOf(verse, startTime, dur) ?? 0);
+      }
     } else {
       handleReaderSeekAyah(surah, ayah);
     }
     if (!player.isPlaying) player.resume();
+  };
+
+  // Tap on the dimmed text at the top / bottom of the first / last page:
+  // why it's dimmed — the Juz / Surah starts (or ends) part-way down that
+  // Mushaf page; the rest of the page belongs to the one before (after).
+  const handleContextTap = (ref: { surah: number; ayah: number }, ctx: "prev" | "next") => {
+    const ta = language === "ta";
+    const name = (n: number) => QURAN_SURAHS.find((x) => x.number === n)?.name ?? `Surah ${n}`;
+    if (readingJuz) {
+      const other = readingJuz.id + (ctx === "prev" ? -1 : 1);
+      const edge = ctx === "prev" ? juzPairs[0] : juzPairs[juzPairs.length - 1];
+      if (!edge) return;
+      const at = `${name(edge[0])} ${edge[0]}:${edge[1]}`;
+      showNotice(
+        ctx === "prev"
+          ? ta
+            ? `இது Juz ${other}. Juz ${readingJuz.id} இந்தப் பக்கத்தின் நடுவில் ${at}-இல் தொடங்குகிறது.`
+            : `This is Juz ${other}. Juz ${readingJuz.id} starts mid-page, at ${at}.`
+          : ta
+          ? `இது Juz ${other}. Juz ${readingJuz.id} இந்தப் பக்கத்தின் நடுவில் ${at}-இல் முடிகிறது.`
+          : `This is Juz ${other}. Juz ${readingJuz.id} ends mid-page, at ${at}.`
+      );
+      return;
+    }
+    if (readingSurah === null) return;
+    showNotice(
+      ctx === "prev"
+        ? ta
+          ? `இது ${name(ref.surah)}. ${name(readingSurah)} இந்தப் பக்கத்தின் நடுவில் தொடங்குகிறது.`
+          : `This is ${name(ref.surah)}. ${name(readingSurah)} starts mid-page.`
+        : ta
+        ? `இது ${name(ref.surah)}. ${name(readingSurah)} இந்தப் பக்கத்தின் நடுவில் முடிகிறது.`
+        : `This is ${name(ref.surah)}. ${name(readingSurah)} ends mid-page.`
+    );
   };
 
   // Reading mode's « Page N »: the page on screen. « » and the page picker
@@ -1379,6 +1425,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             bookmarks={readingBookmarks}
             onVisibleAyahChange={setVisibleAyah}
             onBookmarksInViewChange={setBookmarksInView}
+            onContextTap={handleContextTap}
           />
         )}
       </AnimatePresence>
@@ -1650,9 +1697,19 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         if (standalone) {
+          // Only when the window fills the screen: an iPad window (Stage
+          // Manager, Split View, Slide Over) is smaller than the screen, and
+          // a scene stretched to the screen's height there overflowed it —
+          // iPadOS then zoomed the page in / out to fit, cropped it, or left
+          // a black area (or no verses at all) after a resize. The stretch
+          // only makes up the status-bar strip, so it is capped near that.
           const long = Math.max(screen.width, screen.height);
           const short = Math.min(screen.width, screen.height);
-          scene.style.minHeight = `${window.innerHeight >= window.innerWidth ? long : short}px`;
+          const portrait = window.innerHeight >= window.innerWidth;
+          const fills = Math.abs(window.innerWidth - (portrait ? short : long)) <= 2;
+          const target = portrait ? long : short;
+          scene.style.minHeight =
+            fills && target > window.innerHeight && target - window.innerHeight <= 80 ? `${target}px` : "";
         }
         const r = scene.getBoundingClientRect();
         const top = Math.max(0, Math.round(vv.offsetTop - r.top));
@@ -1664,15 +1721,30 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
         setKeyboardOpen(full.height - vv.height > 150);
       });
     };
+    // A window resized while the app was in the background (another app in
+    // front, the App Switcher) reports no resize on return: measure again
+    // when it shows, and whenever the page box itself changes size.
+    const onShow = () => {
+      if (document.visibilityState === "visible") update();
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(document.documentElement);
     update();
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    window.addEventListener("pageshow", update);
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       cancelAnimationFrame(frame);
+      ro.disconnect();
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("pageshow", update);
+      document.removeEventListener("visibilitychange", onShow);
     };
   }, [sceneRef]);
   return keyboardOpen;

@@ -249,6 +249,30 @@ export function TimeLocationWidget({
       },
     );
   };
+  // Sent to Settings by the « turned off » sheet: on coming back, try again
+  // without another tap, and close the sheet once the location comes.
+  useEffect(() => {
+    if (!blocked || !askOpen) return;
+    const onShow = () => {
+      if (document.visibilityState !== "visible") return;
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setAskOpen(false);
+          setBlocked(false);
+          askAnswer.current = null;
+          void applyPosition(position);
+        },
+        () => {},
+        { timeout: 10000 },
+      );
+    };
+    document.addEventListener("visibilitychange", onShow);
+    window.addEventListener("focus", onShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onShow);
+      window.removeEventListener("focus", onShow);
+    };
+  }, [blocked, askOpen, applyPosition]);
   const askFromPill = () => {
     setBlocked(false);
     askAnswer.current = allowFromPill;
