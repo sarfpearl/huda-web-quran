@@ -25,6 +25,8 @@ export const metadata: Metadata = {
     // Home-screen app: let the scene run under the status bar (no black band).
     statusBarStyle: "black-translucent",
   },
+  // Next 14 only emits the Apple tag; Chrome deprecated it for this one.
+  other: { "mobile-web-app-capable": "yes" },
   ...shareMetadata({ title: siteConfig.title, description: siteConfig.description, url: siteConfig.url }),
   icons: {
     icon: [
