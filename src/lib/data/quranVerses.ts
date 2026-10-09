@@ -824,7 +824,9 @@ export function sanitizeWordSegments(
  * Overlays a reciter's Quran.com (QDC) word-segment timings onto base text
  * verses. Each reciter recites at their own pace, so the timing dataset is
  * loaded per reciter from `/data/quran-timings/<reciterId>/<surah>.json`.
- * Returns a NEW verse array (base text untouched) or null if unavailable.
+ * Returns a NEW verse array (base text untouched), null if this reciter has
+ * no usable timing for the Surah, or undefined if it couldn't be loaded right
+ * now (network) — worth trying again.
  *
  * Only this reciter's own timing is ever used: an ayah whose word segments are
  * missing or unusable gets `noWordTiming` (ayah shown, no recited word) — never
@@ -834,7 +836,7 @@ async function applyReciterTimings(
   baseVerses: AyahVerse[],
   surahNumber: number,
   reciterId: string
-): Promise<AyahVerse[] | null> {
+): Promise<AyahVerse[] | null | undefined> {
   if (typeof fetch === "undefined") return null;
   try {
     const res = await fetch(`/data/quran-timings/${reciterId}/${surahNumber}.json`);
@@ -926,7 +928,7 @@ async function applyReciterTimings(
     }
     return out;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
@@ -1017,16 +1019,21 @@ export async function fetchSurahVerses(
 
   // 3. Overlay the reciter's Quran.com word-segment timings when available so
   //    highlighting tracks that reciter's exact pace.
+  let retryLater = false;
   if (reciterHasWordTiming(reciter)) {
     const overlaid = await applyReciterTimings(baseVerses, surahNumber, rid);
     if (overlaid) {
       memoryCache.set(key, overlaid);
       return overlaid;
     }
+    retryLater = overlaid === undefined;
   }
 
-  // 4. No per-reciter word timing: use base verses (ayah-level glow).
-  memoryCache.set(key, baseVerses);
+  // 4. No per-reciter word timing: use base verses (ayah-level glow). Not
+  //    cached when the timings failed to load (network blip, server restart):
+  //    that pinned the Surah to the whole-ayah glow for the session; the next
+  //    fetch (the next ayah) tries the timings again.
+  if (!retryLater) memoryCache.set(key, baseVerses);
   return baseVerses;
 }
 

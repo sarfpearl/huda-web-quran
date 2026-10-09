@@ -541,15 +541,25 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     }
     const [surah, ayah] = pair;
     let cancelled = false;
-    fetchSurahVerses(surah, selectedReciter.id)
-      .then((verses) => {
-        if (!cancelled) setJuzAyahVerse(verses.find((v) => v.ayahNumber === ayah) ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setJuzAyahVerse(null);
-      });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // A Word Sync reciter's timings that didn't load (network blip): the
+    // whole ayah glowed gold until the next ayah — try again a few times.
+    const load = (attempt: number) =>
+      fetchSurahVerses(surah, selectedReciter.id)
+        .then((verses) => {
+          if (cancelled) return;
+          const v = verses.find((x) => x.ayahNumber === ayah) ?? null;
+          setJuzAyahVerse(v);
+          const missed = v && !v.wordSegments && !v.noWordTiming && reciterHasWordTiming(selectedReciter);
+          if (missed && attempt < 3) timer = setTimeout(() => load(attempt + 1), 1500 * (attempt + 1));
+        })
+        .catch(() => {
+          if (!cancelled) setJuzAyahVerse(null);
+        });
+    load(0);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [ayahSeqIndex, activeJuz, selectedReciter.id]);
 
