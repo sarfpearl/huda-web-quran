@@ -550,7 +550,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           if (cancelled) return;
           const v = verses.find((x) => x.ayahNumber === ayah) ?? null;
           setJuzAyahVerse(v);
-          const missed = v && !v.wordSegments && !v.noWordTiming && reciterHasWordTiming(selectedReciter);
+          const missed = v && !v.wordSegments && !v.noWordTiming && reciterHasWordTiming(getReciterById(selectedReciter.id));
           if (missed && attempt < 3) timer = setTimeout(() => load(attempt + 1), 1500 * (attempt + 1));
         })
         .catch(() => {
