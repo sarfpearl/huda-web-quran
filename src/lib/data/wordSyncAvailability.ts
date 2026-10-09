@@ -5,33 +5,4 @@
  * against the real audio). These Surahs play audio-only for that reciter:
  * highlighting from mismatched timings would show the wrong words.
  */
-export const WORD_SYNC_UNAVAILABLE: Record<string, Record<number, string>> = {
-  "alafasy": {
-    "14": "the streamed recording is 12s longer than the one its word timings describe",
-    "37": "98 of 181 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-    "78": "19 of 39 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-    "82": "the streamed recording is 19s longer than the one its word timings describe",
-    "91": "the streamed recording doesn't match its word timings (their word boundaries line up with it only at +0.38s)"
-  },
-  "dosari": {
-    "50": "the streamed recording is 15s shorter than the one its word timings describe",
-    "92": "the streamed recording is 9s shorter than the one its word timings describe"
-  },
-  "abdulbaset": {
-    "2": "the streamed recording is 1030s longer than the one its word timings describe"
-  },
-  "minshawi": {
-    "13": "13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)"
-  },
-  "shatri": {
-    "17": "38 of 110 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-    "41": "the streamed recording is 7s longer than the one its word timings describe",
-    "59": "6 of 24 ayahs' word boundaries are off the streamed recording (drifting recording)"
-  },
-  "tunaiji": {
-    "10": "the streamed recording is 17s shorter than the one its word timings describe",
-    "13": "13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-    "14": "13 of 51 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-    "72": "the streamed recording is 19s longer than the one its word timings describe"
-  }
-};
+export const WORD_SYNC_UNAVAILABLE: Record<string, Record<number, string>> = {};

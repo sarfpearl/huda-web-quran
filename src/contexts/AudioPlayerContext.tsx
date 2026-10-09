@@ -20,7 +20,7 @@ import {
   getReciterAyah1TrimOffset,
   PRELUDE_AUDIO,
 } from "@/lib/data/service";
-import { reciterHasSurah } from "@/lib/data/quranReciters";
+import { cbrMasterUrl, reciterHasSurah } from "@/lib/data/quranReciters";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────
@@ -1254,7 +1254,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // Never another reciter's file: its voice wouldn't match the reciter
     // shown or the highlight. Offline: wait for the connection to come back.
     const el = audioRef.current;
-    const url = el?.getAttribute("src");
+    const failed = el?.getAttribute("src");
+    // Our R2 CBR copy of a VBR master failing (e.g. r2.dev throttling): carry
+    // on from the master — the same recording, so the timings still fit.
+    const url = (failed && cbrMasterUrl(failed)) || failed;
     if (current && el && url && retryCountRef.current < MAX_STREAM_RETRIES) {
       retryCountRef.current += 1;
       const token = ++retryTokenRef.current;

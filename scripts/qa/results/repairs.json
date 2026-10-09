@@ -1,97 +1,24 @@
 {
- "generated": "2026-10-08T11:51:29.886Z",
+ "generated": "2026-10-09T06:55:06.406Z",
  "dry": false,
  "zeroBased": [],
  "shifted": [],
  "shiftRejected": [
   "alafasy/7:88 (no clear acoustic fit: z=-1.82)",
-  "alafasy/14:17 (no room in window)",
   "alafasy/24:47 (no clear acoustic fit: z=-2.46)",
-  "alafasy/37:152 (no room in window)",
   "alafasy/38:52 (no clear acoustic fit: z=-2.33)",
   "alafasy/56:5 (no clear acoustic fit: z=-1.45)",
   "alafasy/57:10 (no clear acoustic fit: z=-2.13)",
   "alafasy/60:13 (no clear acoustic fit: z=-1.72)",
   "alafasy/92:2 (no clear acoustic fit: z=-2.43)",
   "alafasy/93:9 (no clear acoustic fit: z=-2.07)",
-  "abdulbaset/2:49 (no room in window)",
-  "abdulbaset/2:51 (no room in window)",
-  "abdulbaset/2:54 (no room in window)",
-  "abdulbaset/2:55 (no room in window)",
-  "abdulbaset/2:57 (no room in window)",
-  "abdulbaset/2:58 (no room in window)",
-  "abdulbaset/2:59 (no room in window)",
-  "abdulbaset/2:60 (no room in window)",
-  "abdulbaset/2:61 (no room in window)",
-  "abdulbaset/2:62 (no room in window)",
-  "abdulbaset/2:63 (no room in window)",
-  "abdulbaset/2:64 (no room in window)",
-  "abdulbaset/2:65 (no room in window)",
-  "abdulbaset/2:67 (no room in window)",
-  "abdulbaset/2:68 (no room in window)",
-  "abdulbaset/2:69 (no room in window)",
-  "abdulbaset/2:70 (no room in window)",
-  "abdulbaset/2:79 (no room in window)",
-  "abdulbaset/2:80 (no room in window)",
-  "abdulbaset/2:140 (no room in window)",
-  "abdulbaset/2:150 (no room in window)",
-  "abdulbaset/2:151 (no room in window)",
-  "abdulbaset/2:153 (no room in window)",
-  "abdulbaset/2:154 (no room in window)",
-  "abdulbaset/2:155 (no room in window)",
-  "abdulbaset/2:156 (no room in window)",
-  "abdulbaset/2:157 (no room in window)",
-  "abdulbaset/2:158 (no room in window)",
-  "abdulbaset/2:159 (no room in window)",
-  "abdulbaset/2:160 (no room in window)",
-  "abdulbaset/2:170 (no room in window)",
-  "abdulbaset/2:179 (no room in window)",
-  "abdulbaset/2:180 (no room in window)",
-  "abdulbaset/2:184 (no room in window)",
-  "abdulbaset/2:185 (no room in window)",
-  "abdulbaset/2:186 (no room in window)",
-  "abdulbaset/2:187 (no room in window)",
-  "abdulbaset/2:188 (no room in window)",
-  "abdulbaset/2:189 (no room in window)",
-  "abdulbaset/2:190 (no room in window)",
-  "minshawi/13:2 (no room in window)",
   "shuraim/12:75 (no room in window)",
   "shuraim/40:64 (no clear acoustic fit: z=-2.03)",
-  "shatri/22:52 (no room in window)",
-  "tunaiji/13:2 (no room in window)"
+  "shatri/22:52 (no room in window)"
  ],
  "preludes": [],
  "misaligned": [],
- "unavailable": {
-  "alafasy": {
-   "14": "the streamed recording is 12s longer than the one its word timings describe",
-   "37": "98 of 181 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "78": "19 of 39 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "82": "the streamed recording is 19s longer than the one its word timings describe",
-   "91": "the streamed recording doesn't match its word timings (their word boundaries line up with it only at +0.38s)"
-  },
-  "dosari": {
-   "50": "the streamed recording is 15s shorter than the one its word timings describe",
-   "92": "the streamed recording is 9s shorter than the one its word timings describe"
-  },
-  "abdulbaset": {
-   "2": "the streamed recording is 1030s longer than the one its word timings describe"
-  },
-  "minshawi": {
-   "13": "13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)"
-  },
-  "shatri": {
-   "17": "38 of 110 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "41": "the streamed recording is 7s longer than the one its word timings describe",
-   "59": "6 of 24 ayahs' word boundaries are off the streamed recording (drifting recording)"
-  },
-  "tunaiji": {
-   "10": "the streamed recording is 17s shorter than the one its word timings describe",
-   "13": "13 of 42 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "14": "13 of 51 ayah boundaries miss the streamed recording's pauses (drifting recording)",
-   "72": "the streamed recording is 19s longer than the one its word timings describe"
-  }
- },
+ "unavailable": {},
  "verdicts": {
   "sudais/1": {
    "status": "inconclusive",
@@ -145,60 +72,60 @@
    "boundaries": 199,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 6.6,
+    "zBest": 6.64,
     "z0": -4.87,
-    "n": 3480
+    "n": 3607
    },
    "thirds": [
     {
      "bestShift": 0.16,
-     "zBest": 6.14,
-     "z0": -4.52,
-     "n": 1141
+     "zBest": 6.09,
+     "z0": -4.7,
+     "n": 1184
     },
     {
      "bestShift": 0.16,
-     "zBest": 6.25,
-     "z0": -4.14,
-     "n": 1124
+     "zBest": 6.38,
+     "z0": -4.04,
+     "n": 1180
     },
     {
      "bestShift": 0.16,
-     "zBest": 6.17,
-     "z0": -4.89,
-     "n": 1215
+     "zBest": 6.2,
+     "z0": -4.86,
+     "n": 1243
     }
    ]
   },
   "sudais/4": {
    "status": "match",
    "drift": -0.12,
-   "badBoundaries": 2,
+   "badBoundaries": 1,
    "boundaries": 175,
    "whole": {
     "bestShift": 0.16,
     "zBest": 6.59,
-    "z0": -5.28,
-    "n": 3746
+    "z0": -5.26,
+    "n": 3885
    },
    "thirds": [
     {
      "bestShift": 0.16,
-     "zBest": 6.44,
-     "z0": -5.07,
-     "n": 1216
+     "zBest": 6.49,
+     "z0": -5.04,
+     "n": 1269
     },
     {
      "bestShift": 0.16,
-     "zBest": 6.02,
-     "z0": -5.41,
-     "n": 1254
+     "zBest": 6.07,
+     "z0": -5.38,
+     "n": 1297
     },
     {
      "bestShift": 0.16,
-     "zBest": 6.11,
-     "z0": -4.4,
-     "n": 1276
+     "zBest": 6.14,
+     "z0": -4.52,
+     "n": 1319
     }
    ]
   },
@@ -209,28 +136,28 @@
    "boundaries": 119,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 6.82,
-    "z0": -4.48,
-    "n": 2803
+    "zBest": 6.79,
+    "z0": -4.44,
+    "n": 2933
    },
    "thirds": [
     {
      "bestShift": 0.16,
-     "zBest": 6.21,
-     "z0": -3.66,
-     "n": 977
+     "zBest": 6.27,
+     "z0": -3.56,
+     "n": 1012
     },
     {
      "bestShift": 0.16,
-     "zBest": 6.5,
-     "z0": -4.18,
-     "n": 897
+     "zBest": 6.52,
+     "z0": -4.25,
+     "n": 945
     },
     {
      "bestShift": 0.16,
-     "zBest": 5.86,
-     "z0": -4.39,
-     "n": 929
+     "zBest": 5.98,
+     "z0": -4.5,
+     "n": 976
     }
    ]
   },
@@ -913,27 +840,27 @@
    "boundaries": 92,
    "whole": {
     "bestShift": 0.04,
-    "zBest": -5.84,
-    "z0": -5.84,
+    "zBest": -5.82,
+    "z0": -5.82,
     "n": 1158
    },
    "thirds": [
     {
      "bestShift": 0.04,
-     "zBest": -5.05,
-     "z0": -5.05,
+     "zBest": -5.04,
+     "z0": -5.04,
      "n": 384
     },
     {
      "bestShift": 0.02,
-     "zBest": -5.69,
-     "z0": -5.69,
+     "zBest": -5.63,
+     "z0": -5.63,
      "n": 356
     },
     {
      "bestShift": -2.08,
-     "zBest": -2.46,
-     "z0": -1.7,
+     "zBest": -2.44,
+     "z0": -1.81,
      "n": 418
     }
    ]
@@ -945,28 +872,28 @@
    "boundaries": 87,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 6.34,
-    "z0": -5.01,
-    "n": 1429
+    "zBest": 6.39,
+    "z0": -4.87,
+    "n": 1470
    },
    "thirds": [
     {
      "bestShift": 0.16,
-     "zBest": 5.83,
-     "z0": -3.91,
-     "n": 502
+     "zBest": 5.91,
+     "z0": -3.97,
+     "n": 514
     },
     {
      "bestShift": 0.16,
-     "zBest": 5.65,
-     "z0": -4.15,
-     "n": 457
+     "zBest": 5.82,
+     "z0": -3.97,
+     "n": 475
     },
     {
      "bestShift": 0.06,
-     "zBest": -5.22,
-     "z0": -5.22,
-     "n": 470
+     "zBest": -5.17,
+     "z0": -5.17,
+     "n": 481
     }
    ]
   },
@@ -977,28 +904,28 @@
    "boundaries": 68,
    "whole": {
     "bestShift": 0.16,
-    "zBest": 5.75,
-    "z0": -4.14,
-    "n": 975
+    "zBest": 5.76,
+    "z0": -4.08,
+    "n": 985
    },
    "thirds": [
     {
      "bestShift": 0.16,
-     "zBest": 5.05,
-     "z0": -3.62,
-     "n": 314
-    },
-    {
-     "bestShift": 0.16,
-     "zBest": 3.7,
-     "z0": -3.45,
-     "n": 321
-    },
-    {
-     "bestShift": 0.16,
      "zBest": 5.12,
-     "z0": -2.94,
-     "n": 340
+     "z0": -3.57,
+     "n": 320
+    },
+    {
+     "bestShift": 0.16,
+     "zBest": 3.87,
+     "z0": -3.37,
+     "n": 322
+    },
+    {
+     "bestShift": 0.16,
+     "zBest": 5.06,
+     "z0": -3.04,
+     "n": 343
     }
    ]
   },
@@ -3026,8 +2953,8 @@
    "boundaries": 6,
    "whole": {
     "bestShift": 0.04,
-    "zBest": -5.21,
-    "z0": -5.21,
+    "zBest": -5.19,
+    "z0": -5.19,
     "n": 28
    },
    "thirds": []
@@ -3417,34 +3344,34 @@
    ]
   },
   "alafasy/14": {
-   "status": "mismatch",
-   "drift": 11.56,
-   "badBoundaries": 5,
+   "status": "match",
+   "drift": -0.44,
+   "badBoundaries": 0,
    "boundaries": 51,
    "whole": {
-    "bestShift": -1.48,
-    "zBest": -3.5,
-    "z0": -1.81,
-    "n": 884
+    "bestShift": 0.16,
+    "zBest": 6.07,
+    "z0": -3.43,
+    "n": 885
    },
    "thirds": [
     {
-     "bestShift": -1.44,
-     "zBest": -2.73,
-     "z0": 1.56,
+     "bestShift": 0.16,
+     "zBest": 5.6,
+     "z0": -2.89,
      "n": 299
     },
     {
-     "bestShift": -1.56,
-     "zBest": -2.77,
-     "z0": -2.34,
-     "n": 301
+     "bestShift": 0.16,
+     "zBest": 4.95,
+     "z0": -4.33,
+     "n": 303
     },
     {
-     "bestShift": -1.46,
-     "zBest": -3.11,
-     "z0": 0.54,
-     "n": 284
+     "bestShift": 0.16,
+     "zBest": 5.76,
+     "z0": 2.19,
+     "n": 283
     }
    ]
   },
@@ -4153,34 +4080,34 @@
    ]
   },
   "alafasy/37": {
-   "status": "mismatch",
-   "drift": 0.98,
-   "badBoundaries": 98,
+   "status": "match",
+   "drift": -0.02,
+   "badBoundaries": 1,
    "boundaries": 181,
    "whole": {
-    "bestShift": -2.56,
-    "zBest": 2.65,
-    "z0": 0.56,
-    "n": 864
+    "bestShift": 0.14,
+    "zBest": 5.25,
+    "z0": -3.81,
+    "n": 863
    },
    "thirds": [
     {
-     "bestShift": -2.32,
-     "zBest": -2.45,
-     "z0": 1.34,
-     "n": 287
+     "bestShift": 0.16,
+     "zBest": 5.43,
+     "z0": 3.34,
+     "n": 288
     },
     {
-     "bestShift": -0.82,
-     "zBest": -2.19,
-     "z0": -1.64,
+     "bestShift": 0.14,
+     "zBest": 4.78,
+     "z0": -3.63,
      "n": 291
     },
     {
-     "bestShift": 1.18,
-     "zBest": 2.6,
-     "z0": -0.95,
-     "n": 286
+     "bestShift": 0.14,
+     "zBest": 4.41,
+     "z0": 4.05,
+     "n": 284
     }
    ]
   },
@@ -4863,15 +4790,15 @@
    "boundaries": 23,
    "whole": {
     "bestShift": 0.08,
-    "zBest": -6.08,
-    "z0": -6.08,
+    "zBest": -6.07,
+    "z0": -6.07,
     "n": 481
    },
    "thirds": [
     {
      "bestShift": 0.1,
-     "zBest": -3.29,
-     "z0": -3.29,
+     "zBest": -3.2,
+     "z0": -3.2,
      "n": 173
     },
     {
@@ -4882,8 +4809,8 @@
     },
     {
      "bestShift": 0.06,
-     "zBest": -5.18,
-     "z0": -5.18,
+     "zBest": -5.21,
+     "z0": -5.21,
      "n": 150
     }
    ]
@@ -5427,36 +5354,17 @@
    ]
   },
   "alafasy/78": {
-   "status": "mismatch",
-   "drift": 1.06,
-   "badBoundaries": 19,
+   "status": "inconclusive",
+   "drift": 0.06,
+   "badBoundaries": 0,
    "boundaries": 39,
    "whole": {
-    "bestShift": 2.3,
-    "zBest": 3.09,
-    "z0": 1.67,
-    "n": 180
+    "bestShift": 0.16,
+    "zBest": 4.11,
+    "z0": -1.85,
+    "n": 178
    },
-   "thirds": [
-    {
-     "bestShift": 2.16,
-     "zBest": -2.61,
-     "z0": 1.09,
-     "n": 57
-    },
-    {
-     "bestShift": -0.04,
-     "zBest": 2.71,
-     "z0": 2.71,
-     "n": 59
-    },
-    {
-     "bestShift": -0.16,
-     "zBest": 2.49,
-     "z0": 2.18,
-     "n": 64
-    }
-   ]
+   "thirds": []
   },
   "alafasy/79": {
    "status": "match",
@@ -5517,14 +5425,14 @@
    "thirds": []
   },
   "alafasy/82": {
-   "status": "mismatch",
-   "drift": 18.82,
-   "badBoundaries": 5,
+   "status": "match",
+   "drift": -0.18,
+   "badBoundaries": 0,
    "boundaries": 18,
    "whole": {
-    "bestShift": 1.48,
-    "zBest": 2.4,
-    "z0": -1.64,
+    "bestShift": 0.14,
+    "zBest": 3.71,
+    "z0": -2.84,
     "n": 79
    },
    "thirds": []
@@ -5634,14 +5542,14 @@
    "thirds": []
   },
   "alafasy/91": {
-   "status": "mismatch",
+   "status": "match",
    "drift": 0.04,
-   "badBoundaries": 1,
+   "badBoundaries": 0,
    "boundaries": 14,
    "whole": {
-    "bestShift": 0.38,
-    "zBest": -4.32,
-    "z0": -1.18,
+    "bestShift": -0.04,
+    "zBest": -5.34,
+    "z0": -5.34,
     "n": 53
    },
    "thirds": []
@@ -7495,34 +7403,34 @@
    ]
   },
   "dosari/50": {
-   "status": "mismatch",
-   "drift": -15.18,
-   "badBoundaries": 14,
+   "status": "match",
+   "drift": -0.18,
+   "badBoundaries": 0,
    "boundaries": 44,
    "whole": {
-    "bestShift": 0.18,
-    "zBest": 3.45,
-    "z0": -3.39,
-    "n": 425
+    "bestShift": 0.16,
+    "zBest": 5.12,
+    "z0": -4.49,
+    "n": 487
    },
    "thirds": [
     {
-     "bestShift": 0.06,
-     "zBest": -5.51,
-     "z0": -5.51,
-     "n": 164
+     "bestShift": 0.18,
+     "zBest": 3.66,
+     "z0": -3.26,
+     "n": 166
     },
     {
-     "bestShift": 2.22,
-     "zBest": -2.9,
-     "z0": -1.53,
-     "n": 115
+     "bestShift": 0.16,
+     "zBest": 4.15,
+     "z0": -3.34,
+     "n": 159
     },
     {
-     "bestShift": -1.9,
-     "zBest": -3.19,
-     "z0": -2.32,
-     "n": 146
+     "bestShift": 0.16,
+     "zBest": 4.44,
+     "z0": -4.15,
+     "n": 162
     }
    ]
   },
@@ -8573,15 +8481,15 @@
    "thirds": []
   },
   "dosari/92": {
-   "status": "mismatch",
-   "drift": -9.4,
-   "badBoundaries": 7,
+   "status": "match",
+   "drift": -0.4,
+   "badBoundaries": 3,
    "boundaries": 20,
    "whole": {
-    "bestShift": -0.62,
-    "zBest": 2.65,
-    "z0": -1.56,
-    "n": 63
+    "bestShift": 0.14,
+    "zBest": 3.62,
+    "z0": 2.53,
+    "n": 70
    },
    "thirds": []
   },
@@ -8885,34 +8793,34 @@
    "thirds": []
   },
   "abdulbaset/2": {
-   "status": "mismatch",
-   "drift": 1029.84,
-   "badBoundaries": 79,
+   "status": "match",
+   "drift": -0.16,
+   "badBoundaries": 1,
    "boundaries": 285,
    "whole": {
-    "bestShift": 2.12,
-    "zBest": -3.18,
-    "z0": 0.83,
-    "n": 6380
+    "bestShift": 0.18,
+    "zBest": 5.64,
+    "z0": -4.04,
+    "n": 6365
    },
    "thirds": [
     {
-     "bestShift": 2.12,
-     "zBest": -2.73,
-     "z0": 1.6,
-     "n": 2396
+     "bestShift": 0.18,
+     "zBest": 5.99,
+     "z0": -4.08,
+     "n": 2124
     },
     {
-     "bestShift": 1.84,
-     "zBest": 2.97,
-     "z0": -1.67,
-     "n": 2204
+     "bestShift": 0.18,
+     "zBest": 4.79,
+     "z0": -3.22,
+     "n": 1884
     },
     {
-     "bestShift": 2.14,
-     "zBest": -2.97,
-     "z0": -0.61,
-     "n": 1780
+     "bestShift": 0.18,
+     "zBest": 5.65,
+     "z0": -4.47,
+     "n": 2357
     }
    ]
   },
@@ -12144,34 +12052,34 @@
    ]
   },
   "minshawi/13": {
-   "status": "mismatch",
+   "status": "match",
    "drift": 0,
-   "badBoundaries": 13,
+   "badBoundaries": 0,
    "boundaries": 42,
    "whole": {
-    "bestShift": -0.26,
-    "zBest": 2.9,
-    "z0": -1.35,
-    "n": 882
+    "bestShift": 0.16,
+    "zBest": 6,
+    "z0": -3.48,
+    "n": 878
    },
    "thirds": [
     {
-     "bestShift": 2.98,
-     "zBest": 2.53,
-     "z0": -1.53,
-     "n": 285
+     "bestShift": 0.18,
+     "zBest": 5.64,
+     "z0": -3.26,
+     "n": 278
     },
     {
-     "bestShift": -1.74,
-     "zBest": 2.39,
-     "z0": -1.2,
-     "n": 282
+     "bestShift": 0.16,
+     "zBest": 5.24,
+     "z0": -3.06,
+     "n": 286
     },
     {
-     "bestShift": 0.78,
-     "zBest": -2.96,
-     "z0": -0.63,
-     "n": 315
+     "bestShift": 0.16,
+     "zBest": 5.79,
+     "z0": -3.41,
+     "n": 314
     }
    ]
   },
@@ -14847,32 +14755,32 @@
   },
   "hussary/6": {
    "status": "match",
-   "drift": 0.18,
+   "drift": 0.2,
    "badBoundaries": 0,
    "boundaries": 164,
    "whole": {
     "bestShift": 0,
-    "zBest": -4.8,
-    "z0": -4.8,
+    "zBest": -4.82,
+    "z0": -4.82,
     "n": 3113
    },
    "thirds": [
     {
      "bestShift": 0,
-     "zBest": -5.07,
-     "z0": -5.07,
+     "zBest": -5.08,
+     "z0": -5.08,
      "n": 1089
     },
     {
      "bestShift": 0,
-     "zBest": -4.34,
-     "z0": -4.34,
+     "zBest": -4.33,
+     "z0": -4.33,
      "n": 1021
     },
     {
      "bestShift": -0.02,
-     "zBest": -4.72,
-     "z0": -4.72,
+     "zBest": -4.73,
+     "z0": -4.73,
      "n": 1003
     }
    ]
@@ -15492,21 +15400,21 @@
    "boundaries": 226,
    "whole": {
     "bestShift": -0.04,
-    "zBest": -5.76,
-    "z0": -5.76,
+    "zBest": -5.75,
+    "z0": -5.75,
     "n": 1317
    },
    "thirds": [
     {
      "bestShift": -0.02,
-     "zBest": -4.73,
-     "z0": -4.73,
+     "zBest": -4.72,
+     "z0": -4.72,
      "n": 426
     },
     {
      "bestShift": -0.04,
-     "zBest": -5.62,
-     "z0": -5.62,
+     "zBest": -5.61,
+     "z0": -5.61,
      "n": 428
     },
     {
@@ -20974,34 +20882,34 @@
    ]
   },
   "shatri/17": {
-   "status": "mismatch",
-   "drift": 0.54,
-   "badBoundaries": 38,
+   "status": "match",
+   "drift": -0.46,
+   "badBoundaries": 0,
    "boundaries": 110,
    "whole": {
-    "bestShift": -1.64,
-    "zBest": 2.85,
-    "z0": -1.2,
-    "n": 1620
+    "bestShift": 0.16,
+    "zBest": 6.22,
+    "z0": -2.58,
+    "n": 1624
    },
    "thirds": [
     {
-     "bestShift": -1.02,
-     "zBest": -2.49,
-     "z0": 0.84,
-     "n": 536
+     "bestShift": 0.16,
+     "zBest": 5.49,
+     "z0": 2.22,
+     "n": 540
     },
     {
-     "bestShift": -2.86,
-     "zBest": -2.5,
-     "z0": -1.12,
-     "n": 545
+     "bestShift": 0.16,
+     "zBest": 5.28,
+     "z0": -2.65,
+     "n": 547
     },
     {
-     "bestShift": -2,
-     "zBest": 2.77,
-     "z0": 1.33,
-     "n": 539
+     "bestShift": 0.16,
+     "zBest": 5.42,
+     "z0": -2.16,
+     "n": 537
     }
    ]
   },
@@ -21742,34 +21650,34 @@
    ]
   },
   "shatri/41": {
-   "status": "mismatch",
-   "drift": 6.74,
-   "badBoundaries": 5,
+   "status": "match",
+   "drift": -0.26,
+   "badBoundaries": 0,
    "boundaries": 53,
    "whole": {
-    "bestShift": 2.32,
-    "zBest": -2.78,
-    "z0": -1.88,
-    "n": 860
+    "bestShift": 0.16,
+    "zBest": 5.91,
+    "z0": -4.58,
+    "n": 869
    },
    "thirds": [
     {
-     "bestShift": 0.02,
-     "zBest": -3.31,
-     "z0": -3.31,
-     "n": 279
-    },
-    {
-     "bestShift": -0.58,
-     "zBest": 2.72,
-     "z0": -0.83,
-     "n": 280
+     "bestShift": 0.18,
+     "zBest": 5.15,
+     "z0": -5,
+     "n": 288
     },
     {
      "bestShift": 0.16,
-     "zBest": -2.53,
-     "z0": 1.77,
-     "n": 301
+     "zBest": 5.9,
+     "z0": -4.17,
+     "n": 283
+    },
+    {
+     "bestShift": 0.16,
+     "zBest": 5.4,
+     "z0": -3.6,
+     "n": 298
     }
    ]
   },
@@ -22318,33 +22226,33 @@
    ]
   },
   "shatri/59": {
-   "status": "mismatch",
+   "status": "match",
    "drift": -0.06,
-   "badBoundaries": 5,
+   "badBoundaries": 1,
    "boundaries": 23,
    "whole": {
-    "bestShift": 1.26,
-    "zBest": -2.57,
-    "z0": 1.08,
-    "n": 467
+    "bestShift": 0.16,
+    "zBest": 5.19,
+    "z0": -4.29,
+    "n": 481
    },
    "thirds": [
     {
-     "bestShift": -0.22,
-     "zBest": -3.05,
-     "z0": 1.67,
-     "n": 163
+     "bestShift": 0.16,
+     "zBest": 3.57,
+     "z0": -3.11,
+     "n": 166
     },
     {
-     "bestShift": -2.62,
-     "zBest": -3.1,
-     "z0": -1.69,
-     "n": 149
+     "bestShift": 0.16,
+     "zBest": 4.85,
+     "z0": -3.33,
+     "n": 160
     },
     {
-     "bestShift": 1.24,
-     "zBest": -3.42,
-     "z0": 0.77,
+     "bestShift": -0.06,
+     "zBest": -4.28,
+     "z0": -4.28,
      "n": 155
     }
    ]
@@ -23676,34 +23584,34 @@
    ]
   },
   "tunaiji/10": {
-   "status": "mismatch",
-   "drift": -17.14,
-   "badBoundaries": 32,
+   "status": "match",
+   "drift": -0.14,
+   "badBoundaries": 0,
    "boundaries": 108,
    "whole": {
-    "bestShift": 1.14,
-    "zBest": -2.97,
-    "z0": -1.53,
-    "n": 1878
+    "bestShift": 0.16,
+    "zBest": 5.21,
+    "z0": -4.91,
+    "n": 1877
    },
    "thirds": [
     {
-     "bestShift": -3,
-     "zBest": -2.74,
-     "z0": 0.52,
-     "n": 620
+     "bestShift": 0.04,
+     "zBest": -4.75,
+     "z0": -4.75,
+     "n": 622
     },
     {
-     "bestShift": 2.02,
-     "zBest": -2.9,
-     "z0": -1.78,
-     "n": 634
+     "bestShift": 0.16,
+     "zBest": 5.46,
+     "z0": -4.23,
+     "n": 636
     },
     {
-     "bestShift": -2.32,
-     "zBest": 2.73,
-     "z0": -1.44,
-     "n": 624
+     "bestShift": 0.04,
+     "zBest": -4.93,
+     "z0": -4.93,
+     "n": 619
     }
    ]
   },
@@ -23772,66 +23680,66 @@
    ]
   },
   "tunaiji/13": {
-   "status": "mismatch",
+   "status": "match",
    "drift": 0.12,
-   "badBoundaries": 13,
+   "badBoundaries": 0,
    "boundaries": 42,
    "whole": {
-    "bestShift": 0.86,
-    "zBest": -2.81,
-    "z0": -0.91,
-    "n": 862
+    "bestShift": 0.16,
+    "zBest": 5.8,
+    "z0": -4.46,
+    "n": 868
    },
    "thirds": [
     {
-     "bestShift": -0.68,
-     "zBest": -2.57,
-     "z0": 1.47,
-     "n": 268
+     "bestShift": 0.16,
+     "zBest": 5.34,
+     "z0": -3.25,
+     "n": 276
     },
     {
-     "bestShift": 1.4,
-     "zBest": 3,
-     "z0": -1.1,
-     "n": 285
+     "bestShift": 0.16,
+     "zBest": 4.04,
+     "z0": -4.01,
+     "n": 283
     },
     {
-     "bestShift": 1.84,
-     "zBest": -2.51,
-     "z0": -1.64,
+     "bestShift": 0.16,
+     "zBest": 5.86,
+     "z0": -4.46,
      "n": 309
     }
    ]
   },
   "tunaiji/14": {
-   "status": "mismatch",
+   "status": "match",
    "drift": -0.08,
-   "badBoundaries": 13,
+   "badBoundaries": 0,
    "boundaries": 51,
    "whole": {
-    "bestShift": 2.54,
-    "zBest": 2.65,
-    "z0": -0.55,
-    "n": 593
+    "bestShift": 0.16,
+    "zBest": 5.86,
+    "z0": -4.11,
+    "n": 838
    },
    "thirds": [
     {
-     "bestShift": -0.44,
-     "zBest": 2.77,
-     "z0": 1.28,
-     "n": 211
+     "bestShift": 0.16,
+     "zBest": 4.94,
+     "z0": -3.7,
+     "n": 270
     },
     {
-     "bestShift": 2.56,
-     "zBest": 2.71,
-     "z0": -1.44,
-     "n": 204
+     "bestShift": 0.04,
+     "zBest": -4.76,
+     "z0": -4.76,
+     "n": 291
     },
     {
-     "bestShift": -1.5,
-     "zBest": -2.88,
-     "z0": -0.54,
-     "n": 178
+     "bestShift": 0.16,
+     "zBest": 5.66,
+     "z0": -2.04,
+     "n": 277
     }
    ]
   },
@@ -25641,34 +25549,34 @@
    ]
   },
   "tunaiji/72": {
-   "status": "mismatch",
-   "drift": 18.78,
-   "badBoundaries": 8,
+   "status": "match",
+   "drift": -0.22,
+   "badBoundaries": 0,
    "boundaries": 27,
    "whole": {
-    "bestShift": -1.82,
-    "zBest": 3.45,
-    "z0": -0.78,
-    "n": 282
+    "bestShift": 0.16,
+    "zBest": 4.95,
+    "z0": -4.15,
+    "n": 284
    },
    "thirds": [
     {
-     "bestShift": -1.82,
-     "zBest": 2.9,
-     "z0": -1.12,
+     "bestShift": 0.16,
+     "zBest": 4.18,
+     "z0": -4.03,
      "n": 94
     },
     {
-     "bestShift": -2.04,
-     "zBest": -2.87,
-     "z0": -1.24,
-     "n": 88
+     "bestShift": 0.16,
+     "zBest": 3.76,
+     "z0": -3.07,
+     "n": 89
     },
     {
-     "bestShift": 1.94,
-     "zBest": -3.49,
-     "z0": 0.67,
-     "n": 100
+     "bestShift": 0.16,
+     "zBest": 4.69,
+     "z0": -3.44,
+     "n": 101
     }
    ]
   },
