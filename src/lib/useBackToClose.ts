@@ -31,7 +31,7 @@ if (typeof window !== "undefined") {
  * Back (Android's button, a browser's back, iOS's edge swipe) closes the open
  * dialog instead of leaving the site: opening pushes a same-URL history entry,
  * Back pops it and calls `onClose`; closing any other way drops that entry
- * again. Same URL, so the Next.js router just restores the current page. (The
+ * again (only once the visitor has interacted with the page). Same URL, so the Next.js router just restores the current page. (The
  * address can move on under an open dialog as it follows the playing ayah —
  * the home re-applies it on popstate.)
  */
@@ -41,6 +41,10 @@ export function useBackToClose(open: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!open) return;
+    // A dialog that opens by itself (the first-visit location prompt) gets no
+    // history entry: Chrome marks one pushed without user activation skippable,
+    // so Back would jump over it and leave the site anyway.
+    if (!navigator.userActivation?.hasBeenActive) return;
     const id = Symbol("dialog");
     stack.push(id);
     window.history.pushState({ hudaDialog: true }, "");
