@@ -1,18 +1,18 @@
 {
  "summary": {
-  "generated": "2026-10-06T16:03:50.470Z",
-  "secs": 64,
+  "generated": "2026-10-08T13:39:36.236Z",
+  "secs": 62,
   "totals": {
    "ayahs": 6236,
    "words": 77430,
-   "timingSegments": 715339,
-   "wordTextMatch": 77277,
+   "timingSegments": 714949,
+   "wordTextMatch": 77392,
    "wordTextMismatch": 0
   },
   "wordSync": {
    "reciters": 9,
    "wordSyncSurahs": {
-    "sudais": 107,
+    "sudais": 114,
     "alafasy": 109,
     "dosari": 112,
     "abdulbaset": 113,
@@ -23,15 +23,7 @@
     "tunaiji": 110
    },
    "audioOnlySurahs": {
-    "sudais": [
-     3,
-     4,
-     5,
-     28,
-     29,
-     86,
-     94
-    ],
+    "sudais": [],
     "alafasy": [
      14,
      37,
@@ -63,7 +55,7 @@
      72
     ]
    },
-   "wordsSyncedMeasured": 661932,
+   "wordsSyncedMeasured": 674458,
    "wordsSyncedEstimated": 1613,
    "wordsUnsynced": 4797,
    "unsyncedReasons": {
@@ -80,11 +72,11 @@
    "voiceMatchPct": 100,
    "invalidTimingRanges": 0,
    "transitions": {
-    "checks": 54052,
+    "checks": 54730,
     "failures": 0
    },
    "seek": {
-    "checks": 54322,
+    "checks": 55000,
     "failures": 0
    }
   },
@@ -94,13 +86,14 @@
   },
   "timingRepairsApplied": {
    "misaligned": 72,
+   "forced-alignment": 7,
    "displaced-shift": 47,
    "zero-based-index": 1,
    "embedded-prelude": 77
   },
   "juz": {
    "ayahsCovered": 6236,
-   "ayahsWithWordSync": 49572,
+   "ayahsWithWordSync": 49577,
    "voiceMatchPct": 100,
    "reciterJuzSupport": {
     "sudais": true,
@@ -194,24 +187,24 @@
   },
   "acoustic": {
    "scanned": 1026,
-   "match": 827,
-   "inconclusive": 178,
-   "mismatch": 21,
+   "match": 832,
+   "inconclusive": 179,
+   "mismatch": 15,
    "boundaries": 55098,
-   "badBoundaries": 1336
+   "badBoundaries": 1170
   },
   "perReciter": {
    "sudais": {
     "surahs": 114,
-    "wordSyncSurahs": 107,
+    "wordSyncSurahs": 114,
     "ayahs": 6236,
     "ayahsNoWordTiming": 2,
     "words": 77430,
-    "measured": 64828,
+    "measured": 77354,
     "estimated": 38,
     "unsynced": 38,
-    "voiceSamples": 3112998,
-    "voiceMatch": 3112998
+    "voiceSamples": 3696964,
+    "voiceMatch": 3696964
    },
    "alafasy": {
     "surahs": 114,
