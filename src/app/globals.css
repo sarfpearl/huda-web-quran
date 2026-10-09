@@ -140,14 +140,35 @@
   }
 
   /* Home-screen app: iOS 26 blurs about 40pt below the status bar; the
-     immersive header starts under that band so its buttons stay sharp. */
+     immersive header starts near the end of that band (2rem: owner's choice,
+     2026-10-09, a little higher than 2.75rem). */
   :root {
     --header-gap: 1rem;
   }
   @media (display-mode: standalone) {
     :root {
-      --header-gap: 2.75rem;
+      --header-gap: 2rem;
     }
+    /* black-translucent status bar: the layout viewport comes up a status bar
+       short and iOS clips the locked page there, leaving a black strip at the
+       bottom (iPad, windowed or full screen). Grow the document by the inset. */
+    html.screen-locked,
+    html.screen-locked body {
+      height: calc(100% + env(safe-area-inset-top));
+    }
+    html.screen-locked body {
+      bottom: auto;
+    }
+  }
+
+  /* iPhone home-screen app (MainLayout sets --screen-corner): the player's
+     bottom corners sit 1rem in from the screen's — keep them concentric. The
+     stats frame reads the card's radius, and with the bottom strip open it is
+     the frame's own corners that face the screen edge. */
+  html.iphone-app [data-player-shell]:not([data-footer] [data-player-shell]),
+  html.iphone-app [data-player-frame] {
+    border-bottom-left-radius: max(28px, calc(var(--screen-corner) - 1rem));
+    border-bottom-right-radius: max(28px, calc(var(--screen-corner) - 1rem));
   }
 
   body {

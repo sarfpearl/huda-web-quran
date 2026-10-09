@@ -1072,6 +1072,7 @@ export function CompactBayanPlayer({
   return (
     <div
       ref={shellRef}
+      data-player-shell
       className={`relative overflow-hidden ${collapsed ? "rounded-[28px]" : "rounded-[28px] sm:rounded-[40px]"} bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)] select-none motion-reduce:transition-none ${
         animate ? "transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" : ""
       } ${shellSize ? "" : "invisible"}`}
