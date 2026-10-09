@@ -177,6 +177,20 @@ export function fetchSurahIndoPak(surahNumber: number): Promise<GlyphVerse[] | n
 export const fetchSurahWords = (surahNumber: number, script: QuranScript) =>
   script === "indopak" ? fetchSurahIndoPak(surahNumber) : fetchSurahGlyphs(surahNumber);
 
+/**
+ * The Isti'adhah isn't an ayah, but its words are the Mushaf's own: أَعُوذُ
+ * from 2:67 and بِٱللَّهِ مِنَ ٱلشَّيۡطَٰنِ ٱلرَّجِيمِ from 16:98 — so it draws in
+ * the same page fonts (and Tajweed colours) as the ayahs. No ayah ornament.
+ */
+export async function fetchIstiadhahWords(
+  fetchWords: (surahNumber: number) => Promise<GlyphVerse[] | null>
+): Promise<GlyphVerse | null> {
+  const [s2, s16] = await Promise.all([fetchWords(2), fetchWords(16)]);
+  const a3udhu = s2?.find((v) => v.a === 67)?.w[14];
+  const rest = s16?.find((v) => v.a === 98)?.w.slice(4, 8);
+  return a3udhu && rest?.length === 4 ? { a: 0, w: [a3udhu, ...rest] } : null;
+}
+
 /** The Mushaf script the Arabic is shown in. */
 export type QuranScript = "uthmani" | "indopak";
 
