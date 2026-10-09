@@ -13,6 +13,7 @@ import {
   type RecitationSegment,
 } from "@/lib/data/quranVerses";
 import {
+  fetchIstiadhahWords,
   fetchSurahGlyphs,
   fetchSurahWords,
   glyphFontsFor,
@@ -460,17 +461,22 @@ export function CenterVerseDisplay({
   // on = the fonts' Tajweed palette, off = plain white. The Uthmani text is only
   // the fallback while fonts load — the old Hafs font draws U+06DF / U+06ED as
   // dotted-circle placeholders. The Bismillah prelude uses 1:1; the Isti'adhah
-  // is not an ayah and stays text. Shown once every page font it needs loaded.
+  // (surah 0) is built from Mushaf words (fetchIstiadhahWords). Shown once
+  // every page font it needs loaded.
   const tjRef = (() => {
     const it = activeItemForFit;
     if (!it) return null;
     const type = "type" in it ? it.type : undefined;
-    if (type === "istiadhah") return null;
+    if (type === "istiadhah") return { surah: 0, ayah: 0 };
     if (type === "bismillah") return { surah: 1, ayah: 1 };
     const surah = it.surahNumber ?? currentVerse?.surahNumber;
     const ayah = it.ayahNumber ?? currentVerse?.ayahNumber;
     return surah && ayah && ayah > 0 ? { surah, ayah } : null;
   })();
+  const findVerse = (fetchWords: (surahNumber: number) => Promise<GlyphVerse[] | null>) =>
+    tjRef!.surah === 0
+      ? fetchIstiadhahWords(fetchWords)
+      : fetchWords(tjRef!.surah).then((verses) => verses?.find((v) => v.a === tjRef!.ayah) ?? null);
   const tjKey = tjRef ? `${script}:${tjRef.surah}:${tjRef.ayah}` : "";
   const [glyphVerse, setGlyphVerse] = useState<{ key: string; verse: GlyphVerse } | null>(null);
   // The same words' KFGQPC-encoded text (text_qpc_hafs), drawn in the Hafs font
@@ -480,9 +486,7 @@ export function CenterVerseDisplay({
   useEffect(() => {
     if (!tjRef) return;
     let cancelled = false;
-    const { surah, ayah } = tjRef;
-    fetchSurahWords(surah, script).then((verses) => {
-      const verse = verses?.find((v) => v.a === ayah);
+    findVerse((n) => fetchSurahWords(n, script)).then((verse) => {
       if (verse && !cancelled) setQpcVerse({ key: tjKey, verse });
     });
     return () => {
@@ -493,9 +497,7 @@ export function CenterVerseDisplay({
     // WebKit: page fonts only while Tajweed is on (see isWebKit).
     if (!tjRef || indoPak || !glyphFontsFor(tajweed)) return;
     let cancelled = false;
-    const { surah, ayah } = tjRef;
-    fetchSurahGlyphs(surah).then(async (verses) => {
-      const verse = verses?.find((v) => v.a === ayah);
+    findVerse(fetchSurahGlyphs).then(async (verse) => {
       if (!verse || cancelled) return;
       const pages = [...new Set([...verse.w.map((w) => w[1]), ...(verse.e ? [verse.e[1]] : [])])];
       const ok = await Promise.all(pages.map((p) => loadPageFont(p)));
