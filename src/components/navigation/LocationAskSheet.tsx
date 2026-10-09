@@ -65,7 +65,10 @@ const EN = {
   summary: "The current prayer and its start – end time for where you are, and your place name in the time pill at the top left.",
   privacy:
     "Your browser asks next. The location stays on this device; only its place name is looked up once (OpenStreetMap). Nothing is sent to HuDa.",
-  blocked: "Location is turned off for this site. Turn it on in your browser's settings (iPhone: Settings › Apps › Safari › Location), then try again.",
+  // iPhone / iPad: both switches count — Location Services for Safari
+  // Websites is the master one (the per-site Safari setting alone wasn't enough).
+  blocked:
+    "Location is turned off for this site. iPhone / iPad: Settings › Privacy & Security › Location Services › Safari Websites › While Using the App, and Settings › Apps › Safari › Location › Ask or Allow. Then come back — HuDa tries again on its own (Home Screen app: if not, close and reopen it).",
   allow: "Allow location",
   later: "Not now",
 };
@@ -76,7 +79,7 @@ const TA: typeof EN = {
   privacy:
     "அடுத்து உங்கள் உலாவி அனுமதி கேட்கும். இருப்பிடம் இந்தச் சாதனத்திலேயே இருக்கும்; இடத்தின் பெயர் மட்டும் ஒருமுறை (OpenStreetMap) பார்க்கப்படும். HuDa-வுக்கு எதுவும் அனுப்பப்படாது.",
   blocked:
-    "இந்தத் தளத்துக்கு இருப்பிடம் முடக்கப்பட்டுள்ளது. உலாவி அமைப்புகளில் இயக்குங்கள் (iPhone: Settings › Apps › Safari › Location), பிறகு மீண்டும் முயலுங்கள்.",
+    "இந்தத் தளத்துக்கு இருப்பிடம் முடக்கப்பட்டுள்ளது. iPhone / iPad: Settings › Privacy & Security › Location Services › Safari Websites › While Using the App, மற்றும் Settings › Apps › Safari › Location › Ask அல்லது Allow. பிறகு திரும்பி வாருங்கள் — HuDa தானாக மீண்டும் முயலும் (Home Screen app: இல்லையெனில் மூடி மீண்டும் திறக்கவும்).",
   allow: "இருப்பிடத்தை அனுமதி",
   later: "இப்போது வேண்டாம்",
 };

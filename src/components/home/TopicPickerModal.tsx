@@ -404,7 +404,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? "inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] rounded-t-[28px] border-b-0 px-4 pt-4 pb-[env(safe-area-inset-bottom)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? "inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] rounded-t-[28px] border-b-0 px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -566,7 +566,7 @@ export function TopicPickerModal({
                 <button
                   type="button"
                   onClick={() => setView("about")}
-                  className={`mt-3 ${isMobile ? "mb-4" : ""} flex w-full shrink-0 items-center gap-3 rounded-full border border-white/10 bg-white/5 p-1.5 text-left hover:bg-white/10 transition-colors cursor-pointer`}
+                  className={`mt-3 ${isMobile ? "mb-1.5" : ""} flex w-full shrink-0 items-center gap-3 rounded-full border border-white/10 bg-white/5 p-1.5 text-left hover:bg-white/10 transition-colors cursor-pointer`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-contain" />
@@ -662,6 +662,36 @@ function AboutView() {
         </a>
       )}
 
+      {/* Feedback right under the mobile app (owner, 2026-10-09) */}
+      {ABOUT.contact && (
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-2">
+          <a
+            href={contactHref}
+            target={contactHref.startsWith("http") ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            className="min-w-0 flex-1 rounded-xl px-2.5 py-1.5 hover:bg-white/5 transition-colors"
+          >
+            <span className="block text-xs font-bold text-white">Feedback</span>
+            <span className="block truncate text-[11px] text-sand-200/70">{ABOUT.contact}</span>
+          </a>
+          <button
+            type="button"
+            onClick={copyContact}
+            aria-label={copied ? "Copied" : `Copy ${ABOUT.contact}`}
+            title={copied ? "Copied" : "Copy"}
+            className={cn(
+              "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-colors cursor-pointer active:scale-95",
+              copied
+                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
+                : "border-white/10 bg-white/10 text-sand-100 hover:bg-white/20 hover:text-white"
+            )}
+          >
+            {copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+            <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+          </button>
+        </div>
+      )}
+
       {ABOUT.maker && (
         // Maker card: thin gold edge, a warm halo behind the logo, and a shine
         // that sweeps across the gold lettering only (masked to the logo).
@@ -736,34 +766,6 @@ function AboutView() {
         ))}
       </div>
 
-      {ABOUT.contact && (
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-2">
-          <a
-            href={contactHref}
-            target={contactHref.startsWith("http") ? "_blank" : undefined}
-            rel="noopener noreferrer"
-            className="min-w-0 flex-1 rounded-xl px-2.5 py-1.5 hover:bg-white/5 transition-colors"
-          >
-            <span className="block text-xs font-bold text-white">Feedback</span>
-            <span className="block truncate text-[11px] text-sand-200/70">{ABOUT.contact}</span>
-          </a>
-          <button
-            type="button"
-            onClick={copyContact}
-            aria-label={copied ? "Copied" : `Copy ${ABOUT.contact}`}
-            title={copied ? "Copied" : "Copy"}
-            className={cn(
-              "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-colors cursor-pointer active:scale-95",
-              copied
-                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                : "border-white/10 bg-white/10 text-sand-100 hover:bg-white/20 hover:text-white"
-            )}
-          >
-            {copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
-            <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 }

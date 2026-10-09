@@ -104,8 +104,9 @@ interface AudioPlayerApi extends AudioPlayerState {
     /** Clips to play before given ayah indexes (Isti'adhah / Bismillah). */
     preludes?: Record<number, AyahPrelude[]>
   ) => void;
-  /** Jump to a specific ayah index within the active per-ayah sequence. */
-  jumpToAyah: (index: number) => void;
+  /** Per-ayah sequence: play ayah `index` — from `startAt(clipDuration)`
+   *  seconds into its clip when given (a tapped word; no preludes then). */
+  jumpToAyah: (index: number, startAt?: (clipDuration: number) => number) => void;
   togglePlay: () => void;
   pause: () => void;
   resume: () => void;
@@ -219,6 +220,37 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // waiting ~0.5s on the network after the previous one ends.
   const ayahBlobRef = useRef<Map<string, string>>(new Map());
   const ayahInflightRef = useRef<Set<string>>(new Set());
+  // Paused by the listener (pause / the lock screen), not by the system.
+  const userPausedRef = useRef(false);
+  // When the system last paused the recitation (a phone / FaceTime call):
+  // it plays on once the call ends (see the audio-session effect). 0 = not.
+  const interruptedRef = useRef(0);
+
+  // After a call, iOS can leave the element "playing" without sound or time
+  // moving: if it hasn't moved shortly after play, load it again from there.
+  const kickIfStuck = (el: HTMLAudioElement) => {
+    const t0 = el.currentTime;
+    setTimeout(() => {
+      if (audioRef.current !== el || el.paused || el.ended || userPausedRef.current) return;
+      if (Math.abs(el.currentTime - t0) > 0.05 || el.readyState < 3) return;
+      const src = el.getAttribute("src");
+      if (!src) return;
+      el.src = src;
+      el.load();
+      el.addEventListener(
+        "loadedmetadata",
+        () => {
+          try {
+            el.currentTime = t0;
+          } catch {
+            /* ignore */
+          }
+          el.play().catch(() => {});
+        },
+        { once: true },
+      );
+    }, 2000);
+  };
 
   const [queue, setQueue] = useState<BayanWithRelations[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -709,9 +741,25 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     sb.play().then(() => sb.pause()).catch(() => {}).finally(() => { sb.muted = muted; });
   };
 
+  // A clip started part-way (a tapped word): once its length is known.
+  const startClipAt = (el: HTMLAudioElement, startAt?: (dur: number) => number) => {
+    if (!startAt) return;
+    const go = () => {
+      const t = startAt(Number.isFinite(el.duration) ? el.duration : 0);
+      if (t > 0) {
+        try {
+          el.currentTime = t;
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    if (el.readyState >= 1) go();
+    else el.addEventListener("loadedmetadata", go, { once: true });
+  };
   // Start one clip of the sequence: hand over to the standby element when it
   // already holds this clip, else load it on the current element.
-  const playClip = (url: string) => {
+  const playClip = (url: string, startAt?: (dur: number) => number) => {
     const cur = audioRef.current;
     const sb = standbyAudio();
     if (cur && sb && standbyUrlRef.current === url && sb.getAttribute("src") && !sb.error) {
@@ -723,12 +771,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       sb.defaultPlaybackRate = cur.playbackRate;
       sb.playbackRate = cur.playbackRate;
       try { sb.currentTime = 0; } catch { /* ignore */ }
+      startClipAt(sb, startAt);
       setDuration(Number.isFinite(sb.duration) ? sb.duration : 0);
       sb.play().catch(() => {});
     } else if (cur) {
       cur.src = ayahSrc(url);
       cur.currentTime = 0;
       cur.load();
+      startClipAt(cur, startAt);
       setDuration(0);
       cur.play().catch(() => {});
     }
@@ -741,7 +791,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // Load a specific ayah of the active sequence (keeps ayahSequence state in
   // sync). With `withPre`, that ayah's prelude clips (Isti'adhah / Bismillah)
   // play first; the ayah follows from onEnded (see advanceAyahSequence).
-  const loadAyahAt = useCallback((i: number, withPre: boolean = true) => {
+  const loadAyahAt = useCallback((i: number, withPre: boolean = true, startAt?: (dur: number) => number) => {
     const seq = ayahSeqRef.current;
     if (!seq) return;
     const idx = Math.max(0, Math.min(i, seq.urls.length - 1));
@@ -750,7 +800,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     seq.preStep = pre.length > 0 ? 0 : -1;
     setAyahSequence({ index: idx, total: seq.urls.length, preType: pre[0]?.type ?? null });
     prefetchAyahsAround(seq.urls, idx);
-    playClip(pre.length > 0 ? pre[0].url : seq.urls[idx]);
+    playClip(pre.length > 0 ? pre[0].url : seq.urls[idx], pre.length > 0 ? undefined : startAt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefetchAyahsAround]);
 
@@ -779,11 +829,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadAyahAt]);
 
-  const jumpToAyah = useCallback((index: number) => {
-    if (ayahSeqRef.current) loadAyahAt(index);
+  const jumpToAyah = useCallback((index: number, startAt?: (clipDuration: number) => number) => {
+    if (ayahSeqRef.current) loadAyahAt(index, !startAt, startAt);
   }, [loadAyahAt]);
 
   const pause = useCallback(() => {
+    userPausedRef.current = true;
+    interruptedRef.current = 0;
     if (isPreludeRef.current && preludeAudioRef.current) {
       preludeAudioRef.current.pause();
       setIsPlaying(false);
@@ -794,6 +846,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const resume = useCallback(() => {
+    userPausedRef.current = false;
+    interruptedRef.current = 0;
     if (isPreludeRef.current && preludeAudioRef.current) {
       setIsLoading(true); // spinner while the prelude resumes/buffers
       preludeAudioRef.current
@@ -818,6 +872,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       return;
     }
     el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    kickIfStuck(el);
   }, [current, loadCurrent]);
 
   const togglePlay = useCallback(() => {
@@ -1034,6 +1089,31 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         /* not supported */
       }
     }
+  }, []);
+  // A phone / FaceTime call interrupts the audio session and iOS pauses the
+  // recitation; it never started again after the call. When the session
+  // leaves "interrupted" (checked again on return, in case the page was
+  // asleep through the call), play on — only if it was the call that paused
+  // it (not the listener, nor headphones coming out).
+  useEffect(() => {
+    const session = (navigator as Navigator & { audioSession?: EventTarget & { state?: string } }).audioSession;
+    if (!session || typeof session.addEventListener !== "function") return;
+    let prev = session.state;
+    const onState = () => {
+      const state = session.state;
+      const was = prev;
+      prev = state;
+      if (was !== "interrupted" || state === "interrupted") return;
+      const at = interruptedRef.current;
+      if (at && Date.now() - at < 10 * 60_000 && !userPausedRef.current) mediaActionsRef.current.resume();
+    };
+    const onShow = () => document.visibilityState === "visible" && onState();
+    session.addEventListener("statechange", onState);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      session.removeEventListener("statechange", onState);
+      document.removeEventListener("visibilitychange", onShow);
+    };
   }, []);
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
@@ -1385,18 +1465,32 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     (e: E) => {
       if (e.currentTarget === audioRef.current) fn(e);
     };
+  // One voice at a time. Back from another app, iOS could start an element
+  // again that the sequence had already handed over from (the standby, or
+  // the main one while the prelude plays): two recitations at once. Any
+  // element that starts while it isn't the one in use is stopped.
+  const strayStarted = (el: HTMLAudioElement) => {
+    const stray = el !== audioRef.current || (isPreludeRef.current && !preludeAudioRef.current?.paused);
+    // unlockStandby's muted silent clip pauses itself.
+    if (stray && el.getAttribute("src") !== SILENT_WAV) el.pause();
+    return stray;
+  };
   const mainAudioEvents = {
-    onPlay: fromActive(() => {
+    onPlay: (e: React.SyntheticEvent<HTMLAudioElement>) => {
+      if (strayStarted(e.currentTarget)) return;
       if (!isPreludeRef.current) setIsPlaying(true);
-    }),
+    },
     onPause: fromActive((e) => {
       // An ayah clip reaching its end pauses too, right before the next one
       // starts: keep the pause icon instead of flashing play for a frame.
       if (ayahSeqRef.current && e.currentTarget.ended) return;
+      // Not the listener: the system (a call) — see the audio-session effect.
+      if (!userPausedRef.current && !e.currentTarget.ended && !isPreludeRef.current) interruptedRef.current = Date.now();
       if (!isPreludeRef.current) setIsPlaying(false);
     }),
     onPlaying: fromActive(() => {
       applyMediaMetadata();
+      userPausedRef.current = false;
       if (!isPreludeRef.current) {
         clearTimeout(waitingTimerRef.current);
         setIsPlaying(true);
@@ -1444,7 +1538,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         // when a switch already started it again, or it was emptied.
         onPause={(e) => {
           const el = e.currentTarget;
-          if (isPreludeRef.current && el.paused && !el.ended && el.getAttribute("src")) setIsPlaying(false);
+          if (isPreludeRef.current && el.paused && !el.ended && el.getAttribute("src")) {
+            if (!userPausedRef.current) interruptedRef.current = Date.now();
+            setIsPlaying(false);
+          }
+        }}
+        // Started by the system after the prelude was over: not again.
+        onPlay={(e) => {
+          if (!isPreludeRef.current) e.currentTarget.pause();
         }}
         onCanPlay={() => { if (isPreludeRef.current) setIsLoading(false); }}
         onEnded={onPreludeEnded}

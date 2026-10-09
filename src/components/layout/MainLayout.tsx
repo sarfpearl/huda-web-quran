@@ -46,8 +46,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   // — in the capture phase, so a control that stops a touch's propagation
   // (seek ring, sheet handle, reading view) can't let a pinch through.
   // Should the page still end up zoomed in (a pinch that began during a
-  // rotation, the keyboard closing), it is put back at 1× by re-applying the
-  // viewport tag, which makes Safari re-fit the page.
+  // rotation, the keyboard closing) — or zoomed out / in after an iPad window
+  // was resized (Stage Manager, Split View) — it is put back at 1× by
+  // re-applying the viewport tag, which makes Safari re-fit the page.
   useEffect(() => {
     const opts = { passive: false, capture: true } as const;
     const block = (ev: Event) => ev.preventDefault();
@@ -65,18 +66,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const refit = () => {
       clearTimeout(t);
       t = setTimeout(() => {
-        if (!vv || !meta || vv.scale <= 1.01) return;
+        if (!vv || !meta || Math.abs(vv.scale - 1) <= 0.01) return;
         // Not while typing: the keyboard's own scroll would jump.
         const el = document.activeElement;
         if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
         const content = meta.content;
-        meta.content = `${content.replace(/,?\s*maximum-scale=[^,]*/i, "")}, maximum-scale=1.0001`;
+        meta.content = `${content.replace(/,?\s*(maximum|minimum)-scale=[^,]*/gi, "")}, minimum-scale=1, maximum-scale=1.0001`;
         requestAnimationFrame(() => (meta.content = content));
       }, 250);
     };
+    const onShow = () => document.visibilityState === "visible" && refit();
     vv?.addEventListener("resize", refit);
     window.addEventListener("orientationchange", refit);
     window.addEventListener("focusout", refit);
+    window.addEventListener("resize", refit);
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       document.removeEventListener("gesturestart", block, opts);
       document.removeEventListener("gesturechange", block, opts);
@@ -85,6 +89,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       vv?.removeEventListener("resize", refit);
       window.removeEventListener("orientationchange", refit);
       window.removeEventListener("focusout", refit);
+      window.removeEventListener("resize", refit);
+      document.removeEventListener("visibilitychange", onShow);
       clearTimeout(t);
     };
   }, []);
