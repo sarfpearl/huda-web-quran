@@ -284,6 +284,21 @@ export function TimeLocationWidget({
     };
   }, [applyPosition]);
 
+  // "Update location" in the prayer sheet: a fresh fix (no cached position),
+  // renamed whatever the distance. A tap, so it may prompt.
+  const [locating, setLocating] = useState<"idle" | "busy" | "failed">("idle");
+  const locateNow = () => {
+    setLocating("busy");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocating("idle");
+        void applyPosition(position);
+      },
+      () => setLocating("failed"),
+      { timeout: 15000, maximumAge: 0 },
+    );
+  };
+
   // A tap on the time pill while there's no location ("Not now", denied, or
   // the lookup failed): the same sheet, then the browser's prompt. If the
   // browser has it blocked, the sheet comes back saying where to turn it on.
@@ -446,6 +461,8 @@ export function TimeLocationWidget({
         prefs={prefs}
         onPrefs={setPrefs}
         current={waqt}
+        onLocate={locateNow}
+        locating={locating}
       />
     </>
   );
