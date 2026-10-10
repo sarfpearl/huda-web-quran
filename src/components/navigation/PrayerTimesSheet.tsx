@@ -45,6 +45,8 @@ export function PrayerTimesSheet({
   prefs,
   onPrefs,
   current,
+  onLocate,
+  locating,
 }: {
   open: boolean;
   onClose: () => void;
@@ -56,6 +58,9 @@ export function PrayerTimesSheet({
   prefs: PrayerPrefs;
   onPrefs: (p: PrayerPrefs) => void;
   current: Waqt;
+  /** Look up the device's place again now (a tap, so it may prompt). */
+  onLocate: () => void;
+  locating: "idle" | "busy" | "failed";
 }) {
   const today = dayTimes(coords.lat, coords.lon, new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12), method, asr).times;
   const set = (p: PrayerPrefs) => {
@@ -70,6 +75,19 @@ export function PrayerTimesSheet({
       <div className="px-5 pt-1 pb-2">
         <h2 className="text-base font-bold text-sand-50">Prayer times{place ? ` · ${place}` : ""}</h2>
         <p className="text-xs text-sand-200/70">{date}</p>
+        <button
+          type="button"
+          onClick={onLocate}
+          disabled={locating === "busy"}
+          className="tap-44 mt-1 text-xs text-emerald-200 underline underline-offset-2 hover:text-sand-50 disabled:opacity-60"
+        >
+          {locating === "busy" ? "Finding your location…" : "Update location"}
+        </button>
+        {locating === "failed" && (
+          <p role="status" className="text-[11px] text-sand-200/70">
+            Couldn&apos;t get your location. Check that Location is on for this browser in your device settings.
+          </p>
+        )}
       </div>
       <ul className="px-3 pb-2">
         {ROWS.map((k) => {
