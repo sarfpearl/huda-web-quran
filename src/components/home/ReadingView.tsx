@@ -28,6 +28,7 @@ import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
+import { surahNameIn, tr, useUiLang, word } from "@/lib/uiLang";
 
 /** A run of ayahs inside one Surah (a whole Surah, or part of one in a Juz). */
 export interface ReadingRange {
@@ -137,6 +138,7 @@ export function ReadingView({
   onBookmarksInViewChange,
   onContextTap,
 }: ReadingViewProps) {
+  const lang = useUiLang();
   const scrollRef = useRef<HTMLDivElement>(null);
   const rangesKey = ranges.map((r) => `${r.surah}:${r.from}-${r.to}`).join(",");
 
@@ -441,9 +443,18 @@ export function ReadingView({
     }
     // A third of the way down: clear of the faded top edge, with the lines
     // still to come in view below.
+    // The recited Surah's heading is as high as following goes, and its
+    // first ayah opens with the heading at the top — not the previous
+    // Surah's last ayahs above it.
+    const [surahNo, ayahNo] = activeKey.split(":");
+    const head = el.querySelector<HTMLElement>(`[data-head="${surahNo}"]`);
     followScroll(el, () => {
       const box = el.getBoundingClientRect();
-      const aim = el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
+      let aim = el.scrollTop + target.getBoundingClientRect().top - box.top + along - box.height * 0.35;
+      if (head) {
+        const headAim = el.scrollTop + head.getBoundingClientRect().top - box.top - PAGE_TOP_PX;
+        aim = ayahNo === "1" ? headAim : Math.max(aim, headAim);
+      }
       if (pinnedPageRef.current === null || !section) return aim;
       return Math.max(aim, el.scrollTop + section.getBoundingClientRect().top - box.top - PAGE_TOP_PX);
     }, glide);
@@ -585,6 +596,21 @@ export function ReadingView({
     const top = el.scrollTop + node.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
     el.scrollTo({ top, behavior: "smooth" });
   }, [scrollToPage?.n, pages]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Opening on a Surah before its second ayah: its heading at the top (the
+  // previous Surah's last ayahs stay above, to scroll back to) — during the
+  // Bismillah too, not only once the first ayah starts.
+  const openedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !pages || openedRef.current === surahsKey) return;
+    openedRef.current = surahsKey;
+    if (active && active.ayah !== 1) return;
+    if (scrollToPage && Date.now() - scrollToPage.at <= 8000) return;
+    const surah = active?.surah ?? plan.all.find((p) => p.ctx === "cur")?.ref.surah;
+    const head = el.querySelector<HTMLElement>(`[data-head="${surah}"]`);
+    if (head) el.scrollTop += head.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
+  }, [pages, surahsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A page switching between text and glyphs (or a new text size) changes
   // height; keep the page at the top of the view where it was so the reading
@@ -793,8 +819,8 @@ export function ReadingView({
             <span
               data-bookmark={k}
               role="img"
-              aria-label="Bookmark"
-              title="Bookmark"
+              aria-label={word("bookmark", lang)}
+              title={word("bookmark", lang)}
               className="inline-block align-[0.4em] mx-1 text-[0.55em] text-amber-300 drop-shadow-[0_0_6px_rgba(252,211,77,0.6)] select-none"
             >
               <BookmarkIcon filled />
@@ -807,18 +833,18 @@ export function ReadingView({
             {p.end && isSajdah(ref.surah, ref.ayah) && (
               <PrayerRugIcon
                 role="img"
-                aria-label="Sajdah"
+                aria-label={tr(lang, "Sajdah", "ஸஜ்தா")}
                 className="ml-2 mr-4 inline-block align-[-0.12em] text-[0.95em] text-amber-300 select-none"
               />
             )}
             {p.end &&
               (g?.e && loadedPages.has(g.e[1]) && pageFontReady(g.e[1]) ? (
-                <span aria-label={`Ayah ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
+                <span aria-label={`${word("ayah", lang)} ${ref.ayah}`} className="mx-1.5 select-none" style={glyphStyle(g.e[1], tajweed)}>
                   {g.e[0]}
                 </span>
               ) : (
                 <span
-                  aria-label={`Ayah ${ref.ayah}`}
+                  aria-label={`${word("ayah", lang)} ${ref.ayah}`}
                   className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
                 >
                   {toArabicNumerals(ref.ayah)}
@@ -828,9 +854,11 @@ export function ReadingView({
               <span
                 dir="ltr"
                 aria-hidden="true"
-                className="ml-2 mr-0.5 inline-block rounded-full bg-amber-300/25 px-3 py-1.5 align-middle [font-family:var(--font-poppins),Poppins,system-ui,sans-serif] text-[11px] sm:text-xs font-semibold leading-none text-amber-300 select-none [letter-spacing:0]"
+                className={`ml-2 mr-0.5 inline-block rounded-full bg-amber-300/25 px-3 py-1.5 align-middle ${
+                  lang === "ta" ? "font-tamil" : "[font-family:var(--font-poppins),Poppins,system-ui,sans-serif]"
+                } text-[11px] sm:text-xs font-semibold leading-none text-amber-300 select-none [letter-spacing:0]`}
               >
-                Sajdah
+                {tr(lang, "Sajdah", "ஸஜ்தா")}
               </span>
             )}
           </span>
@@ -844,6 +872,7 @@ export function ReadingView({
     return (
       <div
         key={key}
+        data-head={ctx === "cur" ? surah : undefined}
         aria-hidden={ctx === "cur" ? undefined : true}
         onClick={ctx !== "cur" && onContextTap ? () => onContextTap({ surah, ayah: 1 }, ctx) : undefined}
         className={`px-3 pt-8 pb-5 sm:px-4 text-center ${ctx === "cur" ? "" : `opacity-35 select-none ${onContextTap ? "cursor-help" : ""}`}`}
@@ -901,7 +930,7 @@ export function ReadingView({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      aria-label={`Reading ${label}`}
+      aria-label={tr(lang, `Reading ${label}`, `${label} — ஓதுதல்`)}
       className="absolute inset-0 z-20 pointer-events-none"
     >
       {/* Scrolls between the header and the compact player; edges fade out */}
@@ -912,7 +941,9 @@ export function ReadingView({
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (
-            <p className="py-16 text-center text-sm text-sand-200/70">This couldn&apos;t be loaded right now.</p>
+            <p className={`py-16 text-center text-sm text-sand-200/70${lang === "ta" ? " font-tamil" : ""}`}>
+              {tr(lang, "This couldn't be loaded right now.", "இப்போது இதை ஏற்ற முடியவில்லை.")}
+            </p>
           ) : !pages ? (
             <div className="space-y-4" aria-busy="true">
               {[0, 1, 2].map((i) => (
@@ -921,7 +952,7 @@ export function ReadingView({
             </div>
           ) : (
             pages.map((b) => (
-              <section key={b.page} data-page={b.page} aria-label={`Page ${b.page}`}>
+              <section key={b.page} data-page={b.page} aria-label={`${word("page", lang)} ${b.page}`}>
                 {renderPage(b.items)}
                 {/* Page divider with its number, as a Mushaf page foot */}
                 <div className="my-5 flex items-center gap-3 select-none" aria-hidden="true">
@@ -950,18 +981,18 @@ export function ReadingView({
               className={`flex items-center gap-2 py-1.5 pl-3.5 ${isMark ? "pr-3.5" : "pr-2"} text-xs sm:text-sm font-medium cursor-pointer hover:text-white`}
             >
               <BookmarkIcon filled className="text-amber-300" />
-              <span>
-                {isMark ? "Bookmark" : "Continue reading"} ·{" "}
+              <span className={lang === "ta" ? "font-tamil" : undefined}>
+                {isMark ? word("bookmark", lang) : tr(lang, "Continue reading", "தொடர்ந்து ஓதுக")} ·{" "}
                 {targetHere
-                  ? `Ayah ${target.ayah}`
-                  : `${QURAN_SURAHS.find((x) => x.number === target.surah)?.name ?? `Surah ${target.surah}`} ${target.surah}:${target.ayah}`}
+                  ? `${word("ayah", lang)} ${target.ayah}`
+                  : `${surahNameIn(target.surah, lang)} ${target.surah}:${target.ayah}`}
               </span>
             </button>
             {!isMark && (
               <button
                 type="button"
                 onClick={() => setContinueHidden(true)}
-                aria-label="Dismiss"
+                aria-label={tr(lang, "Dismiss", "மூடு")}
                 className="grid h-7 w-7 mr-1 place-items-center rounded-full text-sand-200 hover:text-white cursor-pointer"
               >
                 <CloseIcon className="text-sm" />

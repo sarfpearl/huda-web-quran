@@ -30,6 +30,7 @@ import { compactCount } from "./QuranEngagement";
 import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
+import { surahNameIn, tr, useUiLang, word } from "@/lib/uiLang";
 
 type ModalTab = "surah" | "quran";
 
@@ -90,6 +91,9 @@ export function TopicPickerModal({
 }: TopicPickerModalProps) {
   const isFavourites = variant === "favourites";
   const player = useAudioPlayer();
+  const lang = useUiLang();
+  // Tamil labels take the Tamil face.
+  const ta = lang === "ta" && "font-tamil";
   const [isOpen, setIsOpen] = useState(false);
   // The browser's list, or its « About HuDa » view (footer link); every open
   // starts on the list.
@@ -269,6 +273,7 @@ export function TopicPickerModal({
       String(j.id).includes(q) ||
       `juz ${j.id}`.includes(q) ||
       `para ${j.id}`.includes(q) ||
+      `${word("juz", "ta")} ${j.id}`.includes(q) ||
       // A page no. (1–604): the Juz that page is in.
       (/^\d+$/.test(q) && +q >= 1 && +q <= MUSHAF_PAGE_COUNT && +q >= JUZ_PAGES[j.id - 1][0] && +q <= JUZ_PAGES[j.id - 1][1])
     );
@@ -284,10 +289,10 @@ export function TopicPickerModal({
         key={`surah-${s.number}`}
         number={s.number.toString().padStart(2, "0")}
         imageSrc={surahImg}
-        title={s.name}
+        title={surahNameIn(s.number, lang)}
         secondaryLabel={s.arabicName}
         isArabicLabel={true}
-        subtitle={`${s.verses} Verses · ${s.revelation}`}
+        subtitle={`${s.verses} ${word("verses", lang)} · ${word(s.revelation === "Medinan" ? "medinan" : "meccan", lang)}`}
         iconName="quran"
         viewCount={countFor("surah", s.number)}
         viewCountText={compactCount(countFor("surah", s.number) ?? 0)}
@@ -312,9 +317,13 @@ export function TopicPickerModal({
         number={j.id.toString().padStart(2, "0")}
         imageSrc={juzImg}
         title={j.title}
-        secondaryLabel={`Juz ${j.id}`}
+        secondaryLabel={`${word("juz", lang)} ${j.id}`}
         isArabicLabel={false}
-        subtitle={`Page ${JUZ_PAGES[j.id - 1][0]} to ${JUZ_PAGES[j.id - 1][1]}`}
+        subtitle={tr(
+          lang,
+          `Page ${JUZ_PAGES[j.id - 1][0]} to ${JUZ_PAGES[j.id - 1][1]}`,
+          `${word("page", lang)} ${JUZ_PAGES[j.id - 1][0]} – ${JUZ_PAGES[j.id - 1][1]}`
+        )}
         iconName="quran"
         viewCount={countFor("juz", j.id)}
         viewCountText={compactCount(countFor("juz", j.id) ?? 0)}
@@ -343,8 +352,14 @@ export function TopicPickerModal({
           triggerClassName ??
           "pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
         }
-        data-tooltip={isFavourites ? "Favourites" : "Surah & Juz"}
-        aria-label={isFavourites ? "Open Favourites" : "Open Content Browser"}
+        data-tooltip={
+          isFavourites ? tr(lang, "Favourites", "விருப்பங்கள்") : `${word("surah", lang)} & ${word("juz", lang)}`
+        }
+        aria-label={
+          isFavourites
+            ? tr(lang, "Open Favourites", "விருப்பங்களைத் திற")
+            : tr(lang, "Open Content Browser", "சூரா & ஜுஸ்உ பட்டியலைத் திற")
+        }
       >
         {isFavourites ? (
           <FavouriteIcon className={triggerClassName ? "text-base sm:text-lg" : "h-5 w-5"} />
@@ -417,17 +432,25 @@ export function TopicPickerModal({
                       type="button"
                       onClick={() => setView("list")}
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
-                      aria-label="Back to the list"
+                      aria-label={tr(lang, "Back to the list", "பட்டியலுக்குத் திரும்பு")}
                     >
                       <ChevronRightIcon className="h-4 w-4 rotate-180" />
                     </button>
                   )}
                   <div className="min-w-0">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
-                      {isFavourites ? "Your Library" : showAbout ? "The story & credits" : "Listen & Read"}
+                    <span className={cn("text-[10px] font-extrabold uppercase tracking-widest text-emerald-400", ta)}>
+                      {isFavourites
+                        ? tr(lang, "Your Library", "உங்கள் நூலகம்")
+                        : showAbout
+                        ? tr(lang, "The story & credits", "கதையும் நன்றியும்")
+                        : tr(lang, "Listen & Read", "கேளுங்கள் & ஓதுங்கள்")}
                     </span>
-                    <h3 id={titleId} className="text-xl font-black text-white tracking-tight">
-                      {isFavourites ? "Favourites" : showAbout ? "About HuDa Web Quran" : "Choose a Surah or Juz"}
+                    <h3 id={titleId} className={cn("text-xl font-black text-white tracking-tight", ta)}>
+                      {isFavourites
+                        ? tr(lang, "Favourites", "விருப்பங்கள்")
+                        : showAbout
+                        ? tr(lang, "About HuDa Web Quran", "HuDa Web Quran பற்றி")
+                        : tr(lang, "Choose a Surah or Juz", "சூரா அல்லது ஜுஸ்உ தேர்ந்தெடுக்கவும்")}
                     </h3>
                   </div>
                 </div>
@@ -439,7 +462,7 @@ export function TopicPickerModal({
                     setIsOpen(false);
                   }}
                   className="tap-44 pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
-                  aria-label="Close"
+                  aria-label={tr(lang, "Close", "மூடு")}
                 >
                   <CloseIcon className="text-lg" />
                 </button>
@@ -461,10 +484,11 @@ export function TopicPickerModal({
                           onClick={() => setFavTab(k)}
                           className={cn(
                             TAB,
-                            favTab === k ? SELECTED_TAB : UNSELECTED_TAB
+                            favTab === k ? SELECTED_TAB : UNSELECTED_TAB,
+                            ta
                           )}
                         >
-                          {k === "surah" ? "Surah" : "Juz"}
+                          {word(k, lang)}
                           {favCounts[k] > 0 && <span className="ml-1.5 tabular-nums opacity-70">{favCounts[k]}</span>}
                         </button>
                       ))}
@@ -479,10 +503,11 @@ export function TopicPickerModal({
                       onClick={() => setActiveTab("surah")}
                       className={cn(
                         TAB,
-                        activeTab === "surah" ? SELECTED_TAB : UNSELECTED_TAB
+                        activeTab === "surah" ? SELECTED_TAB : UNSELECTED_TAB,
+                        ta
                       )}
                     >
-                      Surah
+                      {word("surah", lang)}
                     </button>
 
                     <button
@@ -490,10 +515,11 @@ export function TopicPickerModal({
                       onClick={() => setActiveTab("quran")}
                       className={cn(
                         TAB,
-                        activeTab === "quran" ? SELECTED_TAB : UNSELECTED_TAB
+                        activeTab === "quran" ? SELECTED_TAB : UNSELECTED_TAB,
+                        ta
                       )}
                     >
-                      Juz
+                      {word("juz", lang)}
                     </button>
                   </div>
                   )}
@@ -505,15 +531,24 @@ export function TopicPickerModal({
                       type="text"
                       placeholder={
                         isFavourites
-                          ? "Search favourites..."
+                          ? tr(lang, "Search favourites...", "விருப்பங்களைத் தேடுக...")
                           : activeTab === "surah"
-                          ? "Search Surah..."
-                          : "Search Juz or page no..."
+                          ? tr(lang, "Search Surah...", "சூராவைத் தேடுக...")
+                          : tr(lang, "Search Juz or page no...", "ஜுஸ்உ அல்லது பக்க எண்ணைத் தேடுக...")
                       }
-                      aria-label={isFavourites ? "Search favourites" : activeTab === "surah" ? "Search Surah" : "Search Juz or page number"}
+                      aria-label={
+                        isFavourites
+                          ? tr(lang, "Search favourites", "விருப்பங்களைத் தேடுக")
+                          : activeTab === "surah"
+                          ? tr(lang, "Search Surah", "சூராவைத் தேடுக")
+                          : tr(lang, "Search Juz or page number", "ஜுஸ்உ அல்லது பக்க எண்ணைத் தேடுக")
+                      }
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
+                      className={cn(
+                        "w-full rounded-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
+                        ta
+                      )}
                     />
                   </div>
 
@@ -529,7 +564,9 @@ export function TopicPickerModal({
                     {/* FAVOURITES PANEL (liked Surahs & Juz, newest first) */}
                     {isFavourites &&
                       (favouritesFailed ? (
-                        <p className="px-2 py-8 text-center text-xs text-sand-200/60">Favourites aren&apos;t available right now.</p>
+                        <p className={cn("px-2 py-8 text-center text-xs text-sand-200/60", ta)}>
+                          {tr(lang, "Favourites aren't available right now.", "விருப்பங்கள் இப்போது கிடைக்கவில்லை.")}
+                        </p>
                       ) : favourites === null ? (
                         <div className="h-16 animate-pulse rounded-2xl bg-white/5" aria-busy="true" />
                       ) : (() => {
@@ -545,15 +582,23 @@ export function TopicPickerModal({
                           })
                           .filter(Boolean);
                         if (cards.length) return cards;
-                        const label = favTab === "surah" ? "Surah" : "Juz";
+                        const label = word(favTab, lang);
                         return (
                           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
                             <FavouriteIcon className="text-2xl text-emerald-400/70" />
-                            <p className="text-xs text-sand-200/70">
-                              {q && favCounts[favTab] ? "No matching favourites." : `No ${label} favourites yet.`}
+                            <p className={cn("text-xs text-sand-200/70", ta)}>
+                              {q && favCounts[favTab]
+                                ? tr(lang, "No matching favourites.", "பொருந்தும் விருப்பம் இல்லை.")
+                                : tr(lang, `No ${label} favourites yet.`, `இன்னும் விருப்பமான ${label} இல்லை.`)}
                             </p>
                             {!(q && favCounts[favTab]) && (
-                              <p className="text-[11px] text-sand-200/65">Like the {label} you&apos;re listening to (♥ beside the cover) to keep it here.</p>
+                              <p className={cn("text-[11px] text-sand-200/65", ta)}>
+                                {tr(
+                                  lang,
+                                  `Like the ${label} you're listening to (♥ beside the cover) to keep it here.`,
+                                  `கேட்கும் ${label}வை (அட்டைப்படத்தின் அருகே உள்ள ♥) விரும்பினால் இங்கே சேமிக்கப்படும்.`
+                                )}
+                              </p>
                             )}
                           </div>
                         );
@@ -573,9 +618,13 @@ export function TopicPickerModal({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-contain" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold text-white">About HuDa Web Quran</span>
-                    <span className="block truncate text-[11px] text-sand-200/60">
-                      {ABOUT.appUrl || ABOUT.appNote ? "The app · credits · feedback" : "Credits · feedback"}
+                    <span className={cn("block text-xs font-bold text-white", ta)}>
+                      {tr(lang, "About HuDa Web Quran", "HuDa Web Quran பற்றி")}
+                    </span>
+                    <span className={cn("block truncate text-[11px] text-sand-200/60", ta)}>
+                      {ABOUT.appUrl || ABOUT.appNote
+                        ? tr(lang, "The app · credits · feedback", "ஆப் · நன்றி · கருத்து")
+                        : tr(lang, "Credits · feedback", "நன்றி · கருத்து")}
                     </span>
                   </span>
                   <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/60" />
@@ -593,6 +642,8 @@ export function TopicPickerModal({
 
 /** « About HuDa »: what it is, the app, the maker, credits, feedback. */
 function AboutView() {
+  const lang = useUiLang();
+  const taFont = lang === "ta" && "font-tamil";
   const contactHref = ABOUT.contact.includes("@") && !ABOUT.contact.startsWith("http") ? `mailto:${ABOUT.contact}` : ABOUT.contact;
   // Copy the contact (✓ for a moment). Clipboard API, else a hidden textarea.
   const [copied, setCopied] = useState(false);
@@ -616,6 +667,8 @@ function AboutView() {
     }
     setCopied(true);
   };
+  const copyLabel = tr(lang, "Copy", "நகலெடு");
+  const copiedLabel = tr(lang, "Copied", "நகலெடுக்கப்பட்டது");
   return (
     <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
       {/* Logo left, name right — the pair centred over the intro */}
@@ -631,17 +684,20 @@ function AboutView() {
 
       {!ABOUT.appUrl && ABOUT.appNote && (
         <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3">
-          <p className="text-xs font-bold text-white">HuDa Mobile App</p>
+          <p className={cn("text-xs font-bold text-white", taFont)}>{tr(lang, "HuDa Mobile App", "HuDa மொபைல் ஆப்")}</p>
           <p className="text-[11px] text-sand-200/70">{ABOUT.appNote}</p>
           {ABOUT.appPlatforms.length > 0 && (
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {ABOUT.appPlatforms.map((p) => (
                 <span
                   key={p}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-black/20 px-2.5 py-1 text-[10px] font-semibold text-emerald-200"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-black/20 px-2.5 py-1 text-[10px] font-semibold text-emerald-200",
+                    taFont
+                  )}
                 >
                   {p === "iOS" ? <AppleIcon className="text-sm" /> : <AndroidIcon className="text-sm" />}
-                  {p} · Coming soon
+                  {p} · {tr(lang, "Coming soon", "விரைவில்")}
                 </span>
               ))}
             </div>
@@ -657,8 +713,8 @@ function AboutView() {
           className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 hover:bg-emerald-500/15 transition-colors"
         >
           <span>
-            <span className="block text-xs font-bold text-white">HuDa Mobile App</span>
-            <span className="block text-[11px] text-sand-200/70">Get the app</span>
+            <span className={cn("block text-xs font-bold text-white", taFont)}>{tr(lang, "HuDa Mobile App", "HuDa மொபைல் ஆப்")}</span>
+            <span className={cn("block text-[11px] text-sand-200/70", taFont)}>{tr(lang, "Get the app", "ஆப்பைப் பெறுக")}</span>
           </span>
           <ChevronRightIcon className="h-4 w-4 text-emerald-300" />
         </a>
@@ -673,23 +729,24 @@ function AboutView() {
             rel="noopener noreferrer"
             className="min-w-0 flex-1 rounded-xl px-2.5 py-1.5 hover:bg-white/5 transition-colors"
           >
-            <span className="block text-xs font-bold text-white">Feedback</span>
+            <span className={cn("block text-xs font-bold text-white", taFont)}>{tr(lang, "Feedback", "கருத்து")}</span>
             <span className="block truncate text-[11px] text-sand-200/70">{ABOUT.contact}</span>
           </a>
           <button
             type="button"
             onClick={copyContact}
-            aria-label={copied ? "Copied" : `Copy ${ABOUT.contact}`}
-            title={copied ? "Copied" : "Copy"}
+            aria-label={copied ? copiedLabel : `${copyLabel} ${ABOUT.contact}`}
+            title={copied ? copiedLabel : copyLabel}
             className={cn(
               "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-colors cursor-pointer active:scale-95",
+              taFont,
               copied
                 ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
                 : "border-white/10 bg-white/10 text-sand-100 hover:bg-white/20 hover:text-white"
             )}
           >
             {copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
-            <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+            <span aria-live="polite">{copied ? copiedLabel : copyLabel}</span>
           </button>
         </div>
       )}
@@ -703,7 +760,9 @@ function AboutView() {
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 top-6 mx-auto h-24 w-56 rounded-full bg-[#E8C46E]/20 blur-3xl"
             />
-            <p className="relative text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#E8C46E]/80">Crafted by</p>
+            <p className={cn("relative text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#E8C46E]/80", taFont)}>
+              {tr(lang, "Crafted by", "உருவாக்கியவர்")}
+            </p>
             {ABOUT.makerLogo ? (
               // The SVG keeps the Figma frame's side margins (more room right of
               // the lettering than left), so the light feather tail balances.
@@ -745,7 +804,7 @@ function AboutView() {
             )}
             {ABOUT.builtWith.length > 0 && (
               <p className="relative mt-4 text-[11px] text-sand-200/70">
-                Created with AI ·{" "}
+                <span className={cn(taFont)}>{tr(lang, "Created with AI", "AI உதவியுடன் உருவாக்கப்பட்டது")}</span> ·{" "}
                 {ABOUT.builtWith.map((tool, i) => (
                   <span key={tool}>
                     {i > 0 && " & "}
@@ -759,7 +818,9 @@ function AboutView() {
       )}
 
       <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-2.5">
-        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Sources &amp; credits</p>
+        <p className={cn("text-[10px] font-extrabold uppercase tracking-widest text-emerald-400", taFont)}>
+          {tr(lang, "Sources & credits", "ஆதாரங்களும் நன்றியும்")}
+        </p>
         {ABOUT.credits.map((c) => (
           <div key={c.label}>
             <p className="text-[11px] font-bold text-white">{c.label}</p>

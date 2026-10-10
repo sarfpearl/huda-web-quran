@@ -17,6 +17,7 @@ import {
   ImageIcon,
   TranslateIcon,
 } from "@/components/ui/Icon";
+import { tr } from "@/lib/uiLang";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
@@ -192,8 +193,8 @@ export function ImmersiveHeader({
             aria-haspopup="dialog"
             aria-label={
               showMeaning
-                ? `Translation: ${current.hint.split(" · ")[0]} — change`
-                : "Translation: off — choose a language"
+                ? tr(language, `Translation: ${current.hint.split(" · ")[0]} — change`, `மொழிபெயர்ப்பு: ${current.hint.split(" · ")[0]} — மாற்று`)
+                : tr(language, "Translation: off — choose a language", "மொழிபெயர்ப்பு: இல்லை — ஒரு மொழியைத் தேர்ந்தெடு")
             }
             data-tooltip={language === "ta" ? "மொழிபெயர்ப்பு" : "Translation"}
             className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
@@ -203,24 +204,24 @@ export function ImmersiveHeader({
             {/* Translate icon; dimmed (not slashed) when the translation is hidden */}
             <TranslateIcon className="h-5 w-5" />
             <span
-              className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && current.id === "ta" ? "font-tamil" : ""}`}
+              className={`hidden sm:inline text-[10px] sm:text-xs ${(showMeaning ? current.id === "ta" : language === "ta") ? "font-tamil" : ""}`}
               style={showMeaning && current.font && current.id !== "ta" ? { fontFamily: current.font } : undefined}
             >
-              {!showMeaning ? "Translation" : current.label}
+              {!showMeaning ? tr(language, "Translation", "மொழிபெயர்ப்பு") : current.label}
             </span>
           </button>
         )}
         <ActionSheet
           open={translationSheetOpen}
           onClose={() => setTranslationSheetOpen(false)}
-          label="Choose the translation language"
+          label={tr(language, "Choose the translation language", "மொழிபெயர்ப்பு மொழியைத் தேர்ந்தெடு")}
           flush
         >
           {/* Laid out like the reciter picker: title bar, search, list of cards */}
           <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
             <div>
-              <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">Translation</h3>
-              <p className="mt-0.5 text-[11px] leading-none text-sand-300/70">Choose the meaning language</p>
+              <h3 className={`text-sm sm:text-base font-bold leading-tight tracking-tight text-white ${language === "ta" ? "font-tamil" : ""}`}>{tr(language, "Translation", "மொழிபெயர்ப்பு")}</h3>
+              <p className={`mt-0.5 text-[11px] leading-none text-sand-300/70 ${language === "ta" ? "font-tamil" : ""}`}>{tr(language, "Choose the meaning language", "பொருள் மொழியைத் தேர்ந்தெடுக்கவும்")}</p>
             </div>
             <div className="flex items-center gap-2.5">
             {/* On / Off (Off = Arabic only); picking a language turns it on */}
@@ -228,11 +229,11 @@ export function ImmersiveHeader({
               type="button"
               role="switch"
               aria-checked={showMeaning}
-              aria-label={showMeaning ? "Translation on — turn off (Arabic only)" : "Translation off — turn on"}
+              aria-label={showMeaning ? tr(language, "Translation on — turn off (Arabic only)", "மொழிபெயர்ப்பு உள்ளது — நிறுத்து (அரபு மட்டும்)") : tr(language, "Translation off — turn on", "மொழிபெயர்ப்பு இல்லை — இயக்கு")}
               onClick={() => onToggleMeaning?.()}
-              className="tap-44 flex items-center gap-2 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium text-sand-200 transition-colors hover:bg-white/5 cursor-pointer"
+              className={`tap-44 flex items-center gap-2 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium text-sand-200 transition-colors hover:bg-white/5 cursor-pointer ${language === "ta" ? "font-tamil" : ""}`}
             >
-              {showMeaning ? "On" : "Off"}
+              {showMeaning ? tr(language, "On", "உள்ளது") : tr(language, "Off", "இல்லை")}
               <span
                 className={`relative h-5 w-9 rounded-full border transition-colors ${
                   showMeaning ? "border-amber-200/50 bg-amber-300/30" : "border-white/15 bg-white/10"
@@ -248,7 +249,7 @@ export function ImmersiveHeader({
             <button
               type="button"
               onClick={() => setTranslationSheetOpen(false)}
-              aria-label="Close translation languages"
+              aria-label={tr(language, "Close translation languages", "மொழிப் பட்டியலை மூடு")}
               className="tap-44 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -262,17 +263,19 @@ export function ImmersiveHeader({
               type="text"
               value={langQuery}
               onChange={(e) => setLangQuery(e.target.value)}
-              placeholder="Search languages..."
-              aria-label="Search languages"
-              className="w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+              placeholder={tr(language, "Search languages...", "மொழிகளைத் தேடு...")}
+              aria-label={tr(language, "Search languages", "மொழிகளைத் தேடு")}
+              className={`${language === "ta" ? "font-tamil " : ""}w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50`}
             />
             <svg className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sand-300/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar pb-[env(safe-area-inset-bottom)]" role="radiogroup" aria-label="Translation language">
+          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar pb-[env(safe-area-inset-bottom)]" role="radiogroup" aria-label={tr(language, "Translation language", "மொழிபெயர்ப்பு மொழி")}>
             {langChoices.length === 0 && (
-              <p className="py-6 text-center text-xs text-sand-300/60">No language found for “{langQuery.trim()}”</p>
+              <p className={`py-6 text-center text-xs text-sand-300/60 ${language === "ta" ? "font-tamil" : ""}`}>
+                {tr(language, `No language found for “${langQuery.trim()}”`, `“${langQuery.trim()}” என்ற மொழி இல்லை`)}
+              </p>
             )}
             {langChoices.map((c) => {
               // The language stays marked while off, so it's clear which one turns on.
@@ -321,8 +324,8 @@ export function ImmersiveHeader({
             type="button"
             onClick={() => setTextSizeSheetOpen(true)}
             aria-haspopup="dialog"
-            aria-label={`Text size: ${Math.round(textSize.value * 100)}% — change`}
-            title="Text size"
+            aria-label={tr(language, `Text size: ${Math.round(textSize.value * 100)}% — change`, `எழுத்து அளவு: ${Math.round(textSize.value * 100)}% — மாற்று`)}
+            title={tr(language, "Text size", "எழுத்து அளவு")}
             className="pointer-events-auto flex items-center justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-3 min-[400px]:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white transition-all active:scale-90 cursor-pointer hover:bg-black/20 hover:border-white/30"
           >
             <span aria-hidden="true" className="font-semibold leading-none">
@@ -332,8 +335,8 @@ export function ImmersiveHeader({
           </button>
         )}
         {textSize && (
-          <ActionSheet open={textSizeSheetOpen} onClose={() => setTextSizeSheetOpen(false)} label="Text size">
-            <h3 className="pb-4 text-lg font-black text-white tracking-tight">Text size</h3>
+          <ActionSheet open={textSizeSheetOpen} onClose={() => setTextSizeSheetOpen(false)} label={tr(language, "Text size", "எழுத்து அளவு")}>
+            <h3 className={`pb-4 text-lg font-black text-white tracking-tight ${language === "ta" ? "font-tamil" : ""}`}>{tr(language, "Text size", "எழுத்து அளவு")}</h3>
             {(() => {
               const i = Math.max(0, READER_SCALES.indexOf(textSize.value));
               const step = (d: number) => {
@@ -344,10 +347,10 @@ export function ImmersiveHeader({
                 "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 font-semibold text-white transition-all active:scale-90 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none";
               return (
                 <div className="flex items-center gap-3">
-                  <button type="button" className={`${btn} text-sm`} onClick={() => step(-1)} disabled={i === 0} aria-label="Smaller text">
+                  <button type="button" className={`${btn} text-sm`} onClick={() => step(-1)} disabled={i === 0} aria-label={tr(language, "Smaller text", "சிறிய எழுத்து")}>
                     A−
                   </button>
-                  <div className="flex flex-1 items-center justify-between gap-1" role="radiogroup" aria-label="Text size">
+                  <div className="flex flex-1 items-center justify-between gap-1" role="radiogroup" aria-label={tr(language, "Text size", "எழுத்து அளவு")}>
                     {READER_SCALES.map((v, k) => (
                       <button
                         key={v}
@@ -369,7 +372,7 @@ export function ImmersiveHeader({
                     className={`${btn} text-lg`}
                     onClick={() => step(1)}
                     disabled={i === READER_SCALES.length - 1}
-                    aria-label="Larger text"
+                    aria-label={tr(language, "Larger text", "பெரிய எழுத்து")}
                   >
                     A+
                   </button>
@@ -379,8 +382,8 @@ export function ImmersiveHeader({
             <div className="mt-4 flex items-center justify-between text-xs text-sand-200/70">
               <span className="tabular-nums">{Math.round(textSize.value * 100)}%</span>
               {textSize.value !== textSize.initial && (
-                <button type="button" onClick={() => textSize.onChange(textSize.initial)} className="font-semibold text-amber-300 hover:text-amber-200">
-                  Reset
+                <button type="button" onClick={() => textSize.onChange(textSize.initial)} className={`font-semibold text-amber-300 hover:text-amber-200 ${language === "ta" ? "font-tamil" : ""}`}>
+                  {tr(language, "Reset", "மீட்டமை")}
                 </button>
               )}
             </div>
@@ -423,8 +426,8 @@ export function ImmersiveHeader({
                 {/* Mushaf script: Uthmani (Madani) or IndoPak */}
                 {onChooseScript && (
                   <div className="mb-2 border-b border-white/10 px-1 pb-3">
-                    <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-sand-300/70">Script</p>
-                    <div role="radiogroup" aria-label="Quran script" className={TAB_TRACK}>
+                    <p className={`mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-sand-300/70 ${language === "ta" ? "font-tamil" : ""}`}>{tr(language, "Script", "எழுத்துரு")}</p>
+                    <div role="radiogroup" aria-label={tr(language, "Quran script", "குர்ஆன் எழுத்துரு")} className={TAB_TRACK}>
                       {SCRIPT_CHOICES.map((c) => (
                         <button
                           key={c.id}
@@ -432,9 +435,9 @@ export function ImmersiveHeader({
                           role="radio"
                           aria-checked={script === c.id}
                           onClick={() => onChooseScript(c.id)}
-                          className={`${TAB} ${script === c.id ? SELECTED_TAB : UNSELECTED_TAB}`}
+                          className={`${TAB} ${script === c.id ? SELECTED_TAB : UNSELECTED_TAB} ${language === "ta" ? "font-tamil" : ""}`}
                         >
-                          {c.label}
+                          {language === "ta" ? c.ta : c.label}
                         </button>
                       ))}
                     </div>
@@ -454,7 +457,9 @@ export function ImmersiveHeader({
                     <span className={`text-sm font-semibold ${language === "ta" ? "font-tamil" : ""}`}>
                       {language === "ta" ? "தஜ்வீத் வண்ணங்கள்" : "Tajweed colours"}
                     </span>
-                    {script === "indopak" && <span className="text-[11px] text-sand-300/70">Uthmani script only</span>}
+                    {script === "indopak" && (
+                      <span className={`text-[11px] text-sand-300/70 ${language === "ta" ? "font-tamil" : ""}`}>{tr(language, "Uthmani script only", "உஸ்மானி எழுத்துருவில் மட்டும்")}</span>
+                    )}
                   </span>
                   <span
                     aria-hidden="true"
@@ -485,8 +490,8 @@ export function ImmersiveHeader({
             type="button"
             onClick={handleToggleReciterSelector}
             className="pointer-events-auto relative grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
-            data-tooltip={`Reciter · ${selectedReciter.displayName}`}
-            aria-label={`Choose Quran Reciter (Current: ${selectedReciter.displayName})`}
+            data-tooltip={tr(language, `Reciter · ${selectedReciter.displayName}`, `காரி · ${selectedReciter.displayName}`)}
+            aria-label={tr(language, `Choose Quran Reciter (Current: ${selectedReciter.displayName})`, `காரியைத் தேர்ந்தெடு (தற்போது: ${selectedReciter.displayName})`)}
             aria-expanded={isReciterSelectorOpen}
             aria-haspopup="dialog"
           >
@@ -543,13 +548,13 @@ export function ImmersiveHeader({
             className="tap-44 pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-300 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
             title={
               visualMode === "video"
-                ? "Video Mode Active (Click to switch to Image Mode)"
-                : "Image Mode Active (Click to switch to Video Mode)"
+                ? tr(language, "Video Mode Active (Click to switch to Image Mode)", "காணொளி முறை (பட முறைக்கு மாற அழுத்தவும்)")
+                : tr(language, "Image Mode Active (Click to switch to Video Mode)", "பட முறை (காணொளி முறைக்கு மாற அழுத்தவும்)")
             }
             aria-label={
               visualMode === "video"
-                ? "Switch to Image Mode"
-                : "Switch to Video Mode"
+                ? tr(language, "Switch to Image Mode", "பட முறைக்கு மாறு")
+                : tr(language, "Switch to Video Mode", "காணொளி முறைக்கு மாறு")
             }
           >
             {visualMode === "video" ? (
@@ -594,7 +599,7 @@ function TajweedIcon({ on, className }: { on: boolean; className?: string }) {
   );
 }
 
-const SCRIPT_CHOICES: { id: QuranScript; label: string }[] = [
-  { id: "uthmani", label: "Uthmani" },
-  { id: "indopak", label: "IndoPak" },
+const SCRIPT_CHOICES: { id: QuranScript; label: string; ta: string }[] = [
+  { id: "uthmani", label: "Uthmani", ta: "உஸ்மானி" },
+  { id: "indopak", label: "IndoPak", ta: "இந்தோபாக்" },
 ];

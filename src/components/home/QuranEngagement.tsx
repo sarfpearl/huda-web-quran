@@ -16,6 +16,7 @@ import { CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/componen
 import { cn } from "@/lib/utils";
 import { ActionSheet, useIsMobile } from "@/components/ui/ActionSheet";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
+import { surahNameIn, word } from "@/lib/uiLang";
 
 /*
  * View count, live listeners and comments for the Surah / Juz on screen.
@@ -64,20 +65,29 @@ const T = {
   surahViews: { en: "Surah view count", ta: "சூரா பார்வைகள்" },
   like: { en: "Like", ta: "விரும்பு" },
   unlike: { en: "Unlike", ta: "விருப்பத்தை நீக்கு" },
-  juzViews: { en: "Juz view count", ta: "ஜுஸ் பார்வைகள்" },
+  juzViews: { en: "Juz view count", ta: "ஜுஸ்உ பார்வைகள்" },
   liveNow: { en: "Listening now", ta: "இப்போது கேட்பவர்கள்" },
   allSite: { en: "All Surahs & Juz", ta: "அனைத்தும்" },
   top: { en: "Most listened Surah", ta: "அதிகம் கேட்கப்பட்ட சூரா" },
   del: { en: "Delete?", ta: "நீக்கவா?" },
   unavailable: { en: "Not available right now.", ta: "தற்போது கிடைக்கவில்லை." },
   rate: { en: "Please wait a moment.", ta: "சிறிது நேரம் காத்திருக்கவும்." },
-  failed: { en: "Couldn't post. Try again.", ta: "பதிவிட முடியவில்லை." },
+  failed: { en: "Couldn't post. Try again.", ta: "பதிவிட முடியவில்லை. மீண்டும் முயலவும்." },
   comment: { en: "Comments", ta: "கருத்துகள்" },
   change: { en: "Change name", ta: "பெயரை மாற்று" },
   reply: { en: "Reply", ta: "பதில்" },
   remove: { en: "Delete", ta: "நீக்கு" },
   replyingTo: { en: "Replying to", ta: "பதில் அளிப்பது:" },
   replyTo: { en: "Reply to", ta: "பதில்:" },
+  general: { en: "General", ta: "பொது" },
+  min: { en: "min", ta: "நிமி" },
+  hrs: { en: "hrs", ta: "மணி" },
+  delMine: { en: "Delete my comment", ta: "என் கருத்தை நீக்கு" },
+  closeBox: { en: "Close comment box", ta: "கருத்துப் பெட்டியை மூடு" },
+  send: { en: "Send", ta: "அனுப்பு" },
+  closeComments: { en: "Close comments", ta: "கருத்துகளை மூடு" },
+  cancelReply: { en: "Cancel reply", ta: "பதிலை ரத்துசெய்" },
+  close: { en: "Close", ta: "மூடு" },
 } as const;
 
 const NAME_KEY = "huda-comment-name";
@@ -100,17 +110,28 @@ export function quranContentOf(trackId: string | null | undefined): QuranContent
   return null;
 }
 
-export const contentLabel = (c: { kind: QuranKind | "general"; id: number } | null) =>
-  !c ? "—" : c.kind === "general" ? "General" : c.kind === "juz" ? `Juz ${c.id}${QURAN_JUZ[c.id - 1] ? ` · ${QURAN_JUZ[c.id - 1].title}` : ""}` : QURAN_SURAHS[c.id - 1]?.name ?? `Surah ${c.id}`;
+export const contentLabel = (c: { kind: QuranKind | "general"; id: number } | null, lang: Lang = "en") =>
+  !c
+    ? "—"
+    : c.kind === "general"
+      ? T.general[lang]
+      : c.kind === "juz"
+        ? lang === "ta"
+          ? `${word("juz", lang)} ${c.id}`
+          : `Juz ${c.id}${QURAN_JUZ[c.id - 1] ? ` · ${QURAN_JUZ[c.id - 1].title}` : ""}`
+        : lang === "ta"
+          ? surahNameIn(c.id, lang)
+          : QURAN_SURAHS[c.id - 1]?.name ?? `Surah ${c.id}`;
 
-const surahName = (n: number | null | undefined) => (n ? QURAN_SURAHS[n - 1]?.name ?? `Surah ${n}` : "—");
+const surahName = (n: number | null | undefined, lang: Lang = "en") =>
+  !n ? "—" : lang === "ta" ? surahNameIn(n, lang) : QURAN_SURAHS[n - 1]?.name ?? `Surah ${n}`;
 export const compactCount = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
-function formatHours(seconds: number): string {
-  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+function formatHours(seconds: number, lang: Lang = "en"): string {
+  if (seconds < 3600) return `${Math.round(seconds / 60)} ${T.min[lang]}`;
   const h = seconds / 3600;
-  return `${h >= 100 ? Math.round(h).toLocaleString() : h.toFixed(1)} hrs`;
+  return `${h >= 100 ? Math.round(h).toLocaleString() : h.toFixed(1)} ${T.hrs[lang]}`;
 }
 
 /** Runs `fn` now, every `ms` while the tab is visible, and again as soon as
@@ -487,14 +508,14 @@ function useFitLevel(ref: RefObject<HTMLElement>, max: number, padFor: (level: n
   return level;
 }
 
-function Metric({ label, value, live }: { label: string; value: string; live?: boolean }) {
+function Metric({ label, value, live, lang = "en" }: { label: string; value: string; live?: boolean; lang?: Lang }) {
   return (
     <div className="rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-lg font-semibold text-white tabular-nums">
         {live && <LiveDot on />}
         {value}
       </div>
-      <div className="text-[11px] text-sand-200/70">{label}</div>
+      <div className={cn("text-[11px] text-sand-200/70", lang === "ta" && "font-tamil")}>{label}</div>
     </div>
   );
 }
@@ -689,7 +710,7 @@ function CommentBubble({
             <button
               type="button"
               onClick={() => setConfirm(true)}
-              aria-label="Delete my comment"
+              aria-label={T.delMine[lang]}
               className={cn("py-0.5 hover:text-red-300", lang === "ta" && "font-tamil")}
             >
               {T.remove[lang]}
@@ -796,7 +817,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
       <button
         type="button"
         onClick={() => setComposerOpen(false)}
-        aria-label="Close comment box"
+        aria-label={T.closeBox[lang]}
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sand-200/70 hover:bg-white/10 hover:text-white"
       >
         <CloseIcon className="text-sm" />
@@ -835,7 +856,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
       <button
         type="submit"
         disabled={busy || !text.trim() || !e.configured}
-        aria-label="Send"
+        aria-label={T.send[lang]}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 disabled:opacity-40"
       >
         <SendIcon className="text-base" />
@@ -863,7 +884,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
           <button
             type="button"
             onClick={() => setComposerOpen(false)}
-            aria-label="Close comments"
+            aria-label={T.closeComments[lang]}
             className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
           >
             <CloseIcon className="text-sm" />
@@ -890,7 +911,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
             <button
               type="button"
               onClick={() => setReplyTo(null)}
-              aria-label="Cancel reply"
+              aria-label={T.cancelReply[lang]}
               className="grid h-6 w-6 shrink-0 place-items-center rounded-full hover:bg-white/10 hover:text-white"
             >
               <CloseIcon className="text-[11px]" />
@@ -976,7 +997,7 @@ export function PlayerStatsFrame({
         type="button"
         onClick={() => setViewsOpen(false)}
         className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white"
-        aria-label="Close"
+        aria-label={T.close[lang]}
       >
         <CloseIcon className="text-sm" />
       </button>
@@ -984,28 +1005,28 @@ export function PlayerStatsFrame({
     {stats ? (
       <div className="space-y-3">
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{contentLabel(e.content)}</p>
+          <p className={cn("mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400", lang === "ta" && "font-tamil")}>{contentLabel(e.content, lang)}</p>
           <div className="grid grid-cols-3 gap-2">
-            <Metric label={T.users[lang]} value={compactCount(stats.content.users)} />
-            <Metric label={T.liveNow[lang]} value={compactCount(stats.content.live)} live />
-            <Metric label={T.hours[lang]} value={formatHours(stats.content.seconds)} />
+            <Metric lang={lang} label={T.users[lang]} value={compactCount(stats.content.users)} />
+            <Metric lang={lang} label={T.liveNow[lang]} value={compactCount(stats.content.live)} live />
+            <Metric lang={lang} label={T.hours[lang]} value={formatHours(stats.content.seconds, lang)} />
           </div>
         </div>
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{T.allSite[lang]}</p>
+          <p className={cn("mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400", lang === "ta" && "font-tamil")}>{T.allSite[lang]}</p>
           <div className="grid grid-cols-3 gap-2">
-            <Metric label={T.users[lang]} value={compactCount(stats.site.users)} />
-            <Metric label={T.liveNow[lang]} value={compactCount(stats.site.live)} live />
-            <Metric label={T.hours[lang]} value={formatHours(stats.site.seconds)} />
+            <Metric lang={lang} label={T.users[lang]} value={compactCount(stats.site.users)} />
+            <Metric lang={lang} label={T.liveNow[lang]} value={compactCount(stats.site.live)} live />
+            <Metric lang={lang} label={T.hours[lang]} value={formatHours(stats.site.seconds, lang)} />
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl bg-amber-300/10 border border-amber-300/25 px-3 py-2.5">
           <div>
-            <div className="text-[11px] text-amber-200/80">{T.top[lang]}</div>
-            <div className="text-sm font-semibold text-white">{surahName(stats.site.top_surah)}</div>
+            <div className={cn("text-[11px] text-amber-200/80", lang === "ta" && "font-tamil")}>{T.top[lang]}</div>
+            <div className={cn("text-sm font-semibold text-white", lang === "ta" && "font-tamil")}>{surahName(stats.site.top_surah, lang)}</div>
           </div>
           {stats.site.top_surah_users != null && (
-            <div className="text-right text-xs text-sand-200/80 tabular-nums">
+            <div className={cn("text-right text-xs text-sand-200/80 tabular-nums", lang === "ta" && "font-tamil")}>
               {compactCount(stats.site.top_surah_users)} {T.users[lang].toLowerCase()}
             </div>
           )}

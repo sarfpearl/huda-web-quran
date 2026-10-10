@@ -6,6 +6,7 @@ import { QURAN_SURAHS } from "@/lib/data/service";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS } from "@/lib/data/mushafPages";
 import { cn } from "@/lib/utils";
 import { SELECTED, UNSELECTED_EDGE } from "@/components/ui/selection";
+import { surahNameIn, tr, useUiLang, word } from "@/lib/uiLang";
 
 interface MushafPagePickerProps {
   open: boolean;
@@ -24,6 +25,7 @@ const surahName = (n: number) => QURAN_SURAHS.find((s) => s.number === n)?.name 
  * typed in the box jumps straight to that page.
  */
 export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [1, MUSHAF_PAGE_COUNT] }: MushafPagePickerProps) {
+  const lang = useUiLang();
   const [query, setQuery] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +48,10 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
     (p) =>
       p.page >= range[0] &&
       p.page <= range[1] &&
-      (!q || String(p.page).startsWith(q) || surahName(p.surah).toLowerCase().includes(q))
+      (!q ||
+        String(p.page).startsWith(q) ||
+        surahName(p.surah).toLowerCase().includes(q) ||
+        surahNameIn(p.surah, "ta").includes(query.trim()))
   );
 
   const pick = (page: number) => {
@@ -55,11 +60,13 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
   };
 
   return (
-    <ActionSheet open={open} onClose={onClose} label="Choose a Mushaf page" className="h-[70dvh]">
+    <ActionSheet open={open} onClose={onClose} label={tr(lang, "Choose a Mushaf page", "முஸ்ஹஃப் பக்கத்தைத் தேர்ந்தெடுக்கவும்")} className="h-[70dvh]">
       <div className="flex items-baseline justify-between pb-3">
-        <h3 className="text-lg font-black text-white tracking-tight">Go to page</h3>
-        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
-          Page {currentPage} / {range[1]}
+        <h3 className={cn("text-lg font-black text-white tracking-tight", lang === "ta" && "font-tamil")}>
+          {tr(lang, "Go to page", "பக்கத்திற்குச் செல்")}
+        </h3>
+        <span className={cn("text-[11px] font-bold uppercase tracking-widest text-emerald-400", lang === "ta" && "font-tamil")}>
+          {word("page", lang)} {currentPage} / {range[1]}
         </span>
       </div>
       <form
@@ -73,10 +80,13 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
           type="search"
           inputMode="numeric"
           enterKeyHint="go"
-          placeholder="Page number or Surah…"
+          placeholder={tr(lang, "Page number or Surah…", "பக்க எண் அல்லது சூரா…")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
+          className={cn(
+            "w-full rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
+            lang === "ta" && "font-tamil"
+          )}
         />
       </form>
       <div ref={listRef} className="no-scrollbar -mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 space-y-1">
@@ -94,14 +104,20 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
                 current ? SELECTED : cn(UNSELECTED_EDGE, "text-sand-100 hover:bg-white/10")
               )}
             >
-              <span className="font-bold tabular-nums">Page {page}</span>
-              <span className={cn("truncate text-xs", current ? "text-white/90" : "text-sand-200/60")}>
-                {surahName(surah)} · {surah}:{ayah}
+              <span className={cn("font-bold tabular-nums", lang === "ta" && "font-tamil")}>
+                {word("page", lang)} {page}
+              </span>
+              <span className={cn("truncate text-xs", lang === "ta" && "font-tamil", current ? "text-white/90" : "text-sand-200/60")}>
+                {surahNameIn(surah, lang)} · {surah}:{ayah}
               </span>
             </button>
           );
         })}
-        {pages.length === 0 && <p className="py-8 text-center text-xs text-sand-200/60">No matching page.</p>}
+        {pages.length === 0 && (
+          <p className={cn("py-8 text-center text-xs text-sand-200/60", lang === "ta" && "font-tamil")}>
+            {tr(lang, "No matching page.", "பொருந்தும் பக்கம் இல்லை.")}
+          </p>
+        )}
       </div>
     </ActionSheet>
   );

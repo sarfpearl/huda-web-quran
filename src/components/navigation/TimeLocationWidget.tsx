@@ -6,6 +6,7 @@ import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
 import { clock, currentWaqt, PRAYER_LABELS, regionDefaults, type AsrMadhab, type MethodId } from "@/lib/prayerTimes";
 import { PrayerTimesSheet, readPrayerPrefs, type PrayerPrefs } from "./PrayerTimesSheet";
 import { LocationAskSheet } from "./LocationAskSheet";
+import { tr, useUiLang } from "@/lib/uiLang";
 
 // Place names as plain letters: "Gūduvāncheri" → "Guduvancheri" — the macrons
 // read as stray lines over the small label.
@@ -76,17 +77,14 @@ export function TimeLocationWidget({
   const [askOpen, setAskOpen] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const askAnswer = useRef<((allow: boolean) => void) | null>(null);
-  const [ta, setTa] = useState(false);
+  // The UI language (live from the home screen, so a switch shows at once).
+  const lang = useUiLang();
+  const ta = lang === "ta";
 
   useEffect(() => {
     setMounted(true);
 
     setPrefs(readPrayerPrefs());
-    try {
-      setTa(localStorage.getItem("huda-translation-lang") === "ta");
-    } catch {
-      /* storage unavailable */
-    }
     const updateTime = () => {
       const now = new Date();
       const formatted = now.toLocaleTimeString("en-US", {
@@ -402,7 +400,7 @@ export function TimeLocationWidget({
           <button
             type="button"
             onClick={askFromPill}
-            aria-label={`${timeStr}${location ? `, ${location}` : ""} — use my location for prayer times`}
+            aria-label={`${timeStr}${location ? `, ${location}` : ""} — ${tr(lang, "use my location for prayer times", "தொழுகை நேரங்களுக்கு என் இருப்பிடத்தைப் பயன்படுத்து")}`}
             className={`${pill} cursor-pointer hover:bg-black/20 active:scale-95 transition-all`}
           >
             {content}
@@ -418,11 +416,18 @@ export function TimeLocationWidget({
     );
   }
 
-  const name = PRAYER_LABELS[waqt.prayer].en;
+  const name = PRAYER_LABELS[waqt.prayer][lang];
+  // Tamil puts "from" after the time: "5:12 முதல்".
   const range = waqt.upcoming ? (
-    <>
-      from <Clock d={waqt.start} />
-    </>
+    ta ? (
+      <>
+        <Clock d={waqt.start} /> <span className="font-tamil">முதல்</span>
+      </>
+    ) : (
+      <>
+        from <Clock d={waqt.start} />
+      </>
+    )
   ) : (
     <TimeRange a={waqt.start} b={waqt.end} />
   );
@@ -431,15 +436,20 @@ export function TimeLocationWidget({
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        aria-label={`${name} ${waqt.upcoming ? "starts at " + clock(waqt.start) : `${clock(waqt.start)} to ${clock(waqt.end)}`}${location ? `, ${location}` : ""} — prayer times`}
+        aria-label={
+          ta
+            ? `${name} ${waqt.upcoming ? `${clock(waqt.start)} முதல்` : `${clock(waqt.start)} முதல் ${clock(waqt.end)} வரை`}${location ? `, ${location}` : ""} — தொழுகை நேரங்கள்`
+            : `${name} ${waqt.upcoming ? "starts at " + clock(waqt.start) : `${clock(waqt.start)} to ${clock(waqt.end)}`}${location ? `, ${location}` : ""} — prayer times`
+        }
         className={`${pill.replace("sm:px-[2rem]", "md:px-[2rem]")} cursor-pointer hover:bg-black/20 active:scale-95 transition-all`}
       >
         {/* Below md: the prayer, then its times (the place is in the sheet) —
             on one line "Maghrib 12:59 PM – 12:59 AM" would push the header's
             buttons off the screen (390px, and 640px with their labels).
             md+: prayer + times, then the place. */}
+        {/* Tamil names run wider ("சூரிய உதயம்"): a size smaller below sm. */}
         <span className="whitespace-nowrap text-sm sm:text-base text-white tracking-tight leading-tight drop-shadow-sm font-sans">
-          <span className="font-extrabold">{name}</span>
+          <span className={ta ? "font-tamil font-bold max-sm:text-xs" : "font-extrabold"}>{name}</span>
           <span className="max-md:hidden font-semibold text-sand-100/95"> {range}</span>
         </span>
         <span className="md:hidden text-[11px] sm:text-xs font-semibold text-sand-100/90 tabular-nums leading-tight mt-0.5 whitespace-nowrap">

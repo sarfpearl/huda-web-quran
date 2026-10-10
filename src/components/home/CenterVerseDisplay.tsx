@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { PrayerRugIcon } from "@/components/ui/Icon";
+import { useUiLang, word } from "@/lib/uiLang";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
@@ -211,11 +212,12 @@ function overflows(pane: HTMLElement) {
 }
 
 function AyahOrnament({ n }: { n: number }) {
+  const lang = useUiLang();
   return (
     <span
       lang="ar"
       dir="rtl"
-      aria-label={`Ayah ${n}`}
+      aria-label={`${word("ayah", lang)} ${n}`}
       className="font-arabic text-amber-300 select-none align-middle mx-1.5 tracking-normal [letter-spacing:0] text-[1.2em]"
     >
       {toArabicNumerals(n)}
@@ -722,11 +724,11 @@ export function CenterVerseDisplay({
                         {wordEl}
                         {/* Ayah of prostration: the Sajdah icon, in place of the font's ۩. */}
                         {!isPrelude && isSajdah(surahNum, ayahNum) && (
-                          <PrayerRugIcon role="img" aria-label="Sajdah" className="ml-2 text-[0.6em] text-amber-300 select-none" />
+                          <PrayerRugIcon role="img" aria-label={language === "ta" ? "ஸஜ்தா" : "Sajdah"} className="ml-2 text-[0.6em] text-amber-300 select-none" />
                         )}
                         {glyphs?.e ? (
                           <span
-                            aria-label={`Ayah ${ayahNum}`}
+                            aria-label={`${word("ayah", language)} ${ayahNum}`}
                             className="select-none mx-1.5"
                             style={glyphStyle(glyphs.e[1], tajweed)}
                           >
