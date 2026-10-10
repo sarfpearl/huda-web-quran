@@ -2,6 +2,8 @@ import type { Strings } from "@/lib/uiLang";
 
 /** UI strings (pickers): English key → other languages (missing → English). */
 const strings: Strings = {
+  Settings: { ta: "அமைப்புகள்", ur: "ترتیبات", ml: "ക്രമീകരണങ്ങൾ", hi: "सेटिंग्स", id: "Pengaturan", bn: "সেটিংস", tr: "Ayarlar", fr: "Réglages", ms: "Tetapan" },
+  "Your preferences": { ta: "உங்கள் விருப்பங்கள்", ur: "آپ کی ترجیحات", ml: "നിങ്ങളുടെ മുൻഗണനകൾ", hi: "आपकी पसंद", id: "Preferensi Anda", bn: "আপনার পছন্দ", tr: "Tercihleriniz", fr: "Vos préférences", ms: "Pilihan anda" },
   // Content browser / favourites (TopicPickerModal)
   Favourites: { ta: "விருப்பங்கள்", ur: "پسندیدہ", ml: "പ്രിയപ്പെട്ടവ", hi: "पसंदीदा", id: "Favorit", bn: "প্রিয়", tr: "Favoriler", fr: "Favoris", ms: "Kegemaran" },
   "Open Favourites": { ta: "விருப்பங்களைத் திற", ur: "پسندیدہ کھولیں", ml: "പ്രിയപ്പെട്ടവ തുറക്കുക", hi: "पसंदीदा खोलें", id: "Buka Favorit", bn: "প্রিয় খুলুন", tr: "Favorileri aç", fr: "Ouvrir les favoris", ms: "Buka Kegemaran" },
