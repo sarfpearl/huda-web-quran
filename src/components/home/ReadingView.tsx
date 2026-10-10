@@ -28,7 +28,7 @@ import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
-import { surahNameIn, tr, useUiLang, word } from "@/lib/uiLang";
+import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
 
 /** A run of ayahs inside one Surah (a whole Surah, or part of one in a Juz). */
 export interface ReadingRange {
@@ -833,7 +833,7 @@ export function ReadingView({
             {p.end && isSajdah(ref.surah, ref.ayah) && (
               <PrayerRugIcon
                 role="img"
-                aria-label={tr(lang, "Sajdah", "ஸஜ்தா")}
+                aria-label={t(lang, "Sajdah")}
                 className="ml-2 mr-4 inline-block align-[-0.12em] text-[0.95em] text-amber-300 select-none"
               />
             )}
@@ -855,10 +855,10 @@ export function ReadingView({
                 dir="ltr"
                 aria-hidden="true"
                 className={`ml-2 mr-0.5 inline-block rounded-full bg-amber-300/25 px-3 py-1.5 align-middle ${
-                  lang === "ta" ? "font-tamil" : "[font-family:var(--font-poppins),Poppins,system-ui,sans-serif]"
+                  "font-sans"
                 } text-[11px] sm:text-xs font-semibold leading-none text-amber-300 select-none [letter-spacing:0]`}
               >
-                {tr(lang, "Sajdah", "ஸஜ்தா")}
+                {t(lang, "Sajdah")}
               </span>
             )}
           </span>
@@ -930,7 +930,7 @@ export function ReadingView({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      aria-label={tr(lang, `Reading ${label}`, `${label} — ஓதுதல்`)}
+      aria-label={t(lang, "Reading {label}", { label })}
       className="absolute inset-0 z-20 pointer-events-none"
     >
       {/* Scrolls between the header and the compact player; edges fade out */}
@@ -941,8 +941,8 @@ export function ReadingView({
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (
-            <p className={`py-16 text-center text-sm text-sand-200/70${lang === "ta" ? " font-tamil" : ""}`}>
-              {tr(lang, "This couldn't be loaded right now.", "இப்போது இதை ஏற்ற முடியவில்லை.")}
+            <p className="py-16 text-center text-sm text-sand-200/70">
+              {t(lang, "This couldn't be loaded right now.")}
             </p>
           ) : !pages ? (
             <div className="space-y-4" aria-busy="true">
@@ -981,8 +981,8 @@ export function ReadingView({
               className={`flex items-center gap-2 py-1.5 pl-3.5 ${isMark ? "pr-3.5" : "pr-2"} text-xs sm:text-sm font-medium cursor-pointer hover:text-white`}
             >
               <BookmarkIcon filled className="text-amber-300" />
-              <span className={lang === "ta" ? "font-tamil" : undefined}>
-                {isMark ? word("bookmark", lang) : tr(lang, "Continue reading", "தொடர்ந்து ஓதுக")} ·{" "}
+              <span>
+                {isMark ? word("bookmark", lang) : t(lang, "Continue reading")} ·{" "}
                 {targetHere
                   ? `${word("ayah", lang)} ${target.ayah}`
                   : `${surahNameIn(target.surah, lang)} ${target.surah}:${target.ayah}`}
@@ -992,7 +992,7 @@ export function ReadingView({
               <button
                 type="button"
                 onClick={() => setContinueHidden(true)}
-                aria-label={tr(lang, "Dismiss", "மூடு")}
+                aria-label={t(lang, "Dismiss")}
                 className="grid h-7 w-7 mr-1 place-items-center rounded-full text-sand-200 hover:text-white cursor-pointer"
               >
                 <CloseIcon className="text-sm" />

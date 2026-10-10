@@ -1,6 +1,6 @@
 "use client";
 
-import { UiLangContext, surahNameIn, tr, word } from "@/lib/uiLang";
+import { SetUiLangContext, UI_LANG_KEY, UiLangContext, isUiLang, surahNameIn, t, word, type UiLang } from "@/lib/uiLang";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
@@ -113,10 +113,19 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
-  // The ayah-meaning language (English, Tamil, Urdu…). The app's own labels
-  // follow it only for Tamil — the rest of the interface is in English.
+  // The ayah-meaning language (English, Tamil, Urdu…).
   const [translationLang, setTranslationLang] = useState<TranslationLang>("en");
-  const language: "en" | "ta" = translationLang === "ta" ? "ta" : "en";
+  // The app's own labels: English unless picked otherwise — never follows
+  // the meaning language (picking a Tamil meaning keeps an English app).
+  const [language, setLanguage] = useState<UiLang>("en");
+  const chooseLanguage = (l: UiLang) => {
+    setLanguage(l);
+    try {
+      localStorage.setItem(UI_LANG_KEY, l);
+    } catch {
+      /* ignore */
+    }
+  };
   // Greet the visitor on open; the ayah takes over once playback first starts.
   const [hasPlayed, setHasPlayed] = useState(false);
   useEffect(() => {
@@ -151,6 +160,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       // language, time zone — refined by the place below; translations.ts).
       const savedLang = localStorage.getItem("huda-translation-lang");
       setTranslationLang(isTranslationLang(savedLang) ? savedLang : detectTranslationLang());
+      const savedUi = localStorage.getItem(UI_LANG_KEY);
+      if (isUiLang(savedUi)) setLanguage(savedUi);
       // Reciter is NOT restored: every page load lands on Al-Fatihah with the
       // default reciter (Sheikh Mishari Al-afasi), Surah tab.
     } catch {
@@ -211,14 +222,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   useEffect(() => {
     if (waitingOffline) {
       waitedOfflineRef.current = true;
-      showNotice(
-        language === "ta"
-          ? "இணையம் இல்லை. இணைப்பு வந்ததும் ஓதல் தொடரும்."
-          : "No internet connection. The recitation continues once you're back online.",
-      );
+      showNotice(t(language, "No internet connection. The recitation continues once you're back online."));
     } else if (online && waitedOfflineRef.current) {
       waitedOfflineRef.current = false;
-      showNotice(language === "ta" ? "இணையம் மீண்டும் இணைந்தது" : "Back online");
+      showNotice(t(language, "Back online"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [waitingOffline, online]);
@@ -320,9 +327,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     // This reciter has no per-ayah recording to build the Juz from. Never
     // play another reciter's voice under their name: say so instead.
     showNotice(
-      language === "ta"
-        ? `${selectedReciter.displayName} — ஜுஸ்உ ${juz.id} இந்தக் காரியின் குரலில் இல்லை. ஜுஸ்உ-க்கு வேறு காரியைத் தேர்ந்தெடுக்கவும் (எ.கா. Maher Al-Muaiqly).`
-        : `Juz ${juz.id} isn't available in ${selectedReciter.displayName}'s voice. Choose another reciter for Juz (e.g. Maher Al-Muaiqly).`
+      t(language, "Juz {juz} isn't available in {reciter}'s voice. Choose another reciter for Juz (e.g. Maher Al-Muaiqly).", {
+        juz: juz.id,
+        reciter: selectedReciter.displayName,
+      })
     );
   };
 
@@ -337,14 +345,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     // only estimates, so resuming "the same ayah" would land somewhere else.
     const keepAyah = reciterHasWordTiming(reciter);
     if (!keepAyah) {
-      const what = isPlayingJuz ? `Juz ${activeJuz?.id ?? ""}`.trim() : activeSurah?.name ?? "The Surah";
-      const whatTa = isPlayingJuz
-        ? `ஜுஸ்உ ${activeJuz?.id ?? ""}`.trim()
-        : activeSurah ? surahNameIn(activeSurah.number, "ta") : "இந்த சூரா";
+      const what = isPlayingJuz
+        ? `${word("juz", language)} ${activeJuz?.id ?? ""}`.trim()
+        : activeSurah
+          ? language === "en" ? activeSurah.name : surahNameIn(activeSurah.number, language)
+          : t(language, "The Surah");
       showNotice(
-        language === "ta"
-          ? `${reciter.displayName} — ஒலி மட்டும். ${whatTa} முதல் ஆயத்திலிருந்து மீண்டும் ஒலிக்கும்.`
-          : `${reciter.displayName} is Audio Only — ${what} will play again from the beginning.`
+        t(language, "{reciter} is Audio Only — {what} will play again from the beginning.", { reciter: reciter.displayName, what })
       );
     }
 
@@ -371,11 +378,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       }
       // Reciter has no per-ayah audio → fall through to whole-surah playback
       // (in the NEW reciter's own voice) at the Surah the Juz was on — said so.
-      showNotice(
-        language === "ta"
-          ? `${reciter.displayName} — ஜுஸ்உ ஓதல் இல்லை; அதே சூரா முழுமையாக ஒலிக்கும்.`
-          : `${reciter.displayName} has no Juz recording — playing the Surah instead.`
-      );
+      showNotice(t(language, "{reciter} has no Juz recording — playing the Surah instead.", { reciter: reciter.displayName }));
     }
 
     // Which Surah to (re)start from in the new reciter's voice:
@@ -674,9 +677,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     if (!syncGapKey || !player.isPlaying || lastSyncGapRef.current === syncGapKey) return;
     lastSyncGapRef.current = syncGapKey;
     showNotice(
-      language === "ta"
-        ? `${selectedReciter.displayName} — இந்த சூராவின் ஓதலுக்குச் சொல் ஒத்திசைவு இல்லை; ஒலி மட்டும்.`
-        : `Word Sync isn't available for this Surah in ${selectedReciter.displayName}'s recording — audio only.`
+      t(language, "Word Sync isn't available for this Surah in {reciter}'s recording — audio only.", { reciter: selectedReciter.displayName })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncGapKey, player.isPlaying]);
@@ -935,7 +936,6 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // why it's dimmed — the Juz / Surah starts (or ends) part-way down that
   // Mushaf page; the rest of the page belongs to the one before (after).
   const handleContextTap = (ref: { surah: number; ayah: number }, ctx: "prev" | "next") => {
-    const ta = language === "ta";
     const name = (n: number) => surahNameIn(n, language);
     if (readingJuz) {
       const other = readingJuz.id + (ctx === "prev" ? -1 : 1);
@@ -943,25 +943,20 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       if (!edge) return;
       const at = `${name(edge[0])} ${edge[0]}:${edge[1]}`;
       showNotice(
-        ctx === "prev"
-          ? ta
-            ? `இது ஜுஸ்உ ${other}. ஜுஸ்உ ${readingJuz.id} இந்தப் பக்கத்தின் நடுவில் ${at}-இல் தொடங்குகிறது.`
-            : `This is Juz ${other}. Juz ${readingJuz.id} starts mid-page, at ${at}.`
-          : ta
-          ? `இது ஜுஸ்உ ${other}. ஜுஸ்உ ${readingJuz.id} இந்தப் பக்கத்தின் நடுவில் ${at}-இல் முடிகிறது.`
-          : `This is Juz ${other}. Juz ${readingJuz.id} ends mid-page, at ${at}.`
+        t(
+          language,
+          ctx === "prev" ? "This is Juz {other}. Juz {juz} starts mid-page, at {at}." : "This is Juz {other}. Juz {juz} ends mid-page, at {at}.",
+          { other, juz: readingJuz.id, at }
+        )
       );
       return;
     }
     if (readingSurah === null) return;
     showNotice(
-      ctx === "prev"
-        ? ta
-          ? `இது ${name(ref.surah)}. ${name(readingSurah)} இந்தப் பக்கத்தின் நடுவில் தொடங்குகிறது.`
-          : `This is ${name(ref.surah)}. ${name(readingSurah)} starts mid-page.`
-        : ta
-        ? `இது ${name(ref.surah)}. ${name(readingSurah)} இந்தப் பக்கத்தின் நடுவில் முடிகிறது.`
-        : `This is ${name(ref.surah)}. ${name(readingSurah)} ends mid-page.`
+      t(language, ctx === "prev" ? "This is {other}. {surah} starts mid-page." : "This is {other}. {surah} ends mid-page.", {
+        other: name(ref.surah),
+        surah: name(readingSurah),
+      })
     );
   };
 
@@ -1261,13 +1256,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     const title = deepLinkMeta(shareLink).title;
     // The notice in the UI language (the share card itself stays English).
     const shownTitle =
-      language !== "ta"
+      language === "en"
         ? title
         : shareLink.kind === "juz"
-          ? `${word("juz", "ta")} ${shareLink.juz} · ${QURAN_JUZ[shareLink.juz - 1]?.title ?? ""}`
+          ? `${word("juz", language)} ${shareLink.juz} · ${QURAN_JUZ[shareLink.juz - 1]?.title ?? ""}`
           : shareLink.ayah > 1
-            ? `${surahNameIn(shareLink.surah, "ta")} ${shareLink.surah}:${shareLink.ayah}`
-            : `${surahNameIn(shareLink.surah, "ta")} · ${word("surah", "ta")} ${shareLink.surah}`;
+            ? `${surahNameIn(shareLink.surah, language)} ${shareLink.surah}:${shareLink.ayah}`
+            : `${surahNameIn(shareLink.surah, language)} · ${word("surah", language)} ${shareLink.surah}`;
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ title: `${title} · ${siteConfig.name}`, text: title, url });
@@ -1278,7 +1273,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     }
     try {
       await navigator.clipboard.writeText(url);
-      showNotice(language === "ta" ? `இணைப்பு நகலெடுக்கப்பட்டது · ${shownTitle}` : `Link copied · ${title}`);
+      showNotice(t(language, "Link copied · {title}", { title: shownTitle }));
     } catch {
       showNotice(url);
     }
@@ -1294,6 +1289,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     // the slides, scales and morphs (CSS animations: globals.css).
     <MotionConfig reducedMotion="user">
     <UiLangContext.Provider value={language}>
+    <SetUiLangContext.Provider value={chooseLanguage}>
     <div
       ref={sceneRef}
       // 99% alpha: iOS 26 Safari clips opaque fixed layers short of its bars.
@@ -1402,8 +1398,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             type="button"
             onClick={() => setReadingMode((on) => !on)}
             aria-pressed={readingMode}
-            aria-label={readingMode ? tr(language, "Exit reading mode", "வாசிப்பு முறையிலிருந்து வெளியேறு") : tr(language, "Reading mode", "வாசிப்பு முறை")}
-            data-tooltip={readingMode ? tr(language, "Exit reading mode", "வாசிப்பு முறையிலிருந்து வெளியேறு") : tr(language, "Reading mode", "வாசிப்பு முறை")}
+            aria-label={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
+            data-tooltip={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
             // On: the same line book, in gold (owner: no filled icon) — no
             // coloured ring (nor the focus ring a tap left on it).
             className={`pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none ${
@@ -1478,7 +1474,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 className="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
               >
                 <PlayIcon className="text-emerald-300" />
-                <span className={language === "ta" ? "font-tamil" : ""}>
+                <span>
                   {word("juz", language)} {juzLink} · {QURAN_JUZ[juzLink - 1]?.title}
                 </span>
               </button>
@@ -1493,11 +1489,11 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 className="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
               >
                 <PlayIcon className="text-emerald-300" />
-                <span className={language === "ta" ? "font-tamil" : ""}>
-                  {tr(language, "Continue", "தொடர்க")} ·{" "}
-                  {language === "ta"
-                    ? surahNameIn(getSurahByTrackId(continueAt.bayan.id)?.number ?? 1, "ta")
-                    : continueAt.bayan.title}{" "}
+                <span>
+                  {t(language, "Continue")} ·{" "}
+                  {language === "en"
+                    ? continueAt.bayan.title
+                    : surahNameIn(getSurahByTrackId(continueAt.bayan.id)?.number ?? 1, language)}{" "}
                   {formatClock(continueAt.position)}
                 </span>
               </button>
@@ -1512,7 +1508,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               className="pointer-events-auto flex items-center gap-2 rounded-full border border-amber-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
             >
               <BookmarkIcon filled className="text-amber-300" />
-              <span className={language === "ta" ? "font-tamil" : ""}>
+              <span>
                 {word("bookmark", language)} · {surahNameIn(mainBookmark.surah, language)}{" "}
                 {mainBookmark.surah}:{mainBookmark.ayah}
               </span>
@@ -1542,7 +1538,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               <path d="M3 12a9 9 0 1 0 3-6.7" />
               <path d="M3 4v5h5" />
             </svg>
-            <span className={language === "ta" ? "font-tamil" : ""}>{notice.text}</span>
+            <span>{notice.text}</span>
           </div>
         )}
         {/* Live comments + composer (the Live / view count strip frames the player below) */}
@@ -1561,8 +1557,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             <button
               type="button"
               onClick={handleToggleVisualMode}
-              data-tooltip={visualMode === "video" ? tr(language, "Image mode", "பட முறை") : tr(language, "Video mode", "காணொளி முறை")}
-              aria-label={visualMode === "video" ? tr(language, "Switch to Image Mode", "பட முறைக்கு மாறு") : tr(language, "Switch to Video Mode", "காணொளி முறைக்கு மாறு")}
+              data-tooltip={visualMode === "video" ? t(language, "Image mode") : t(language, "Video mode")}
+              aria-label={visualMode === "video" ? t(language, "Switch to Image Mode") : t(language, "Switch to Video Mode")}
               className="relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']"
             >
               {visualMode === "video" ? (
@@ -1590,8 +1586,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                   handleToggleBookmark();
                 }}
                 aria-pressed={bookmarkOn}
-                aria-label={bookmarkOn ? tr(language, "Remove bookmark", "புக்மார்க்கை நீக்கு") : tr(language, "Add bookmark", "புக்மார்க் சேர்")}
-                data-tooltip={bookmarkOn ? tr(language, "Remove bookmark", "புக்மார்க்கை நீக்கு") : tr(language, "Add bookmark", "புக்மார்க் சேர்")}
+                aria-label={bookmarkOn ? t(language, "Remove bookmark") : t(language, "Add bookmark")}
+                data-tooltip={bookmarkOn ? t(language, "Remove bookmark") : t(language, "Add bookmark")}
                 className={`pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer ${bookmarkOn ? "text-amber-300" : "text-sand-200"}`}
               >
                 {bookmarkOn ? <BookmarkIcon filled className="text-base sm:text-lg" /> : <BookmarkAddIcon className="text-base sm:text-lg" />}
@@ -1601,8 +1597,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               <button
                 type="button"
                 onClick={handleShare}
-                aria-label={language === "ta" ? "பகிர்" : "Share"}
-                data-tooltip={language === "ta" ? "பகிர்" : "Share"}
+                aria-label={t(language, "Share")}
+                data-tooltip={t(language, "Share")}
                 className="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
               >
                 <ShareIcon className="text-base sm:text-lg" />
@@ -1696,6 +1692,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />
     </div>
+    </SetUiLangContext.Provider>
     </UiLangContext.Provider>
     </MotionConfig>
   );

@@ -58,6 +58,11 @@ const config: Config = {
           "var(--font-sans)",
           "HuDa Tamil",
           "var(--font-tamil)",
+          // The other app languages' scripts (each face only covers its own).
+          "var(--font-naskh)",
+          "var(--font-malayalam)",
+          "var(--font-devanagari)",
+          "var(--font-bengali)",
           "system-ui",
           "sans-serif",
         ],

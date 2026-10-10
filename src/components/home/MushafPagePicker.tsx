@@ -6,7 +6,7 @@ import { QURAN_SURAHS } from "@/lib/data/service";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS } from "@/lib/data/mushafPages";
 import { cn } from "@/lib/utils";
 import { SELECTED, UNSELECTED_EDGE } from "@/components/ui/selection";
-import { surahNameIn, tr, useUiLang, word } from "@/lib/uiLang";
+import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
 
 interface MushafPagePickerProps {
   open: boolean;
@@ -33,12 +33,12 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
     if (!open) return;
     setQuery("");
     // After the sheet mounts: bring the current page to the middle.
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       listRef.current
         ?.querySelector<HTMLElement>(`[data-page="${currentPage}"]`)
         ?.scrollIntoView({ block: "center" });
     }, 50);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [open, currentPage]);
 
   const typed = parseInt(query, 10);
@@ -60,12 +60,12 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
   };
 
   return (
-    <ActionSheet open={open} onClose={onClose} label={tr(lang, "Choose a Mushaf page", "முஸ்ஹஃப் பக்கத்தைத் தேர்ந்தெடுக்கவும்")} className="h-[70dvh]">
+    <ActionSheet open={open} onClose={onClose} label={t(lang, "Choose a Mushaf page")} className="h-[70dvh]">
       <div className="flex items-baseline justify-between pb-3">
-        <h3 className={cn("text-lg font-black text-white tracking-tight", lang === "ta" && "font-tamil")}>
-          {tr(lang, "Go to page", "பக்கத்திற்குச் செல்")}
+        <h3 className="text-lg font-black text-white tracking-tight">
+          {t(lang, "Go to page")}
         </h3>
-        <span className={cn("text-[11px] font-bold uppercase tracking-widest text-emerald-400", lang === "ta" && "font-tamil")}>
+        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
           {word("page", lang)} {currentPage} / {range[1]}
         </span>
       </div>
@@ -80,12 +80,11 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
           type="search"
           inputMode="numeric"
           enterKeyHint="go"
-          placeholder={tr(lang, "Page number or Surah…", "பக்க எண் அல்லது சூரா…")}
+          placeholder={t(lang, "Page number or Surah…")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className={cn(
             "w-full rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
-            lang === "ta" && "font-tamil"
           )}
         />
       </form>
@@ -104,18 +103,18 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
                 current ? SELECTED : cn(UNSELECTED_EDGE, "text-sand-100 hover:bg-white/10")
               )}
             >
-              <span className={cn("font-bold tabular-nums", lang === "ta" && "font-tamil")}>
+              <span className="font-bold tabular-nums">
                 {word("page", lang)} {page}
               </span>
-              <span className={cn("truncate text-xs", lang === "ta" && "font-tamil", current ? "text-white/90" : "text-sand-200/60")}>
+              <span className={cn("truncate text-xs", current ? "text-white/90" : "text-sand-200/60")}>
                 {surahNameIn(surah, lang)} · {surah}:{ayah}
               </span>
             </button>
           );
         })}
         {pages.length === 0 && (
-          <p className={cn("py-8 text-center text-xs text-sand-200/60", lang === "ta" && "font-tamil")}>
-            {tr(lang, "No matching page.", "பொருந்தும் பக்கம் இல்லை.")}
+          <p className="py-8 text-center text-xs text-sand-200/60">
+            {t(lang, "No matching page.")}
           </p>
         )}
       </div>

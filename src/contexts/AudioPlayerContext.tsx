@@ -1,6 +1,6 @@
 "use client";
 
-import { surahNameIn, type UiLang } from "@/lib/uiLang";
+import { UI_LANG_KEY, isUiLang, surahNameIn, t, type UiLang } from "@/lib/uiLang";
 import {
   createContext,
   useCallback,
@@ -169,15 +169,18 @@ function surahMissingFor(bayan: BayanWithRelations): string | null {
   const num = Number(bayan.id.replace(SURAH_TRACK_ID_PREFIX, ""));
   const reciter = resolveActiveReciter(bayan);
   if (reciterHasSurah(reciter, num)) return null;
-  return storedUiLang() === "ta"
-    ? `${surahNameIn(num, "ta")} — ${reciter.displayName} அவர்களின் ஒலிப்பதிவுகளில் இல்லை. வேறு காரியைத் தேர்ந்தெடுக்கவும்.`
-    : `${bayan.title} isn't available in ${reciter.displayName}'s recordings. Choose another reciter.`;
+  const lang = storedUiLang();
+  return t(lang, "{surah} isn't available in {reciter}'s recordings. Choose another reciter.", {
+    surah: lang === "en" ? bayan.title : surahNameIn(num, lang),
+    reciter: reciter.displayName,
+  });
 }
 
 /** The UI language as last picked (this provider sits above the language context). */
 function storedUiLang(): UiLang {
   try {
-    return localStorage.getItem("huda-translation-lang") === "ta" ? "ta" : "en";
+    const v = localStorage.getItem(UI_LANG_KEY);
+    return isUiLang(v) ? v : "en";
   } catch {
     return "en";
   }
@@ -1385,11 +1388,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     retryCountRef.current = 0;
     setIsPlaying(false);
     setIsLoading(false);
-    setError(
-      storedUiLang() === "ta"
-        ? "இந்த ஒலியை ஏற்ற முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் இயக்கவும்."
-        : "Couldn't load this audio. Check your connection and press play to try again."
-    );
+    setError(t(storedUiLang(), "Couldn't load this audio. Check your connection and press play to try again."));
   }, [current, advanceAyahSequence]);
 
   const value = useMemo<AudioPlayerApi>(

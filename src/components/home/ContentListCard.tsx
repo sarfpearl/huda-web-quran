@@ -6,10 +6,7 @@ import { cn } from "@/lib/utils";
 import { mediaUrl } from "@/lib/media";
 import { CategoryIcon, ViewCountIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
-import { tr, useUiLang } from "@/lib/uiLang";
-
-// Tamil script in a label → the Tamil face (Latin titles keep the UI font).
-const hasTamil = (t?: string) => !!t && /[\u0B80-\u0BFF]/.test(t);
+import { t, useUiLang } from "@/lib/uiLang";
 
 export interface ContentListCardProps {
   /** Padded index number string e.g. "01", "02", ... "114" */
@@ -111,7 +108,7 @@ export function ContentListCard({
       {/* 3. Main Title & Subtitle Metadata */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={cn("truncate text-xs md:text-sm font-bold text-white tracking-tight", hasTamil(title) && "font-tamil")}>
+          <span className="truncate text-xs md:text-sm font-bold text-white tracking-tight">
             {title}
           </span>
           {secondaryLabel && (
@@ -122,21 +119,21 @@ export function ContentListCard({
                 "shrink-0 font-semibold text-emerald-300/90",
                 isArabicLabel
                   ? "font-arabic text-xs md:text-sm"
-                  : cn("text-[10px] md:text-[11px]", hasTamil(secondaryLabel) && "font-tamil")
+                  : "text-[10px] md:text-[11px]"
               )}
             >
               · {secondaryLabel}
             </span>
           )}
         </div>
-        <p className={cn("line-clamp-1 mt-0.5 text-[11px] text-sand-200/60 font-normal", hasTamil(subtitle) && "font-tamil")}>
+        <p className="line-clamp-1 mt-0.5 text-[11px] text-sand-200/60 font-normal">
           {subtitle}
         </p>
       </div>
 
       {/* 4. Trailing Action Button / Icon / Equalizer */}
       <div
-        title={showCount ? tr(lang, `${viewCount} listeners`, `${viewCount} கேட்டவர்கள்`) : undefined}
+        title={showCount ? t(lang, "{n} listeners", { n: viewCount ?? 0 }) : undefined}
         className={cn(
           "flex h-8 shrink-0 items-center justify-center gap-1 rounded-full text-sm transition-all",
           showCount ? "min-w-8 px-2.5" : "w-8",
@@ -146,7 +143,7 @@ export function ContentListCard({
         )}
       >
         {isActive && isPlaying ? (
-          <span className="flex items-end gap-0.5" aria-label={tr(lang, "Playing", "ஒலிக்கிறது")}>
+          <span className="flex items-end gap-0.5" aria-label={t(lang, "Playing")}>
             <span className="h-3 w-0.5 animate-[equalizer_0.6s_ease-in-out_infinite] bg-amber-300" />
             <span className="h-4 w-0.5 animate-[equalizer_0.8s_ease-in-out_infinite] bg-amber-300" />
             <span className="h-2.5 w-0.5 animate-[equalizer_0.5s_ease-in-out_infinite] bg-amber-300" />
