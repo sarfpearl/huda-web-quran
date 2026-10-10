@@ -9,6 +9,7 @@ import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIco
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
+import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { PLAYER_GLASS, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
@@ -119,6 +120,7 @@ export function TopicPickerModal({
   const titleId = useId();
   useDialogFocus(isOpen, panelRef, triggerRef);
   useBackToClose(isOpen, () => setIsOpen(false));
+  useOnlyOneSheet(isOpen, () => setIsOpen(false));
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (ev: KeyboardEvent) => {
