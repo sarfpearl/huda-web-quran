@@ -136,10 +136,12 @@ export function TimeLocationWidget({
           setLocation(plain(city));
         }
         savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now() });
+        return true;
       }
     } catch {
       // Keep default location if reverse geocoding fails
     }
+    return false;
   }, []);
 
   // Asked only once the splash is gone, and the next onboarding step (the
@@ -286,13 +288,12 @@ export function TimeLocationWidget({
 
   // "Update location" in the prayer sheet: a fresh fix (no cached position),
   // renamed whatever the distance. A tap, so it may prompt.
-  const [locating, setLocating] = useState<"idle" | "busy" | "failed">("idle");
+  const [locating, setLocating] = useState<"idle" | "busy" | "done" | "failed" | "unnamed">("idle");
   const locateNow = () => {
     setLocating("busy");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocating("idle");
-        void applyPosition(position);
+        void applyPosition(position).then((ok) => setLocating(ok ? "done" : "unnamed"));
       },
       () => setLocating("failed"),
       { timeout: 15000, maximumAge: 0 },
@@ -452,7 +453,10 @@ export function TimeLocationWidget({
       </button>
       <PrayerTimesSheet
         open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
+        onClose={() => {
+          setSheetOpen(false);
+          setLocating("idle");
+        }}
         coords={coords}
         place={location}
         now={now ?? new Date()}

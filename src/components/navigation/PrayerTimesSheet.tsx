@@ -60,7 +60,7 @@ export function PrayerTimesSheet({
   current: Waqt;
   /** Look up the device's place again now (a tap, so it may prompt). */
   onLocate: () => void;
-  locating: "idle" | "busy" | "failed";
+  locating: "idle" | "busy" | "done" | "failed" | "unnamed";
 }) {
   const today = dayTimes(coords.lat, coords.lon, new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12), method, asr).times;
   const set = (p: PrayerPrefs) => {
@@ -83,6 +83,16 @@ export function PrayerTimesSheet({
         >
           {locating === "busy" ? "Finding your location…" : "Update location"}
         </button>
+        {locating === "done" && (
+          <p role="status" className="text-[11px] text-emerald-200">
+            ✓ Location updated{place ? ` · ${place}` : ""}
+          </p>
+        )}
+        {locating === "unnamed" && (
+          <p role="status" className="text-[11px] text-sand-200/70">
+            Couldn&apos;t look up the place name. Check your connection and try again.
+          </p>
+        )}
         {locating === "failed" && (
           <p role="status" className="text-[11px] text-sand-200/70">
             Couldn&apos;t get your location. Check that Location is on for this browser in your device settings.
