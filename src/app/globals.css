@@ -2,6 +2,19 @@
    self-hosted by next/font (src/app/fonts.ts), which sets --font-poppins,
    --font-tamil, --font-amiri, --font-urdu … on <html>. */
 
+/* Tamil at the Latin UI's size: Noto Serif Tamil draws ~12% larger than
+   Poppins at the same font-size, so every Tamil label and meaning looked a
+   size up. Its Tamil subset again, scaled down (size-adjust) and named first
+   wherever --font-tamil is used (tailwind.config, translations.ts). */
+@font-face {
+  font-family: 'HuDa Tamil';
+  src: url('/fonts/noto-serif-tamil-ui.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  size-adjust: 88%;
+  unicode-range: U+0964-0965, U+0B82-0BFA, U+200C-200D, U+20B9, U+25CC;
+}
+
 /* KFGQPC Uthmanic Script HAFS v0.18 — Madinah Mushaf font for Quran Arabic
    text, the build Quran.com ships (v0.09 couldn't draw U+06ED). It's made for
    KFGQPC-encoded text (text_qpc_hafs, in the glyph data). No local() first:

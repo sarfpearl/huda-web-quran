@@ -56,7 +56,13 @@ const config: Config = {
           "var(--font-poppins)",
           "Poppins",
           "var(--font-sans)",
+          "HuDa Tamil",
           "var(--font-tamil)",
+          // The other app languages' scripts (each face only covers its own).
+          "var(--font-naskh)",
+          "var(--font-malayalam)",
+          "var(--font-devanagari)",
+          "var(--font-bengali)",
           "system-ui",
           "sans-serif",
         ],
@@ -66,7 +72,7 @@ const config: Config = {
           "sans-serif",
         ],
         poppins: ["var(--font-poppins)", "Poppins", "sans-serif"],
-        tamil: ["var(--font-tamil)", "Noto Serif Tamil", "serif"],
+        tamil: ["HuDa Tamil", "var(--font-tamil)", "Noto Serif Tamil", "serif"],
         arabic: ["var(--font-arabic)", "serif"],
       },
       borderRadius: {

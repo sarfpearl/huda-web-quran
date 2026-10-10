@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { mediaUrl } from "@/lib/media";
 import { CategoryIcon, ViewCountIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
+import { t, useUiLang } from "@/lib/uiLang";
 
 export interface ContentListCardProps {
   /** Padded index number string e.g. "01", "02", ... "114" */
@@ -59,6 +60,7 @@ export function ContentListCard({
   onClick,
   className,
 }: ContentListCardProps) {
+  const lang = useUiLang();
   const showCount = typeof viewCount === "number";
   const [imgSrc, setImgSrc] = React.useState(imageSrc);
 
@@ -131,7 +133,7 @@ export function ContentListCard({
 
       {/* 4. Trailing Action Button / Icon / Equalizer */}
       <div
-        title={showCount ? `${viewCount} listeners` : undefined}
+        title={showCount ? t(lang, "{n} listeners", { n: viewCount ?? 0 }) : undefined}
         className={cn(
           "flex h-8 shrink-0 items-center justify-center gap-1 rounded-full text-sm transition-all",
           showCount ? "min-w-8 px-2.5" : "w-8",
@@ -141,7 +143,7 @@ export function ContentListCard({
         )}
       >
         {isActive && isPlaying ? (
-          <span className="flex items-end gap-0.5" aria-label="Playing">
+          <span className="flex items-end gap-0.5" aria-label={t(lang, "Playing")}>
             <span className="h-3 w-0.5 animate-[equalizer_0.6s_ease-in-out_infinite] bg-amber-300" />
             <span className="h-4 w-0.5 animate-[equalizer_0.8s_ease-in-out_infinite] bg-amber-300" />
             <span className="h-2.5 w-0.5 animate-[equalizer_0.5s_ease-in-out_infinite] bg-amber-300" />

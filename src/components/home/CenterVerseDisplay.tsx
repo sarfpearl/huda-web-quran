@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { PrayerRugIcon } from "@/components/ui/Icon";
+import { isRtl, t, useUiLang, word, type UiLang } from "@/lib/uiLang";
 import {
   getEffectiveWords,
   getVoiceProgressInSegment,
@@ -31,7 +32,7 @@ interface CenterVerseDisplayProps {
   currentSegment?: RecitationSegment | null;
   currentTime?: number;
   isPlaying?: boolean;
-  language?: "en" | "ta";
+  language?: UiLang;
   /** The ayah-meaning language (any of TRANSLATIONS); defaults to `language`. */
   translationLang?: TranslationLang;
   showTranslation?: boolean;
@@ -53,13 +54,12 @@ interface CenterVerseDisplayProps {
   script?: QuranScript;
 }
 
-const GREETING = {
-  en: { line: "As-salamu alaykum", meaning: "Peace be upon you" },
-  ta: { line: "அஸ்ஸலாமு அலைக்கும்", meaning: "உங்கள் மீது சாந்தி உண்டாவதாக" },
-} as const;
+/** UI languages in Latin script: the greeting keeps the serif face on phones. */
+const LATIN_UI: readonly UiLang[] = ["en", "id", "tr", "fr", "ms"];
 
-function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSSProperties }) {
-  const g = GREETING[language];
+function Greeting({ language, style }: { language: UiLang; style: React.CSSProperties }) {
+  const face = LATIN_UI.includes(language) ? "font-serif sm:font-sans" : "font-sans";
+  const dir = isRtl(language) ? "rtl" : undefined;
   // Fit: shrink the whole greeting to the room between the header and the
   // player (short landscape phones, tall players); hide it when there is
   // effectively none.
@@ -105,15 +105,17 @@ function Greeting({ language, style }: { language: "en" | "ta"; style: React.CSS
         </h2>
         <p
           lang={language}
-          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-white text-2xl sm:text-2xl md:text-3xl tracking-wide quran-translation-shadow`}
+          dir={dir}
+          className={`${face} text-white text-2xl sm:text-2xl md:text-3xl tracking-wide quran-translation-shadow`}
         >
-          {g.line}
+          {t(language, "As-salamu alaykum")}
         </p>
         <p
           lang={language}
-          className={`${language === "ta" ? "font-tamil" : "font-serif sm:font-sans"} text-sand-50/75 text-base sm:text-base md:text-lg tracking-wide quran-translation-shadow`}
+          dir={dir}
+          className={`${face} text-sand-50/75 text-base sm:text-base md:text-lg tracking-wide quran-translation-shadow`}
         >
-          {g.meaning}
+          {t(language, "Peace be upon you")}
         </p>
       </div>
     </div>
@@ -211,11 +213,12 @@ function overflows(pane: HTMLElement) {
 }
 
 function AyahOrnament({ n }: { n: number }) {
+  const lang = useUiLang();
   return (
     <span
       lang="ar"
       dir="rtl"
-      aria-label={`Ayah ${n}`}
+      aria-label={`${word("ayah", lang)} ${n}`}
       className="font-arabic text-amber-300 select-none align-middle mx-1.5 tracking-normal [letter-spacing:0] text-[1.2em]"
     >
       {toArabicNumerals(n)}
@@ -722,11 +725,11 @@ export function CenterVerseDisplay({
                         {wordEl}
                         {/* Ayah of prostration: the Sajdah icon, in place of the font's ۩. */}
                         {!isPrelude && isSajdah(surahNum, ayahNum) && (
-                          <PrayerRugIcon role="img" aria-label="Sajdah" className="ml-2 text-[0.6em] text-amber-300 select-none" />
+                          <PrayerRugIcon role="img" aria-label={t(language, "Sajdah")} className="ml-2 text-[0.6em] text-amber-300 select-none" />
                         )}
                         {glyphs?.e ? (
                           <span
-                            aria-label={`Ayah ${ayahNum}`}
+                            aria-label={`${word("ayah", language)} ${ayahNum}`}
                             className="select-none mx-1.5"
                             style={glyphStyle(glyphs.e[1], tajweed)}
                           >

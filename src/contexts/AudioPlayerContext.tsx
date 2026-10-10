@@ -1,5 +1,6 @@
 "use client";
 
+import { UI_LANG_KEY, isUiLang, surahNameIn, t, type UiLang } from "@/lib/uiLang";
 import {
   createContext,
   useCallback,
@@ -168,7 +169,21 @@ function surahMissingFor(bayan: BayanWithRelations): string | null {
   const num = Number(bayan.id.replace(SURAH_TRACK_ID_PREFIX, ""));
   const reciter = resolveActiveReciter(bayan);
   if (reciterHasSurah(reciter, num)) return null;
-  return `${bayan.title} isn't available in ${reciter.displayName}'s recordings. Choose another reciter.`;
+  const lang = storedUiLang();
+  return t(lang, "{surah} isn't available in {reciter}'s recordings. Choose another reciter.", {
+    surah: lang === "en" ? bayan.title : surahNameIn(num, lang),
+    reciter: reciter.displayName,
+  });
+}
+
+/** The UI language as last picked (this provider sits above the language context). */
+function storedUiLang(): UiLang {
+  try {
+    const v = localStorage.getItem(UI_LANG_KEY);
+    return isUiLang(v) ? v : "en";
+  } catch {
+    return "en";
+  }
 }
 
 /** The next / previous Surah (wrapping 114 ↔ 1) the reciter's server has. */
@@ -1041,19 +1056,19 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     const reciter = resolveActiveReciter(track);
     const abs = (u: string) => new URL(u, window.location.href).href;
-    // The scene lives on R2 (cross-origin, full-size). The home-screen app's
-    // lock screen skips such artwork — and can then blank the whole card — so
-    // it goes through the site's own image optimizer: same origin, 512 px.
+    // The scene lives on R2 (cross-origin, full-size, wide). The home-screen
+    // app's lock screen skips such artwork — and can then blank the whole
+    // card — and shows a wide one as a wide card, so it comes through the
+    // site's own artwork route: same origin, a 512 px square.
     const cover = track.coverImageUrl;
-    const art = cover && /^https?:/i.test(cover) ? `/_next/image?url=${encodeURIComponent(cover)}&w=512&q=75` : cover;
+    const art = cover ? `/api/artwork?src=${encodeURIComponent(cover)}` : null;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: reciter?.displayName ?? track.speaker?.name ?? "",
       album: "HuDa Web Quran",
       // The scene, then the logo (same origin) if the scene can't be shown.
-      // No `type`: the optimizer picks the format per device.
       artwork: [
-        ...(art ? [{ src: abs(art), sizes: "512x512" }] : []),
+        ...(art ? [{ src: abs(art), sizes: "512x512", type: "image/jpeg" }] : []),
         { src: abs("/icon-512.png"), sizes: "512x512", type: "image/png" },
         { src: abs("/icon-192.png"), sizes: "192x192", type: "image/png" },
       ],
@@ -1373,7 +1388,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     retryCountRef.current = 0;
     setIsPlaying(false);
     setIsLoading(false);
-    setError("Couldn't load this audio. Check your connection and press play to try again.");
+    setError(t(storedUiLang(), "Couldn't load this audio. Check your connection and press play to try again."));
   }, [current, advanceAyahSequence]);
 
   const value = useMemo<AudioPlayerApi>(

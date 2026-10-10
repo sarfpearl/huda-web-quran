@@ -16,6 +16,7 @@ import { CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/componen
 import { cn } from "@/lib/utils";
 import { ActionSheet, useIsMobile } from "@/components/ui/ActionSheet";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
+import { surahNameIn, t, word, type UiLang } from "@/lib/uiLang";
 
 /*
  * View count, live listeners and comments for the Surah / Juz on screen.
@@ -51,34 +52,7 @@ interface QuranComment {
   liked?: boolean;
 }
 
-type Lang = "en" | "ta";
-
-const T = {
-  say: { en: "Say something…", ta: "ஏதாவது சொல்லுங்கள்…" },
-  yourName: { en: "Your name first…", ta: "முதலில் உங்கள் பெயர்…" },
-  views: { en: "View count", ta: "பார்வைகள்" },
-  hours: { en: "Listening time", ta: "கேட்ட நேரம்" },
-  users: { en: "Listeners", ta: "கேட்டவர்கள்" },
-  live: { en: "Live", ta: "நேரலை" },
-  overall: { en: "Overall view count", ta: "மொத்த பார்வைகள்" },
-  surahViews: { en: "Surah view count", ta: "சூரா பார்வைகள்" },
-  like: { en: "Like", ta: "விரும்பு" },
-  unlike: { en: "Unlike", ta: "விருப்பத்தை நீக்கு" },
-  juzViews: { en: "Juz view count", ta: "ஜுஸ் பார்வைகள்" },
-  liveNow: { en: "Listening now", ta: "இப்போது கேட்பவர்கள்" },
-  allSite: { en: "All Surahs & Juz", ta: "அனைத்தும்" },
-  top: { en: "Most listened Surah", ta: "அதிகம் கேட்கப்பட்ட சூரா" },
-  del: { en: "Delete?", ta: "நீக்கவா?" },
-  unavailable: { en: "Not available right now.", ta: "தற்போது கிடைக்கவில்லை." },
-  rate: { en: "Please wait a moment.", ta: "சிறிது நேரம் காத்திருக்கவும்." },
-  failed: { en: "Couldn't post. Try again.", ta: "பதிவிட முடியவில்லை." },
-  comment: { en: "Comments", ta: "கருத்துகள்" },
-  change: { en: "Change name", ta: "பெயரை மாற்று" },
-  reply: { en: "Reply", ta: "பதில்" },
-  remove: { en: "Delete", ta: "நீக்கு" },
-  replyingTo: { en: "Replying to", ta: "பதில் அளிப்பது:" },
-  replyTo: { en: "Reply to", ta: "பதில்:" },
-} as const;
+type Lang = UiLang;
 
 const NAME_KEY = "huda-comment-name";
 /** Comments are one general stream for everyone (not per Surah / Juz). */
@@ -100,17 +74,28 @@ export function quranContentOf(trackId: string | null | undefined): QuranContent
   return null;
 }
 
-export const contentLabel = (c: { kind: QuranKind | "general"; id: number } | null) =>
-  !c ? "—" : c.kind === "general" ? "General" : c.kind === "juz" ? `Juz ${c.id}${QURAN_JUZ[c.id - 1] ? ` · ${QURAN_JUZ[c.id - 1].title}` : ""}` : QURAN_SURAHS[c.id - 1]?.name ?? `Surah ${c.id}`;
+export const contentLabel = (c: { kind: QuranKind | "general"; id: number } | null, lang: Lang = "en") =>
+  !c
+    ? "—"
+    : c.kind === "general"
+      ? t(lang, "General")
+      : c.kind === "juz"
+        ? lang !== "en"
+          ? `${word("juz", lang)} ${c.id}`
+          : `Juz ${c.id}${QURAN_JUZ[c.id - 1] ? ` · ${QURAN_JUZ[c.id - 1].title}` : ""}`
+        : lang !== "en"
+          ? surahNameIn(c.id, lang)
+          : QURAN_SURAHS[c.id - 1]?.name ?? `Surah ${c.id}`;
 
-const surahName = (n: number | null | undefined) => (n ? QURAN_SURAHS[n - 1]?.name ?? `Surah ${n}` : "—");
+const surahName = (n: number | null | undefined, lang: Lang = "en") =>
+  !n ? "—" : lang !== "en" ? surahNameIn(n, lang) : QURAN_SURAHS[n - 1]?.name ?? `Surah ${n}`;
 export const compactCount = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
-function formatHours(seconds: number): string {
-  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+function formatHours(seconds: number, lang: Lang = "en"): string {
+  if (seconds < 3600) return t(lang, "{n} min", { n: Math.round(seconds / 60) });
   const h = seconds / 3600;
-  return `${h >= 100 ? Math.round(h).toLocaleString() : h.toFixed(1)} hrs`;
+  return t(lang, "{n} hrs", { n: h >= 100 ? Math.round(h).toLocaleString() : h.toFixed(1) });
 }
 
 /** Runs `fn` now, every `ms` while the tab is visible, and again as soon as
@@ -360,7 +345,7 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
   if (!e.content) return null;
   const liked = Boolean(e.likes?.liked);
   const count = e.likes?.count ?? 0;
-  const tip = liked ? T.unlike[lang] : T.like[lang];
+  const tip = liked ? t(lang, "Unlike") : t(lang, "Like");
   return (
     <button
       type="button"
@@ -487,14 +472,14 @@ function useFitLevel(ref: RefObject<HTMLElement>, max: number, padFor: (level: n
   return level;
 }
 
-function Metric({ label, value, live }: { label: string; value: string; live?: boolean }) {
+function Metric({ label, value, live, lang = "en" }: { label: string; value: string; live?: boolean; lang?: Lang }) {
   return (
     <div className="rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-lg font-semibold text-white tabular-nums">
         {live && <LiveDot on />}
         {value}
       </div>
-      <div className="text-[11px] text-sand-200/70">{label}</div>
+      <div className={"text-[11px] text-sand-200/70"}>{label}</div>
     </div>
   );
 }
@@ -659,7 +644,7 @@ function CommentBubble({
           type="button"
           onClick={() => onLike(c.id)}
           aria-pressed={Boolean(c.liked)}
-          aria-label={`${c.liked ? T.unlike[lang] : T.like[lang]}${likes ? `: ${likes}` : ""}`}
+          aria-label={`${c.liked ? t(lang, "Unlike") : t(lang, "Like")}${likes ? `: ${likes}` : ""}`}
           className={cn(
             "flex items-center gap-1 py-0.5 transition-colors active:scale-90",
             c.liked ? "text-emerald-400" : "hover:text-white"
@@ -671,9 +656,9 @@ function CommentBubble({
         <button
           type="button"
           onClick={() => onReply(c)}
-          className={cn("py-0.5 hover:text-white", lang === "ta" && "font-tamil")}
+          className={"py-0.5 hover:text-white"}
         >
-          {T.reply[lang]}
+          {t(lang, "Reply")}
         </button>
         {/* Own comments: Delete → Delete? (confirm within 3 s) */}
         {c.mine &&
@@ -681,18 +666,18 @@ function CommentBubble({
             <button
               type="button"
               onClick={() => onDelete(c.id)}
-              className={cn("rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-red-500", lang === "ta" && "font-tamil")}
+              className={"rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-red-500"}
             >
-              {T.del[lang]}
+              {t(lang, "Delete?")}
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setConfirm(true)}
-              aria-label="Delete my comment"
-              className={cn("py-0.5 hover:text-red-300", lang === "ta" && "font-tamil")}
+              aria-label={t(lang, "Delete my comment")}
+              className={"py-0.5 hover:text-red-300"}
             >
-              {T.remove[lang]}
+              {t(lang, "Delete")}
             </button>
           ))}
       </div>
@@ -764,7 +749,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     setMessage(null);
     const err = await e.post(value, replyTo?.id);
     setBusy(false);
-    if (err) setMessage(err === "rate" ? T.rate[lang] : T.failed[lang]);
+    if (err) setMessage(err === "rate" ? t(lang, "Please wait a moment.") : t(lang, "Couldn't post. Try again."));
     else {
       setText("");
       setReplyTo(null);
@@ -796,7 +781,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
       <button
         type="button"
         onClick={() => setComposerOpen(false)}
-        aria-label="Close comment box"
+        aria-label={t(lang, "Close comment box")}
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sand-200/70 hover:bg-white/10 hover:text-white"
       >
         <CloseIcon className="text-sm" />
@@ -805,7 +790,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
         <button
           type="button"
           onClick={() => setName("")}
-          title={T.change[lang]}
+          title={t(lang, "Change name")}
           className="max-w-[28%] shrink-0 truncate text-xs font-bold text-emerald-300 hover:underline"
         >
           {name}
@@ -819,23 +804,20 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
         disabled={!e.configured}
         placeholder={
           !e.configured
-            ? T.unavailable[lang]
+            ? t(lang, "Not available right now.")
             : !name
-              ? T.yourName[lang]
+              ? t(lang, "Your name first…")
               : replyTo
-                ? `${T.replyTo[lang]} ${replyTo.name}…`
-                : T.say[lang]
+                ? `${t(lang, "Reply to")} ${replyTo.name}…`
+                : t(lang, "Say something…")
         }
-        aria-label={name ? T.say[lang] : T.yourName[lang]}
-        className={cn(
-          "min-w-0 flex-1 bg-transparent text-base sm:text-sm text-white placeholder:text-sand-200/45 focus:outline-none",
-          lang === "ta" && "font-tamil"
-        )}
+        aria-label={name ? t(lang, "Say something…") : t(lang, "Your name first…")}
+        className="min-w-0 flex-1 bg-transparent text-base sm:text-sm text-white placeholder:text-sand-200/45 focus:outline-none"
       />
       <button
         type="submit"
         disabled={busy || !text.trim() || !e.configured}
-        aria-label="Send"
+        aria-label={t(lang, "Send")}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 disabled:opacity-40"
       >
         <SendIcon className="text-base" />
@@ -850,20 +832,20 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     <ActionSheet
       open={composerOpen}
       onClose={() => setComposerOpen(false)}
-      label={T.comment[lang]}
+      label={t(lang, "Comments")}
       keepAttr="data-engagement-keep"
       className="h-[70dvh]"
     >
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Header: "Comments (17)" · close (same button as the reciter sheet) */}
         <div className="flex shrink-0 items-center justify-between gap-3 px-1 pb-2">
-          <h2 className={cn("text-base font-bold text-white", lang === "ta" && "font-tamil")}>
-            {T.comment[lang]} <span className="tabular-nums">({e.commentsTotal})</span>
+          <h2 className={"text-base font-bold text-white"}>
+            {t(lang, "Comments")} <span className="tabular-nums">({e.commentsTotal})</span>
           </h2>
           <button
             type="button"
             onClick={() => setComposerOpen(false)}
-            aria-label="Close comments"
+            aria-label={t(lang, "Close comments")}
             className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
           >
             <CloseIcon className="text-sm" />
@@ -871,7 +853,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
         </div>
         <ul
           ref={listRef}
-          aria-label={T.comment[lang]}
+          aria-label={t(lang, "Comments")}
           // Soft fade under the header and above the box instead of a hard cut;
           // the padding keeps the first / last comment clear of the fade.
           className="no-scrollbar -mx-1 flex min-h-0 flex-1 flex-col items-start gap-1.5 overflow-y-auto overscroll-contain px-1 pt-5 pb-5 [mask-image:linear-gradient(to_bottom,transparent,black_28px,black_calc(100%-24px),transparent)]"
@@ -884,13 +866,13 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
         </ul>
         {replyTo && (
           <div className="mb-1.5 flex shrink-0 items-center justify-between gap-2 px-3 text-xs text-sand-200/70">
-            <span className={cn("min-w-0 truncate", lang === "ta" && "font-tamil")}>
-              {T.replyingTo[lang]} <span className="font-bold text-emerald-300">{replyTo.name}</span>
+            <span className={"min-w-0 truncate"}>
+              {t(lang, "Replying to")} <span className="font-bold text-emerald-300">{replyTo.name}</span>
             </span>
             <button
               type="button"
               onClick={() => setReplyTo(null)}
-              aria-label="Cancel reply"
+              aria-label={t(lang, "Cancel reply")}
               className="grid h-6 w-6 shrink-0 place-items-center rounded-full hover:bg-white/10 hover:text-white"
             >
               <CloseIcon className="text-[11px]" />
@@ -971,12 +953,12 @@ export function PlayerStatsFrame({
   const viewsBody = (
     <>
     <div className="mb-3 flex items-center justify-between">
-      <h3 className={cn("text-sm font-bold text-white", lang === "ta" && "font-tamil")}>{T.views[lang]}</h3>
+      <h3 className={"text-sm font-bold text-white"}>{t(lang, "View count")}</h3>
       <button
         type="button"
         onClick={() => setViewsOpen(false)}
         className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white"
-        aria-label="Close"
+        aria-label={t(lang, "Close")}
       >
         <CloseIcon className="text-sm" />
       </button>
@@ -984,35 +966,35 @@ export function PlayerStatsFrame({
     {stats ? (
       <div className="space-y-3">
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{contentLabel(e.content)}</p>
+          <p className={"mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400"}>{contentLabel(e.content, lang)}</p>
           <div className="grid grid-cols-3 gap-2">
-            <Metric label={T.users[lang]} value={compactCount(stats.content.users)} />
-            <Metric label={T.liveNow[lang]} value={compactCount(stats.content.live)} live />
-            <Metric label={T.hours[lang]} value={formatHours(stats.content.seconds)} />
+            <Metric lang={lang} label={t(lang, "Listeners")} value={compactCount(stats.content.users)} />
+            <Metric lang={lang} label={t(lang, "Listening now")} value={compactCount(stats.content.live)} live />
+            <Metric lang={lang} label={t(lang, "Listening time")} value={formatHours(stats.content.seconds, lang)} />
           </div>
         </div>
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400">{T.allSite[lang]}</p>
+          <p className={"mb-2 text-[11px] font-bold uppercase tracking-widest text-emerald-400"}>{t(lang, "All Surahs & Juz")}</p>
           <div className="grid grid-cols-3 gap-2">
-            <Metric label={T.users[lang]} value={compactCount(stats.site.users)} />
-            <Metric label={T.liveNow[lang]} value={compactCount(stats.site.live)} live />
-            <Metric label={T.hours[lang]} value={formatHours(stats.site.seconds)} />
+            <Metric lang={lang} label={t(lang, "Listeners")} value={compactCount(stats.site.users)} />
+            <Metric lang={lang} label={t(lang, "Listening now")} value={compactCount(stats.site.live)} live />
+            <Metric lang={lang} label={t(lang, "Listening time")} value={formatHours(stats.site.seconds, lang)} />
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl bg-amber-300/10 border border-amber-300/25 px-3 py-2.5">
           <div>
-            <div className="text-[11px] text-amber-200/80">{T.top[lang]}</div>
-            <div className="text-sm font-semibold text-white">{surahName(stats.site.top_surah)}</div>
+            <div className={"text-[11px] text-amber-200/80"}>{t(lang, "Most listened Surah")}</div>
+            <div className={"text-sm font-semibold text-white"}>{surahName(stats.site.top_surah, lang)}</div>
           </div>
           {stats.site.top_surah_users != null && (
-            <div className="text-right text-xs text-sand-200/80 tabular-nums">
-              {compactCount(stats.site.top_surah_users)} {T.users[lang].toLowerCase()}
+            <div className={"text-right text-xs text-sand-200/80 tabular-nums"}>
+              {compactCount(stats.site.top_surah_users)} {t(lang, "Listeners").toLowerCase()}
             </div>
           )}
         </div>
       </div>
     ) : (
-      <p className="text-sm text-sand-200/70">{e.statsFailed ? T.unavailable[lang] : "…"}</p>
+      <p className="text-sm text-sand-200/70">{e.statsFailed ? t(lang, "Not available right now.") : "…"}</p>
     )}
     </>
   );
@@ -1032,7 +1014,7 @@ export function PlayerStatsFrame({
             transition={{ duration: 0.18 }}
             role="dialog"
             data-engagement-keep
-            aria-label={T.views[lang]}
+            aria-label={t(lang, "View count")}
             className="pointer-events-auto absolute bottom-full right-0 z-20 mb-2 max-h-[60vh] w-full max-w-[380px] overflow-y-auto rounded-[28px] sm:rounded-[32px] bg-black/[0.08] backdrop-blur-[6px] border border-white/15 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
           >
             {viewsBody}
@@ -1040,7 +1022,7 @@ export function PlayerStatsFrame({
         )}
       </AnimatePresence>
       {/* Phones: the same details as a bottom action sheet */}
-      <ActionSheet open={viewsOpen && isMobile} onClose={() => setViewsOpen(false)} label={T.views[lang]} keepAttr="data-engagement-keep">
+      <ActionSheet open={viewsOpen && isMobile} onClose={() => setViewsOpen(false)} label={t(lang, "View count")} keepAttr="data-engagement-keep">
         <div className="overflow-y-auto">{viewsBody}</div>
       </ActionSheet>
     <div
@@ -1070,12 +1052,12 @@ export function PlayerStatsFrame({
             type="button"
             data-engagement-keep
             onClick={toggleViews}
-            aria-label={`${T.liveNow[lang]}: ${stats?.content.live ?? 0}`}
-            data-tooltip={T.liveNow[lang]}
+            aria-label={`${t(lang, "Listening now")}: ${stats?.content.live ?? 0}`}
+            data-tooltip={t(lang, "Listening now")}
             className={stat}
           >
             <LiveDot on={Boolean(stats && stats.content.live > 0)} />
-            {fit < 1 && <span>{T.live[lang]}</span>}
+            {fit < 1 && <span>{t(lang, "Live")}</span>}
             <span>{stats ? compactCount(stats.content.live) : "–"}</span>
           </button>
           )}
@@ -1084,8 +1066,8 @@ export function PlayerStatsFrame({
             data-engagement-keep
             onClick={toggleViews}
             aria-expanded={viewsOpen}
-            aria-label={`${T.overall[lang]}: ${stats?.content.users ?? 0}`}
-            data-tooltip={T.views[lang]}
+            aria-label={`${t(lang, "Overall view count")}: ${stats?.content.users ?? 0}`}
+            data-tooltip={t(lang, "View count")}
             className={cn(stat, viewsOpen && "text-emerald-300")}
           >
             <ViewCountIcon className="text-xs sm:text-sm" />
@@ -1100,8 +1082,8 @@ export function PlayerStatsFrame({
               setViewsOpen(false);
             }}
             aria-pressed={composerOpen}
-            aria-label={`${T.comment[lang]}: ${e.commentsTotal}`}
-            data-tooltip={T.comment[lang]}
+            aria-label={`${t(lang, "Comments")}: ${e.commentsTotal}`}
+            data-tooltip={t(lang, "Comments")}
             className={cn(stat, composerOpen && "text-emerald-300")}
           >
             <CommentIcon className="text-xs sm:text-sm" />

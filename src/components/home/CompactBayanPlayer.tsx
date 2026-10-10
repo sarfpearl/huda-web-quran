@@ -46,7 +46,7 @@ import {
 import type { QuranSurah } from "@/lib/data/quran";
 import { haptic } from "@/lib/haptics";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
-import { SURAH_NAMES } from "@/lib/data/surahNames";
+import { surahNameIn, t, useUiLang, word, type UiLang } from "@/lib/uiLang";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
 import { VoiceBars } from "@/components/player/VoiceBars";
 import { useOnline } from "@/lib/useOnline";
@@ -60,7 +60,7 @@ interface CompactBayanPlayerProps {
   segments?: RecitationSegment[];
   totalVerses?: number;
   activeVerseIndex?: number;
-  language?: "en" | "ta";
+  language?: UiLang;
   onToggleLanguage?: () => void;
   showTranslation?: boolean;
   onToggleShowTranslation?: () => void;
@@ -164,11 +164,16 @@ export function CompactBayanPlayer({
   pageNav = null,
   onTitleClick,
 }: CompactBayanPlayerProps) {
-  // Visible labels follow the translation language (Tamil / English).
-  const ta = language === "ta";
-  const L = ta ? PLAYER_TA : PLAYER_EN;
+  // Visible labels follow the UI language.
+  // Latin-script languages keep the wide caps tracking; other scripts get
+  // taller lines so truncate doesn't clip their vowel signs.
+  const latin = LATIN_UI.has(language);
+  // aria-labels stay English: the home screen's keyboard shortcuts find the
+  // player buttons by them (ImmersiveHomeClient). The tooltips are translated.
   const prevTrackLabel = trackKind ? `Previous ${trackKind}` : "Previous";
   const nextTrackLabel = trackKind ? `Next ${trackKind}` : "Next";
+  const prevTrackTip = t(language, prevTrackLabel);
+  const nextTrackTip = t(language, nextTrackLabel);
   const player = useAudioPlayer();
   const isCurrentTrack = player.current?.id === bayan.id;
   const isPlaying = isCurrentTrack && player.isPlaying;
@@ -176,7 +181,7 @@ export function CompactBayanPlayer({
   // Offline, a new Surah just spins (iOS doesn't even report an error): say why.
   const online = useOnline();
   const errorMsg = isCurrentTrack
-    ? player.error ?? (!online && player.isLoading ? (ta ? "இணையம் இல்லை — இணைந்ததும் ஒலிக்கும்" : "No internet — plays once you're back online") : null)
+    ? player.error ?? (!online && player.isLoading ? t(language, "No internet — plays once you're back online") : null)
     : null;
   const isQuran = isQuranTrack(bayan.id) || Boolean(activeSurah) || bayan.category?.slug === "quran" || bayan.category?.slug === "quran-recitation";
   const surah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
@@ -324,15 +329,15 @@ export function CompactBayanPlayer({
   const juzOfTrack = isQuran && !surah ? getQuranJuzByTrackId(bayan.id) : undefined;
   const categoryLine = isQuran
     ? (surah
-        ? `${L.quran} • ${L.surah} ${surah.number} · ${surah.verses} ${L.verses} · ${
-            surah.revelation === "Medinan" ? L.medinan : L.meccan
+        ? `${t(language, "Quran")} • ${word("surah", language)} ${surah.number} · ${surah.verses} ${word("verses", language)} · ${
+            surah.revelation === "Medinan" ? word("medinan", language) : word("meccan", language)
           }`
-        : juzOfTrack && ta
-          ? `${L.quran} • ${L.juz} ${juzOfTrack.id} · ${bayan.speaker?.name || "Sheikh Maher Al-Muaiqly"}`
+        : juzOfTrack && language !== "en"
+          ? `${t(language, "Quran")} • ${word("juz", language)} ${juzOfTrack.id} · ${bayan.speaker?.name || "Sheikh Maher Al-Muaiqly"}`
           : quranContentLabel(bayan.id, bayan.speaker?.name) ?? bayan.category.name)
     : bayan.category.name;
-  // Surah names in Tamil script when Tamil is chosen.
-  const displayTitle = ta && surah ? SURAH_NAMES[surah.number - 1]?.[2] ?? bayan.title : bayan.title;
+  // Surah names in the UI language's script when one is chosen.
+  const displayTitle = language !== "en" && surah ? surahNameIn(surah.number, language) : bayan.title;
   const fullTitle = useArabicFits([displayTitle, surah?.arabicName]);
   const stripTitle = useArabicFits([displayTitle, surah?.arabicName, footerSlot]);
   const currentSurah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
@@ -380,8 +385,8 @@ export function CompactBayanPlayer({
         onClick={() => { haptic(); bookmark.onToggle(); }}
         aria-pressed={bookmark.on}
         className={`${btnClass} ${bookmark.on ? "text-amber-300" : ""}`}
-        aria-label={bookmark.on ? "Remove bookmark" : "Add bookmark"}
-        data-tooltip={bookmark.on ? "Remove bookmark" : "Add bookmark"}
+        aria-label={bookmark.on ? t(language, "Remove bookmark") : t(language, "Add bookmark")}
+        data-tooltip={bookmark.on ? t(language, "Remove bookmark") : t(language, "Add bookmark")}
       >
         {bookmark.on ? <BookmarkIcon filled className={iconClass} /> : <BookmarkAddIcon className={iconClass} />}
       </button>
@@ -393,8 +398,8 @@ export function CompactBayanPlayer({
         onClick={() => { haptic(); nav.onStep(-1); }}
         disabled={nav.page <= nav.first}
         className={btnClass}
-        aria-label="Previous Page"
-        title="Previous Page"
+        aria-label={t(language, "Previous Page")}
+        title={t(language, "Previous Page")}
       >
         <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
@@ -404,18 +409,18 @@ export function CompactBayanPlayer({
         type="button"
         onClick={() => { haptic(); nav.onOpenPicker(); }}
         className="rounded-full px-2 py-0.5 text-sand-300/80 font-normal tabular-nums whitespace-nowrap transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
-        aria-label={`Page ${nav.page} — choose a page`}
-        title="Choose a page"
+        aria-label={`${word("page", language)} ${nav.page} — ${t(language, "Choose a page")}`}
+        title={t(language, "Choose a page")}
       >
-        {L.page} {nav.page}
+        {word("page", language)} {nav.page}
       </button>
       <button
         type="button"
         onClick={() => { haptic(); nav.onStep(1); }}
         disabled={nav.page >= nav.last}
         className={btnClass}
-        aria-label="Next Page"
-        title="Next Page"
+        aria-label={t(language, "Next Page")}
+        title={t(language, "Next Page")}
       >
         <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
@@ -432,7 +437,8 @@ export function CompactBayanPlayer({
           disabled={atFirstAyah}
           className={btnClass}
           aria-label="Previous Ayah"
-          title="Previous Ayah"
+          title={t(language, "Previous Ayah")}
+          data-tooltip={t(language, "Previous Ayah")}
         >
           <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
             <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
@@ -444,18 +450,18 @@ export function CompactBayanPlayer({
       <span className="min-w-0 truncate px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
         {isAyahSeq && ayahSeq ? (
           ayahSeq.preType === "istiadhah" ? (
-            L.istiadhah
+            t(language, "Isti'adhah")
           ) : ayahSeq.preType === "bismillah" ? (
-            L.bismillah
+            t(language, "Bismillah")
           ) : (
-            <>{L.ayat} {ayahSeq.index + 1}/{ayahSeq.total}</>
+            <>{t(language, "Ayat")} {ayahSeq.index + 1}/{ayahSeq.total}</>
           )
         ) : currentSegment?.type === "istiadhah" ? (
-          L.istiadhah
+          t(language, "Isti'adhah")
         ) : currentSegment?.type === "bismillah" ? (
-          L.bismillah
+          t(language, "Bismillah")
         ) : (
-          <>{L.ayat} {surahAyah}/{surahAyahTotal}</>
+          <>{t(language, "Ayat")} {surahAyah}/{surahAyahTotal}</>
         )}
       </span>
       {onNextVerse ? (
@@ -465,7 +471,8 @@ export function CompactBayanPlayer({
           disabled={atLastAyah}
           className={btnClass}
           aria-label="Next Ayah"
-          title="Next Ayah"
+          title={t(language, "Next Ayah")}
+          data-tooltip={t(language, "Next Ayah")}
         >
           <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
             <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
@@ -638,7 +645,8 @@ export function CompactBayanPlayer({
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
           className={`${compactBtn} ${NARROW_HIDE}`}
           aria-label={prevTrackLabel}
-          title={prevTrackLabel}
+          title={prevTrackTip}
+          data-tooltip={prevTrackTip}
         >
           <PrevIcon className="text-lg" />
         </button>
@@ -742,7 +750,8 @@ export function CompactBayanPlayer({
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
           className={`${compactBtn} ${NARROW_HIDE}`}
           aria-label={nextTrackLabel}
-          title={nextTrackLabel}
+          title={nextTrackTip}
+          data-tooltip={nextTrackTip}
         >
           <NextIcon className="text-lg" />
         </button>
@@ -751,8 +760,8 @@ export function CompactBayanPlayer({
           type="button"
           onClick={() => toggleCollapsed(false)}
           className={compactBtn}
-          aria-label="Expand player"
-          title="Expand player"
+          aria-label={t(language, "Expand player")}
+          title={t(language, "Expand player")}
         >
           <ChevronDownIcon className="text-xl rotate-180" />
         </button>
@@ -813,15 +822,15 @@ export function CompactBayanPlayer({
 
         {/* Track Info — NOW PLAYING · Title · Arabic Name · Reciter/Speaker · Category */}
         <div className={`min-w-0 flex-1 flex flex-col ${hasAyahPill ? "justify-between" : "justify-center"}`}>
-          <span className={`text-[10px] sm:text-xs font-semibold text-sand-300/70 uppercase ${ta ? "font-tamil tracking-normal" : "tracking-widest"}`}>
-            {L.nowPlaying}
+          <span className={`text-[10px] sm:text-xs font-semibold text-sand-300/70 uppercase ${latin ? "tracking-widest" : "tracking-normal"}`}>
+            {t(language, "Now Playing")}
           </span>
           <div
             ref={fullTitle.rowRef}
             className={`relative flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
-            {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
+            {...(onTitleClick ? titleButtonProps(onTitleClick, t(language, "Show in list"), t(language, "Show in the Surah / Juz list")) : {})}
           >
-            <h3 ref={fullTitle.nameRef as React.RefObject<HTMLHeadingElement>} className={`truncate font-bold text-white tracking-tight ${ta && surah ? "font-tamil text-sm sm:text-base md:text-base" : "font-sans text-base sm:text-base md:text-lg"}`}>
+            <h3 ref={fullTitle.nameRef as React.RefObject<HTMLHeadingElement>} className={`truncate font-bold text-white tracking-tight ${language === "ta" && surah ? "font-sans text-sm sm:text-base md:text-base" : "font-sans text-base sm:text-base md:text-lg"}`}>
               {displayTitle}
             </h3>
             {surah?.arabicName && (
@@ -836,9 +845,9 @@ export function CompactBayanPlayer({
               </span>
             )}
           </div>
-          {/* Tamil: taller line + a little padding, so truncate's overflow clip
-              doesn't cut the vowel signs above and below the letters. */}
-          <p className={`truncate text-xs font-medium text-emerald-400 mt-0.5 ${ta ? "font-tamil leading-relaxed py-0.5" : ""}`}>
+          {/* Non-Latin scripts: taller line + a little padding, so truncate's
+              overflow clip doesn't cut the vowel signs above and below the letters. */}
+          <p className={`truncate text-xs font-medium text-emerald-400 mt-0.5 ${latin ? "" : "leading-relaxed py-0.5"}`}>
             {categoryLine}
           </p>
           {/* Active Ayah pill — every Surah (any reciter) and every per-ayah Juz */}
@@ -869,21 +878,21 @@ export function CompactBayanPlayer({
           ) : (
           <button
             type="button"
-            data-tooltip={L.shuffle}
+            data-tooltip={t(language, "Shuffle")}
             onClick={handleShuffle}
             title={
               isSurahTrackId(bayan.id)
-                ? "Play a random Surah"
+                ? t(language, "Play a random Surah")
                 : isQuranTrackId(bayan.id)
-                ? "Play a random Juz"
+                ? t(language, "Play a random Juz")
                 : "Random Category / Shuffle"
             }
             className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
             aria-label={
               isSurahTrackId(bayan.id)
-                ? "Shuffle Surah"
+                ? `${t(language, "Shuffle")} · ${word("surah", language)}`
                 : isQuranTrackId(bayan.id)
-                ? "Shuffle Juz"
+                ? `${t(language, "Shuffle")} · ${word("juz", language)}`
                 : "Shuffle Category"
             }
           >
@@ -899,8 +908,8 @@ export function CompactBayanPlayer({
               const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
               player.setPlaybackRate?.(rates[nextIdx]);
             }}
-            aria-label={`Playback speed ${player.playbackRate}×`}
-            data-tooltip={`${L.speed} · ${player.playbackRate}x`}
+            aria-label={`${t(language, "Playback speed")} ${player.playbackRate}×`}
+            data-tooltip={`${t(language, "Playback speed")} · ${player.playbackRate}x`}
             className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >
             {player.playbackRate}x
@@ -989,7 +998,8 @@ export function CompactBayanPlayer({
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
           className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_HIDE}`}
           aria-label={prevTrackLabel}
-          title={prevTrackLabel}
+          title={prevTrackTip}
+          data-tooltip={prevTrackTip}
         >
           <PrevIcon className="text-lg" />
         </button>
@@ -1000,6 +1010,7 @@ export function CompactBayanPlayer({
           onClick={() => { haptic(); handlePlayToggle(); }}
           className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
+          data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
           {isLoading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
@@ -1015,7 +1026,8 @@ export function CompactBayanPlayer({
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
           className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_HIDE}`}
           aria-label={nextTrackLabel}
-          title={nextTrackLabel}
+          title={nextTrackTip}
+          data-tooltip={nextTrackTip}
         >
           <NextIcon className="text-lg" />
         </button>
@@ -1024,8 +1036,8 @@ export function CompactBayanPlayer({
           type="button"
           onClick={() => toggleCollapsed(true)}
           className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
-          aria-label="Minimize player"
-          title="Minimize player"
+          aria-label={t(language, "Minimize player")}
+          title={t(language, "Minimize player")}
         >
           <ChevronDownIcon className="text-xl" />
         </button>
@@ -1042,9 +1054,9 @@ export function CompactBayanPlayer({
       <div
         ref={stripTitle.rowRef}
         className={`relative flex min-w-0 flex-1 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
-        {...(onTitleClick ? titleButtonProps(onTitleClick, L.showInList) : {})}
+        {...(onTitleClick ? titleButtonProps(onTitleClick, t(language, "Show in list"), t(language, "Show in the Surah / Juz list")) : {})}
       >
-        <span ref={stripTitle.nameRef} className={`truncate font-semibold ${ta && surah ? "font-tamil" : ""}`}>{displayTitle}</span>
+        <span ref={stripTitle.nameRef} className="truncate font-semibold">{displayTitle}</span>
         {surah?.arabicName && (
           <span
             ref={stripTitle.arabicRef}
@@ -1106,6 +1118,7 @@ function VolumeControl({
   active?: boolean;
 }) {
   const { volume, isMuted, setVolume, toggleMute } = useAudioPlayer();
+  const lang = useUiLang();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; bottom: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -1160,8 +1173,8 @@ function VolumeControl({
         tabIndex={open ? 0 : -1}
         onClick={() => { haptic(); toggleMute(); }}
         className="tap-44 grid h-7 w-7 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-        aria-label={isMuted ? "Unmute" : "Mute"}
-        title={isMuted ? "Unmute" : "Mute"}
+        aria-label={isMuted ? t(lang, "Unmute") : t(lang, "Mute")}
+        title={isMuted ? t(lang, "Unmute") : t(lang, "Mute")}
       >
         {silent ? <MuteIcon className="text-sm" /> : <VolumeIcon className="text-sm" />}
       </button>
@@ -1178,7 +1191,7 @@ function VolumeControl({
           value={level}
           tabIndex={open ? 0 : -1}
           onChange={(e) => setVolume(Number(e.target.value))}
-          aria-label="Volume level"
+          aria-label={t(lang, "Volume level")}
           className="neomorph-range relative z-10 h-1.5 w-full cursor-pointer appearance-none bg-transparent"
         />
       </div>
@@ -1192,9 +1205,9 @@ function VolumeControl({
         type="button"
         onClick={() => { haptic(); setOpen((o) => !o); }}
         className={`${buttonClassName} ${open ? "!text-emerald-400" : ""}`}
-        aria-label="Volume"
+        aria-label={t(lang, "Volume")}
         aria-expanded={open}
-        title={silent ? "Muted" : `Volume ${Math.round(volume * 100)}%`}
+        title={silent ? t(lang, "Muted") : `${t(lang, "Volume")} ${Math.round(volume * 100)}%`}
       >
         {silent ? <MuteIcon className="text-xl" /> : <VolumeIcon className="text-xl" />}
       </button>
@@ -1203,45 +1216,13 @@ function VolumeControl({
   );
 }
 
-const PLAYER_EN = {
-  nowPlaying: "Now Playing",
-  quran: "Quran",
-  surah: "Surah",
-  juz: "Juz",
-  verses: "Verses",
-  meccan: "Meccan",
-  medinan: "Medinan",
-  ayat: "Ayat",
-  page: "Page",
-  istiadhah: "Isti'adhah",
-  bismillah: "Bismillah",
-  showInList: "Show in list",
-  shuffle: "Shuffle",
-  speed: "Playback speed",
-};
-const PLAYER_TA: typeof PLAYER_EN = {
-  nowPlaying: "இப்போது ஒலிப்பது",
-  quran: "குர்ஆன்",
-  surah: "சூரா",
-  juz: "ஜுஸ்உ",
-  verses: "வசனங்கள்",
-  meccan: "மக்கீ",
-  medinan: "மதனீ",
-  ayat: "ஆயத்",
-  page: "பக்கம்",
-  istiadhah: "இஸ்திஆதா",
-  bismillah: "பிஸ்மில்லாஹ்",
-  showInList: "பட்டியலில் காட்டு",
-  shuffle: "கலக்கு",
-  speed: "ஒலி வேகம்",
-};
 
 /** The Surah / Juz name as a button (keeps its inline layout: a div with button semantics). */
-function titleButtonProps(onClick: () => void, tooltip: string) {
+function titleButtonProps(onClick: () => void, tooltip: string, label: string) {
   return {
     role: "button",
     tabIndex: 0,
-    "aria-label": "Show in the Surah / Juz list",
+    "aria-label": label,
     "data-tooltip": tooltip,
     onClick: () => {
       haptic();
@@ -1365,6 +1346,9 @@ function CoverFlight({
     </div>
   );
 }
+
+/** UI languages written in Latin script. */
+const LATIN_UI = new Set<UiLang>(["en", "id", "tr", "fr", "ms"]);
 
 const COLLAPSED_KEY = "huda:player-collapsed";
 const SMALL_SCREEN = "(max-width: 767px)";

@@ -66,13 +66,14 @@ export function regionDefaults(countryCode?: string | null, stateCode?: string |
 }
 
 export type PrayerName = "fajr" | "sunrise" | "dhuhr" | "asr" | "maghrib" | "isha";
-export const PRAYER_LABELS: Record<PrayerName, { en: string; ta: string; ar: string }> = {
-  fajr: { en: "Fajr", ta: "ஃபஜ்ர்", ar: "الفجر" },
-  sunrise: { en: "Sunrise", ta: "சூரிய உதயம்", ar: "الشروق" },
-  dhuhr: { en: "Dhuhr", ta: "லுஹர்", ar: "الظهر" },
-  asr: { en: "Asr", ta: "அஸர்", ar: "العصر" },
-  maghrib: { en: "Maghrib", ta: "மஃரிப்", ar: "المغرب" },
-  isha: { en: "Isha", ta: "இஷா", ar: "العشاء" },
+/** English (the UI-string key: t(lang, PRAYER_LABELS[k].en)) and Arabic names. */
+export const PRAYER_LABELS: Record<PrayerName, { en: string; ar: string }> = {
+  fajr: { en: "Fajr", ar: "الفجر" },
+  sunrise: { en: "Sunrise", ar: "الشروق" },
+  dhuhr: { en: "Dhuhr", ar: "الظهر" },
+  asr: { en: "Asr", ar: "العصر" },
+  maghrib: { en: "Maghrib", ar: "المغرب" },
+  isha: { en: "Isha", ar: "العشاء" },
 };
 const ORDER: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
 

@@ -4,6 +4,7 @@ import { ActionSheet } from "@/components/ui/ActionSheet";
 import { CheckCircleIcon, HourglassIcon, MosqueLocationIcon } from "@/components/ui/Icon";
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { cn } from "@/lib/utils";
+import { t, uiLocale, useUiLang } from "@/lib/uiLang";
 import { clock, dayTimes, METHODS, PRAYER_LABELS, type AsrMadhab, type MethodId, type PrayerName, type Waqt } from "@/lib/prayerTimes";
 
 /** A method / Asr chosen here, over the region's default (per browser). */
@@ -31,6 +32,10 @@ function savePrayerPrefs(p: PrayerPrefs) {
     /* storage unavailable */
   }
 }
+
+// Prayer names are PRAYER_LABELS[k].en through t(); the method names
+// (organisations) stay as they are.
+const MADHAB = { shafi: "Shafi'i · Maliki · Hanbali", hanafi: "Hanafi" } as const;
 
 const ROWS: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
 
@@ -72,13 +77,17 @@ export function PrayerTimesSheet({
     onPrefs(p);
     savePrayerPrefs(p);
   };
-  const date = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const lang = useUiLang();
+  const date = now.toLocaleDateString(uiLocale(lang), { weekday: "long", day: "numeric", month: "long" });
   const regional = !prefs.method && !prefs.asr;
 
   return (
-    <ActionSheet open={open} onClose={onClose} label="Prayer times">
+    <ActionSheet open={open} onClose={onClose} label={t(lang, "Prayer times")}>
       <div className="px-5 pt-1 pb-2">
-        <h2 className="text-base font-bold text-sand-50">Prayer times{place ? ` · ${place}` : ""}</h2>
+        <h2 className="text-base font-bold text-sand-50">
+          {t(lang, "Prayer times")}
+          {place ? ` · ${place}` : ""}
+        </h2>
         <p className="text-xs text-sand-200/70">{date}</p>
         {/* Figma 679:19923: one pill, its icon and text following the state. */}
         <button
@@ -95,22 +104,23 @@ export function PrayerTimesSheet({
           ) : (
             <MosqueLocationIcon className="shrink-0" />
           )}
-          <span className="whitespace-nowrap">
+          {/* Other languages run longer: they may wrap rather than run off a phone. */}
+          <span className={lang === "en" ? "whitespace-nowrap" : "text-start"}>
             {locating === "busy"
-              ? "Finding your location..."
+              ? t(lang, "Finding your location...")
               : locating === "done"
-                ? `Location Updated${place ? ` - “${place}”` : ""}`
-                : "Update location"}
+                ? `${t(lang, "Location Updated")}${place ? ` - “${place}”` : ""}`
+                : t(lang, "Update location")}
           </span>
         </button>
         {locating === "unnamed" && (
           <p role="status" className="mt-1.5 text-[11px] text-sand-200/70">
-            Couldn&apos;t look up the place name. Check your connection and try again.
+            {t(lang, "Couldn't look up the place name. Check your connection and try again.")}
           </p>
         )}
         {locating === "failed" && (
           <p role="status" className="mt-1.5 text-[11px] text-sand-200/70">
-            Couldn&apos;t get your location. Check that Location is on for this browser in your device settings.
+            {t(lang, "Couldn't get your location. Check that Location is on for this browser in your device settings.")}
           </p>
         )}
       </div>
@@ -128,7 +138,7 @@ export function PrayerTimesSheet({
               )}
             >
               <span className="flex items-baseline gap-2">
-                <span className="font-semibold">{PRAYER_LABELS[k].en}</span>
+                <span className="font-semibold">{t(lang, PRAYER_LABELS[k].en)}</span>
                 <span className="font-arabic text-sm opacity-70" lang="ar">
                   {PRAYER_LABELS[k].ar}
                 </span>
@@ -140,7 +150,7 @@ export function PrayerTimesSheet({
       </ul>
       <div className="space-y-3 border-t border-white/10 px-5 pt-3 pb-5">
         <label className="block text-xs text-sand-200/80">
-          <span className="mb-1 block">Calculation method</span>
+          <span className="mb-1 block">{t(lang, "Calculation method")}</span>
           <select
             value={method}
             onChange={(e) => set({ ...prefs, method: e.target.value as MethodId })}
@@ -155,8 +165,8 @@ export function PrayerTimesSheet({
           </select>
         </label>
         <div className="text-xs text-sand-200/80">
-          <span className="mb-1 block">Asr</span>
-          <div role="radiogroup" aria-label="Asr" className={TAB_TRACK}>
+          <span className="mb-1 block">{t(lang, "Asr")}</span>
+          <div role="radiogroup" aria-label={t(lang, "Asr")} className={TAB_TRACK}>
             {(["shafi", "hanafi"] as const).map((m) => (
               <button
                 key={m}
@@ -166,18 +176,18 @@ export function PrayerTimesSheet({
                 onClick={() => set({ ...prefs, asr: m })}
                 className={cn(TAB, "min-h-11", asr === m ? SELECTED_TAB : UNSELECTED_TAB)}
               >
-                {m === "shafi" ? "Shafi'i · Maliki · Hanbali" : "Hanafi"}
+                {t(lang, MADHAB[m])}
               </button>
             ))}
           </div>
         </div>
         <p className="text-[11px] leading-relaxed text-sand-200/60">
-          Worked out on your device from your location.{" "}
+          {t(lang, "Worked out on your device from your location.")}{" "}
           {regional ? (
-            "Method and Asr follow your region."
+            t(lang, "Method and Asr follow your region.")
           ) : (
             <button type="button" onClick={() => set({})} className="tap-44 underline underline-offset-2 hover:text-sand-50">
-              Use my region&apos;s defaults
+              {t(lang, "Use my region's defaults")}
             </button>
           )}
         </p>
