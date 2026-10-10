@@ -12,9 +12,19 @@ import { LocationAskSheet } from "./LocationAskSheet";
 const plain = (name: string) =>
   name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+// Great-circle distance in km.
+function km(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const r = Math.PI / 180;
+  const a =
+    Math.sin(((lat2 - lat1) * r) / 2) ** 2 +
+    Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(((lon2 - lon1) * r) / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(a));
+}
+
 // The last place found, kept so a reload doesn't ask again: iOS Safari
 // forgets a site's location permission between loads and would prompt every
-// time. Asked again only after a week, and never on its own once denied or
+// time. Refreshed silently when the permission is still granted (below);
+// asked again only after a week, and never on its own once denied or
 // "Not now" (a tap on the time pill asks again).
 const PLACE_KEY = "huda-place";
 const PLACE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -231,6 +241,46 @@ export function TimeLocationWidget({
       cancelled = true;
       clearInterval(poll);
       status?.removeEventListener("change", onChange);
+    };
+  }, [applyPosition]);
+
+  // Moved since the saved place (travel, or a PWA left open): look again —
+  // on load and on coming back to the app, at most every 10 min — but only
+  // where the permission is already granted, so it never prompts. A new name
+  // only past ~2 km, to spare Nominatim.
+  const coordsRef = useRef(coords);
+  coordsRef.current = coords;
+  useEffect(() => {
+    if (!("geolocation" in navigator) || !navigator.permissions) return;
+    let last = 0;
+    const refresh = () => {
+      if (document.visibilityState !== "visible" || Date.now() - last < 10 * 60 * 1000) return;
+      const had = coordsRef.current;
+      if (!had) return;
+      last = Date.now();
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((s) => {
+          if (s.state !== "granted") return;
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+              if (km(had.lat, had.lon, latitude, longitude) > 2) void applyPosition(position);
+            },
+            () => {},
+            { timeout: 15000, maximumAge: 5 * 60 * 1000 },
+          );
+        })
+        .catch(() => {});
+    };
+    // The saved place shows first; this follows.
+    const t = setTimeout(refresh, 1500);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
     };
   }, [applyPosition]);
 
