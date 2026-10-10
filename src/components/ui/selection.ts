@@ -22,6 +22,6 @@ export const SELECTED_BADGE = "border border-amber-300/30 bg-amber-300/15 text-a
 export const TAB_TRACK = "flex rounded-full border border-[#4b433b] bg-[#201e20]/55 p-[2px] backdrop-blur-md";
 /** Every tab; add SELECTED_TAB or UNSELECTED_TAB. */
 export const TAB =
-  "flex flex-1 items-center justify-center gap-1.5 rounded-full border px-[10px] py-[6px] text-center text-[14px] font-medium leading-6 tracking-[-0.28px] transition-colors cursor-pointer";
+  "flex flex-1 items-center justify-center gap-1.5 rounded-full border px-[10px] py-[6px] text-center text-[13px] font-medium leading-6 tracking-[-0.26px] transition-colors cursor-pointer";
 export const SELECTED_TAB = "huda-tab-gold";
 export const UNSELECTED_TAB = "border-transparent text-white hover:bg-white/5";

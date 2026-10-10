@@ -27,7 +27,7 @@ export interface TranslationInfo {
 
 export const TRANSLATIONS: TranslationInfo[] = [
   { id: "en", label: "English", hint: "Saheeh International", edition: "en.sahih", dir: "ltr" },
-  { id: "ta", label: "தமிழ்", hint: "Tamil · Jan Trust", edition: "ta.tamil", dir: "ltr", font: "var(--font-tamil)" },
+  { id: "ta", label: "தமிழ்", hint: "Tamil · Jan Trust", edition: "ta.tamil", dir: "ltr", font: "'HuDa Tamil', var(--font-tamil)" },
   { id: "ur", label: "اردو", hint: "Urdu · Fateh Muhammad Jalandhry", edition: "ur.jalandhry", dir: "rtl", font: "var(--font-urdu), serif" },
   { id: "ml", label: "മലയാളം", hint: "Malayalam · Abdul Hameed & Parappoor", edition: "ml.abdulhameed", dir: "ltr", font: "var(--font-malayalam), sans-serif" },
   { id: "hi", label: "हिन्दी", hint: "Hindi · Azizul Haque al-Umari", edition: "qurancom:122", dir: "ltr", font: "var(--font-devanagari), sans-serif" },
