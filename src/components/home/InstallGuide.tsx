@@ -6,6 +6,7 @@ import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
+import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 
 const DISMISSED_KEY = "huda-install-dismissed";
 // After "Not now", ask again in two weeks.
@@ -451,6 +452,7 @@ export function InstallGuide() {
 
   // Back (Android) = "Not now" too, not leaving the site.
   useBackToClose(open, dismiss);
+  useOnlyOneSheet(open, dismiss);
 
   // Escape = "Not now".
   useEffect(() => {

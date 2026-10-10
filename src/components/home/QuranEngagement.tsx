@@ -399,7 +399,10 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
       if (!card) return setGeo(null);
       const c = card.getBoundingClientRect();
       if (c.width <= 0) return setGeo(null);
-      const view = [...card.children].find((v) => v.getAttribute("aria-hidden") === "false") as HTMLElement | undefined;
+      // The visible view is the one that isn't `inert` (the player hides the
+      // other with it; it once used aria-hidden, and this still looked for
+      // that, so the strip fell back to 8px edges).
+      const view = ([...card.children] as HTMLElement[]).find((v) => !v.inert && v.getAttribute("aria-hidden") !== "true");
       let left = 0;
       let right = 0;
       if (view) {
@@ -429,7 +432,7 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
     };
     sync();
     const mo = new MutationObserver(sync);
-    mo.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-hidden", "class", "style"] });
+    mo.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ["inert", "aria-hidden", "class", "style"] });
     // The shell animates its size after a switch; re-measure once it settles.
     wrap.addEventListener("transitionend", measure);
     return () => {
