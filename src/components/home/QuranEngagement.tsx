@@ -793,16 +793,8 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     <form
       data-engagement-keep
       onSubmit={submit}
-      className="pointer-events-auto flex h-12 w-full min-w-0 shrink-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-2 pr-1.5 shadow-lg"
+      className="pointer-events-auto flex h-12 w-full min-w-0 shrink-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-4 pr-1.5 shadow-lg"
     >
-      <button
-        type="button"
-        onClick={() => setComposerOpen(false)}
-        aria-label={t(lang, "Close comment box")}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sand-200/70 hover:bg-white/10 hover:text-white"
-      >
-        <CloseIcon className="text-sm" />
-      </button>
       {name && (
         <button
           type="button"
