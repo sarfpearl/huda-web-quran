@@ -521,6 +521,15 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const [playerCollapsed, setPlayerCollapsed] = useState(false);
   const [playerFooter, setPlayerFooter] = useState<HTMLDivElement | null>(null);
   const isJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
+  // Lock screen / headset Next on a Juz's last ayah: on to the next Juz
+  // (30 → 1), like the player's >| button.
+  const nextJuzRef = useRef<(() => void) | null>(null);
+  nextJuzRef.current = isJuz && activeJuz ? () => handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1) : null;
+  const { setAyahSequenceNext } = player;
+  useEffect(() => {
+    setAyahSequenceNext(() => nextJuzRef.current?.());
+    return () => setAyahSequenceNext(null);
+  }, [setAyahSequenceNext]);
   // Voice Sync QA HUD is a developer tool — hidden for end users. Open the
   // app with ?qa=1 in the URL to show it.
   const [showQaHud, setShowQaHud] = useState(false);
