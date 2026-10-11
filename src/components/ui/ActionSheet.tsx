@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,51 @@ export function useKeyboardInset(active: boolean) {
 }
 
 /**
+ * While a sheet is open, only its own scrolling lists move under a finger.
+ * Elsewhere (header, scrim, a list at its end) iOS would pan the whole visual
+ * viewport — with the keyboard up that drags the sheet and the scene behind it.
+ */
+function useSheetTouchLock(active: boolean, sheetRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    if (!active) return;
+    let startX = 0;
+    let startY = 0;
+    const onStart = (ev: TouchEvent) => {
+      startX = ev.touches[0]?.clientX ?? 0;
+      startY = ev.touches[0]?.clientY ?? 0;
+    };
+    const onMove = (ev: TouchEvent) => {
+      if (ev.touches.length > 1) return;
+      const target = ev.target as HTMLElement | null;
+      if (target?.closest("input, textarea")) return;
+      const dx = (ev.touches[0]?.clientX ?? 0) - startX;
+      const dy = (ev.touches[0]?.clientY ?? 0) - startY;
+      const sideways = Math.abs(dx) > Math.abs(dy);
+      for (let el = target; el && el !== sheetRef.current?.parentElement; el = el.parentElement) {
+        const { overflowX: ox, overflowY: oy } = getComputedStyle(el);
+        if (sideways) {
+          if ((ox === "auto" || ox === "scroll") && el.scrollWidth > el.clientWidth + 1) return;
+          continue;
+        }
+        if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight + 1) {
+          const atTop = el.scrollTop <= 0;
+          const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+          if ((dy > 0 && atTop) || (dy < 0 && atEnd)) break;
+          return; // the list scrolls itself
+        }
+      }
+      if (ev.cancelable) ev.preventDefault();
+    };
+    document.addEventListener("touchstart", onStart, { passive: true });
+    document.addEventListener("touchmove", onMove, { passive: false });
+    return () => {
+      document.removeEventListener("touchstart", onStart);
+      document.removeEventListener("touchmove", onMove);
+    };
+  }, [active, sheetRef]);
+}
+
+/**
  * Phone / tablet action sheet: slides up from the bottom over a dimmed scene, closes on
  * a scrim tap, Escape, or a swipe down on its handle. Portalled to <body> so a
  * transformed ancestor can't pin it to the wrong box.
@@ -85,6 +130,7 @@ export function ActionSheet({
   useBackToClose(open, onClose);
   useOnlyOneSheet(open, onClose);
   const kb = useKeyboardInset(open);
+  useSheetTouchLock(open, sheetRef);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
