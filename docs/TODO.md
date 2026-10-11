@@ -438,6 +438,11 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
       (Supabase Auth); only users in `public.admins` can moderate. The
       moderator key is gone
       (`supabase/migrations/20261006120000_admin_login_moderation.sql`).
-- [ ] Supabase Free plan pauses after ~7 days without activity and has no
-      automatic backups — restore from the dashboard if paused; consider Pro
-      before relying on the data.
+- [x] **Supabase pause** (2026-10-11, `fix/supabase-keepalive`) — the Free
+      plan pauses after ~7 days without activity. Vercel Cron (`vercel.json`)
+      calls `/api/keepalive` daily at 03:17 UTC; it runs the read-only
+      `get_quran_view_counts` RPC. Optional `CRON_SECRET` in Vercel keeps
+      others from calling it. Check after deploy: Vercel → Project → Cron Jobs
+      shows the job and its last run is 200.
+- [ ] Supabase Free plan has no automatic backups — consider Pro before
+      relying on the data.

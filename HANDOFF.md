@@ -104,7 +104,7 @@
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
 - [x] Supabase test data cleared (2026-10-07).
 - [ ] Harden anonymous counts against abuse (Cloudflare Turnstile on comments if spam gets through) — see `docs/TODO.md`.
-- [ ] Supabase Free plan pauses after ~7 days without activity — see `docs/TODO.md`.
+- [x] Supabase Free-plan pause — daily Vercel Cron → `/api/keepalive` (2026-10-11). No automatic backups on Free — see `docs/TODO.md`.
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
 - [ ] 16 Aal-Imran chapter clips never rendered (those scenes show the image).
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
@@ -184,6 +184,7 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
 | `NEXT_PUBLIC_SITE_URL` | Vercel Production (Config) | Canonical site URL `https://huda-web-quran.vercel.app` for sitemap, robots, canonical and `og:url`. Without it they fall back to `http://localhost:3000`. Not needed locally. |
+| `CRON_SECRET` | Vercel Production (optional) | Vercel sends it to `/api/keepalive`; when set, other callers get 401 |
 | `NEXT_PUBLIC_INDOPAK` | Optional | `1` turns on the IndoPak script outside `next dev` — only once the font is licensed |
 
 > [!CAUTION]
