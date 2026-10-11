@@ -106,7 +106,7 @@
 - [ ] **Comment spam guard:** links held for review, duplicates refused — migration `20261011120000_quran_comment_spam_guard.sql` must be run in the Supabase SQL editor (owner). Turnstile only if spam still gets through — see `docs/TODO.md`.
 - [x] Supabase Free-plan pause — daily Vercel Cron → `/api/keepalive` (2026-10-11). No automatic backups on Free — see `docs/TODO.md`.
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
-- [ ] 16 Aal-Imran chapter clips never rendered (those scenes show the image).
+- [ ] 16 Aal-Imran chapter clips (03a–10b, ayahs 33–200) never rendered — prompts ready in `scripts/generation/generate_vertex_imran_batch.mjs`; owner renders on the Mac (Vertex credentials, paid), then `reencode-videos.mjs --new`.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
 
 ### Done (2026-10-07 → 10-10)
