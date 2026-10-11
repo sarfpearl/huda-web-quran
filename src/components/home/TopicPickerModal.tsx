@@ -26,6 +26,7 @@ import { MUSHAF_PAGE_COUNT, mushafPageOf } from "@/lib/data/mushafPages";
 import { searchSurahs } from "@/lib/data/surahSearch";
 import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
+import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, type SettingsPage } from "./SettingsPages";
 import { compactCount } from "./QuranEngagement";
 import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
@@ -95,13 +96,14 @@ export function TopicPickerModal({
   const [isOpen, setIsOpen] = useState(false);
   // The browser's list, its « About HuDa » view (footer link) or Settings
   // (⚙ beside Close) and its App-language page; every open starts on the list.
-  const [view, setView] = useState<"list" | "about" | "settings" | "language">("list");
+  const [view, setView] = useState<"list" | "about" | "settings" | SettingsPage>("list");
   useEffect(() => {
     if (isOpen) setView("list");
   }, [isOpen]);
   const showAbout = !isFavourites && view === "about";
-  const showLanguage = !isFavourites && view === "language";
-  const showSettings = !isFavourites && (view === "settings" || showLanguage);
+  // A page under Settings (App language, Translation, …).
+  const settingsPage = !isFavourites && SETTINGS_PAGES.includes(view as SettingsPage) ? (view as SettingsPage) : null;
+  const showSettings = !isFavourites && (view === "settings" || settingsPage !== null);
   const [activeTab, setActiveTab] = useState<ModalTab>("surah");
   const [searchQuery, setSearchQuery] = useState("");
   // The panel is portalled to <body>: the ♥ trigger sits inside the player's
@@ -427,9 +429,9 @@ export function TopicPickerModal({
                   {(showAbout || showSettings) && (
                     <button
                       type="button"
-                      onClick={() => setView(showLanguage ? "settings" : "list")}
+                      onClick={() => setView(settingsPage ? "settings" : "list")}
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
-                      aria-label={t(lang, showLanguage ? "Settings" : "Back to the list")}
+                      aria-label={t(lang, settingsPage ? "Settings" : "Back to the list")}
                     >
                       <ChevronRightIcon className="h-4 w-4 rotate-180" />
                     </button>
@@ -449,8 +451,8 @@ export function TopicPickerModal({
                         ? t(lang, "Favourites")
                         : showAbout
                         ? t(lang, "About HuDa Web Quran")
-                        : showLanguage
-                        ? t(lang, "App language")
+                        : settingsPage
+                        ? t(lang, SETTINGS_PAGE_TITLE[settingsPage])
                         : showSettings
                         ? t(lang, "Settings")
                         : t(lang, "Choose a Surah or Juz")}
@@ -484,10 +486,24 @@ export function TopicPickerModal({
                 </div>
               </div>
 
-              {showLanguage ? (
+              {settingsPage === "language" ? (
                 <LanguageView />
+              ) : settingsPage === "translation" ? (
+                <TranslationPage />
+              ) : settingsPage === "textSize" ? (
+                <TextSizePage />
+              ) : settingsPage === "quran" ? (
+                <QuranTextPage />
               ) : showSettings ? (
-                <SettingsView onOpenLanguage={() => setView("language")} />
+                <SettingsList
+                  onOpen={setView}
+                  onLeave={(event) => {
+                    // Closed first, and the sheet asked for once the closing
+                    // Back entry is gone: that history pop would close it too.
+                    setIsOpen(false);
+                    window.setTimeout(() => window.dispatchEvent(new Event(event)), 350);
+                  }}
+                />
               ) : showAbout ? (
                 <AboutView />
               ) : (
@@ -839,29 +855,6 @@ function AboutView() {
         ))}
       </div>
 
-    </div>
-  );
-}
-
-/** Settings (⚙ in the header): one row per preference, each opening its page. */
-function SettingsView({ onOpenLanguage }: { onOpenLanguage: () => void }) {
-  const lang = useUiLang();
-  const current = UI_LANGS.find((l) => l.id === lang);
-  return (
-    <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
-      <button
-        type="button"
-        onClick={onOpenLanguage}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-left hover:bg-white/10 transition-colors cursor-pointer active:scale-[0.99]"
-      >
-        <span className="text-sm font-semibold text-white">{t(lang, "App language")}</span>
-        <span className="flex min-w-0 items-center gap-1.5 text-sm text-sand-200/80">
-          <span lang={current?.id} dir={current?.id === "ur" ? "rtl" : undefined} className="truncate">
-            {current?.label}
-          </span>
-          <ChevronRightIcon className="h-4 w-4 shrink-0" />
-        </span>
-      </button>
     </div>
   );
 }

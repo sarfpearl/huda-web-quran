@@ -8,6 +8,7 @@ import { ImmersiveBackground } from "./ImmersiveBackground";
 import { ImmersiveHeader, READER_SCALES, defaultReaderScale } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
+import { HomeSettingsProvider } from "./SettingsPages";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
 import { ReadingView, type ReadingRange } from "./ReadingView";
 import { MushafPagePicker } from "./MushafPagePicker";
@@ -1444,11 +1445,29 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             <BookOpenIcon className="h-5 w-5" />
           </button>
         )}
-        <TopicPickerModal
-          openRequest={browserOpenRequest}
-          surahTracks={surahTracksForCurrentReciter}
-          onSelectJuz={handleSelectJuz}
-        />
+        {/* Its Settings page edits the same preferences as the header. */}
+        <HomeSettingsProvider
+          value={{
+            translationLang,
+            onChooseTranslation: handleChooseTranslation,
+            showMeaning: showTranslation,
+            onToggleMeaning: handleToggleMeaning,
+            textSize: { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault },
+            showTajweed: tajweedShown,
+            onToggleTajweed: handleToggleTajweed,
+            script: quranScript,
+            onChooseScript: INDOPAK_ENABLED ? handleChooseScript : undefined,
+            visualMode,
+            onToggleVisualMode: handleToggleVisualMode,
+            reciterName: selectedReciter.displayName,
+          }}
+        >
+          <TopicPickerModal
+            openRequest={browserOpenRequest}
+            surahTracks={surahTracksForCurrentReciter}
+            onSelectJuz={handleSelectJuz}
+          />
+        </HomeSettingsProvider>
       </ImmersiveHeader>
 
       {/* Typing a comment: dim the verse so the comments read cleanly over it */}

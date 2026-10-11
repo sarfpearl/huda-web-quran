@@ -40,6 +40,13 @@ const strings: Strings = {
   "Credits · feedback": { ta: "நன்றி · கருத்து", ur: "اعتراف · رائے", ml: "കടപ്പാട് · അഭിപ്രായം", hi: "आभार · प्रतिक्रिया", id: "Kredit · masukan", bn: "কৃতজ্ঞতা · মতামত", tr: "Emeği geçenler · geri bildirim", fr: "Crédits · avis", ms: "Penghargaan · maklum balas" },
 
   // About view
+  // Settings rows and pages (SettingsPages).
+  "Prayer times & location": { ta: "தொழுகை நேரம் & இருப்பிடம்", ur: "نماز کے اوقات اور مقام", ml: "നമസ്കാര സമയവും സ്ഥലവും", hi: "नमाज़ के समय और स्थान", id: "Waktu salat & lokasi", bn: "নামাজের সময় ও অবস্থান", tr: "Namaz vakitleri ve konum", fr: "Horaires de prière et position", ms: "Waktu solat & lokasi" },
+  Background: { ta: "பின்னணி", ur: "پس منظر", ml: "പശ്ചാത്തലം", hi: "पृष्ठभूमि", id: "Latar", bn: "পটভূমি", tr: "Arka plan", fr: "Arrière-plan", ms: "Latar" },
+  Video: { ta: "வீடியோ", ur: "ویڈیو", ml: "വീഡിയോ", hi: "वीडियो", id: "Video", bn: "ভিডিও", tr: "Video", fr: "Vidéo", ms: "Video" },
+  Image: { ta: "படம்", ur: "تصویر", ml: "ചിത്രം", hi: "चित्र", id: "Gambar", bn: "ছবি", tr: "Resim", fr: "Image", ms: "Gambar" },
+  "Show translation": { ta: "மொழிபெயர்ப்பைக் காட்டு", ur: "ترجمہ دکھائیں", ml: "പരിഭാഷ കാണിക്കുക", hi: "अनुवाद दिखाएँ", id: "Tampilkan terjemahan", bn: "অনুবাদ দেখান", tr: "Meali göster", fr: "Afficher la traduction", ms: "Tunjukkan terjemahan" },
+  "For the whole Surah in reading mode.": { ta: "வாசிப்பு முறையில் முழு சூராவுக்கு.", ur: "ریڈنگ موڈ میں پوری سورت کے لیے۔", ml: "വായനാ മോഡിൽ മുഴുവൻ സൂറത്തിനും.", hi: "रीडिंग मोड में पूरी सूरह के लिए।", id: "Untuk seluruh surah di mode baca.", bn: "পড়ার মোডে পুরো সূরার জন্য।", tr: "Okuma modunda tüm sure için.", fr: "Pour toute la sourate en mode lecture.", ms: "Untuk seluruh surah dalam mod bacaan." },
   "App language": { ta: "ஆப் மொழி", ur: "ایپ کی زبان", ml: "ആപ്പിന്റെ ഭാഷ", hi: "ऐप की भाषा", id: "Bahasa aplikasi", bn: "অ্যাপের ভাষা", tr: "Uygulama dili", fr: "Langue de l’app", ms: "Bahasa aplikasi" },
   "Ayah meanings are chosen separately, from the translation button.": {
     ta: "ஆயத் பொருளின் மொழியை மொழிபெயர்ப்பு பொத்தானில் தனியாகத் தேர்ந்தெடுக்கலாம்.",
