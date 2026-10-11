@@ -11,15 +11,15 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-11, after PR #74.*
+*Snapshot: 2026-10-11, after PR #79.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `eddd18d` — Merge PR #74 (`fix/square-art-lang-reading-head`) |
-| **Latest merged PRs** | #70 iPad QA batch · #71–#73 location refresh / Update location · #74 Settings + app language (10 languages), square lock-screen art |
-| **Open PRs** | This HANDOFF update only (PR #50 closed — superseded) |
+| **`main`** | `289ac85` — Merge PR #79 (`feat/imran-clips-batch`) |
+| **Latest merged PRs** | #75 HANDOFF status · #76 Supabase keep-alive cron · #77 Juz Next on the last ayah → next Juz · #78 comment spam guard · #79 Aal-Imran clip batch script |
+| **Open PRs** | This HANDOFF update only |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Local working tree** | `main`, clean |
 
@@ -52,6 +52,11 @@
 12. **Phone / iPad feedback** (#54, #60, #66, #68, #69, #70): favicon, location explainer, 125% reading size on phones, lock-screen info + same-origin 512px artwork, round sheets, one audio at a time, iPhone player corners, iPad status-bar inset, Isti'adhah in the Mushaf fonts, Juz word tap, call resume.
 13. **Location** (#25, #71–#73): place remembered; refreshed when the device has moved; *Update location* button in the prayer times sheet, with a "location updated" message.
 14. **App language + Settings** (#74): UI language separate from the ayah meaning — English default, 10 languages (`src/lib/i18n/`, `t(lang, "English")`, localStorage `huda-ui-lang`); Settings (gear beside Close in the Surah & Juz sheet) holds it. Tamil at the Latin size; reading view opens at the heading; square lock-screen art.
+15. **2026-10-11** (#76–#79):
+    - **Supabase keep-alive** (#76): Vercel Cron (`vercel.json`) calls `/api/keepalive` daily at 03:17 UTC; it runs the read-only `get_quran_view_counts` RPC so the Free project never pauses. Optional `CRON_SECRET` limits the route to Vercel Cron.
+    - **Juz Next** (#77): lock-screen / headset Next on a Juz's last ayah goes on to the next Juz (30 → 1), like the player's >| (`setAyahSequenceNext` in `AudioPlayerContext`, registered by `ImmersiveHomeClient`). It used to replay the last ayah.
+    - **Comment spam guard** (#78): `supabase/migrations/20261011120000_quran_comment_spam_guard.sql` — a comment or name with a link is saved hidden until an admin unhides it; the same text within 24 h is refused (same browser id, or same IP for 20+ characters). Messages in all 10 languages. **Not live until the owner runs the migration.**
+    - **Aal-Imran clips** (#79): `scripts/generation/generate_vertex_imran_batch.mjs` holds the 16 scene prompts (03a–10b) with `--list` / `--dry-run` / `--only`; nothing rendered yet.
 
 ### Cloudflare R2 Media Migration
 - **Bucket:** `huda-quran-media`
@@ -109,6 +114,9 @@
 - [ ] 16 Aal-Imran chapter clips (03a–10b, ayahs 33–200) never rendered — prompts ready in `scripts/generation/generate_vertex_imran_batch.mjs`; owner renders on the Mac (Vertex credentials, paid), then `reencode-videos.mjs --new`.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
 
+### Done (2026-10-11)
+- [x] PRs #75–#79 merged — see §2 item 15 and §6. Owner still to: run the spam-guard migration; check Vercel → Cron Jobs shows `/api/keepalive` with a 200 run; render the Aal-Imran clips; delete the merged branches on GitHub (the session's git proxy refuses branch deletes).
+
 ### Done (2026-10-07 → 10-10)
 - [x] PRs #24–#74 merged and live — see §2 items 9–14 and §6.
 
@@ -142,6 +150,11 @@
 
 ## 6. Important Git History
 
+- `289ac85` — **PR #79** `feat/imran-clips-batch`: batch script + 16 prompts for Aal-Imran 03a–10b
+- `46cfb6b` — **PR #78** `fix/comment-spam-guard`: links held for review, duplicates refused (migration to run)
+- `22fb33d` — **PR #77** `fix/juz-next-at-last-ayah`: Next on a Juz's last ayah → next Juz
+- `362ef5e` — **PR #76** `fix/supabase-keepalive`: daily Vercel Cron → `/api/keepalive`
+- `dbfcfe4` — **PR #75** `docs/handoff-status-1011`: HANDOFF status after PR #74 (supersedes #50)
 - `eddd18d` — **PR #74** `fix/square-art-lang-reading-head`: Settings + app language (10), Tamil size, square lock-screen art
 - `79086f9` / `e5179cc` / `b1728aa` — **PRs #73 / #72 / #71**: location refresh, Update location button + feedback, one sheet at a time
 - `9bd674c` — **PR #70** `fix/ipad-qa-batch`: iPad QA batch, word-timing load failure no longer pins the ayah glow
