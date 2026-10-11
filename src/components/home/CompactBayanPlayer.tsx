@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
 import { CoverArt } from "@/components/ui/CoverArt";
 import {
   PlayIcon,
@@ -14,7 +14,8 @@ import {
   PlaylistAddIcon,
   ShareIcon,
   ShuffleIcon,
-  RepeatIcon,
+  RepeatOneIcon,
+  PlayNextIcon,
   EqualizerIcon,
   ChevronDownIcon,
   VolumeIcon,
@@ -99,7 +100,7 @@ interface CompactBayanPlayerProps {
     onOpenPicker: () => void;
   } | null;
   /** 🔖 add / remove a bookmark (Surah / Juz): after » in the compact strip,
-   *  in the shuffle button's place on the full card. */
+   *  in the repeat / next / shuffle button's place on the full card. */
   bookmark?: { on: boolean; onToggle: () => void } | null;
 }
 
@@ -525,23 +526,16 @@ export function CompactBayanPlayer({
     }
   };
 
-  // Shuffle is context-aware:
-  //   • Surah playing → jump to a DIFFERENT random Surah (excluding current)
-  //   • Juz playing   → jump to a DIFFERENT random Juz (excluding current)
-  const playRandomFrom = (tracks: BayanWithRelations[]) => {
-    if (tracks.length === 0) return;
-    const pool =
-      tracks.length > 1 ? tracks.filter((t) => t.id !== bayan.id) : tracks;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    player.playBayan(pick, tracks);
-  };
-
-  const handleShuffle = () => {
-    if (isSurahTrackId(bayan.id)) {
-      playRandomFrom(surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan)));
-    } else if (isQuranTrackId(bayan.id)) {
-      playRandomFrom(QURAN_TRACKS);
-    }
+  // Repeat / next / shuffle: what plays when the Surah / Juz ends. Each tap
+  // steps to the following mode.
+  const endModeLabel = {
+    next: t(language, "Then: next"),
+    repeat: t(language, "Then: repeat"),
+    shuffle: t(language, "Then: shuffle"),
+  }[player.endMode];
+  const cycleEndMode = () => {
+    haptic();
+    player.setEndMode(END_MODES[(END_MODES.indexOf(player.endMode) + 1) % END_MODES.length]);
   };
 
   // Ring scrubber: drag around the cover's ring to seek (tap the cover to play / pause).
@@ -868,7 +862,7 @@ export function CompactBayanPlayer({
           {/* 1. View count of the Surah / Juz playing (replaced the ♥ button) */}
           {viewSlot}
 
-          {/* 2. Shuffle Button (Moved from bottom left per red arrow) —
+          {/* 2. Repeat / next / shuffle — what plays when this one ends.
               Surah / Juz: the bookmark button in its place */}
           {bookmark ? (
             bookmarkButton(
@@ -878,25 +872,20 @@ export function CompactBayanPlayer({
           ) : (
           <button
             type="button"
-            data-tooltip={t(language, "Shuffle")}
-            onClick={handleShuffle}
-            title={
-              isSurahTrackId(bayan.id)
-                ? t(language, "Play a random Surah")
-                : isQuranTrackId(bayan.id)
-                ? t(language, "Play a random Juz")
-                : "Random Category / Shuffle"
-            }
-            className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 text-sand-300 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer"
-            aria-label={
-              isSurahTrackId(bayan.id)
-                ? `${t(language, "Shuffle")} · ${word("surah", language)}`
-                : isQuranTrackId(bayan.id)
-                ? `${t(language, "Shuffle")} · ${word("juz", language)}`
-                : "Shuffle Category"
-            }
+            data-tooltip={endModeLabel}
+            onClick={cycleEndMode}
+            className={`tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 hover:bg-black/60 hover:text-emerald-400 active:scale-90 transition-all cursor-pointer ${
+              player.endMode === "next" ? "text-sand-300" : "text-emerald-400"
+            }`}
+            aria-label={endModeLabel}
           >
-            <ShuffleIcon className="text-xs sm:text-sm" />
+            {player.endMode === "repeat" ? (
+              <RepeatOneIcon className="text-xs sm:text-sm" />
+            ) : player.endMode === "shuffle" ? (
+              <ShuffleIcon className="text-xs sm:text-sm" />
+            ) : (
+              <PlayNextIcon className="text-xs sm:text-sm" />
+            )}
           </button>
           )}
 

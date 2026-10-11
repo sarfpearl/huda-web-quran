@@ -147,6 +147,22 @@ export const RepeatIcon = (p: IconProps) => (
     <path d="M21 13v1a4 4 0 0 1-4 4H3" />
   </Base>
 );
+/** Repeat with a "1": the same Surah / Juz again. */
+export const RepeatOneIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m17 2 4 4-4 4" />
+    <path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4" />
+    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    <path d="M11 10.5 12.5 9.5v5" />
+  </Base>
+);
+/** A list with an arrow: then the next Surah / Juz. */
+export const PlayNextIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 6h12M3 12h8M3 18h8" />
+    <path d="M15 12v6l5-3-5-3Z" fill="currentColor" />
+  </Base>
+);
 export const EqualizerIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" />
