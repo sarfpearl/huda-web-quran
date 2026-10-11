@@ -7,6 +7,7 @@ const strings: Strings = {
   Sunrise: { ta: "சூரிய உதயம்", ur: "طلوع آفتاب", ml: "സൂര്യോദയം", hi: "सूर्योदय", id: "Matahari terbit", bn: "সূর্যোদয়", tr: "Güneş", fr: "Lever du soleil", ms: "Syuruk" },
   Dhuhr: { ta: "லுஹர்", ur: "ظہر", ml: "ളുഹ്ർ", hi: "ज़ुहर", id: "Zuhur", bn: "যোহর", tr: "Öğle", fr: "Dhuhr", ms: "Zohor" },
   Asr: { ta: "அஸர்", ur: "عصر", ml: "അസ്ർ", hi: "अस्र", id: "Asar", bn: "আসর", tr: "İkindi", fr: "Asr", ms: "Asar" },
+  Sunset: { ta: "சூரிய அஸ்தமனம்", ur: "غروب آفتاب", ml: "സൂര്യാസ്തമയം", hi: "सूर्यास्त", id: "Matahari terbenam", bn: "সূর্যাস্ত", tr: "Gün batımı", fr: "Coucher du soleil", ms: "Matahari terbenam" },
   Maghrib: { ta: "மஃரிப்", ur: "مغرب", ml: "മഗ്‌രിബ്", hi: "मग़रिब", id: "Magrib", bn: "মাগরিব", tr: "Akşam", fr: "Maghrib", ms: "Maghrib" },
   Isha: { ta: "இஷா", ur: "عشاء", ml: "ഇശാ", hi: "इशा", id: "Isya", bn: "এশা", tr: "Yatsı", fr: "Icha", ms: "Isyak" },
 
