@@ -88,6 +88,12 @@ Everything else is merged and live (#26 … #52).
       deleted after the recovery (was `e575c56`); its generation scripts and
       `docs/REAL_FOOTAGE_LICENSES.md` (Mixkit sources for the ayah clips) are
       in `main`.
+      **2026-10-11:** the 16 prompts (03a–10b) are in
+      `scripts/generation/generate_vertex_imran_batch.mjs` (`--list`,
+      `--dry-run --only=03a`, `--only=03a`); same pipeline as 02c (Veo 3.1
+      Fast, 8 s, 1080p, loop seam, QA frames). Owner: render on the Mac (paid),
+      check `qa_frames/`, then `reencode-videos.mjs --new --only=003-aal-e-imran`
+      and `video-manifest.mjs`.
 - [x] **Offline** (2026-10-07, `feat/offline`, PR #45) —
       `public/sw.js`, registered in production only
       (`src/components/layout/ServiceWorker.tsx`): pages network-first →
