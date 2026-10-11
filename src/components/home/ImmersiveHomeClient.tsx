@@ -17,7 +17,7 @@ import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { INDOPAK_ENABLED, isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayer, type EndMode } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
@@ -333,6 +333,28 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       })
     );
   };
+
+  // A Juz that ends in "next" mode → the next Juz (Juz 30 stops); in
+  // "shuffle" → a random other Juz. ("repeat" restarts in the player.)
+  const juzEndRef = useRef<(mode: EndMode) => boolean>(() => false);
+  juzEndRef.current = (mode) => {
+    if (!activeJuz) return false;
+    if (mode === "shuffle") {
+      const pick = 1 + Math.floor(Math.random() * 29);
+      handleSelectJuz(pick >= activeJuz.id ? pick + 1 : pick);
+      return true;
+    }
+    if (mode === "next" && activeJuz.id < 30) {
+      handleSelectJuz(activeJuz.id + 1);
+      return true;
+    }
+    return false;
+  };
+  const { setSequenceEndHandler } = player;
+  useEffect(() => {
+    setSequenceEndHandler((mode) => juzEndRef.current(mode));
+    return () => setSequenceEndHandler(null);
+  }, [setSequenceEndHandler]);
 
   const handleSelectReciter = (reciter: QuranReciter) => {
     if (reciter.id === selectedReciter.id) return;

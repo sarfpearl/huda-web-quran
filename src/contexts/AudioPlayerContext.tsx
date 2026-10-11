@@ -33,6 +33,12 @@ import { cbrMasterUrl, reciterHasSurah } from "@/lib/data/quranReciters";
 const LAST_KEY = "huda-player:last";
 const POSITIONS_KEY = "huda-player:positions";
 const PREFS_KEY = "huda-player:prefs";
+const END_MODE_KEY = "huda-player:end-mode";
+
+/** What happens when a Surah / Juz ends: the next one, the same again, or a
+ *  random other one. */
+export type EndMode = "next" | "repeat" | "shuffle";
+export const END_MODES: readonly EndMode[] = ["next", "repeat", "shuffle"];
 
 export const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 2] as const;
 
@@ -62,6 +68,7 @@ interface AudioPlayerState {
   preludeDuration: number;
   // Set while a Juz is playing per-ayah in a chosen reciter's voice.
   ayahSequence: AyahSequenceState | null;
+  endMode: EndMode;
 }
 
 /** A short clip played before an ayah in a per-ayah Juz sequence. */
@@ -133,6 +140,10 @@ interface AudioPlayerApi extends AudioPlayerState {
    * updated on the first animation frame past this boundary. Null = none.
    */
   setTimeBoundary: (seconds: number | null) => void;
+  setEndMode: (mode: EndMode) => void;
+  /** Called when a per-ayah Juz sequence ends in "next" / "shuffle" mode (the
+   *  Juz list lives with the page). Returns true when it started another. */
+  setSequenceEndHandler: (fn: ((mode: EndMode) => boolean) | null) => void;
 }
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
@@ -294,6 +305,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [preludeDuration, setPreludeDuration] = useState(0);
   // Per-ayah Juz sequence position (for the progress bar & current-ayah verse).
   const [ayahSequence, setAyahSequence] = useState<AyahSequenceState | null>(null);
+  const [endMode, setEndModeState] = useState<EndMode>("next");
+  const sequenceEndHandlerRef = useRef<((mode: EndMode) => boolean) | null>(null);
 
   const current = queue[currentIndex] ?? null;
 
@@ -305,6 +318,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       if (typeof prefs.playbackRate === "number")
         setPlaybackRateState(prefs.playbackRate);
       if (typeof prefs.isMuted === "boolean") setIsMuted(prefs.isMuted);
+      const mode = localStorage.getItem(END_MODE_KEY);
+      if (mode && (END_MODES as readonly string[]).includes(mode)) setEndModeState(mode as EndMode);
 
       const last = localStorage.getItem(LAST_KEY);
       if (last) {
@@ -1172,6 +1187,19 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     setPlaybackRateState(r);
   }, []);
 
+  const setEndMode = useCallback((mode: EndMode) => {
+    setEndModeState(mode);
+    try {
+      localStorage.setItem(END_MODE_KEY, mode);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setSequenceEndHandler = useCallback((fn: ((mode: EndMode) => boolean) | null) => {
+    sequenceEndHandlerRef.current = fn;
+  }, []);
+
   const addToQueue = useCallback((bayan: BayanWithRelations) => {
     setQueue((q) => (q.some((b) => b.id === bayan.id) ? q : [...q, bayan]));
   }, []);
@@ -1321,16 +1349,36 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // Per-ayah Juz sequence: advance to the next ayah in the chosen voice.
     const seq = ayahSeqRef.current;
     if (seq) {
-      if (!advanceAyahSequence()) {
-        ayahSeqRef.current = null;
-        setAyahSequence(null);
-        setIsPlaying(false);
+      if (advanceAyahSequence()) return;
+      // The Juz is over: again from its first ayah, or the page starts the
+      // next / a random Juz.
+      if (endMode === "repeat") {
+        loadAyahAt(0);
+        return;
       }
+      if (sequenceEndHandlerRef.current?.(endMode)) return;
+      ayahSeqRef.current = null;
+      setAyahSequence(null);
+      setIsPlaying(false);
       return;
     }
     if (current) writePosition(current.id, 0);
     if (current && isSurahTrackId(current.id)) {
+      if (endMode === "repeat") {
+        playFromQueue(currentIndex);
+        return;
+      }
       const num = Number(current.id.replace(SURAH_TRACK_ID_PREFIX, ""));
+      if (endMode === "shuffle") {
+        const reciter = resolveActiveReciter(current);
+        const tracks = getSurahTracksForReciter(reciter);
+        const pool = tracks.filter((tr, i) => i + 1 !== num && reciterHasSurah(reciter, i + 1));
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        if (pick) {
+          playBayan(pick, tracks);
+          return;
+        }
+      }
       if (num < 114) {
         next();
         return;
@@ -1338,9 +1386,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsPlaying(false);
       return;
     }
-    if (currentIndex < queue.length - 1) next();
+    if (endMode === "repeat") playFromQueue(currentIndex);
+    else if (currentIndex < queue.length - 1) next();
     else setIsPlaying(false);
-  }, [current, currentIndex, queue.length, next, advanceAyahSequence]);
+  }, [current, currentIndex, queue.length, next, advanceAyahSequence, endMode, loadAyahAt, playFromQueue, playBayan]);
 
   const onError = useCallback(() => {
     // A single missing/failed ayah file must not kill a Juz sequence — skip it.
@@ -1420,6 +1469,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       preludeCurrentTime,
       preludeDuration,
       ayahSequence,
+      endMode,
       playBayan,
       cueBayan,
       playAyahSequence,
@@ -1441,6 +1491,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setExpanded,
       dismissContinue,
       setTimeBoundary,
+      setEndMode,
+      setSequenceEndHandler,
           }),
     [
       queue,
@@ -1461,6 +1513,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       preludeCurrentTime,
       preludeDuration,
       ayahSequence,
+      endMode,
       playBayan,
       cueBayan,
       playAyahSequence,
@@ -1482,6 +1535,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setExpanded,
       dismissContinue,
       setTimeBoundary,
+      setEndMode,
+      setSequenceEndHandler,
           ]
   );
 
