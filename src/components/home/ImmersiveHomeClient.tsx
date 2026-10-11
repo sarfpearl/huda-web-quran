@@ -1427,7 +1427,11 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         {((activeSurah && !isJuz) || (isJuz && activeJuz)) && (
           <button
             type="button"
-            onClick={() => setReadingMode((on) => !on)}
+            onClick={() => {
+              const on = !readingMode;
+              setReadingMode(on);
+              showNotice(t(language, on ? "Reading mode on" : "Ayah mode on"));
+            }}
             aria-pressed={readingMode}
             aria-label={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
             data-tooltip={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}

@@ -23,6 +23,8 @@ const strings: Strings = {
   // ── Home controls ──
   "Exit reading mode": { ta: "வாசிப்பு முறையிலிருந்து வெளியேறு", ur: "مطالعہ موڈ سے باہر نکلیں", ml: "വായന മോഡിൽ നിന്ന് പുറത്തുകടക്കുക", hi: "पढ़ने का मोड छोड़ें", id: "Keluar dari mode baca", bn: "পড়ার মোড থেকে বের হন", tr: "Okuma modundan çık", fr: "Quitter le mode lecture", ms: "Keluar mod bacaan" },
   "Reading mode": { ta: "வாசிப்பு முறை", ur: "مطالعہ موڈ", ml: "വായന മോഡ്", hi: "पढ़ने का मोड", id: "Mode baca", bn: "পড়ার মোড", tr: "Okuma modu", fr: "Mode lecture", ms: "Mod bacaan" },
+  "Reading mode on": { ta: "வாசிப்பு முறை இயக்கப்பட்டது", ur: "مطالعہ موڈ آن", ml: "വായന മോഡ് ഓൺ", hi: "पढ़ने का मोड चालू", id: "Mode baca aktif", bn: "পড়ার মোড চালু", tr: "Okuma modu açık", fr: "Mode lecture activé", ms: "Mod bacaan dihidupkan" },
+  "Ayah mode on": { ta: "ஆயத் முறை இயக்கப்பட்டது", ur: "آیت موڈ آن", ml: "ആയത്ത് മോഡ് ഓൺ", hi: "आयत मोड चालू", id: "Mode ayat aktif", bn: "আয়াত মোড চালু", tr: "Ayet modu açık", fr: "Mode verset activé", ms: "Mod ayat dihidupkan" },
   Continue: { ta: "தொடர்க", ur: "جاری رکھیں", ml: "തുടരുക", hi: "जारी रखें", id: "Lanjutkan", bn: "চালিয়ে যান", tr: "Devam et", fr: "Reprendre", ms: "Teruskan" },
   "Image mode": { ta: "பட முறை", ur: "تصویر موڈ", ml: "ചിത്ര മോഡ്", hi: "चित्र मोड", id: "Mode gambar", bn: "ছবি মোড", tr: "Görsel modu", fr: "Mode image", ms: "Mod imej" },
   "Video mode": { ta: "காணொளி முறை", ur: "ویڈیو موڈ", ml: "വീഡിയോ മോഡ്", hi: "वीडियो मोड", id: "Mode video", bn: "ভিডিও মোড", tr: "Video modu", fr: "Mode vidéo", ms: "Mod video" },
