@@ -745,7 +745,7 @@ export function ReadingView({
     return {
       "data-word-idx": i,
       "aria-current": isActive ? ("true" as const) : undefined,
-      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${dim ? (glyph ? "quran-word--glyph quran-word--dim" : "quran-word--dim text-white/60") : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
+      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${dim ? `quran-word--dim text-white/60 ${glyph ? "quran-word--glyph" : ""}` : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
       onClick: seekable
         ? (ev: React.MouseEvent) => {
             ev.stopPropagation();
