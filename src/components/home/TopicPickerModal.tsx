@@ -94,13 +94,14 @@ export function TopicPickerModal({
   const lang = useUiLang();
   const [isOpen, setIsOpen] = useState(false);
   // The browser's list, its « About HuDa » view (footer link) or Settings
-  // (⚙ beside Close); every open starts on the list.
-  const [view, setView] = useState<"list" | "about" | "settings">("list");
+  // (⚙ beside Close) and its App-language page; every open starts on the list.
+  const [view, setView] = useState<"list" | "about" | "settings" | "language">("list");
   useEffect(() => {
     if (isOpen) setView("list");
   }, [isOpen]);
   const showAbout = !isFavourites && view === "about";
-  const showSettings = !isFavourites && view === "settings";
+  const showLanguage = !isFavourites && view === "language";
+  const showSettings = !isFavourites && (view === "settings" || showLanguage);
   const [activeTab, setActiveTab] = useState<ModalTab>("surah");
   const [searchQuery, setSearchQuery] = useState("");
   // The panel is portalled to <body>: the ♥ trigger sits inside the player's
@@ -426,9 +427,9 @@ export function TopicPickerModal({
                   {(showAbout || showSettings) && (
                     <button
                       type="button"
-                      onClick={() => setView("list")}
+                      onClick={() => setView(showLanguage ? "settings" : "list")}
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
-                      aria-label={t(lang, "Back to the list")}
+                      aria-label={t(lang, showLanguage ? "Settings" : "Back to the list")}
                     >
                       <ChevronRightIcon className="h-4 w-4 rotate-180" />
                     </button>
@@ -448,6 +449,8 @@ export function TopicPickerModal({
                         ? t(lang, "Favourites")
                         : showAbout
                         ? t(lang, "About HuDa Web Quran")
+                        : showLanguage
+                        ? t(lang, "App language")
                         : showSettings
                         ? t(lang, "Settings")
                         : t(lang, "Choose a Surah or Juz")}
@@ -481,8 +484,10 @@ export function TopicPickerModal({
                 </div>
               </div>
 
-              {showSettings ? (
-                <SettingsView />
+              {showLanguage ? (
+                <LanguageView />
+              ) : showSettings ? (
+                <SettingsView onOpenLanguage={() => setView("language")} />
               ) : showAbout ? (
                 <AboutView />
               ) : (
@@ -838,16 +843,37 @@ function AboutView() {
   );
 }
 
-/** Settings (⚙ in the header): the app language, each name in its own script. */
-function SettingsView() {
+/** Settings (⚙ in the header): one row per preference, each opening its page. */
+function SettingsView({ onOpenLanguage }: { onOpenLanguage: () => void }) {
+  const lang = useUiLang();
+  const current = UI_LANGS.find((l) => l.id === lang);
+  return (
+    <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
+      <button
+        type="button"
+        onClick={onOpenLanguage}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-left hover:bg-white/10 transition-colors cursor-pointer active:scale-[0.99]"
+      >
+        <span className="text-sm font-semibold text-white">{t(lang, "App language")}</span>
+        <span className="flex min-w-0 items-center gap-1.5 text-sm text-sand-200/80">
+          <span lang={current?.id} dir={current?.id === "ur" ? "rtl" : undefined} className="truncate">
+            {current?.label}
+          </span>
+          <ChevronRightIcon className="h-4 w-4 shrink-0" />
+        </span>
+      </button>
+    </div>
+  );
+}
+
+/** Settings › App language: every label, each name in its own script. */
+function LanguageView() {
   const lang = useUiLang();
   const setUiLang = useSetUiLang();
   return (
     <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
-      {/* App language: every label, each name in its own script */}
       <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-        <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">{t(lang, "App language")}</p>
-        <p className="mt-0.5 text-[11px] text-sand-200/70">
+        <p className="text-[11px] text-sand-200/70">
           {t(lang, "Ayah meanings are chosen separately, from the translation button.")}
         </p>
         <div role="radiogroup" aria-label={t(lang, "App language")} className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
