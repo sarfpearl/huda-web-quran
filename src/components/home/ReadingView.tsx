@@ -736,8 +736,8 @@ export function ReadingView({
 
   // The recited word turns gold with a soft glow, as in the main verse view:
   // glyph words through the font's gold palette (Tajweed colours kept), text
-  // words through colour.
-  const wordProps = (r: AyahRef, v: AyahVerse | null, i: number, isActive: boolean, live: boolean, glyph = false) => {
+  // words through colour. Words not yet recited are dimmed, as there too.
+  const wordProps = (r: AyahRef, v: AyahVerse | null, i: number, isActive: boolean, live: boolean, glyph = false, dim = false) => {
     const t = v?.words?.[i];
     const seekable = Boolean(live && onSeekWord && t && t.endTime > t.startTime);
     // Sajdah line: the page fonts draw their own once loaded.
@@ -745,7 +745,7 @@ export function ReadingView({
     return {
       "data-word-idx": i,
       "aria-current": isActive ? ("true" as const) : undefined,
-      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
+      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${dim ? `quran-word--dim text-white/60 ${glyph ? "quran-word--glyph" : ""}` : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
       onClick: seekable
         ? (ev: React.MouseEvent) => {
             ev.stopPropagation();
@@ -777,6 +777,11 @@ export function ReadingView({
     const live = ctx === "cur";
     const k = `${ref.surah}:${ref.ayah}`;
     const activeIdx = live && k === activeKey ? activeWordIndex : -1;
+    // Unread, as in the ayah view: an ayah after the recited one, or a word
+    // after the recited word (all of the recited ayah before its first word).
+    const ahead = Boolean(live && active && (ref.surah > active.surah || (ref.surah === active.surah && ref.ayah > active.ayah)));
+    const timed = live && k === activeKey && Boolean(v?.words?.some((w) => w.endTime > w.startTime));
+    const unread = (i: number) => ahead || (timed && i > activeIdx);
     const bookmarked = live && p.from === 0 && bookmarkKeys.has(k);
     let words: React.ReactNode;
     if (g) {
@@ -785,7 +790,7 @@ export function ReadingView({
         return (
           <Fragment key={i}>
             {j > 0 && " "}
-            <span {...wordProps(ref, v, i, i === activeIdx, live, loadedPages.has(page) && pageFontReady(page))}>
+            <span {...wordProps(ref, v, i, i === activeIdx, live, loadedPages.has(page) && pageFontReady(page), unread(i))}>
               {glyphWord(code, page, text, i === activeIdx)}
             </span>
           </Fragment>
@@ -795,7 +800,7 @@ export function ReadingView({
       words = v.words.map((w, i) => (
         <Fragment key={i}>
           {i > 0 && " "}
-          <span {...wordProps(ref, v, i, i === activeIdx, live)}>{w.word}</span>
+          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))}>{w.word}</span>
         </Fragment>
       ));
     } else {
