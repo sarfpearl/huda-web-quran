@@ -113,6 +113,8 @@ interface AudioPlayerApi extends AudioPlayerState {
   resume: () => void;
   seek: (seconds: number) => void;
   next: () => void;
+  /** Per-ayah sequence: what Next does on its last ayah (the next Juz). */
+  setAyahSequenceNext: (fn: (() => void) | null) => void;
   previous: () => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
@@ -225,6 +227,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     /** Position in pre[index] being played; -1 while the ayah itself plays. */
     preStep: number;
   } | null>(null);
+  const ayahSeqNextRef = useRef<(() => void) | null>(null);
+  const setAyahSequenceNext = useCallback((fn: (() => void) | null) => {
+    ayahSeqNextRef.current = fn;
+  }, []);
   // One-shot start position for the next loadCurrent (see playBayan opts).
   const pendingStartAtRef = useRef<StartAt | null>(null);
   // True between loading a track with a forced start and applying it — the
@@ -938,9 +944,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   const next = useCallback(() => {
-    // Per-ayah Juz sequence: skip forward one ayah.
-    if (ayahSeqRef.current) {
-      loadAyahAt(ayahSeqRef.current.index + 1);
+    // Per-ayah Juz sequence: skip forward one ayah; on the last one, the
+    // next Juz (it replayed the last ayah).
+    const seq = ayahSeqRef.current;
+    if (seq) {
+      if (seq.index + 1 >= seq.urls.length && ayahSeqNextRef.current) ayahSeqNextRef.current();
+      else loadAyahAt(seq.index + 1);
       return;
     }
     if (preludeAudioRef.current) {
@@ -1420,6 +1429,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       resume,
       seek,
       next,
+      setAyahSequenceNext,
       previous,
       setVolume,
       toggleMute,
@@ -1460,6 +1470,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       resume,
       seek,
       next,
+      setAyahSequenceNext,
       previous,
       setVolume,
       toggleMute,
