@@ -433,6 +433,16 @@ Built on `feat/indopak-script`, **development-only** until the font is licensed
       don't change it, a forged `CF-Connecting-IP` is refused by Cloudflare.
 - [x] **Drop the temporary probe** — gone on the live DB (anon RPC → PGRST202,
       checked 2026-10-07).
+- [ ] **Comment spam guard** (2026-10-11, `fix/comment-spam-guard`,
+      `supabase/migrations/20261011120000_quran_comment_spam_guard.sql`) —
+      a comment or name with a link (http(s)://, www., t.me/, wa.me/, a bare
+      domain) is saved hidden and shows once an admin unhides it in
+      /admin/comments (filter "Hidden"); the poster sees "comments with a link
+      show after review". The same text again within 24 h is refused
+      ("You've already posted this") — same browser id, or same IP when 20+
+      characters. Tested on a local Postgres 16 with all migrations.
+      **Owner:** run the migration in the Supabase SQL editor, then post a
+      comment with a link on the live site and check it lands under Hidden.
 - [ ] **Later, if spam still gets through:** Cloudflare Turnstile on comments.
 - [x] **Admin login** — `/admin/comments` signs in with an email magic link
       (Supabase Auth); only users in `public.admins` can moderate. The

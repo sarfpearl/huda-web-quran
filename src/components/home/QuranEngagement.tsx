@@ -234,9 +234,9 @@ export function useQuranEngagement(content: QuranContent | null) {
     }
   }, [kind, ref]);
 
-  /** Returns an error message, or null on success. */
+  /** Returns an error message, "held" (saved, shows after review), or null on success. */
   const post = useCallback(
-    async (body: string, parentId?: string | null): Promise<"rate" | "failed" | null> => {
+    async (body: string, parentId?: string | null): Promise<"rate" | "duplicate" | "failed" | "held" | null> => {
       const supabase = getSupabaseRpcClient();
       if (!supabase) return "failed";
       try {
@@ -249,7 +249,12 @@ export function useQuranEngagement(content: QuranContent | null) {
           // Only sent for replies, so posting works before the replies migration.
           ...(parentId ? { p_parent: parentId } : {}),
         });
-        if (error || !data?.ok) return data?.error === "rate_limited" ? "rate" : "failed";
+        if (error || !data?.ok) {
+          if (data?.error === "rate_limited") return "rate";
+          return data?.error === "duplicate" ? "duplicate" : "failed";
+        }
+        // A comment with a link is saved hidden until an admin approves it.
+        if (data.held) return "held";
         setComments((c) => [...c, data.comment as QuranComment]);
         setCommentsTotal((n) => n + 1);
         return null;
@@ -749,7 +754,12 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     setMessage(null);
     const err = await e.post(value, replyTo?.id);
     setBusy(false);
-    if (err) setMessage(err === "rate" ? t(lang, "Please wait a moment.") : t(lang, "Couldn't post. Try again."));
+    if (err === "held") {
+      setMessage(t(lang, "Thanks — comments with a link show after review."));
+      setText("");
+      setReplyTo(null);
+    } else if (err === "duplicate") setMessage(t(lang, "You've already posted this."));
+    else if (err) setMessage(err === "rate" ? t(lang, "Please wait a moment.") : t(lang, "Couldn't post. Try again."));
     else {
       setText("");
       setReplyTo(null);
