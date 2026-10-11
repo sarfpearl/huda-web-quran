@@ -777,9 +777,11 @@ export function ReadingView({
     const live = ctx === "cur";
     const k = `${ref.surah}:${ref.ayah}`;
     const activeIdx = live && k === activeKey ? activeWordIndex : -1;
-    // Unread: an ayah after the recited one, or a word after the recited word.
+    // Unread, as in the ayah view: an ayah after the recited one, or a word
+    // after the recited word (all of the recited ayah before its first word).
     const ahead = Boolean(live && active && (ref.surah > active.surah || (ref.surah === active.surah && ref.ayah > active.ayah)));
-    const unread = (i: number) => ahead || (activeIdx >= 0 && i > activeIdx);
+    const timed = live && k === activeKey && Boolean(v?.words?.some((w) => w.endTime > w.startTime));
+    const unread = (i: number) => ahead || (timed && i > activeIdx);
     const bookmarked = live && p.from === 0 && bookmarkKeys.has(k);
     let words: React.ReactNode;
     if (g) {
