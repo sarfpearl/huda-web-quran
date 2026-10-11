@@ -1,7 +1,7 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Antigravity / Claude / any AI assistant continuing this project  
-> **Last Updated:** 2026-10-06  
+> **Last Updated:** 2026-10-11  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
 > **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
@@ -11,16 +11,16 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-06, after PR #19.*
+*Snapshot: 2026-10-11, after PR #74.*
 
 | Item | Status |
 | :--- | :--- |
-| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters (Bayan section removed) |
+| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `b6cee90` — Merge PR #19 (`docs/handoff-status-1006b`) |
-| **Latest merged PRs** | #14 IndoPak script (dev-only) · #15 HANDOFF status + README · #16 env vars · #17 share image (og/twitter) · #18 TODO open items · #19 HANDOFF status |
-| **Open PRs** | None |
-| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — deploy of `b6cee90` succeeded |
+| **`main`** | `eddd18d` — Merge PR #74 (`fix/square-art-lang-reading-head`) |
+| **Latest merged PRs** | #70 iPad QA batch · #71–#73 location refresh / Update location · #74 Settings + app language (10 languages), square lock-screen art |
+| **Open PRs** | This HANDOFF update only (PR #50 closed — superseded) |
+| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Local working tree** | `main`, clean |
 
 ---
@@ -45,6 +45,13 @@
 6. **IndoPak script by region — development-only** (PR #14): `public/data/quran-indopak/`, "Uthmani | IndoPak" picker in the Tajweed panel, region default. Enabled only in `next dev` or with `NEXT_PUBLIC_INDOPAK=1`, until the QuranWBW IndoPak font licence is granted (see `docs/TODO.md`).
 7. **Quran-only app** (PR #12): the Bayan / talks section, YouTube engine and Bayan admin were removed; `/admin/comments` (comment moderation) kept.
 8. **Media fully on R2:** artwork, list thumbnails (`assets/images/{surah,quran}/thumbs/`, served without Vercel Image Optimization), videos, preludes, 51 reciter portraits, and Maher's 30 full-Juz recordings (PR #13).
+
+9. **Launch QA stack** (PRs #26–#45, 2026-10-07): Quran text / translation / word-sync / audio / navigation / reading / routes / responsive / Tajweed / theme / SEO / performance / a11y checks, each with its fixes (`docs/TODO.md` → *Launch QA*). Highlights: Surah / ayah / Juz deep links (#32), current prayer (waqt) in the header pill (#34), share button in the player (#40), 17 → 6 MB on open and CLS 0.30 → 0.01 (#38), Back closes sheets / pickers (#44), offline service worker `public/sw.js` (#45, #48).
+10. **Media slimmed** (#41, #42, #51, #52): R2 background clips re-encoded (1,365 → 386 MB), scene images as WebP (164.8 → 49.8 MB), every Surah has a clip (manifest 62 → 171; only 16 Aal-Imran chapter clips missing). Replaced clips are versioned in `src/lib/data/videoVersions.ts` (R2 serves them immutable).
+11. **Word Sync everywhere** (#61, #63, #65): Sudais timings improved; 18 Xing-VBR reciter streams re-hosted as CBR so seeks match the voice (falls back to the master); Surahs whose stream didn't match Quran.com timings got forced-alignment timings measured on the streamed audio (`scripts/generation/align-reciter-timings.py`) — `WORD_SYNC_UNAVAILABLE` is now empty.
+12. **Phone / iPad feedback** (#54, #60, #66, #68, #69, #70): favicon, location explainer, 125% reading size on phones, lock-screen info + same-origin 512px artwork, round sheets, one audio at a time, iPhone player corners, iPad status-bar inset, Isti'adhah in the Mushaf fonts, Juz word tap, call resume.
+13. **Location** (#25, #71–#73): place remembered; refreshed when the device has moved; *Update location* button in the prayer times sheet, with a "location updated" message.
+14. **App language + Settings** (#74): UI language separate from the ayah meaning — English default, 10 languages (`src/lib/i18n/`, `t(lang, "English")`, localStorage `huda-ui-lang`); Settings (gear beside Close in the Surah & Juz sheet) holds it. Tamil at the Latin size; reading view opens at the heading; square lock-screen art.
 
 ### Cloudflare R2 Media Migration
 - **Bucket:** `huda-quran-media`
@@ -95,8 +102,15 @@
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
-- [x] Supabase test data cleared (2026-10-07). [ ] Still open: harden anonymous counts against abuse — see `docs/TODO.md`.
+- [x] Supabase test data cleared (2026-10-07).
+- [ ] Harden anonymous counts against abuse (Cloudflare Turnstile on comments if spam gets through) — see `docs/TODO.md`.
+- [ ] Supabase Free plan pauses after ~7 days without activity — see `docs/TODO.md`.
+- [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
+- [ ] 16 Aal-Imran chapter clips never rendered (those scenes show the image).
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
+
+### Done (2026-10-07 → 10-10)
+- [x] PRs #24–#74 merged and live — see §2 items 9–14 and §6.
 
 ### Done (2026-10-05 → 10-06)
 - [x] Production R2 media issue (`.r2.dev4f` typo) resolved and verified live (§3).
@@ -119,7 +133,7 @@
 
 ## 5. Git / Uncommitted Work
 
-*2026-10-06: `main` working tree clean; no open PRs.*
+*2026-10-11: `main` working tree clean; only this HANDOFF PR open.*
 
 > [!WARNING]
 > **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`.
@@ -128,6 +142,14 @@
 
 ## 6. Important Git History
 
+- `eddd18d` — **PR #74** `fix/square-art-lang-reading-head`: Settings + app language (10), Tamil size, square lock-screen art
+- `79086f9` / `e5179cc` / `b1728aa` — **PRs #73 / #72 / #71**: location refresh, Update location button + feedback, one sheet at a time
+- `9bd674c` — **PR #70** `fix/ipad-qa-batch`: iPad QA batch, word-timing load failure no longer pins the ayah glow
+- PRs #66 / #68 / #69 (2026-10-09): Back-entry without user activation, iPhone player corners / iPad inset, Isti'adhah glyph font
+- PRs #61 / #63 / #65 (2026-10-09): Sudais timings, CBR reciter streams, forced-alignment word timings for every Surah
+- PRs #51–#54, #60 (2026-10-07/08): Surah clips (62 → 171), clip versioning, owner's phone feedback, lock-screen artwork
+- PRs #26–#49 (2026-10-07): Launch QA stack, waqt pill, share, offline, WebP / re-encoded media, Supabase cleanup docs
+- PRs #20–#25 (2026-10-06): admin magic-link login, per-IP limits, remembered location
 - `b6cee90` — **PR #19** `docs/handoff-status-1006b`: HANDOFF status after PR #18
 - `65dea7d` — **PR #18** `docs/todo-open-items`: Open items checklist in `docs/TODO.md`
 - `317815f` — **PR #17** `feat/og-share-image`: share image for link previews
@@ -238,7 +260,7 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 
 ## 🧠 Architectural Rules That Must Not Be Broken
 
-1. **Audio and word timings must come from the same source:** Word timings come from Quran.com QDC and match quranicaudio files. 9 reciters have them (sudais, alafasy, dosari, abdulbaset, minshawi, hussary, shuraim, shatri, tunaiji). Never borrow another reciter's timings.
+1. **Audio and word timings must come from the same source:** Word timings come from Quran.com QDC and match quranicaudio files. 9 reciters have them (sudais, alafasy, dosari, abdulbaset, minshawi, hussary, shuraim, shatri, tunaiji). Where a streamed recording doesn't match QDC, timings are forced-aligned on that same stream (`align-reciter-timings.py`). Never borrow another reciter's timings.
 2. **Repeated words:** map QDC segments by `wordIndex`, drive the active word from `verse.wordSegments`.
 3. **Surah 1** = Isti'adhah prelude clip (cut at 6.60s) → reciter's own Bismillah → ayahs. **Surahs 2–114** (never 9) open with Bismillah: Dosari 2–78 embeds his own; others get `bismillah-prelude.mp3`. Audio Only reciters get no prelude. Never double the Bismillah.
 4. **Juz boundaries are Indo-Pak**, not King Fahd/Madani (differ at Juz 4, 7, 11, 20, 21, 23). Don't "correct" them from quran.com.
