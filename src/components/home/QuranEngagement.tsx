@@ -12,7 +12,7 @@ import {
   isSurahTrackId,
   SURAH_TRACK_ID_PREFIX,
 } from "@/lib/data/quran";
-import { CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/components/ui/Icon";
+import { CheckIcon, CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { ActionSheet, useIsMobile } from "@/components/ui/ActionSheet";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
@@ -701,6 +701,8 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
   const { composerOpen, setComposerOpen, viewsOpen, setViewsOpen, name, setName } = e;
   // Replying to this comment (its name is shown above the box).
   const [replyTo, setReplyTo] = useState<QuranComment | null>(null);
+  // Just saved the name: greet them and point at the comment step.
+  const [justNamed, setJustNamed] = useState(false);
 
   // Threads: top-level comments oldest → newest, each followed by its replies.
   const tops = e.comments.filter((c) => !c.parent_id);
@@ -713,7 +715,10 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
   }, [tops.length, composerOpen]);
 
   useEffect(() => {
-    if (!composerOpen) setReplyTo(null);
+    if (!composerOpen) {
+      setReplyTo(null);
+      setJustNamed(false);
+    }
   }, [composerOpen]);
 
   const startReply = (c: QuranComment) => {
@@ -747,6 +752,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     if (!name) {
       // First message sets the display name.
       setName(value.slice(0, 40));
+      setJustNamed(true);
       setText("");
       return;
     }
@@ -763,6 +769,7 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     else {
       setText("");
       setReplyTo(null);
+      setJustNamed(false);
     }
   };
 
@@ -786,20 +793,15 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
     <form
       data-engagement-keep
       onSubmit={submit}
-      className="pointer-events-auto flex h-12 w-full min-w-0 shrink-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-2 pr-1.5 shadow-lg"
+      className="pointer-events-auto flex h-12 w-full min-w-0 shrink-0 items-center gap-2 rounded-full bg-[#1a1a1a]/90 backdrop-blur-[10px] border border-white/10 pl-4 pr-1.5 shadow-lg"
     >
-      <button
-        type="button"
-        onClick={() => setComposerOpen(false)}
-        aria-label={t(lang, "Close comment box")}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sand-200/70 hover:bg-white/10 hover:text-white"
-      >
-        <CloseIcon className="text-sm" />
-      </button>
       {name && (
         <button
           type="button"
-          onClick={() => setName("")}
+          onClick={() => {
+            setName("");
+            setJustNamed(false);
+          }}
           title={t(lang, "Change name")}
           className="max-w-[28%] shrink-0 truncate text-xs font-bold text-emerald-300 hover:underline"
         >
@@ -819,7 +821,9 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
               ? t(lang, "Your name first…")
               : replyTo
                 ? `${t(lang, "Reply to")} ${replyTo.name}…`
-                : t(lang, "Say something…")
+                : justNamed
+                  ? t(lang, "Hi {name} — now write your comment…", { name })
+                  : t(lang, "Say something…")
         }
         aria-label={name ? t(lang, "Say something…") : t(lang, "Your name first…")}
         className="min-w-0 flex-1 bg-transparent text-base sm:text-sm text-white placeholder:text-sand-200/45 focus:outline-none"
@@ -827,10 +831,10 @@ export function EngagementOverlay({ e, lang = "en" }: { e: QuranEngagement; lang
       <button
         type="submit"
         disabled={busy || !text.trim() || !e.configured}
-        aria-label={t(lang, "Send")}
+        aria-label={name ? t(lang, "Send") : t(lang, "Save name")}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 disabled:opacity-40"
       >
-        <SendIcon className="text-base" />
+        {name ? <SendIcon className="text-base" /> : <CheckIcon className="text-base" />}
       </button>
     </form>
   );
