@@ -80,7 +80,7 @@ interface ReadingViewProps {
   /** Tap on the dimmed text around it (the rest of the first / last page):
    *  say why it's dimmed — the Surah / Juz starts or ends mid-page. */
   onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
-  /** Focus reading: header and player hidden, the text takes the whole screen. */
+  /** Header and player hidden (focus reading, or scrolled on): the text takes the whole screen. */
   focus?: boolean;
   /** Scrolled by hand: on (`true`, forward) or back / to the top. */
   onUserScroll?: (forward: boolean) => void;
@@ -663,16 +663,32 @@ export function ReadingView({
   // Which way the reader scrolls by hand (the follow's own drift doesn't count).
   const userScrollCbRef = useRef(onUserScroll);
   userScrollCbRef.current = onUserScroll;
+  const scrollLastRef = useRef(0);
+  // Going full screen (or back) moves the view's top edge: keep the text
+  // where it was, and don't read that nudge as the reader scrolling.
+  const viewTopRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (viewTopRef.current !== null && top !== viewTopRef.current) {
+      el.scrollTop += top - viewTopRef.current;
+      scrollLastRef.current = el.scrollTop;
+    }
+    viewTopRef.current = top;
+  }, [focus]);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    let last = el.scrollTop;
+    scrollLastRef.current = el.scrollTop;
     const onScroll = () => {
+      const last = scrollLastRef.current;
       const d = el.scrollTop - last;
+      if (Date.now() - userScrollAtRef.current >= 1000) return void (scrollLastRef.current = el.scrollTop);
       if (el.scrollTop < 24) userScrollCbRef.current?.(false);
       else if (Math.abs(d) < 12) return;
-      else if (Date.now() - userScrollAtRef.current < 1000) userScrollCbRef.current?.(d > 0);
-      last = el.scrollTop;
+      else userScrollCbRef.current?.(d > 0);
+      scrollLastRef.current = el.scrollTop;
     };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);

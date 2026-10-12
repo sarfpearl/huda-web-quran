@@ -877,7 +877,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const [readerFocus, setReaderFocus] = useState(false);
   const focusOn = readingActive && readerFocus;
   // Reading mode, scrolling on by hand: header and player slide away; back
-  // (or to the top) brings them again. Focus reading keeps its ⤡ instead.
+  // (or to the top) brings them again — and ends focus reading.
   const [chromeAway, setChromeAway] = useState(false);
   const chromeHidden = readingActive && !readerFocus && chromeAway;
   useEffect(() => setChromeAway(false), [readingActive, readerFocus]);
@@ -1521,8 +1521,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onVisibleAyahChange={setVisibleAyah}
             onBookmarksInViewChange={setBookmarksInView}
             onContextTap={handleContextTap}
-            focus={focusOn}
-            onUserScroll={setChromeAway}
+            focus={focusOn || chromeHidden}
+            onUserScroll={(forward) => {
+              // Back (or to the top) by hand: every control again, focus reading too.
+              if (!forward) setReaderFocus(false);
+              setChromeAway(forward);
+            }}
           />
         )}
       </AnimatePresence>
