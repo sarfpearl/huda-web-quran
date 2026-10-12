@@ -18,7 +18,7 @@ import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { INDOPAK_ENABLED, isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
-import { useAudioPlayer, type EndMode } from "@/contexts/AudioPlayerContext";
+import { STANDALONE_SILENT, useAudioPlayer, type EndMode } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
@@ -233,6 +233,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [waitingOffline, online]);
+  // The home-screen app got no sound at all (the player gave up after a
+  // reload): the reason belongs in front of the listener — the error line
+  // alone sits in the expanded player.
+  useEffect(() => {
+    if (player.error && player.error === t(language, STANDALONE_SILENT)) showNotice(player.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player.error]);
 
 
   // Selected track (defaults to Surah 1: Al-Fatihah, or active player track / category track)

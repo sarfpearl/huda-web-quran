@@ -190,6 +190,18 @@ function surahMissingFor(bayan: BayanWithRelations): string | null {
 }
 
 /** The UI language as last picked (this provider sits above the language context). */
+// The home-screen app (iOS "Open as Web App"), not a browser tab.
+function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
+/** The error set when the home-screen app gets no sound (shown as a notice too). */
+export const STANDALONE_SILENT = "Sound doesn't play in the Home Screen app on this device. Open HuDa in Safari instead.";
+
 function storedUiLang(): UiLang {
   try {
     const v = localStorage.getItem(UI_LANG_KEY);
@@ -277,6 +289,17 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         if (prelude) {
           el.pause();
           onPreludeEndedRef.current();
+          return;
+        }
+        // Still frozen after a reload in the home-screen app: some iPads give
+        // that app no sound at all (Safari on the same iPad plays). Say so,
+        // instead of a pause icon over silence.
+        if (isStandalone()) {
+          userPausedRef.current = true;
+          el.pause();
+          setIsPlaying(false);
+          setIsLoading(false);
+          setError(t(storedUiLang(), STANDALONE_SILENT));
         }
         return;
       }
