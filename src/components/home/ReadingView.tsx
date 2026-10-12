@@ -24,6 +24,7 @@ import {
 } from "@/lib/data/quranGlyphs";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import SurahBanner from "./SurahBanner";
+import { READER_SCALES } from "./ImmersiveHeader";
 import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
@@ -63,6 +64,8 @@ interface ReadingViewProps {
   scrollToPage?: { page: number; n: number; at: number } | null;
   /** Ayah text size, × the default (the reader's text-size setting). */
   textScale?: number;
+  /** A two-finger pinch on the text steps the text size. */
+  onTextScaleChange?: (v: number) => void;
   /** Recitation running (the recited ayah then counts as read). */
   playing?: boolean;
   /** « Continue reading » at a last read ayah outside what's shown. */
@@ -135,6 +138,7 @@ export function ReadingView({
   onVisiblePageChange,
   scrollToPage = null,
   textScale = 1,
+  onTextScaleChange,
   playing = false,
   focus = false,
   playerShown = true,
@@ -372,7 +376,9 @@ export function ReadingView({
     const el = scrollRef.current;
     if (!el) return;
     let idle: ReturnType<typeof setTimeout> | undefined;
-    const mark = () => {
+    const mark = (e?: Event) => {
+      // Two fingers: a pinch (text size), not scrolling.
+      if (e && "touches" in e && (e as TouchEvent).touches.length > 1) return;
       userScrollAtRef.current = Date.now();
       awayRef.current = true;
       pinnedPageRef.current = null;
@@ -632,9 +638,84 @@ export function ReadingView({
     const node = el.querySelector<HTMLElement>(`[data-page="${a.page}"]`);
     if (!node) return;
     const delta = node.getBoundingClientRect().top - a.top;
-    if (Math.abs(delta) > 1) el.scrollTop += delta;
+    if (Math.abs(delta) > 1) {
+      el.scrollTop += delta;
+      // Not the reader scrolling (a pinch would flip full screen otherwise).
+      resizedAtRef.current = Date.now();
+    }
     anchorRef.current = { page: a.page, top: node.getBoundingClientRect().top };
   }, [loadedPages, textScale]);
+
+  // Pinch in / out on the text: step through the text sizes as the fingers
+  // spread or close (the page pinch-zoom itself is blocked app-wide).
+  const scaleRef = useRef(textScale);
+  scaleRef.current = textScale;
+  const scaleCbRef = useRef(onTextScaleChange);
+  scaleCbRef.current = onTextScaleChange;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let pinch: { dist: number; scale: number } | null = null;
+    const step = (want: number) => {
+      if (!scaleCbRef.current) return;
+      const next = READER_SCALES.reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a));
+      if (next !== scaleRef.current) {
+        scaleRef.current = next;
+        scaleCbRef.current(next);
+      }
+    };
+    const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const start = (e: TouchEvent) => {
+      if (e.touches.length === 2) pinch = { dist: dist(e.touches) || 1, scale: scaleRef.current };
+    };
+    const move = (e: TouchEvent) => {
+      if (!pinch || e.touches.length !== 2 || !scaleCbRef.current) return;
+      e.preventDefault();
+      step(pinch.scale * (dist(e.touches) / pinch.dist));
+    };
+    // A trackpad pinch: ctrl + wheel (Chrome, Firefox, Edge)…
+    let wheelScale = 0;
+    let wheelIdle: ReturnType<typeof setTimeout> | undefined;
+    const wheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      if (!wheelScale) wheelScale = scaleRef.current;
+      wheelScale = Math.min(2, Math.max(0.7, wheelScale * Math.exp(-e.deltaY / 100)));
+      step(wheelScale);
+      clearTimeout(wheelIdle);
+      wheelIdle = setTimeout(() => (wheelScale = 0), 300);
+    };
+    // …and Safari's gesture events (desktop trackpad).
+    let gestureFrom = 1;
+    const gStart = (e: Event) => {
+      e.preventDefault();
+      gestureFrom = scaleRef.current;
+    };
+    const gChange = (e: Event) => {
+      e.preventDefault();
+      step(gestureFrom * ((e as Event & { scale?: number }).scale ?? 1));
+    };
+    const end = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinch = null;
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", move, { passive: false });
+    el.addEventListener("touchend", end, { passive: true });
+    el.addEventListener("touchcancel", end, { passive: true });
+    el.addEventListener("wheel", wheel, { passive: false });
+    el.addEventListener("gesturestart", gStart);
+    el.addEventListener("gesturechange", gChange);
+    return () => {
+      clearTimeout(wheelIdle);
+      el.removeEventListener("wheel", wheel);
+      el.removeEventListener("gesturestart", gStart);
+      el.removeEventListener("gesturechange", gChange);
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchmove", move);
+      el.removeEventListener("touchend", end);
+      el.removeEventListener("touchcancel", end);
+    };
+  }, []);
 
   // The view ends just above the player's frame, measured: the fixed 9.5rem
   // left the last lines under it (and it grows with the expanded player).

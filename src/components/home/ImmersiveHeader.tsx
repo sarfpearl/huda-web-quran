@@ -51,9 +51,7 @@ interface ImmersiveHeaderProps {
   /** Ayah meaning (translation) visibility + toggle */
   showMeaning?: boolean;
   onToggleMeaning?: () => void;
-  /** Reading mode's text size (× base) + setter + the device's default (Reset); shows the Aa control. */
-  textSize?: { value: number; onChange: (v: number) => void; initial: number };
-  /** Reading mode: text only (every other control hidden) + toggle, next to Aa. */
+  /** Reading mode: text only (every other control hidden) + toggle. */
   focus?: { on: boolean; onToggle: () => void };
 
   /** Tajweed colouring of the verse text + toggle */
@@ -82,7 +80,6 @@ export function ImmersiveHeader({
   onChooseTranslation,
   showMeaning = true,
   onToggleMeaning,
-  textSize,
   focus,
   showTajweed = false,
   onToggleTajweed,
@@ -141,7 +138,6 @@ export function ImmersiveHeader({
   }, [translationSheetOpen]);
   const q = langQuery.trim().toLowerCase();
   const langChoices = q ? TRANSLATIONS.filter((c) => `${c.label} ${c.hint}`.toLowerCase().includes(q)) : TRANSLATIONS;
-  const [textSizeSheetOpen, setTextSizeSheetOpen] = useState(false);
   // Picking a language shows the meaning in it (the title bar switch turns it off).
   const chooseTranslation = (id: TranslationLang) => {
     if (translationLang !== id) onChooseTranslation?.(id);
@@ -346,23 +342,8 @@ export function ImmersiveHeader({
           </div>
         </ActionSheet>
 
-        {/* Reading mode: text size (A− / A+), in the translation button's place */}
-        {textSize && (
-          <button
-            type="button"
-            onClick={() => setTextSizeSheetOpen(true)}
-            aria-haspopup="dialog"
-            aria-label={t(language, "Text size: {pct}% — change", { pct: Math.round(textSize.value * 100) })}
-            title={t(language, "Text size")}
-            className="pointer-events-auto flex items-center justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-3 min-[400px]:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white transition-all active:scale-90 cursor-pointer hover:bg-black/20 hover:border-white/30"
-          >
-            <span aria-hidden="true" className="font-semibold leading-none">
-              <span className="text-[0.8rem]">A</span>
-              <span className="text-[1.1rem]">A</span>
-            </span>
-          </button>
-        )}
-        {/* …and, where there's room, text only (focus reading). */}
+        {/* Reading mode: where there's room, text only (focus reading). Text size is
+            in Settings and a pinch on the text. */}
         {focus && (
           <button
             type="button"
@@ -373,61 +354,6 @@ export function ImmersiveHeader({
           >
             <ArrowExpandIcon className="h-5 w-5" />
           </button>
-        )}
-        {textSize && (
-          <ActionSheet open={textSizeSheetOpen} onClose={() => setTextSizeSheetOpen(false)} label={t(language, "Text size")}>
-            <h3 className={`pb-4 text-lg font-black text-white tracking-tight`}>{t(language, "Text size")}</h3>
-            {(() => {
-              const i = Math.max(0, READER_SCALES.indexOf(textSize.value));
-              const step = (d: number) => {
-                const next = READER_SCALES[Math.min(READER_SCALES.length - 1, Math.max(0, i + d))];
-                if (next !== textSize.value) textSize.onChange(next);
-              };
-              const btn =
-                "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 font-semibold text-white transition-all active:scale-90 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none";
-              return (
-                <div className="flex items-center gap-3">
-                  <button type="button" className={`${btn} text-sm`} onClick={() => step(-1)} disabled={i === 0} aria-label={t(language, "Smaller text")}>
-                    A−
-                  </button>
-                  <div className="flex flex-1 items-center justify-between gap-1" role="radiogroup" aria-label={t(language, "Text size")}>
-                    {READER_SCALES.map((v, k) => (
-                      <button
-                        key={v}
-                        type="button"
-                        role="radio"
-                        aria-checked={k === i}
-                        aria-label={`${Math.round(v * 100)}%`}
-                        onClick={() => textSize.onChange(v)}
-                        className="flex h-8 flex-1 items-center justify-center"
-                      >
-                        <span
-                          className={`block rounded-full transition-all ${k === i ? "h-3 w-3 bg-amber-300" : k < i ? "h-2 w-2 bg-white/70" : "h-2 w-2 bg-white/25"}`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className={`${btn} text-lg`}
-                    onClick={() => step(1)}
-                    disabled={i === READER_SCALES.length - 1}
-                    aria-label={t(language, "Larger text")}
-                  >
-                    A+
-                  </button>
-                </div>
-              );
-            })()}
-            <div className="mt-4 flex items-center justify-between text-xs text-sand-200/70">
-              <span className="tabular-nums">{Math.round(textSize.value * 100)}%</span>
-              {textSize.value !== textSize.initial && (
-                <button type="button" onClick={() => textSize.onChange(textSize.initial)} className={`font-semibold text-amber-300 hover:text-amber-200`}>
-                  {t(language, "Reset")}
-                </button>
-              )}
-            </div>
-          </ActionSheet>
         )}
 
         {/* Tajweed: opens a panel with the on/off switch and the colour legend
