@@ -22,7 +22,7 @@ interface ReciterPickerModalProps {
   onSelectReciter: (reciter: QuranReciter) => void;
   isPlayingQuran: boolean;
   isJuz?: boolean;
-  triggerRef?: React.RefObject<HTMLElement>;
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 export function ReciterPickerModal({

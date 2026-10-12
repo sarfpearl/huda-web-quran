@@ -22,7 +22,7 @@ export function HoverTooltips({
   placement = "top",
   selector = "button, [data-tooltip]",
 }: {
-  container: RefObject<HTMLElement>;
+  container: RefObject<HTMLElement | null>;
   placement?: "top" | "bottom";
   selector?: string;
 }) {

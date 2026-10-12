@@ -1828,7 +1828,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
  * the fixed scene. Publishes the covered heights as --vv-top / --vv-bottom on
  * the scene (plus the visible --vv-height) and returns whether the keyboard is up.
  */
-function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
+function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement | null>): boolean {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   useEffect(() => {
     const scene = sceneRef.current;
