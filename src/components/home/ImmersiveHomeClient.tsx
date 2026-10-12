@@ -1035,7 +1035,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // visitor sees there's a Surah / Juz list — last in the onboarding sequence
   // (splash → location → install guide, lib/onboarding), 7 seconds after the
   // install guide closes or is skipped, so the home screen is seen first; not
-  // if playback has started by then.
+  // if playback has started by then, nor once the visitor taps or types
+  // anything in the meantime.
   const hasPlayedRef = useRef(hasPlayed);
   hasPlayedRef.current = hasPlayed;
   const cameByLink = Boolean(deepLink);
@@ -1043,18 +1044,25 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     if (cameByLink) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
+    const onInteract = () => {
+      cancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener("pointerdown", onInteract, true);
+      window.removeEventListener("keydown", onInteract, true);
+    };
     // Location too: the install step is skipped at once on desktop, in the
     // installed app and while snoozed, which mustn't let this pass the prompt.
     Promise.all([afterSplash(), afterStage("location"), afterStage("install")]).then(() => {
       if (cancelled) return;
+      // Only taps after the onboarding count — its own buttons don't.
+      window.addEventListener("pointerdown", onInteract, true);
+      window.addEventListener("keydown", onInteract, true);
       timer = setTimeout(() => {
+        onInteract();
         if (!hasPlayedRef.current) setBrowserOpenRequest((n) => n + 1);
       }, 7000);
     });
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
+    return onInteract;
     // Not over a Surah / Juz the visitor came to by a link.
   }, [cameByLink]);
   // The page on screen follows the reader's scrolling (ReadingView reports it);
