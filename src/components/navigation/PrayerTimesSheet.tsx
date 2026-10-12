@@ -37,7 +37,7 @@ function savePrayerPrefs(p: PrayerPrefs) {
 // (organisations) stay as they are.
 const MADHAB = { shafi: "Shafi'i · Maliki · Hanbali", hanafi: "Hanafi" } as const;
 
-const ROWS: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "sunset", "maghrib", "isha"];
+const ROWS: PrayerName[] = ["fajr", "sunrise", "noon", "dhuhr", "asr", "sunset", "maghrib", "isha"];
 
 // The select's own arrow, drawn so it sits inside the pill's rounded end.
 const CHEVRON =
@@ -134,7 +134,7 @@ export function PrayerTimesSheet({
               className={cn(
                 "flex items-center justify-between rounded-2xl px-3 py-2.5",
                 isNow ? "bg-emerald-400/15 text-emerald-200" : "text-sand-100",
-                (k === "sunrise" || k === "sunset") && !isNow && "text-sand-200/60",
+                (k === "sunrise" || k === "noon" || k === "sunset") && !isNow && "text-sand-200/60",
               )}
             >
               <span className="flex items-baseline gap-2">
