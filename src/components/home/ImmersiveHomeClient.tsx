@@ -876,11 +876,6 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // hidden, one ⤡ to bring them back. Ends with reading mode.
   const [readerFocus, setReaderFocus] = useState(false);
   const focusOn = readingActive && readerFocus;
-  // Reading mode, scrolling on by hand: header and player slide away; back
-  // (or to the top) brings them again — and ends focus reading.
-  const [chromeAway, setChromeAway] = useState(false);
-  const chromeHidden = readingActive && !readerFocus && chromeAway;
-  useEffect(() => setChromeAway(false), [readingActive, readerFocus]);
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
@@ -1418,7 +1413,6 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         // …and gets a text-size control in its place.
         textSize={readingActive ? { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault } : undefined}
         focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) } : undefined}
-        away={chromeHidden}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -1521,12 +1515,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onVisibleAyahChange={setVisibleAyah}
             onBookmarksInViewChange={setBookmarksInView}
             onContextTap={handleContextTap}
-            focus={focusOn || chromeHidden}
-            onUserScroll={(forward) => {
-              // Back (or to the top) by hand: every control again, focus reading too.
-              if (!forward) setReaderFocus(false);
-              setChromeAway(forward);
-            }}
+            focus={focusOn}
+            // Scrolling on by hand: focus reading (text only, ⤡ to come back);
+            // back (or to the top): every control again.
+            onUserScroll={setReaderFocus}
           />
         )}
       </AnimatePresence>
@@ -1613,9 +1605,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         role="region"
         aria-label="Player"
         tabIndex={-1}
-        aria-hidden={focusOn || chromeHidden ? true : undefined}
+        aria-hidden={focusOn ? true : undefined}
         className={`outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
-          focusOn || chromeHidden ? "invisible opacity-0" : ""
+          focusOn ? "invisible opacity-0" : ""
         }`}
       >
         {notice && !keyboardOpen && (

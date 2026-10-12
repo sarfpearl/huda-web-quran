@@ -55,8 +55,7 @@ interface ImmersiveHeaderProps {
   textSize?: { value: number; onChange: (v: number) => void; initial: number };
   /** Reading mode: text only (every other control hidden) + toggle, next to Aa. */
   focus?: { on: boolean; onToggle: () => void };
-  /** Hidden for now (reading mode, scrolled on); stays mounted. */
-  away?: boolean;
+
   /** Tajweed colouring of the verse text + toggle */
   showTajweed?: boolean;
   onToggleTajweed?: () => void;
@@ -85,7 +84,6 @@ export function ImmersiveHeader({
   onToggleMeaning,
   textSize,
   focus,
-  away = false,
   showTajweed = false,
   onToggleTajweed,
   script = "uthmani",
@@ -188,7 +186,7 @@ export function ImmersiveHeader({
       : qaHud;
 
   return (
-    <header data-scene-header aria-hidden={away ? true : undefined} className={`absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1 min-[360px]:gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border transition-opacity duration-300 ${away ? "invisible opacity-0" : ""}`}>
+    <header data-scene-header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1 min-[360px]:gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border">
       {/* Focus reading: only the way back; the rest stays mounted, hidden. */}
       {focus?.on && (
         <div ref={focusRef} className="ml-auto">
