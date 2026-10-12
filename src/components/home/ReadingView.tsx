@@ -80,6 +80,10 @@ interface ReadingViewProps {
   /** Tap on the dimmed text around it (the rest of the first / last page):
    *  say why it's dimmed — the Surah / Juz starts or ends mid-page. */
   onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
+  /** Focus reading: header and player hidden, the text takes the whole screen. */
+  focus?: boolean;
+  /** Focus reading: scrolled on (`true`, forward) or back / to the top. */
+  onFocusScroll?: (forward: boolean) => void;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -130,6 +134,8 @@ export function ReadingView({
   scrollToPage = null,
   textScale = 1,
   playing = false,
+  focus = false,
+  onFocusScroll,
   onOpenAyah,
   mark = null,
   onOpenMark,
@@ -635,6 +641,8 @@ export function ReadingView({
     const host = el?.parentElement;
     if (!el || !frame || !host) return;
     const fit = () => {
+      // Focus reading: down to the bottom edge (the player is hidden).
+      if (focus) return void (el.style.bottom = "var(--vv-bottom,0px)");
       const f = frame.getBoundingClientRect();
       if (!f.height) return el.style.removeProperty("bottom");
       el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
@@ -650,7 +658,25 @@ export function ReadingView({
       frame.removeEventListener("transitionend", fit);
       window.removeEventListener("resize", fit);
     };
-  }, []);
+  }, [focus]);
+
+  // Focus reading: which way the reader scrolls (shows / hides the way back).
+  const focusScrollRef = useRef(onFocusScroll);
+  focusScrollRef.current = onFocusScroll;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!focus || !el) return;
+    let last = el.scrollTop;
+    const onScroll = () => {
+      const d = el.scrollTop - last;
+      if (el.scrollTop < 24) focusScrollRef.current?.(false);
+      else if (Math.abs(d) < 12) return;
+      else focusScrollRef.current?.(d > 0);
+      last = el.scrollTop;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [focus]);
 
   // Page shown in the player strip = the page still visible at the top of the
   // view (reading along in one's own voice, not the audio).
@@ -943,7 +969,7 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]"
+        className={`no-scrollbar pointer-events-auto absolute inset-x-0 ${focus ? "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+0.5rem)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)]"} bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]`}
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (
