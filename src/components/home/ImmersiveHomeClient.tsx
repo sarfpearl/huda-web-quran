@@ -110,6 +110,9 @@ const formatClock = (sec: number) => {
   return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
 };
 
+// Ayah meaning shown or not (handleToggleMeaning).
+const SHOW_MEANING_KEY = "huda:show-meaning";
+
 export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink | null } = {}) {
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
@@ -1266,10 +1269,24 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // Ayah meaning (translation) is OFF on every page load; the toggle only
-  // applies to the current session.
+  // Ayah meaning (translation) on / off is remembered per browser (owner's
+  // choice); off until it was first turned on.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SHOW_MEANING_KEY) === "1") setShowTranslation(true);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [setShowTranslation]);
   const handleToggleMeaning = () => {
-    setShowTranslation((prev) => !prev);
+    setShowTranslation((prev) => {
+      try {
+        localStorage.setItem(SHOW_MEANING_KEY, prev ? "0" : "1");
+      } catch {
+        /* storage unavailable */
+      }
+      return !prev;
+    });
   };
 
   // Share: the Surah at the ayah on screen (/surah/36/3), or the Juz (/juz/30)
