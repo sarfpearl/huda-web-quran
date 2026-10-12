@@ -80,6 +80,10 @@ interface ReadingViewProps {
   /** Tap on the dimmed text around it (the rest of the first / last page):
    *  say why it's dimmed — the Surah / Juz starts or ends mid-page. */
   onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
+  /** Header and player hidden (focus reading, or scrolled on): the text takes the whole screen. */
+  focus?: boolean;
+  /** Scrolled by hand: on (`true`, forward) or back / to the top. */
+  onUserScroll?: (forward: boolean) => void;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -130,6 +134,8 @@ export function ReadingView({
   scrollToPage = null,
   textScale = 1,
   playing = false,
+  focus = false,
+  onUserScroll,
   onOpenAyah,
   mark = null,
   onOpenMark,
@@ -635,6 +641,8 @@ export function ReadingView({
     const host = el?.parentElement;
     if (!el || !frame || !host) return;
     const fit = () => {
+      // Focus reading: down to the bottom edge (the player is hidden).
+      if (focus) return void (el.style.bottom = "var(--vv-bottom,0px)");
       const f = frame.getBoundingClientRect();
       if (!f.height) return el.style.removeProperty("bottom");
       el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
@@ -650,6 +658,40 @@ export function ReadingView({
       frame.removeEventListener("transitionend", fit);
       window.removeEventListener("resize", fit);
     };
+  }, [focus]);
+
+  // Which way the reader scrolls by hand (the follow's own drift doesn't count).
+  const userScrollCbRef = useRef(onUserScroll);
+  userScrollCbRef.current = onUserScroll;
+  const scrollLastRef = useRef(0);
+  // Going full screen (or back) moves the view's top edge: keep the text
+  // where it was, and don't read that nudge as the reader scrolling.
+  const viewTopRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (viewTopRef.current !== null && top !== viewTopRef.current) {
+      el.scrollTop += top - viewTopRef.current;
+      scrollLastRef.current = el.scrollTop;
+    }
+    viewTopRef.current = top;
+  }, [focus]);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    scrollLastRef.current = el.scrollTop;
+    const onScroll = () => {
+      const last = scrollLastRef.current;
+      const d = el.scrollTop - last;
+      if (Date.now() - userScrollAtRef.current >= 1000) return void (scrollLastRef.current = el.scrollTop);
+      if (el.scrollTop < 24) userScrollCbRef.current?.(false);
+      else if (Math.abs(d) < 12) return;
+      else userScrollCbRef.current?.(d > 0);
+      scrollLastRef.current = el.scrollTop;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   // Page shown in the player strip = the page still visible at the top of the
@@ -779,8 +821,9 @@ export function ReadingView({
     const activeIdx = live && k === activeKey ? activeWordIndex : -1;
     // Unread, as in the ayah view: an ayah after the recited one, or a word
     // after the recited word (all of the recited ayah before its first word).
-    const ahead = Boolean(live && active && (ref.surah > active.surah || (ref.surah === active.surah && ref.ayah > active.ayah)));
-    const timed = live && k === activeKey && Boolean(v?.words?.some((w) => w.endTime > w.startTime));
+    // Only while it plays: read silently (stopped / paused), all in full colour.
+    const ahead = Boolean(playing && live && active && (ref.surah > active.surah || (ref.surah === active.surah && ref.ayah > active.ayah)));
+    const timed = playing && live && k === activeKey && Boolean(v?.words?.some((w) => w.endTime > w.startTime));
     const unread = (i: number) => ahead || (timed && i > activeIdx);
     const bookmarked = live && p.from === 0 && bookmarkKeys.has(k);
     let words: React.ReactNode;
@@ -942,7 +985,7 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className="no-scrollbar pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)] bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]"
+        className={`no-scrollbar pointer-events-auto absolute inset-x-0 ${focus ? "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+0.5rem)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)]"} bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]`}
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (

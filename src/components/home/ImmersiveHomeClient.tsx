@@ -875,6 +875,20 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const readingJuz = readingMode && isJuz ? activeJuz ?? null : null;
   const readingSurah = readingMode && !isJuz ? activeSurah?.number ?? null : null;
   const readingActive = readingSurah !== null || readingJuz !== null;
+  // Focus reading (header ⤢ next to Aa): the text alone — header and player
+  // hidden, one ⤡ to bring them back. Ends with reading mode.
+  const [readerFocus, setReaderFocus] = useState(false);
+  const focusOn = readingActive && readerFocus;
+  useEffect(() => {
+    if (!readingActive) setReaderFocus(false);
+  }, [readingActive]);
+
+  useEffect(() => {
+    if (!focusOn) return;
+    const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setReaderFocus(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [focusOn]);
   const readingKey = readingJuz ? `juz-${readingJuz.id}` : readingSurah !== null ? `surah-${readingSurah}` : null;
 
   // Audio Only playback (no word sync for this reciter × Surah / Juz) shows no
@@ -1415,6 +1429,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
         textSize={readingActive ? { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault } : undefined}
+        focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) } : undefined}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -1517,6 +1532,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onVisibleAyahChange={setVisibleAyah}
             onBookmarksInViewChange={setBookmarksInView}
             onContextTap={handleContextTap}
+            focus={focusOn}
+            // Scrolling on by hand: focus reading (text only, ⤡ to come back);
+            // back (or to the top): every control again.
+            onUserScroll={setReaderFocus}
           />
         )}
       </AnimatePresence>
@@ -1603,7 +1622,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         role="region"
         aria-label="Player"
         tabIndex={-1}
-        className="outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none"
+        aria-hidden={focusOn ? true : undefined}
+        className={`outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
+          focusOn ? "invisible opacity-0" : ""
+        }`}
       >
         {notice && !keyboardOpen && (
           <div
