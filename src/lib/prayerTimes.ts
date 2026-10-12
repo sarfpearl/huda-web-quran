@@ -77,6 +77,10 @@ export const PRAYER_LABELS: Record<PrayerName, { en: string; ar: string }> = {
   maghrib: { en: "Maghrib", ar: "المغرب" },
   isha: { en: "Isha", ar: "العشاء" },
 };
+/** The name for that day: Dhuhr is Jumu'ah on a Friday (owner's choice). */
+export function prayerLabel(k: PrayerName, day: Date): { en: string; ar: string } {
+  return k === "dhuhr" && day.getDay() === 5 ? { en: "Jumu'ah", ar: "الجمعة" } : PRAYER_LABELS[k];
+}
 // The waqts in turn; zawal and sunset are shown in the sheet only (not waqts of their own).
 const ORDER: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
 

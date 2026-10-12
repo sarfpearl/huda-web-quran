@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { afterSplash, finishStage } from "@/lib/onboarding";
 import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
-import { clock, currentWaqt, PRAYER_LABELS, regionDefaults, type AsrMadhab, type MethodId } from "@/lib/prayerTimes";
+import { clock, currentWaqt, prayerLabel, regionDefaults, type AsrMadhab, type MethodId } from "@/lib/prayerTimes";
 import { PrayerTimesSheet, readPrayerPrefs, type PrayerPrefs } from "./PrayerTimesSheet";
 import { LocationAskSheet } from "./LocationAskSheet";
 import { t, useUiLang } from "@/lib/uiLang";
@@ -443,7 +443,7 @@ export function TimeLocationWidget({
     );
   }
 
-  const name = t(lang, PRAYER_LABELS[waqt.prayer].en);
+  const name = t(lang, prayerLabel(waqt.prayer, waqt.start).en);
   // "from" may sit after the time ("5:12 முதல்"): split around {time}.
   const [fromPre, fromPost] = t(lang, "from {time}").split("{time}");
   const range = waqt.upcoming ? (
