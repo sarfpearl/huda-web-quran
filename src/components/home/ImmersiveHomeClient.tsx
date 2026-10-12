@@ -876,6 +876,11 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // hidden, one ⤡ to bring them back. Ends with reading mode.
   const [readerFocus, setReaderFocus] = useState(false);
   const focusOn = readingActive && readerFocus;
+  // Reading mode, scrolling on by hand: header and player slide away; back
+  // (or to the top) brings them again. Focus reading keeps its ⤡ instead.
+  const [chromeAway, setChromeAway] = useState(false);
+  const chromeHidden = readingActive && !readerFocus && chromeAway;
+  useEffect(() => setChromeAway(false), [readingActive, readerFocus]);
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
@@ -1413,6 +1418,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         // …and gets a text-size control in its place.
         textSize={readingActive ? { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault } : undefined}
         focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) } : undefined}
+        away={chromeHidden}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -1516,6 +1522,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onBookmarksInViewChange={setBookmarksInView}
             onContextTap={handleContextTap}
             focus={focusOn}
+            onUserScroll={setChromeAway}
           />
         )}
       </AnimatePresence>
@@ -1602,9 +1609,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         role="region"
         aria-label="Player"
         tabIndex={-1}
-        aria-hidden={focusOn ? true : undefined}
+        aria-hidden={focusOn || chromeHidden ? true : undefined}
         className={`outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
-          focusOn ? "invisible opacity-0" : ""
+          focusOn || chromeHidden ? "invisible opacity-0" : ""
         }`}
       >
         {notice && !keyboardOpen && (

@@ -82,6 +82,8 @@ interface ReadingViewProps {
   onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
   /** Focus reading: header and player hidden, the text takes the whole screen. */
   focus?: boolean;
+  /** Scrolled by hand: on (`true`, forward) or back / to the top. */
+  onUserScroll?: (forward: boolean) => void;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -133,6 +135,7 @@ export function ReadingView({
   textScale = 1,
   playing = false,
   focus = false,
+  onUserScroll,
   onOpenAyah,
   mark = null,
   onOpenMark,
@@ -656,6 +659,24 @@ export function ReadingView({
       window.removeEventListener("resize", fit);
     };
   }, [focus]);
+
+  // Which way the reader scrolls by hand (the follow's own drift doesn't count).
+  const userScrollCbRef = useRef(onUserScroll);
+  userScrollCbRef.current = onUserScroll;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let last = el.scrollTop;
+    const onScroll = () => {
+      const d = el.scrollTop - last;
+      if (el.scrollTop < 24) userScrollCbRef.current?.(false);
+      else if (Math.abs(d) < 12) return;
+      else if (Date.now() - userScrollAtRef.current < 1000) userScrollCbRef.current?.(d > 0);
+      last = el.scrollTop;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Page shown in the player strip = the page still visible at the top of the
   // view (reading along in one's own voice, not the audio).
