@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { JSX, SVGProps } from "react";
 
 /*
  * Inline SVG icon set. Keeping icons local avoids an icon-library dependency

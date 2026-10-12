@@ -6,23 +6,25 @@ import { deepLinkMeta, parseSurahLink } from "@/lib/deepLink";
 import { deepLinkJsonLd } from "@/lib/structuredData";
 import { absoluteUrl, notFoundMetadata, shareMetadata } from "@/lib/site";
 
-type Props = { params: { surah: string; ayah: string } };
+type Props = { params: Promise<{ surah: string; ayah: string }> };
 
-export function generateMetadata({ params }: Props): Metadata {
-  const link = parseSurahLink(params.surah, params.ayah);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const p = await params;
+  const link = parseSurahLink(p.surah, p.ayah);
   if (!link) return notFoundMetadata;
   const { title, description } = deepLinkMeta(link);
   // One page per Surah in search: an ayah link is canonical to its Surah.
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl(`/surah/${params.surah}`) },
-    ...shareMetadata({ title, description, url: absoluteUrl(`/surah/${params.surah}/${params.ayah}`) }),
+    alternates: { canonical: absoluteUrl(`/surah/${p.surah}`) },
+    ...shareMetadata({ title, description, url: absoluteUrl(`/surah/${p.surah}/${p.ayah}`) }),
   };
 }
 
-export default function SurahAyahPage({ params }: Props) {
-  const link = parseSurahLink(params.surah, params.ayah);
+export default async function SurahAyahPage({ params }: Props) {
+  const p = await params;
+  const link = parseSurahLink(p.surah, p.ayah);
   if (!link) notFound();
   return (
     <>

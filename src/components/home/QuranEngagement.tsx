@@ -379,7 +379,7 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
  * button … last button), so the stats strip lines up with them. Follows the
  * card resizing and the compact ⇄ expanded switch.
  */
-function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
+function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined) {
   const [geo, setGeo] = useState<{ width: number; left: number; right: number; radius: number } | null>(null);
   useEffect(() => {
     const wrap = container?.current;
@@ -440,7 +440,7 @@ function usePlayerGeometry(container: RefObject<HTMLElement> | undefined) {
  * and back down once the strip is as wide as the level below needed — the
  * width it overflowed at — so it never flickers between two levels.
  */
-function useFitLevel(ref: RefObject<HTMLElement>, max: number, padFor: (level: number) => number) {
+function useFitLevel(ref: RefObject<HTMLElement | null>, max: number, padFor: (level: number) => number) {
   const padRef = useRef(padFor);
   padRef.current = padFor;
   const pad = padFor(0);
@@ -936,7 +936,7 @@ export function PlayerStatsFrame({
   e: QuranEngagement;
   lang?: Lang;
   /** The player container passed as children's ref — measured for alignment. */
-  playerRef: RefObject<HTMLElement>;
+  playerRef: RefObject<HTMLElement | null>;
   /** Control at the strip's left edge (the image/video toggle). */
   leading?: React.ReactNode;
   /** Bottom strip (same look as the top one); the player portals into it. */

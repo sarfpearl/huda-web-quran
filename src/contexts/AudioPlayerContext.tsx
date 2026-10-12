@@ -230,7 +230,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const audioBRef = useRef<HTMLAudioElement | null>(null);
   const standbyUrlRef = useRef<string | null>(null);
   const standbyUnlockedRef = useRef(false);
-  const waitingTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const waitingTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const preludeAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastSaveRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);

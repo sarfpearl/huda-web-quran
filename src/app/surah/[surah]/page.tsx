@@ -6,22 +6,24 @@ import { deepLinkMeta, deepLinkPath, parseSurahLink } from "@/lib/deepLink";
 import { deepLinkJsonLd } from "@/lib/structuredData";
 import { absoluteUrl, notFoundMetadata, shareMetadata } from "@/lib/site";
 
-type Props = { params: { surah: string } };
+type Props = { params: Promise<{ surah: string }> };
 
 export function generateStaticParams() {
   return Array.from({ length: 114 }, (_, i) => ({ surah: String(i + 1) }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const link = parseSurahLink(params.surah);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const p = await params;
+  const link = parseSurahLink(p.surah);
   if (!link) return notFoundMetadata;
   const { title, description } = deepLinkMeta(link);
   const url = absoluteUrl(deepLinkPath(link));
   return { title, description, alternates: { canonical: url }, ...shareMetadata({ title, description, url }) };
 }
 
-export default function SurahPage({ params }: Props) {
-  const link = parseSurahLink(params.surah);
+export default async function SurahPage({ params }: Props) {
+  const p = await params;
+  const link = parseSurahLink(p.surah);
   if (!link) notFound();
   return (
     <>
