@@ -259,6 +259,8 @@ export function CenterVerseDisplay({
   useEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
     const header = document.querySelector<HTMLElement>("[data-scene-header]");
+    // The Continue / Bookmark pills below the header (0 tall when none show).
+    const pills = document.querySelector<HTMLElement>("[data-home-pills]");
     if (!dock && !header) return;
     const measure = () => {
       // Measured against the full-screen scene (it can run under Safari's bars).
@@ -270,7 +272,10 @@ export function CenterVerseDisplay({
       if (header) {
         const scene = header.parentElement?.getBoundingClientRect();
         // The header's own pb-4 (16px) is the gap below its pills.
-        setTopInset(Math.max(0, header.getBoundingClientRect().bottom - (scene?.top ?? 0)));
+        let bottom = header.getBoundingClientRect().bottom;
+        // Clear of the pills too (they sit over the stage's top otherwise).
+        if (pills && pills.offsetHeight > 0) bottom = Math.max(bottom, pills.getBoundingClientRect().bottom + 12);
+        setTopInset(Math.max(0, bottom - (scene?.top ?? 0)));
       }
     };
     measure();
@@ -278,6 +283,7 @@ export function CenterVerseDisplay({
     // border-box: the header grows through its safe-area padding, not content.
     if (dock) ro.observe(dock, { box: "border-box" });
     if (header) ro.observe(header, { box: "border-box" });
+    if (pills) ro.observe(pills, { box: "border-box" });
     window.addEventListener("resize", measure);
     return () => {
       ro.disconnect();

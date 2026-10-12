@@ -22,6 +22,7 @@ import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import { ReciterPickerModal } from "./ReciterPickerModal";
+import { OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 
 /** How long the Tajweed panel stays open untouched before hiding itself. */
@@ -121,6 +122,12 @@ export function ImmersiveHeader({
     return () => window.clearTimeout(timer);
   }, [activePopover, tajweedHeld, showTajweed]);
   const isReciterSelectorOpen = activePopover === "reciter";
+  // Settings › Reciter opens the same picker.
+  useEffect(() => {
+    const open = () => setActivePopover("reciter");
+    window.addEventListener(OPEN_RECITERS_EVENT, open);
+    return () => window.removeEventListener(OPEN_RECITERS_EVENT, open);
+  }, []);
   const [translationSheetOpen, setTranslationSheetOpen] = useState(false);
   // The sheet's language search; cleared whenever the sheet closes.
   const [langQuery, setLangQuery] = useState("");
@@ -599,7 +606,7 @@ function TajweedIcon({ on, className }: { on: boolean; className?: string }) {
   );
 }
 
-const SCRIPT_CHOICES: { id: QuranScript; label: string }[] = [
+export const SCRIPT_CHOICES: { id: QuranScript; label: string }[] = [
   { id: "uthmani", label: "Uthmani" },
   { id: "indopak", label: "IndoPak" },
 ];

@@ -8,6 +8,7 @@ import { ImmersiveBackground } from "./ImmersiveBackground";
 import { ImmersiveHeader, READER_SCALES, defaultReaderScale } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
+import { HomeSettingsProvider } from "./SettingsPages";
 import { CenterVerseDisplay } from "./CenterVerseDisplay";
 import { ReadingView, type ReadingRange } from "./ReadingView";
 import { MushafPagePicker } from "./MushafPagePicker";
@@ -1444,11 +1445,29 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             <BookOpenIcon className="h-5 w-5" />
           </button>
         )}
-        <TopicPickerModal
-          openRequest={browserOpenRequest}
-          surahTracks={surahTracksForCurrentReciter}
-          onSelectJuz={handleSelectJuz}
-        />
+        {/* Its Settings page edits the same preferences as the header. */}
+        <HomeSettingsProvider
+          value={{
+            translationLang,
+            onChooseTranslation: handleChooseTranslation,
+            showMeaning: showTranslation,
+            onToggleMeaning: handleToggleMeaning,
+            textSize: { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault },
+            showTajweed: tajweedShown,
+            onToggleTajweed: handleToggleTajweed,
+            script: quranScript,
+            onChooseScript: INDOPAK_ENABLED ? handleChooseScript : undefined,
+            visualMode,
+            onToggleVisualMode: handleToggleVisualMode,
+            reciterName: selectedReciter.displayName,
+          }}
+        >
+          <TopicPickerModal
+            openRequest={browserOpenRequest}
+            surahTracks={surahTracksForCurrentReciter}
+            onSelectJuz={handleSelectJuz}
+          />
+        </HomeSettingsProvider>
       </ImmersiveHeader>
 
       {/* Typing a comment: dim the verse so the comments read cleanly over it */}
@@ -1489,6 +1508,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           (when the ayah on air isn't the bookmark itself), and « Continue »
           where the last Surah listened to was left — only while the
           recitation is stopped (a clean scene while it plays or buffers). */}
+      {/* Always there (0 tall when empty): CenterVerseDisplay measures it to
+          keep the greeting / ayah below the pills. */}
+      <div
+        data-home-pills
+        className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30"
+      >
       <AnimatePresence>
         {!readingActive && (showBookmarkPill || showContinuePill || juzLink) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
           <motion.div
@@ -1497,7 +1522,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30 flex flex-wrap justify-center gap-2 px-4"
+            className="flex flex-wrap justify-center gap-2 px-4"
           >
             {juzLink && (
               <button
@@ -1552,6 +1577,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       {/* Bottom Floating Player — the skip link's target (MainLayout) */}
       <div

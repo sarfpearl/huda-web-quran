@@ -65,16 +65,18 @@ export function regionDefaults(countryCode?: string | null, stateCode?: string |
   return { method, asr };
 }
 
-export type PrayerName = "fajr" | "sunrise" | "dhuhr" | "asr" | "maghrib" | "isha";
+export type PrayerName = "fajr" | "sunrise" | "dhuhr" | "asr" | "sunset" | "maghrib" | "isha";
 /** English (the UI-string key: t(lang, PRAYER_LABELS[k].en)) and Arabic names. */
 export const PRAYER_LABELS: Record<PrayerName, { en: string; ar: string }> = {
   fajr: { en: "Fajr", ar: "الفجر" },
   sunrise: { en: "Sunrise", ar: "الشروق" },
   dhuhr: { en: "Dhuhr", ar: "الظهر" },
   asr: { en: "Asr", ar: "العصر" },
+  sunset: { en: "Sunset", ar: "الغروب" },
   maghrib: { en: "Maghrib", ar: "المغرب" },
   isha: { en: "Isha", ar: "العشاء" },
 };
+// The waqts in turn; sunset is shown in the sheet only (not a waqt of its own).
 const ORDER: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
 
 function params(method: MethodId, asr: AsrMadhab): CalculationParameters {
@@ -95,7 +97,7 @@ export interface DayTimes {
 
 export function dayTimes(lat: number, lon: number, day: Date, method: MethodId, asr: AsrMadhab): DayTimes {
   const t = new PrayerTimes(new Coordinates(lat, lon), day, params(method, asr));
-  return { date: day, times: { fajr: t.fajr, sunrise: t.sunrise, dhuhr: t.dhuhr, asr: t.asr, maghrib: t.maghrib, isha: t.isha } };
+  return { date: day, times: { fajr: t.fajr, sunrise: t.sunrise, dhuhr: t.dhuhr, asr: t.asr, sunset: t.sunset, maghrib: t.maghrib, isha: t.isha } };
 }
 
 /**

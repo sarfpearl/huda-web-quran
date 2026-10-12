@@ -7,6 +7,7 @@ import { clock, currentWaqt, PRAYER_LABELS, regionDefaults, type AsrMadhab, type
 import { PrayerTimesSheet, readPrayerPrefs, type PrayerPrefs } from "./PrayerTimesSheet";
 import { LocationAskSheet } from "./LocationAskSheet";
 import { t, useUiLang } from "@/lib/uiLang";
+import { OPEN_PRAYER_TIMES_EVENT } from "@/lib/settingsEvents";
 
 // Place names as plain letters: "Gūduvāncheri" → "Guduvancheri" — the macrons
 // read as stray lines over the small label.
@@ -243,34 +244,50 @@ export function TimeLocationWidget({
     };
   }, [applyPosition]);
 
-  // Moved since the saved place (travel, or a PWA left open): look again —
-  // on load and on coming back to the app, at most every 10 min — but only
-  // where the permission is already granted, so it never prompts. A new name
-  // only past ~2 km, to spare Nominatim.
+  // Moved since the saved place (travel, or a PWA left open): look again on
+  // every open and on coming back to the app (at most every 10 min), by
+  // itself (owner: the place must follow without a tap). Once allowed only:
+  // never where it's denied or was never shared. iOS Safari reports "prompt"
+  // again after a reload even though it was allowed, so that counts too (its
+  // own prompt may then show). A new name only past ~2 km, to spare
+  // Nominatim; the prayer times follow any move.
   const coordsRef = useRef(coords);
   coordsRef.current = coords;
+  const placeRef = useRef(location);
+  placeRef.current = location;
+  const regionRef = useRef(region);
+  regionRef.current = region;
   useEffect(() => {
-    if (!("geolocation" in navigator) || !navigator.permissions) return;
+    if (!("geolocation" in navigator)) return;
     let last = 0;
     const refresh = () => {
       if (document.visibilityState !== "visible" || Date.now() - last < 10 * 60 * 1000) return;
       const had = coordsRef.current;
       if (!had) return;
       last = Date.now();
+      const look = () =>
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            if (km(had.lat, had.lon, latitude, longitude) > 2) {
+              void applyPosition(position);
+              return;
+            }
+            const here = { lat: latitude, lon: longitude };
+            setCoords(here);
+            savePlace({ city: placeRef.current || undefined, detail: regionRef.current ?? undefined, coords: here, at: Date.now() });
+          },
+          () => {},
+          { timeout: 15000, maximumAge: 5 * 60 * 1000 },
+        );
+      if (!navigator.permissions) {
+        look();
+        return;
+      }
       navigator.permissions
         .query({ name: "geolocation" })
-        .then((s) => {
-          if (s.state !== "granted") return;
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              if (km(had.lat, had.lon, latitude, longitude) > 2) void applyPosition(position);
-            },
-            () => {},
-            { timeout: 15000, maximumAge: 5 * 60 * 1000 },
-          );
-        })
-        .catch(() => {});
+        .then((s) => s.state !== "denied" && look())
+        .catch(look);
     };
     // The saved place shows first; this follows.
     const t = setTimeout(refresh, 1500);
@@ -360,6 +377,17 @@ export function TimeLocationWidget({
     () => (coords && now ? currentWaqt(coords.lat, coords.lon, now, method, asr) : null),
     [coords, now, method, asr],
   );
+  // Settings › Prayer times & location: the sheet, or the ask without a place.
+  const openTimesRef = useRef<() => void>(() => {});
+  openTimesRef.current = () => {
+    if (waqt && coords) setSheetOpen(true);
+    else if ("geolocation" in navigator) askFromPill();
+  };
+  useEffect(() => {
+    const open = () => openTimesRef.current();
+    window.addEventListener(OPEN_PRAYER_TIMES_EVENT, open);
+    return () => window.removeEventListener(OPEN_PRAYER_TIMES_EVENT, open);
+  }, []);
   if (!mounted) {
     return (
       <div
