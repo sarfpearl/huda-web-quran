@@ -1443,7 +1443,6 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
-        textSize={readingActive ? { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault } : undefined}
         focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) } : undefined}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}

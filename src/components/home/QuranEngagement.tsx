@@ -447,6 +447,7 @@ function useFitLevel(ref: RefObject<HTMLElement>, max: number, padFor: (level: n
   const [level, setLevel] = useState(0);
   const levelRef = useRef(0);
   const needs = useRef<number[]>([]);
+  const widthRef = useRef(-1);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return;
@@ -468,7 +469,22 @@ function useFitLevel(ref: RefObject<HTMLElement>, max: number, padFor: (level: n
       }
     };
     // The strip's own width, and its groups' (a button coming or going).
-    const ro = new ResizeObserver(measure);
+    // A level reached mid-animation (the player shrinking to compact) can
+    // stick, its "needs" measured on the way: when the strip's own width
+    // changes, measure again from the top (synchronously, so no flicker; the
+    // width doesn't depend on the level, so this can't loop).
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== widthRef.current) {
+        widthRef.current = el.clientWidth;
+        needs.current = [];
+        if (levelRef.current > 0) {
+          levelRef.current = 0;
+          setLevel(0);
+          return;
+        }
+      }
+      measure();
+    });
     ro.observe(el);
     for (const c of el.children) ro.observe(c);
     measure();
