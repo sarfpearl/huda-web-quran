@@ -9,7 +9,7 @@ import { ImmersiveHeader, READER_SCALES, defaultReaderScale } from "./ImmersiveH
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
 import { HomeSettingsProvider } from "./SettingsPages";
-import { CenterVerseDisplay } from "./CenterVerseDisplay";
+import { CenterVerseDisplay, VISIBLE_AREA_EVENT } from "./CenterVerseDisplay";
 import { ReadingView, type ReadingRange } from "./ReadingView";
 import { MushafPagePicker } from "./MushafPagePicker";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
@@ -1799,11 +1799,24 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
             fills && target > window.innerHeight && target - window.innerHeight <= 80 ? `${target}px` : "";
         }
         const r = scene.getBoundingClientRect();
-        const top = Math.max(0, Math.round(vv.offsetTop - r.top));
-        const bottom = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));
+        // Only the keyboard covers part of a home-screen app (no browser
+        // toolbars): with nothing to type in, a smaller visual viewport is a
+        // stale reading from the app-switch animation — it pushed the player
+        // up to the middle of an iPad screen after coming back from another app.
+        const a = document.activeElement as HTMLElement | null;
+        const typing = !!a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+        const covered = !standalone || typing;
+        const top = covered ? Math.max(0, Math.round(vv.offsetTop - r.top)) : 0;
+        const bottom = covered ? Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height))) : 0;
+        const moved =
+          scene.style.getPropertyValue("--vv-top") !== `${top}px` ||
+          scene.style.getPropertyValue("--vv-bottom") !== `${bottom}px`;
         scene.style.setProperty("--vv-top", `${top}px`);
         scene.style.setProperty("--vv-bottom", `${bottom}px`);
         scene.style.setProperty("--vv-height", `${Math.round(vv.height)}px`);
+        // The player dock sits on --vv-bottom: it moves without changing size,
+        // so the verse stage (CenterVerseDisplay) is told to measure it again.
+        if (moved) window.dispatchEvent(new Event(VISIBLE_AREA_EVENT));
         if (vv.width !== full.width || vv.height > full.height) full = { width: vv.width, height: vv.height };
         setKeyboardOpen(full.height - vv.height > 150);
       });
@@ -1811,8 +1824,14 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
     // A window resized while the app was in the background (another app in
     // front, the App Switcher) reports no resize on return: measure again
     // when it shows, and whenever the page box itself changes size.
+    // The window can still be animating back into place when the page
+    // shows: measure again once it has settled.
+    let settle: ReturnType<typeof setTimeout>[] = [];
     const onShow = () => {
-      if (document.visibilityState === "visible") update();
+      if (document.visibilityState !== "visible") return;
+      update();
+      settle.forEach(clearTimeout);
+      settle = [300, 1000].map((ms) => setTimeout(update, ms));
     };
     const ro = new ResizeObserver(update);
     ro.observe(document.documentElement);
@@ -1821,7 +1840,7 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
     vv.addEventListener("scroll", update);
     window.addEventListener("resize", update);
     window.addEventListener("orientationchange", update);
-    window.addEventListener("pageshow", update);
+    window.addEventListener("pageshow", onShow);
     document.addEventListener("visibilitychange", onShow);
     return () => {
       cancelAnimationFrame(frame);
@@ -1830,8 +1849,9 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement>): boolean {
       vv.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       window.removeEventListener("orientationchange", update);
-      window.removeEventListener("pageshow", update);
+      window.removeEventListener("pageshow", onShow);
       document.removeEventListener("visibilitychange", onShow);
+      settle.forEach(clearTimeout);
     };
   }, [sceneRef]);
   return keyboardOpen;

@@ -258,15 +258,28 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // it plays on once the call ends (see the audio-session effect). 0 = not.
   const interruptedRef = useRef(0);
 
-  // After a call, iOS can leave the element "playing" without sound or time
-  // moving: if it hasn't moved shortly after play, load it again from there.
-  const kickIfStuck = (el: HTMLAudioElement) => {
+  // After a call — or the iPad home-screen app coming back from another app —
+  // iOS can leave the element "playing" without sound or time moving (pause
+  // icon, 0:00, silence): if it hasn't moved shortly after play, load it again
+  // from there. The prelude (a few seconds of Isti'adhah / Bismillah) still
+  // stuck after that hands over to the reciter instead.
+  const onPreludeEndedRef = useRef<() => void>(() => {});
+  const kickIfStuck = useCallback((el: HTMLAudioElement, retried = false) => {
+    const prelude = el === preludeAudioRef.current;
     const t0 = el.currentTime;
     setTimeout(() => {
-      if (audioRef.current !== el || el.paused || el.ended || userPausedRef.current) return;
+      const active = prelude ? isPreludeRef.current : audioRef.current === el;
+      if (!active || el.paused || el.ended || userPausedRef.current) return;
       if (Math.abs(el.currentTime - t0) > 0.05 || el.readyState < 3) return;
       const src = el.getAttribute("src");
       if (!src) return;
+      if (retried) {
+        if (prelude) {
+          el.pause();
+          onPreludeEndedRef.current();
+        }
+        return;
+      }
       el.src = src;
       el.load();
       el.addEventListener(
@@ -277,12 +290,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           } catch {
             /* ignore */
           }
-          el.play().catch(() => {});
+          el.play().then(() => kickIfStuck(el, true)).catch(() => {});
         },
         { once: true },
       );
     }, 2000);
-  };
+    // Reads only refs (and itself).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [queue, setQueue] = useState<BayanWithRelations[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -480,7 +495,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             pel.load();
             if (autoplay) {
               setIsLoading(true); // show spinner while the prelude buffers
-              pel.play().then(() => setIsPlaying(true)).catch(() => {
+              pel.play().then(() => {
+                setIsPlaying(true);
+                kickIfStuck(pel);
+              }).catch(() => {
                 setIsPlaying(false);
                 setIsLoading(false);
               });
@@ -532,7 +550,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
         // Start playback ASAP
         if (autoplay) {
-          el.play().catch(() => setIsPlaying(false));
+          el.play().then(() => kickIfStuck(el)).catch(() => setIsPlaying(false));
         }
 
         // Once metadata arrives, apply duration
@@ -582,7 +600,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         if (autoplay) el.play().catch(() => setIsPlaying(false));
       }, { once: true });
     },
-    []
+    [kickIfStuck]
   );
 
   const playBayan = useCallback(
@@ -886,9 +904,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     interruptedRef.current = 0;
     if (isPreludeRef.current && preludeAudioRef.current) {
       setIsLoading(true); // spinner while the prelude resumes/buffers
-      preludeAudioRef.current
+      const pel = preludeAudioRef.current;
+      pel
         .play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true);
+          kickIfStuck(pel);
+        })
         .catch(() => setIsLoading(false));
       return;
     }
@@ -909,7 +931,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     kickIfStuck(el);
-  }, [current, loadCurrent]);
+  }, [current, loadCurrent, kickIfStuck]);
 
   const togglePlay = useCallback(() => {
     if (isPlaying) pause();
@@ -1154,6 +1176,29 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       document.removeEventListener("visibilitychange", onShow);
     };
   }, []);
+  // Back from another app (the iPad home-screen app especially), iOS can
+  // keep the recitation "playing" with the clock frozen and no sound: check
+  // the element in use once the page shows again.
+  useEffect(() => {
+    if (!isPlaying) return;
+    const onShow = () => {
+      if (document.visibilityState !== "visible") return;
+      const el = isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
+      if (!el) return;
+      // Paused while the app was away without a pause event reaching us:
+      // show play, so a tap starts it again.
+      if (el.paused && !el.ended && el.getAttribute("src")) setIsPlaying(false);
+      else kickIfStuck(el);
+    };
+    document.addEventListener("visibilitychange", onShow);
+    window.addEventListener("pageshow", onShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onShow);
+      window.removeEventListener("pageshow", onShow);
+    };
+    // kickIfStuck only reads refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying]);
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     navigator.mediaSession.playbackState = current ? (isPlaying ? "playing" : "paused") : "none";
@@ -1251,11 +1296,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     setCurrentTime(0);
     setIsLoading(true); // handoff gap: spinner until the reciter stream starts
-    el.play().then(() => setIsPlaying(true)).catch(() => {
+    el.play().then(() => {
+      setIsPlaying(true);
+      kickIfStuck(el);
+    }).catch(() => {
       setIsPlaying(false);
       setIsLoading(false);
     });
-  }, []);
+  }, [kickIfStuck]);
+  onPreludeEndedRef.current = onPreludeEnded;
 
   const onPreludeTimeUpdate = useCallback(() => {
     const pel = preludeAudioRef.current;
