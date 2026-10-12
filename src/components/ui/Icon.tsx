@@ -552,3 +552,15 @@ export const CheckCircleIcon = (p: IconProps) => (
     </g>
   </Icon16>
 );
+/** Focus reading: hide everything but the text (owner's arrow-expand.svg). */
+export const ArrowExpandIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M8 3.1s-4-.36-4.61.29C2.74 4.03 3.1 8 3.1 8M8 20.9s-4 .36-4.61-.29C2.74 19.97 3.1 16 3.1 16M16 3.1s3.97-.36 4.61.29c.65.64.29 4.61.29 4.61M16 20.9s3.97.36 4.61-.29c.65-.64.29-4.61.29-4.61M14.01 10l6.05-6.05M10 14l-6.36 6.38M10 10 3.84 3.86M13.98 14l6.55 6.5" />
+  </Base>
+);
+/** Back from focus reading (owner's arrow-shrink.svg). */
+export const ArrowShrinkIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M14.22 17.99c-.01-.75-.53-3.23 0-3.76.53-.53 3.01-.01 3.76 0M20.99 20.99l-6.38-6.38M9.76 17.99c.01-.75.53-3.23 0-3.76-.53-.53-3.01-.01-3.76 0M2.99 20.99l6.39-6.38M6 9.76c.75.01 3.23.52 3.76 0 .53-.53.01-3.02-.01-3.77M9.37 9.36 2.99 3M17.98 9.76c-.75.01-3.23.52-3.76 0-.53-.53-.01-3.02.01-3.77M14.61 9.36 20.99 3" />
+  </Base>
+);

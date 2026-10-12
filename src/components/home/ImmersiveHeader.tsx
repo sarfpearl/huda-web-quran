@@ -28,7 +28,7 @@ import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 /** How long the Tajweed panel stays open untouched before hiding itself. */
 const TAJWEED_AUTO_HIDE_MS = 4000;
 import { ActionSheet } from "@/components/ui/ActionSheet";
-import { CheckIcon } from "@/components/ui/Icon";
+import { ArrowExpandIcon, ArrowShrinkIcon, CheckIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 
@@ -53,6 +53,8 @@ interface ImmersiveHeaderProps {
   onToggleMeaning?: () => void;
   /** Reading mode's text size (× base) + setter + the device's default (Reset); shows the Aa control. */
   textSize?: { value: number; onChange: (v: number) => void; initial: number };
+  /** Reading mode: text only (every other control hidden) + toggle, next to Aa. */
+  focus?: { on: boolean; onToggle: () => void };
   /** Tajweed colouring of the verse text + toggle */
   showTajweed?: boolean;
   onToggleTajweed?: () => void;
@@ -80,6 +82,7 @@ export function ImmersiveHeader({
   showMeaning = true,
   onToggleMeaning,
   textSize,
+  focus,
   showTajweed = false,
   onToggleTajweed,
   script = "uthmani",
@@ -182,6 +185,19 @@ export function ImmersiveHeader({
 
   return (
     <header data-scene-header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1 min-[360px]:gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border">
+      {/* Focus reading: only the way back; the rest stays mounted, hidden. */}
+      {focus?.on && (
+        <button
+          type="button"
+          onClick={focus.onToggle}
+          aria-label={t(language, "Show the controls")}
+          title={t(language, "Show the controls")}
+          className={`ml-auto ${FOCUS_BTN}`}
+        >
+          <ArrowShrinkIcon className="h-5 w-5" />
+        </button>
+      )}
+      <div className={focus?.on ? "hidden" : "contents"}>
       {/* Top Left Time & Location */}
       <TimeLocationWidget />
 
@@ -339,6 +355,18 @@ export function ImmersiveHeader({
               <span className="text-[0.8rem]">A</span>
               <span className="text-[1.1rem]">A</span>
             </span>
+          </button>
+        )}
+        {/* …and, where there's room, text only (focus reading). */}
+        {focus && (
+          <button
+            type="button"
+            onClick={focus.onToggle}
+            aria-label={t(language, "Show only the text")}
+            data-tooltip={t(language, "Show only the text")}
+            className={`max-[379px]:hidden ${FOCUS_BTN}`}
+          >
+            <ArrowExpandIcon className="h-5 w-5" />
           </button>
         )}
         {textSize && (
@@ -578,9 +606,13 @@ export function ImmersiveHeader({
         {/* Category Picker Menu (Menu.svg) */}
         {children}
       </div>
+      </div>
     </header>
   );
 }
+
+const FOCUS_BTN =
+  "pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer";
 
 /** Three rule-coloured dots (Tajweed on) or muted outlines (off). */
 function TajweedIcon({ on, className }: { on: boolean; className?: string }) {

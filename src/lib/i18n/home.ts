@@ -55,6 +55,8 @@ const strings: Strings = {
   // ── Header: text size (reading mode) ──
   "Text size": { ta: "எழுத்து அளவு", ur: "متن کا سائز", ml: "അക്ഷര വലുപ്പം", hi: "अक्षर का आकार", id: "Ukuran teks", bn: "লেখার আকার", tr: "Yazı boyutu", fr: "Taille du texte", ms: "Saiz teks" },
   "Text size: {pct}% — change": { ta: "எழுத்து அளவு: {pct}% — மாற்று", ur: "متن کا سائز: {pct}% — بدلیں", ml: "അക്ഷര വലുപ്പം: {pct}% — മാറ്റുക", hi: "अक्षर का आकार: {pct}% — बदलें", id: "Ukuran teks: {pct}% — ubah", bn: "লেখার আকার: {pct}% — বদলান", tr: "Yazı boyutu: %{pct} — değiştir", fr: "Taille du texte : {pct} % — changer", ms: "Saiz teks: {pct}% — tukar" },
+  "Show only the text": { ta: "எழுத்தை மட்டும் காட்டு", ur: "صرف متن دکھائیں", ml: "വാചകം മാത്രം കാണിക്കുക", hi: "केवल पाठ दिखाएँ", id: "Tampilkan teks saja", bn: "শুধু লেখা দেখান", tr: "Yalnızca metni göster", fr: "Afficher le texte seul", ms: "Tunjukkan teks sahaja" },
+  "Show the controls": { ta: "கட்டுப்பாடுகளைக் காட்டு", ur: "کنٹرول دکھائیں", ml: "നിയന്ത്രണങ്ങൾ കാണിക്കുക", hi: "नियंत्रण दिखाएँ", id: "Tampilkan kontrol", bn: "নিয়ন্ত্রণ দেখান", tr: "Denetimleri göster", fr: "Afficher les commandes", ms: "Tunjukkan kawalan" },
   "Smaller text": { ta: "சிறிய எழுத்து", ur: "چھوٹا متن", ml: "ചെറിയ അക്ഷരം", hi: "छोटे अक्षर", id: "Teks lebih kecil", bn: "ছোট লেখা", tr: "Daha küçük yazı", fr: "Texte plus petit", ms: "Teks lebih kecil" },
   "Larger text": { ta: "பெரிய எழுத்து", ur: "بڑا متن", ml: "വലിയ അക്ഷരം", hi: "बड़े अक्षर", id: "Teks lebih besar", bn: "বড় লেখা", tr: "Daha büyük yazı", fr: "Texte plus grand", ms: "Teks lebih besar" },
   Reset: { ta: "மீட்டமை", ur: "ری سیٹ", ml: "പുനഃസജ്ജമാക്കുക", hi: "रीसेट", id: "Atur ulang", bn: "রিসেট", tr: "Sıfırla", fr: "Réinitialiser", ms: "Set semula" },

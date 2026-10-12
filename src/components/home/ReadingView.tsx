@@ -779,8 +779,9 @@ export function ReadingView({
     const activeIdx = live && k === activeKey ? activeWordIndex : -1;
     // Unread, as in the ayah view: an ayah after the recited one, or a word
     // after the recited word (all of the recited ayah before its first word).
-    const ahead = Boolean(live && active && (ref.surah > active.surah || (ref.surah === active.surah && ref.ayah > active.ayah)));
-    const timed = live && k === activeKey && Boolean(v?.words?.some((w) => w.endTime > w.startTime));
+    // Only while it plays: read silently (stopped / paused), all in full colour.
+    const ahead = Boolean(playing && live && active && (ref.surah > active.surah || (ref.surah === active.surah && ref.ayah > active.ayah)));
+    const timed = playing && live && k === activeKey && Boolean(v?.words?.some((w) => w.endTime > w.startTime));
     const unread = (i: number) => ahead || (timed && i > activeIdx);
     const bookmarked = live && p.from === 0 && bookmarkKeys.has(k);
     let words: React.ReactNode;
