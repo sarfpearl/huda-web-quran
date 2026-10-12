@@ -82,8 +82,6 @@ interface ReadingViewProps {
   onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
   /** Focus reading: header and player hidden, the text takes the whole screen. */
   focus?: boolean;
-  /** Focus reading: scrolled on (`true`, forward) or back / to the top. */
-  onFocusScroll?: (forward: boolean) => void;
 }
 
 const verseCount = (s: number) => QURAN_SURAHS.find((x) => x.number === s)?.verses ?? 0;
@@ -135,7 +133,6 @@ export function ReadingView({
   textScale = 1,
   playing = false,
   focus = false,
-  onFocusScroll,
   onOpenAyah,
   mark = null,
   onOpenMark,
@@ -658,24 +655,6 @@ export function ReadingView({
       frame.removeEventListener("transitionend", fit);
       window.removeEventListener("resize", fit);
     };
-  }, [focus]);
-
-  // Focus reading: which way the reader scrolls (shows / hides the way back).
-  const focusScrollRef = useRef(onFocusScroll);
-  focusScrollRef.current = onFocusScroll;
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!focus || !el) return;
-    let last = el.scrollTop;
-    const onScroll = () => {
-      const d = el.scrollTop - last;
-      if (el.scrollTop < 24) focusScrollRef.current?.(false);
-      else if (Math.abs(d) < 12) return;
-      else focusScrollRef.current?.(d > 0);
-      last = el.scrollTop;
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
   }, [focus]);
 
   // Page shown in the player strip = the page still visible at the top of the

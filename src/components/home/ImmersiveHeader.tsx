@@ -54,7 +54,7 @@ interface ImmersiveHeaderProps {
   /** Reading mode's text size (× base) + setter + the device's default (Reset); shows the Aa control. */
   textSize?: { value: number; onChange: (v: number) => void; initial: number };
   /** Reading mode: text only (every other control hidden) + toggle, next to Aa. */
-  focus?: { on: boolean; onToggle: () => void; /** The way back shown (hidden while reading forward). */ shown?: boolean };
+  focus?: { on: boolean; onToggle: () => void; };
   /** Tajweed colouring of the verse text + toggle */
   showTajweed?: boolean;
   onToggleTajweed?: () => void;
@@ -188,17 +188,13 @@ export function ImmersiveHeader({
     <header data-scene-header className="absolute top-0 inset-x-0 z-50 flex items-center justify-between gap-1 min-[360px]:gap-1.5 w-full max-w-[100vw] px-2 sm:px-8 pt-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] pb-4 pointer-events-none box-border">
       {/* Focus reading: only the way back; the rest stays mounted, hidden. */}
       {focus?.on && (
-        <div
-          ref={focusRef}
-          className={`ml-auto transition-opacity duration-300 ${focus.shown === false ? "opacity-0 [&>button]:pointer-events-none" : ""}`}
-        >
+        <div ref={focusRef} className="ml-auto">
           <HoverTooltips container={focusRef} placement="bottom" selector="[data-tooltip]" />
           <button
             type="button"
             onClick={focus.onToggle}
             aria-label={t(language, "Show the controls")}
             data-tooltip={t(language, "Show the controls")}
-            tabIndex={focus.shown === false ? -1 : undefined}
             className={FOCUS_BTN}
           >
             <ArrowShrinkIcon className="h-5 w-5" />

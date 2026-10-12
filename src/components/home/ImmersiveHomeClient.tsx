@@ -876,12 +876,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // hidden, one ⤡ to bring them back. Ends with reading mode.
   const [readerFocus, setReaderFocus] = useState(false);
   const focusOn = readingActive && readerFocus;
-  // Reading on (scrolling forward) hides the ⤡ too; scrolling back shows it.
-  const [focusButtonShown, setFocusButtonShown] = useState(true);
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
-  useEffect(() => setFocusButtonShown(true), [focusOn]);
+
   useEffect(() => {
     if (!focusOn) return;
     const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setReaderFocus(false);
@@ -1414,7 +1412,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
         textSize={readingActive ? { value: readerScale, onChange: handleReaderScale, initial: readerScaleDefault } : undefined}
-        focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v), shown: focusButtonShown } : undefined}
+        focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) } : undefined}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -1518,7 +1516,6 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onBookmarksInViewChange={setBookmarksInView}
             onContextTap={handleContextTap}
             focus={focusOn}
-            onFocusScroll={(forward) => setFocusButtonShown(!forward)}
           />
         )}
       </AnimatePresence>
