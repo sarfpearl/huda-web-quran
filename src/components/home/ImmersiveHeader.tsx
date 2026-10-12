@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, isValidElement, cloneElement, type ReactElement } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, isValidElement, cloneElement, type ReactElement } from "react";
 import Image from "next/image";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
@@ -142,6 +142,41 @@ export function ImmersiveHeader({
   const q = langQuery.trim().toLowerCase();
   const langChoices = q ? TRANSLATIONS.filter((c) => `${c.label} ${c.hint}`.toLowerCase().includes(q)) : TRANSLATIONS;
   const [textSizeSheetOpen, setTextSizeSheetOpen] = useState(false);
+  // The text size button only where the row has room for it (a narrow phone
+  // pinches the text instead; Settings has the size too). Measured: the
+  // prayer pill and the buttons vary with the language and the screen.
+  const textSizeRef = useRef<HTMLButtonElement>(null);
+  const textSizeWidthRef = useRef(0);
+  const [textSizeFits, setTextSizeFits] = useState(true);
+  const hasTextSize = Boolean(textSize);
+  useLayoutEffect(() => {
+    const row = controlsRef.current;
+    const header = row?.parentElement?.closest("header");
+    if (!row || !header || !hasTextSize) return;
+    const fit = () => {
+      const left = row.previousElementSibling as HTMLElement | null;
+      const cs = getComputedStyle(header);
+      const room =
+        header.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.columnGap || "0");
+      const gap = parseFloat(getComputedStyle(row).columnGap || "0");
+      const btn = textSizeRef.current;
+      if (btn) textSizeWidthRef.current = btn.offsetWidth + gap;
+      const others = row.scrollWidth - (btn ? textSizeWidthRef.current : 0);
+      const used = (left?.offsetWidth ?? 0) + others + textSizeWidthRef.current;
+      // Last in line: below 380px (where even ⤢ goes) the row is a phone's.
+      setTextSizeFits(window.innerWidth >= 380 && used <= room + 0.5);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(header);
+    window.addEventListener("resize", fit);
+    ro.observe(row);
+    if (row.previousElementSibling) ro.observe(row.previousElementSibling);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, [hasTextSize]);
   // Picking a language shows the meaning in it (the title bar switch turns it off).
   const chooseTranslation = (id: TranslationLang) => {
     if (translationLang !== id) onChooseTranslation?.(id);
@@ -346,9 +381,11 @@ export function ImmersiveHeader({
           </div>
         </ActionSheet>
 
-        {/* Reading mode: text size (A− / A+), in the translation button's place */}
-        {textSize && (
+        {/* Reading mode: text size (A− / A+), in the translation button's place.
+            Only where it fits (see textSizeFits); a pinch sizes the text too. */}
+        {textSize && textSizeFits && (
           <button
+            ref={textSizeRef}
             type="button"
             onClick={() => setTextSizeSheetOpen(true)}
             aria-haspopup="dialog"

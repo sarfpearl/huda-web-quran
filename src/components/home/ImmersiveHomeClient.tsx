@@ -1539,6 +1539,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onVisiblePageChange={(page, byHand) => handleVisiblePageChange(readingKey, page, byHand)}
             scrollToPage={scrollToPage}
             textScale={readerScale}
+            onTextScaleChange={handleReaderScale}
             playing={player.isPlaying}
             onOpenAyah={openSurahAt}
             mark={bookmarks[0] ?? null}
