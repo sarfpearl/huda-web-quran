@@ -80,9 +80,11 @@ interface ReadingViewProps {
   /** Tap on the dimmed text around it (the rest of the first / last page):
    *  say why it's dimmed — the Surah / Juz starts or ends mid-page. */
   onContextTap?: (ref: AyahRef, ctx: "prev" | "next") => void;
-  /** Header and player hidden (focus reading, or scrolled on): the text takes the whole screen. */
+  /** Header hidden (focus reading, or scrolled on): the text runs to the top. */
   focus?: boolean;
-  /** Scrolled by hand: on (`true`, forward) or back / to the top. */
+  /** The player still showing (always, outside focus reading): the text ends above it. */
+  playerShown?: boolean;
+  /** Scrolled by hand: on (`true`, forward) or back. */
   onUserScroll?: (forward: boolean) => void;
 }
 
@@ -135,6 +137,7 @@ export function ReadingView({
   textScale = 1,
   playing = false,
   focus = false,
+  playerShown = true,
   onUserScroll,
   onOpenAyah,
   mark = null,
@@ -641,8 +644,8 @@ export function ReadingView({
     const host = el?.parentElement;
     if (!el || !frame || !host) return;
     const fit = () => {
-      // Focus reading: down to the bottom edge (the player is hidden).
-      if (focus) return void (el.style.bottom = "var(--vv-bottom,0px)");
+      // Player hidden: down to the bottom edge.
+      if (!playerShown) return void (el.style.bottom = "var(--vv-bottom,0px)");
       const f = frame.getBoundingClientRect();
       if (!f.height) return el.style.removeProperty("bottom");
       el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
@@ -658,7 +661,7 @@ export function ReadingView({
       frame.removeEventListener("transitionend", fit);
       window.removeEventListener("resize", fit);
     };
-  }, [focus]);
+  }, [playerShown]);
 
   // Which way the reader scrolls by hand (the follow's own drift doesn't count).
   const userScrollCbRef = useRef(onUserScroll);
@@ -667,6 +670,7 @@ export function ReadingView({
   // Going full screen (or back) moves the view's top edge: keep the text
   // where it was, and don't read that nudge as the reader scrolling.
   const viewTopRef = useRef<number | null>(null);
+  const resizedAtRef = useRef(0);
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -674,6 +678,9 @@ export function ReadingView({
     if (viewTopRef.current !== null && top !== viewTopRef.current) {
       el.scrollTop += top - viewTopRef.current;
       scrollLastRef.current = el.scrollTop;
+      // The resize (and any clamp at either end) isn't the reader: ignore the
+      // scrolls it makes, or a short Surah flips in and out of full screen.
+      resizedAtRef.current = Date.now();
     }
     viewTopRef.current = top;
   }, [focus]);
@@ -684,14 +691,23 @@ export function ReadingView({
     const onScroll = () => {
       const last = scrollLastRef.current;
       const d = el.scrollTop - last;
-      if (Date.now() - userScrollAtRef.current >= 1000) return void (scrollLastRef.current = el.scrollTop);
-      if (el.scrollTop < 24) userScrollCbRef.current?.(false);
-      else if (Math.abs(d) < 12) return;
-      else userScrollCbRef.current?.(d > 0);
+      const now = Date.now();
+      if (now - userScrollAtRef.current >= 1000 || now - resizedAtRef.current < 500)
+        return void (scrollLastRef.current = el.scrollTop);
+      if (Math.abs(d) < 12) return;
+      userScrollCbRef.current?.(d > 0);
       scrollLastRef.current = el.scrollTop;
     };
+    // Already at the top (a short Surah may not scroll at all): wheel up = back.
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0 && el.scrollTop <= 0) userScrollCbRef.current?.(false);
+    };
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    el.addEventListener("wheel", onWheel, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("wheel", onWheel);
+    };
   }, []);
 
   // Page shown in the player strip = the page still visible at the top of the
@@ -1019,8 +1035,8 @@ export function ReadingView({
       {/* « Continue reading » */}
       {showContinue && target && (
         <div
-          aria-hidden={continueFaded || undefined}
-          className={`pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4 transition-[opacity,visibility] duration-500 ${continueFaded ? "opacity-0 invisible" : ""}`}
+          aria-hidden={continueFaded || focus || undefined}
+          className={`pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-10 flex justify-center px-4 transition-[opacity,visibility] duration-500 ${continueFaded || focus ? "opacity-0 invisible" : ""}`}
         >
           <div className="pointer-events-auto flex items-center rounded-full border border-amber-300/40 bg-black/45 backdrop-blur-md text-sand-50 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
             <button

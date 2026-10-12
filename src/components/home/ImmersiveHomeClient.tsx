@@ -879,6 +879,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // hidden, one ⤡ to bring them back. Ends with reading mode.
   const [readerFocus, setReaderFocus] = useState(false);
   const focusOn = readingActive && readerFocus;
+  // Listening: focus reading hides only the header — the player stays (and
+  // stays through a pause, so the button just tapped doesn't vanish).
+  const [focusKeepsPlayer, setFocusKeepsPlayer] = useState(false);
+  useEffect(() => {
+    if (!focusOn) setFocusKeepsPlayer(false);
+    else if (player.isPlaying) setFocusKeepsPlayer(true);
+  }, [focusOn, player.isPlaying]);
+  const playerAway = focusOn && !focusKeepsPlayer && !player.isPlaying;
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
@@ -1533,8 +1541,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onBookmarksInViewChange={setBookmarksInView}
             onContextTap={handleContextTap}
             focus={focusOn}
+            playerShown={!playerAway}
             // Scrolling on by hand: focus reading (text only, ⤡ to come back);
-            // back (or to the top): every control again.
+            // back: every control again.
             onUserScroll={setReaderFocus}
           />
         )}
@@ -1622,9 +1631,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         role="region"
         aria-label="Player"
         tabIndex={-1}
-        aria-hidden={focusOn ? true : undefined}
+        aria-hidden={playerAway ? true : undefined}
         className={`outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
-          focusOn ? "invisible opacity-0" : ""
+          playerAway ? "invisible opacity-0" : ""
         }`}
       >
         {notice && !keyboardOpen && (
