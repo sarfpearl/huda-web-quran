@@ -226,6 +226,9 @@ function AyahOrnament({ n }: { n: number }) {
   );
 }
 
+/** Fired on window when the visible area (and so the player dock) moves. */
+export const VISIBLE_AREA_EVENT = "huda:visible-area";
+
 export function CenterVerseDisplay({
   currentVerse,
   currentSegment,
@@ -285,9 +288,14 @@ export function CenterVerseDisplay({
     if (header) ro.observe(header, { box: "border-box" });
     if (pills) ro.observe(pills, { box: "border-box" });
     window.addEventListener("resize", measure);
+    // The dock moves with the visible area (keyboard, toolbars, an iPad app
+    // coming back from another app) without resizing: measure it then too —
+    // a stale inset left no room and hid the ayah until the player resized.
+    window.addEventListener(VISIBLE_AREA_EVENT, measure);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", measure);
+      window.removeEventListener(VISIBLE_AREA_EVENT, measure);
     };
   }, []);
 
