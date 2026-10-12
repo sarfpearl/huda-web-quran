@@ -5,7 +5,7 @@ import { CheckCircleIcon, HourglassIcon, MosqueLocationIcon } from "@/components
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { cn } from "@/lib/utils";
 import { t, uiLocale, useUiLang } from "@/lib/uiLang";
-import { clock, dayTimes, METHODS, PRAYER_LABELS, type AsrMadhab, type MethodId, type PrayerName, type Waqt } from "@/lib/prayerTimes";
+import { clock, dayTimes, METHODS, prayerLabel, type AsrMadhab, type MethodId, type PrayerName, type Waqt } from "@/lib/prayerTimes";
 
 /** A method / Asr chosen here, over the region's default (per browser). */
 export interface PrayerPrefs {
@@ -33,11 +33,11 @@ function savePrayerPrefs(p: PrayerPrefs) {
   }
 }
 
-// Prayer names are PRAYER_LABELS[k].en through t(); the method names
+// Prayer names are prayerLabel(k, now).en through t(); the method names
 // (organisations) stay as they are.
 const MADHAB = { shafi: "Shafi'i · Maliki · Hanbali", hanafi: "Hanafi" } as const;
 
-const ROWS: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "sunset", "maghrib", "isha"];
+const ROWS: PrayerName[] = ["fajr", "sunrise", "noon", "dhuhr", "asr", "sunset", "maghrib", "isha"];
 
 // The select's own arrow, drawn so it sits inside the pill's rounded end.
 const CHEVRON =
@@ -134,13 +134,13 @@ export function PrayerTimesSheet({
               className={cn(
                 "flex items-center justify-between rounded-2xl px-3 py-2.5",
                 isNow ? "bg-emerald-400/15 text-emerald-200" : "text-sand-100",
-                (k === "sunrise" || k === "sunset") && !isNow && "text-sand-200/60",
+                (k === "sunrise" || k === "noon" || k === "sunset") && !isNow && "text-sand-200/60",
               )}
             >
               <span className="flex items-baseline gap-2">
-                <span className="font-semibold">{t(lang, PRAYER_LABELS[k].en)}</span>
+                <span className="font-semibold">{t(lang, prayerLabel(k, now).en)}</span>
                 <span className="font-arabic text-sm opacity-70" lang="ar">
-                  {PRAYER_LABELS[k].ar}
+                  {prayerLabel(k, now).ar}
                 </span>
               </span>
               <span className="tabular-nums font-semibold">{clock(today[k])}</span>

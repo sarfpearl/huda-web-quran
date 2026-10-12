@@ -65,18 +65,23 @@ export function regionDefaults(countryCode?: string | null, stateCode?: string |
   return { method, asr };
 }
 
-export type PrayerName = "fajr" | "sunrise" | "dhuhr" | "asr" | "sunset" | "maghrib" | "isha";
+export type PrayerName = "fajr" | "sunrise" | "noon" | "dhuhr" | "asr" | "sunset" | "maghrib" | "isha";
 /** English (the UI-string key: t(lang, PRAYER_LABELS[k].en)) and Arabic names. */
 export const PRAYER_LABELS: Record<PrayerName, { en: string; ar: string }> = {
   fajr: { en: "Fajr", ar: "الفجر" },
   sunrise: { en: "Sunrise", ar: "الشروق" },
+  noon: { en: "Zawal", ar: "الزوال" },
   dhuhr: { en: "Dhuhr", ar: "الظهر" },
   asr: { en: "Asr", ar: "العصر" },
   sunset: { en: "Sunset", ar: "الغروب" },
   maghrib: { en: "Maghrib", ar: "المغرب" },
   isha: { en: "Isha", ar: "العشاء" },
 };
-// The waqts in turn; sunset is shown in the sheet only (not a waqt of its own).
+/** The name for that day: Dhuhr is Jumu'ah on a Friday (owner's choice). */
+export function prayerLabel(k: PrayerName, day: Date): { en: string; ar: string } {
+  return k === "dhuhr" && day.getDay() === 5 ? { en: "Jumu'ah", ar: "الجمعة" } : PRAYER_LABELS[k];
+}
+// The waqts in turn; zawal and sunset are shown in the sheet only (not waqts of their own).
 const ORDER: PrayerName[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
 
 function params(method: MethodId, asr: AsrMadhab): CalculationParameters {
@@ -97,7 +102,10 @@ export interface DayTimes {
 
 export function dayTimes(lat: number, lon: number, day: Date, method: MethodId, asr: AsrMadhab): DayTimes {
   const t = new PrayerTimes(new Coordinates(lat, lon), day, params(method, asr));
-  return { date: day, times: { fajr: t.fajr, sunrise: t.sunrise, dhuhr: t.dhuhr, asr: t.asr, sunset: t.sunset, maghrib: t.maghrib, isha: t.isha } };
+  // Zawal (solar noon, the sun at its highest): halfway between sunrise and
+  // sunset (within seconds of the true transit). No prayer at that moment.
+  const noon = new Date((t.sunrise.getTime() + t.sunset.getTime()) / 2);
+  return { date: day, times: { fajr: t.fajr, sunrise: t.sunrise, noon, dhuhr: t.dhuhr, asr: t.asr, sunset: t.sunset, maghrib: t.maghrib, isha: t.isha } };
 }
 
 /**
