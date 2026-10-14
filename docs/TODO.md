@@ -109,7 +109,7 @@ Everything else is merged and live (#26 … #52).
       all caches.
 
 - [x] **Remove unused R2 keys from Vercel** (done 2026-10-06) — `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are in Vercel (Project → Settings → Environments → Production) but only the local `scripts/tools/upload-to-r2.mjs` uses them; the app never reads them. Delete both there; keep them in `.env.local`. Owner does this in the Vercel dashboard.
-- [ ] **IndoPak font licence (QuranWBW permission)** — waiting on written permission from QuranWBW.com (quranwbw@gmail.com); no reply yet (2026-10-07). Owner's choice: IndoPak stays development-only until then (not offered in production even as an opt-in — without the font ~1,383 waqf marks show as boxes). Steps once granted: see *IndoPak script by region* below.
+- [x] **IndoPak font licence (QuranWBW permission)** — granted 2026-10-11 (free, no ads / paywall, unmodified, credits shown); IndoPak is live — see *IndoPak script* below.
 - [x] **Supabase test data cleared** (owner, 2026-10-07) — `quran_listens`, `quran_presence`, `quran_ip_viewers`, `quran_likes`, `quran_comments`, `quran_comment_likes` truncated (all 0); checked live: view counts `{}`, comments `total: 0`.
 - [x] **Admin login turned on (2026-10-06)** — migration `20261006120000_admin_login_moderation.sql` run, sign-ups off, URL Configuration set, admin added; verified live (signed in, comments load). Admin = `sarf.pearl@gmail.com`. Supabase's built-in email only sends to the org's team members and ~2 emails/hour; add custom SMTP (e.g. Resend) before adding other admins. If a link lands on `localhost:3000`, the Site URL / Redirect URLs in Auth → URL Configuration are wrong.
 - [x] **Old Bayan DB tables dropped** (owner, 2026-10-07) — `bayan`, `bayan_plays`, `speakers`, `categories` were empty and are gone (anon REST → PGRST205). `public.admins` / `public.is_admin()` kept.
@@ -397,31 +397,21 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       popover is non-modal (focus stays on its button); the background video
       still plays with Reduce Motion on (image mode is one tap away).
 
-## IndoPak script by region
+## IndoPak script
 
-Built on `feat/indopak-script`, **development-only** until the font is licensed
-(`INDOPAK_ENABLED` in `src/lib/data/quranScript.ts`: on in `next dev`, or with
-`NEXT_PUBLIC_INDOPAK=1`).
+Live from `feat/indopak-font`: QuranWBW gave written permission on 2026-10-11
+for the "AlQuran IndoPak by QuranWBW" font and its Quran text — **on condition
+the app stays free, with no ads and no Quran text behind a paywall, the font
+and text are used unmodified, and the credits are shown** (About → credits).
 
 - [x] IndoPak word text at the glyph data's word positions —
       `public/data/quran-indopak/` (`scripts/generation/fetch-indopak-words.mjs`,
       Quran.com `text_indopak`); word sync, highlight and tap-to-seek unchanged.
-- [x] Region default: device time zone, then the country from the location
-      (India, Pakistan, Bangladesh, Sri Lanka, Nepal, South Africa, Mauritius
-      → IndoPak); a script picked by hand is remembered (`huda:script`).
-- [x] "Uthmani | IndoPak" picker in the Tajweed panel; Tajweed colours are
-      Uthmani-only (switch disabled in IndoPak — agreed).
+- [x] "Uthmani | IndoPak" picker in the Tajweed panel (default Uthmani; a
+      pick is remembered in `huda:script`); Tajweed colours are Uthmani-only.
 - [x] Reading mode keeps the Madani 604-page layout and page numbers.
-- [ ] **Font licence** — Quran.com's `text_indopak` is encoded for
-      "AlQuran IndoPak by QuranWBW" (it uses that font's private-use marks).
-      Its licence: *not for distribution or development without written notice
-      by QuranWBW.com* (quranwbw@gmail.com). Until permission arrives the text
-      falls back to Noto Naskh Arabic, which shows 1,367 of 77,430 words
-      (1.77%) with boxes for those marks.
-- [ ] Once granted: self-host the font, declare it as `'IndoPak'` in
-      `globals.css` (`.font-arabic.quran-indopak` already lists it first), set
-      `NEXT_PUBLIC_INDOPAK=1` in Vercel, add the font to About → credits, and
-      check the ayah-end ornament and waqf marks with the real font.
+- [x] Font self-hosted unmodified: `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`
+      (`'IndoPak'` in `globals.css`); credits on the About page.
 
 ## Quran views · live · comments · likes (Supabase)
 

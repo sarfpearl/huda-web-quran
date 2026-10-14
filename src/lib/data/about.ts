@@ -32,9 +32,15 @@ export const ABOUT = {
     { label: "Reciter list", value: "SurahQuran.com" },
     { label: "Word timings & Mushaf fonts", value: "Quran.com · King Fahd Complex (QPC)" },
     {
+      // As QuranWBW asked: the font's own copyright and credits, and the text's source.
+      label: "IndoPak script",
+      value:
+        "AlQuran IndoPak font by QuranWBW (Ayman Siddiqui), used with permission · © Al Qalam © Ghandhara © KFGQPC © Ayman Siddiqui · Credits: Abdul Majeed Khan, Arif Karim, Shakir-ul-Qadree, Jawad · IndoPak Quran text: QuranWBW, via Quran.com",
+    },
+    {
       label: "Translations",
       value:
-        "Saheeh International (English) · Jan Trust (Tamil) · Jalandhry (Urdu) · Abdul Hameed & Parappoor (Malayalam) · Suhel Farooq Khan (Hindi) · Indonesian Ministry of Religious Affairs · Muhiuddin Khan (Bengali) · Diyanet (Turkish) · Hamidullah (French) · Basmeih (Malay), via alquran.cloud",
+        "Saheeh International (English) · Jan Trust (Tamil) · Jalandhry (Urdu) · Abdul Hameed & Parappoor (Malayalam) · Azizul Haque al-Umari (Hindi, via Quran.com) · Indonesian Ministry of Religious Affairs · Muhiuddin Khan (Bengali) · Diyanet (Turkish) · Hamidullah (French) · Basmeih (Malay), via alquran.cloud",
     },
   ],
 } as const;

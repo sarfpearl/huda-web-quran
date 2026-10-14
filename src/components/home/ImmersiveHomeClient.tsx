@@ -17,7 +17,7 @@ import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
-import { INDOPAK_ENABLED, isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
+import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { STANDALONE_SILENT, useAudioPlayer, type EndMode } from "@/contexts/AudioPlayerContext";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
@@ -814,11 +814,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   }, []);
   // Mushaf script (Uthmani / IndoPak, quranScript.ts): the one picked before,
   // else Uthmani (no time-zone / place guess any more).
-  // IndoPak has no Tajweed colours. Development-only until the IndoPak font
-  // is licensed (INDOPAK_ENABLED).
+  // IndoPak has no Tajweed colours.
   const [quranScript, setQuranScript] = useState<QuranScript>("uthmani");
   useEffect(() => {
-    if (!INDOPAK_ENABLED) return;
     let saved: string | null = null;
     try {
       saved = localStorage.getItem(SCRIPT_STORAGE_KEY);
@@ -1455,7 +1453,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
-        onChooseScript={INDOPAK_ENABLED ? handleChooseScript : undefined}
+        onChooseScript={handleChooseScript}
         selectedReciter={selectedReciter}
         onSelectReciter={handleSelectReciter}
         isQuranActive={Boolean(activeSurah || (activeBayan && isQuranTrackId(activeBayan.id)))}
@@ -1510,7 +1508,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             showTajweed: tajweedShown,
             onToggleTajweed: handleToggleTajweed,
             script: quranScript,
-            onChooseScript: INDOPAK_ENABLED ? handleChooseScript : undefined,
+            onChooseScript: handleChooseScript,
             visualMode,
             onToggleVisualMode: handleToggleVisualMode,
             reciterName: selectedReciter.displayName,
