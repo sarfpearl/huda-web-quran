@@ -1388,6 +1388,50 @@ export function getAyahClipWordSync(
   return { hasWordTiming: r.hasWordTiming, activeWordIndex: r.activeWordIndex };
 }
 
+/** Surah time (seconds) of a moment in an ayah's own clip; null when the clip
+ *  is another cut (as getAyahClipWordSync). */
+export function ayahClipSurahTime(verse: AyahVerse | null | undefined, clipTime: number, clipDuration: number): number | null {
+  const win = ayahClipWindow(verse);
+  if (!win) return null;
+  const winDur = win.end - win.start;
+  const dur = clipDuration > 0 ? clipDuration : winDur;
+  if (Math.abs(dur / winDur - 1) > JUZ_CLIP_TOLERANCE) return null;
+  return win.start + clipTime * (winDur / dur);
+}
+
+type WordTimed = { words?: { startTime: number; endTime: number }[]; wordSegments?: WordSegment[] };
+
+/**
+ * Where a reciter change carries on in an ayah, by word (0-based, canonical
+ * order): the word being recited at `t` — said again from its start — or,
+ * once its voice has finished, the next one. `words.length` = every word done.
+ * Null without word timing.
+ */
+export function resumeWordAt(seg: WordTimed | null | undefined, t: number): number | null {
+  const total = seg?.words?.length ?? 0;
+  if (!seg || total === 0) return null;
+  const clamp = (i: number) => Math.min(Math.max(i, 0), total);
+  // Raw segments in recitation order (a repeated word shows up again).
+  const spans = seg.wordSegments?.length
+    ? seg.wordSegments.map((w) => ({ idx: w.wordIndex - 1, start: w.startTime, end: w.endTime }))
+    : seg.words!.map((w, idx) => ({ idx, start: w.startTime, end: w.endTime }));
+  let done = -1; // last word whose voice has finished
+  for (const sp of spans) {
+    if (t < sp.start) break;
+    if (t < sp.end) return clamp(sp.idx);
+    done = sp.idx;
+  }
+  return clamp(done + 1);
+}
+
+/** Start (seconds, the timing's own timeline) of word `k`'s first recitation. */
+export function wordStartTime(seg: WordTimed | null | undefined, k: number): number | null {
+  const raw = seg?.wordSegments?.find((w) => w.wordIndex === k + 1);
+  if (raw) return raw.startTime;
+  const w = seg?.words?.[k];
+  return w ? w.startTime : null;
+}
+
 /** Clip time (seconds) at which a Surah-time moment of the ayah falls — for tap-to-seek. */
 export function ayahClipTimeOf(verse: AyahVerse | null | undefined, surahTime: number, clipDuration: number): number | null {
   const win = ayahClipWindow(verse);

@@ -110,7 +110,10 @@ interface AudioPlayerApi extends AudioPlayerState {
     ayahUrls: string[],
     startIndex?: number,
     /** Clips to play before given ayah indexes (Isti'adhah / Bismillah). */
-    preludes?: Record<number, AyahPrelude[]>
+    preludes?: Record<number, AyahPrelude[]>,
+    /** Start `startAt(clipDuration)` seconds into the first ayah's clip
+     *  (no preludes then) — a reciter change mid-ayah. */
+    startAt?: (clipDuration: number) => number
   ) => void;
   /** Per-ayah sequence: play ayah `index` — from `startAt(clipDuration)`
    *  seconds into its clip when given (a tapped word; no preludes then). */
@@ -701,7 +704,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       displayTrack: BayanWithRelations,
       ayahUrls: string[],
       startIndex: number = 0,
-      preludes: Record<number, AyahPrelude[]> = {}
+      preludes: Record<number, AyahPrelude[]> = {},
+      startAt?: (clipDuration: number) => number
     ) => {
       if (!ayahUrls || ayahUrls.length === 0) return;
       const startIdx = Math.max(0, Math.min(startIndex, ayahUrls.length - 1));
@@ -725,7 +729,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setContinueListening(null);
       setCurrentTime(0);
       setDuration(0);
-      loadAyahAt(startIdx, true);
+      // A start inside the ayah (a reciter change mid-ayah) skips its preludes.
+      loadAyahAt(startIdx, !startAt, startAt);
       setIsPlaying(true);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
