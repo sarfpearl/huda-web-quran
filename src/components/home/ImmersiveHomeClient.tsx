@@ -998,6 +998,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     : player.ayahSequence && !player.ayahSequence.preType && juzPairs[player.ayahSequence.index]
     ? { surah: juzPairs[player.ayahSequence.index][0], ayah: juzPairs[player.ayahSequence.index][1] }
     : null;
+  // Audio Only Surah: the reader still follows the recitation, to the ayah the
+  // playback position suggests (an estimate, so it isn't lit).
+  const readingFollow =
+    readingSurah !== null && audioOnlyKey && !player.isPrelude && currentVerse && currentVerse.ayahNumber > 0
+      ? { surah: readingSurah, ayah: currentVerse.ayahNumber }
+      : null;
   const readingWordIndex = readingSurah !== null
     ? hasWordTiming && !player.isPrelude ? activeWordIndex : -1
     : !juzPreSegment ? juzWordSync.activeWordIndex : -1;
@@ -1583,6 +1589,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             label={readingJuz ? `Juz ${readingJuz.id}` : activeSurah?.name ?? ""}
             reciterId={selectedReciter.id}
             active={readingAyah}
+            follow={readingFollow}
             onSeekAyah={handleReaderSeekAyah}
             tajweed={tajweedShown}
             script={quranScript}
