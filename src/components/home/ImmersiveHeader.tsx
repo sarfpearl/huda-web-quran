@@ -391,7 +391,8 @@ export function ImmersiveHeader({
               >
                 {/* Mushaf script: Uthmani (Madani) or IndoPak */}
                 {onChooseScript && (
-                  <div className="mb-2 border-b border-white/10 px-1 pb-3">
+                  // The divider separates it from the Tajweed switch, which IndoPak doesn't have.
+                  <div className={`px-1 ${script === "indopak" ? "pb-1" : "mb-2 border-b border-white/10 pb-3"}`}>
                     <p className={`mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-sand-300/70`}>{t(language, "Script")}</p>
                     <div role="radiogroup" aria-label={t(language, "Quran script")} className={TAB_TRACK}>
                       {SCRIPT_CHOICES.map((c) => (
