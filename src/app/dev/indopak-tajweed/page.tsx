@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // Prototype: Uthmani Tajweed rules carried onto the IndoPak text
-// (scripts/generation/build-indopak-tajweed.mjs) — Al-Baqarah 1–20 only.
+// (scripts/generation/build-indopak-tajweed.py) — Al-Baqarah 1–20 only.
 export default function Page() {
   return <IndoPakTajweedPreview />;
 }

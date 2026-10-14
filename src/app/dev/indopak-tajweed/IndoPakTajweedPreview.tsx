@@ -25,7 +25,7 @@ export function IndoPakTajweedPreview() {
       <div className="mx-auto max-w-3xl">
         <h1 className="text-lg font-semibold">IndoPak Tajweed · prototype</h1>
         <p className="mt-1 text-sm text-sand-300/80">
-          Al-Baqarah 1–20 · Uthmani Tajweed rules carried onto the IndoPak text. Check the letters still join and
+          Al-Baqarah 1–20 · the Uthmani (QPC V4) Tajweed colours carried onto the IndoPak text. Check the letters still join and
           the colours sit on the right letters.
         </p>
 
