@@ -438,23 +438,45 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
       spread onto the ن, a ر's blue vanished in تر, Allah's blue vanished.
       The generator shapes every word with the font (HarfBuzz) and lists the
       words to draw with `liga` off (`nl`, 14 in 1–20); لا stays a ligature.
-- [x] QA, positional (`docs/qa/indopak-tajweed-2-1-20.md`): painted glyph
-      segments vs the QPC V4 layer contours, per word. Before the fix 204 /
-      230 words matched (the earlier "98.7%" compared only the set of
-      colours); now 217 / 230, every character painted in its data colour.
-      Left: 3 × لا (the alef's madd shows on the maddah only — the lam-alef
-      is one glyph) and 10 words where the same letters are coloured but the
-      two calligraphies place them apart (checked by eye on the dev page).
+- [x] **Allah (Option 1, 2026-10-14):** a name of Allah whose lams are
+      heavy is drawn with `liga` off (8 of 9 in 1–20): both lams blue, the
+      ه plain, joined normally; بِاللّٰهِ (after a kasra, no colour) keeps its
+      ligature. Checked in Chromium against V4 letter by letter.
+- [x] **Found while reviewing (2026-10-14):** the rule data marks some madds
+      on the vowel before the madd letter (2:4 يُوقِنُونَ: on the ن's damma) —
+      the madd letter now carries it.
+- [x] **Chromium paints a mark in its letter's colour** (measured: a
+      coloured tanween / small alef / maddah / sukun alone shows plain; a
+      `unicode-bidi: isolate` span colours it but detaches it from its
+      letter; ZWJ doesn't help). A colour on a mark alone (madd 2's small
+      alef, a grey tanween, لا's maddah, iqlab's small meem) is not visible
+      in Chromium. QA reports two paint models: glyph 217 / 230, Chromium
+      190 / 230 (`docs/qa/indopak-tajweed-2-1-20.md`).
+- [x] QA, positional: painted glyph segments vs the QPC V4 layer contours,
+      per word, each difference categorised — genuine mismatch 0, font
+      shaping 6 rows (3 × لا), calligraphy position 10 (same letters,
+      reviewed on a word-level comparison sheet), browser (Chromium) 45.
+      Before the ligature fix 204 / 230 words matched (the earlier "98.7%"
+      compared only the set of colours).
 - [x] Tests: `python3 -m unittest scripts/generation/test_build_indopak_tajweed.py`
-      (18: verse 2's لَا / هُدًى / لِّلۡمُتَّقِيۡنَ, marks, several colours in a
+      (23: verse 2's لَا / هُدًى / لِّلۡمُتَّقِيۡنَ, marks, several colours in a
       word, word boundaries, normalisation, unmatched letters, the lam of
-      Allah, tarqiq, text preserved, paint = data, the V4 comparison).
+      Allah and Option 1, tarqiq, madd on its letter, text preserved, paint =
+      data, Chromium rows, the V4 comparison, no unreviewed difference).
 - [x] Al-Baqarah 1–20 → `public/data/quran-indopak-tajweed/2.json`.
 - [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
       Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
       Preview: `huda-web-quran-git-proto-indopak-tajweed-hu-da-right-guidance.vercel.app/dev/indopak-tajweed`.
-- [ ] **Owner:** iPhone Safari — letters still join where the colour changes
-      inside a word, colours on the same letters as the Uthmani column.
+- [ ] **Owner:** iPhone Safari (not tested — no WebKit here; Linux WebKit
+      wouldn't be CoreText anyway) — on `/dev/indopak-tajweed`: letters join
+      where the colour changes inside a word; Allah's two lams blue with the
+      ه white and normally joined; لِّلۡمُتَّقِيۡنَ's ن white; whether a mark
+      coloured alone shows its colour (ذٰلِكَ's small alef pink, هُدًى's
+      tanween grey).
+- [ ] **Decide:** marks coloured alone don't show in Chromium. The fix that
+      works in every browser is drawing the coloured words as glyphs (SVG
+      or a generated colour font, as QPC V4 does), with the text kept for
+      copy / screen readers.
 - [ ] Then: all 114 Surahs (review the QA miss list), the reader / verse
       view drawing the coloured runs, the Tajweed switch back in IndoPak
       (undo PR #103's hiding), the dataset's CC BY credit on the About page.

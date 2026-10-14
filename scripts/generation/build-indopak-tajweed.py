@@ -54,7 +54,7 @@ import io
 import json
 import re
 import sys
-from collections import Counter
+from collections import Counter, namedtuple
 from pathlib import Path
 
 import uharfbuzz as hb
@@ -110,6 +110,8 @@ HEAVY = set("خصضغطقظ")
 # (A necessary madd keeps its whole span: QPC colours the letters of الٓمٓ red.)
 MADD_RULES = {"madd_2", "madd_246", "madd_munfasil", "madd_muttasil"}
 MADD_CHARS = set("اويىٰٓۥۦۤ")
+# The madd letter a vowel lengthens into: damma → و, kasra → ي / ى, fatha → ا / ى.
+LONG_AFTER = {"ُ": "و", "ِ": "يى", "َ": "اى"}
 NASAL_RULES = {"ghunnah", "ikhfa", "ikhfa_shafawi", "iqlab"}
 IQLAB_MARKS = set("ۭۢ")  # small meem
 NASAL_MARKS = IQLAB_MARKS | TANWEEN
@@ -188,6 +190,14 @@ def ayah_colours(text, annotations, shift):
                     break  # colours its own word only
                 span.append(k)
             only = MADD_CHARS if r["rule"] in MADD_RULES else NASAL_CHARS if r["rule"] in NASAL_RULES else None
+            if r["rule"] in MADD_RULES and span and all(chars[k] in LONG_AFTER for k in span):
+                # The data marks some madds on the vowel before the madd letter
+                # (2:4 يُوقِنُونَ: on the ن's damma): the madd letter carries it.
+                k = span[-1] + 1
+                while k < len(chars) and chars[k] != " " and not is_letter(chars[k]):
+                    k += 1
+                if k < len(chars) and chars[k] in LONG_AFTER[chars[span[-1]]]:
+                    span = [k]
             if only:
                 span = [k for k in span if chars[k] in only] or span
             if r["rule"] in NASAL_RULES and any(chars[k] in NASAL_MARKS for k in span):
@@ -273,13 +283,15 @@ class Shaper:
         self.font = hb.Font(hb.Face(hb.Blob(data.getvalue())))
         self.order = f.getGlyphOrder()
 
-    def shape(self, text, liga=True):
-        """[(first char index, glyph name, x0, x1)] in visual order, x in font units."""
+    def shape(self, text, liga=True, graphemes=False):
+        """[(first char index, glyph name, x0, x1)] in visual order, x in font
+        units. Clusters: per character unless a glyph joins them (a ligature);
+        `graphemes`: a letter and its marks together, as well."""
         buf = hb.Buffer()
         buf.add_str(text)
         buf.guess_segment_properties()
-        # Characters keep their own clusters unless a glyph joins them (a ligature).
-        buf.cluster_level = hb.BufferClusterLevel.MONOTONE_CHARACTERS
+        buf.cluster_level = (hb.BufferClusterLevel.MONOTONE_GRAPHEMES if graphemes
+                             else hb.BufferClusterLevel.MONOTONE_CHARACTERS)
         hb.shape(self.font, buf, {} if liga else {"liga": False})
         out, x = [], 0
         for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
@@ -289,9 +301,9 @@ class Shaper:
             x += pos.x_advance
         return out
 
-    def clusters(self, text, liga=True):
+    def clusters(self, text, liga=True, graphemes=False):
         """[(start, end)]: the character ranges shaped into one glyph unit."""
-        starts = sorted({c for c, *_ in self.shape(text, liga)})
+        starts = sorted({c for c, *_ in self.shape(text, liga, graphemes)})
         return [(s, starts[i + 1] if i + 1 < len(starts) else len(text)) for i, s in enumerate(starts)]
 
 
@@ -426,11 +438,19 @@ def resolve_ligatures(shaper, ip, icol, notes=None):
     return icol, False
 
 
-def painted_segments(shaper, ip, icol, liga=True):
+# Paint models. "glyph": every glyph in its first character's colour — a
+# ligature in one colour, a mark in its own (an engine that colours marks
+# apart from their letter). "chromium": measured in Chromium (2026-10-14) —
+# also a mark is painted in its letter's colour (a whole grapheme in one
+# colour), so a colour on a mark alone doesn't show there.
+MODELS = ("glyph", "chromium")
+
+
+def painted_segments(shaper, ip, icol, liga=True, model="glyph"):
     """Coloured segments as painted: [(colour, r0, r1)], r = fraction of the
-    word's width from its right edge. A glyph takes its first character's colour."""
+    word's width from its right edge. A glyph takes its cluster's first character's colour."""
     # The word's own ink: pause marks, spaces and joiners after it are left out.
-    glyphs = [g for g in shaper.shape(ip, liga) if g[3] > g[2] and not PLAIN.match(ip[g[0]])]
+    glyphs = [g for g in shaper.shape(ip, liga, model == "chromium") if g[3] > g[2] and not PLAIN.match(ip[g[0]])]
     if not glyphs:
         return []
     x0 = min(g[2] for g in glyphs)
@@ -458,11 +478,11 @@ def painted_segments(shaper, ip, icol, liga=True):
     return merge_segments(segs)
 
 
-def paint_errors(shaper, ip, icol, liga=True):
+def paint_errors(shaper, ip, icol, liga=True, model="glyph"):
     """Characters whose data colour isn't the colour they'll be painted in
-    (a glyph is painted in its first character's colour): [(char index, data, painted)]."""
+    (a glyph is painted in its cluster's first character's colour): [(char index, data, painted)]."""
     out = []
-    for s, e in shaper.clusters(ip, liga):
+    for s, e in shaper.clusters(ip, liga, model == "chromium"):
         for k in range(s, e):
             if icol[k] != icol[s] and not PLAIN.match(ip[k]):
                 out.append((k, icol[k], icol[s]))
@@ -631,24 +651,57 @@ def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
                 no_liga.append(wi)
                 stats["words drawn with liga off"] += 1
             words.append(runs_of(ip, icol))
-            for k, data_c, painted in paint_errors(shaper, ip, icol, liga=not off):
-                stats["paint errors"] += 1
-                rows.append((f"{surah}:{a}", wi + 1, "".join(wchars), ip, (data_c, 0, 0) if data_c is not None else None,
-                             (painted, 0, 0) if painted is not None else None, "paint",
-                             f"ligature: {ip[k]!r} painted in its glyph's first character's colour"))
-            issues = compare(ref, painted_segments(shaper, ip, icol, liga=not off))
+            key, u = (f"{surah}:{a}", wi + 1), "".join(wchars)
             stats["words"] += 1
-            stats["words matching V4"] += not issues
-            for kind, exp, act in issues:
-                rows.append((f"{surah}:{a}", wi + 1, "".join(wchars), ip, exp, act, kind, cause(kind, exp, act, notes, wcol)))
+            glyph_issues = []
+            for model in MODELS:
+                for k, data_c, painted in paint_errors(shaper, ip, icol, not off, model):
+                    stats[f"paint errors ({model})"] += 1
+                    if model == "glyph":
+                        rows.append(Row(*key, u, ip, (data_c, 0, 0) if data_c is not None else None,
+                                        (painted, 0, 0) if painted is not None else None, "paint",
+                                        f"{ip[k]!r} painted in its glyph's first character's colour", model, "UNREVIEWED"))
+                issues = compare(ref, painted_segments(shaper, ip, icol, not off, model))
+                stats[f"words matching V4 ({model})"] += not issues
+                if model == "glyph":
+                    glyph_issues = issues
+                    for kind, exp, act in issues:
+                        rows.append(Row(*key, u, ip, exp, act, kind, cause(kind, exp, act, notes, wcol), model,
+                                        "font shaping" if notes else REVIEW.get(key, "UNREVIEWED")))
+                else:
+                    # Only what Chromium adds: a colour on a mark alone, painted in its letter's colour.
+                    for kind, exp, act in issues:
+                        if (kind, exp) not in [(k2, e2) for k2, e2, _ in glyph_issues]:
+                            rows.append(Row(*key, u, ip, exp, act, kind,
+                                            "a mark coloured alone: Chromium paints it in its letter's colour", model, "browser"))
             for n in notes:
                 stats["ligature limits"] += 1
-                rows.append((f"{surah}:{a}", wi + 1, "".join(wchars), ip, None, None, "ligature limit", n))
+                rows.append(Row(*key, u, ip, None, None, "ligature limit", n, "glyph", "font shaping"))
         entry = {"a": a, "w": words}
         if no_liga:
             entry["nl"] = no_liga
         result.append(entry)
     return result, rows, stats
+
+
+Row = namedtuple("Row", "ref word uthmani indopak expected actual kind cause model category")
+
+# Remaining glyph-model differences reviewed on the word-level comparison
+# sheet (Uthmani V4 glyph beside the IndoPak word, Chromium, 84 px): the same
+# letters carry the same colours; the two calligraphies place them apart.
+CALLIGRAPHY = "calligraphy position"
+REVIEW = {
+    ("2:4", 12): CALLIGRAPHY,   # يُوۡقِنُوۡنَ: و orange (the data's madd on the ن's damma moved to it)
+    ("2:7", 9): CALLIGRAPHY,    # غِشَاوَةٌ: the tanween's grey (on ة in both)
+    ("2:7", 12): CALLIGRAPHY,   # عَظِيۡمٌ: ي orange
+    ("2:8", 10): CALLIGRAPHY,   # هُمۡ: م green (V4 draws the meem's long tail)
+    ("2:9", 10): CALLIGRAPHY,   # يَشۡعُرُوۡنَ: و orange
+    ("2:19", 11): CALLIGRAPHY,  # فِىۡۤ: ى madd 4/5 (V4 stacks فى)
+    ("2:19", 16): CALLIGRAPHY,  # الۡمَوۡتِ: و orange
+    ("2:19", 19): CALLIGRAPHY,  # بِالۡكٰفِرِيۡنَ: the small alef on ك
+    ("2:20", 4): CALLIGRAPHY,   # اَبۡصَارَهُمۡ: ص, ر blue
+    ("2:20", 19): CALLIGRAPHY,  # وَاَبۡصَارِهِمۡ: ص blue
+}
 
 
 def cause(kind, exp, act, notes, wcol):
@@ -679,21 +732,46 @@ def fmt(seg):
 
 
 def report(rows, stats, surah, first, last):
-    pct = 100 * stats["words matching V4"] / max(1, stats["words"])
+    n = stats["words"]
+    pct = lambda m: f"{stats[f'words matching V4 ({m})']} / {n} ({100 * stats[f'words matching V4 ({m})'] / max(1, n):.1f}%)"
+    by = lambda cat: [r for r in rows if r.category == cat]
     lines = [
         f"# IndoPak Tajweed — QA vs QPC V4, {surah}:{first}–{last}",
         "",
-        "Generated by `scripts/generation/build-indopak-tajweed.py`. Spans are fractions of the word's",
-        f"width from its right edge (QPC V4 layers vs IndoPak glyphs as painted); tolerance {TOL}.",
+        "Generated by `scripts/generation/build-indopak-tajweed.py` (do not edit by hand). Each IndoPak",
+        "word as painted (HarfBuzz, the IndoPak font) against the coloured layer contours of its QPC V4",
+        "word glyph — the app's Uthmani Tajweed. Spans: fractions of the word's width from its right",
+        f"edge; tolerance {TOL}, span ends {SPAN_TOL}.",
         "",
-        f"Words: {stats['words']} · matching V4: {stats['words matching V4']} ({pct:.1f}%) · "
-        f"drawn with liga off: {stats['words drawn with liga off']} · ligature limits: {stats['ligature limits']}",
+        "Paint models:",
+        "- **glyph** — each glyph in its first character's colour: a ligature in one colour, a mark in",
+        "  its own. The data is built for this model.",
+        "- **chromium** — measured in Chromium: a mark is painted in its letter's colour too, so a colour",
+        "  on a mark alone (a madd's small alef, a grey tanween, a maddah) does not show there.",
+        "- iPhone Safari (WebKit / CoreText): **not tested yet**.",
         "",
-        "| Surah:Ayah | Word | Expected colour/span | Actual colour/span | Error type | Root cause |",
-        "| :-- | :-- | :-- | :-- | :-- | :-- |",
+        f"Words: {n} · matching V4 — glyph model: {pct('glyph')} · Chromium: {pct('chromium')}",
+        f"Drawn with liga off: {stats['words drawn with liga off']} · paint errors (glyph model): "
+        f"{stats['paint errors (glyph)']}",
+        "",
+        "## Summary by category",
+        "",
+        "| Category | Rows | Meaning |",
+        "| :-- | --: | :-- |",
+        f"| Genuine colour mismatch | {len(by('UNREVIEWED'))} | unreviewed difference — a rule / mapping error until shown otherwise |",
+        f"| Font shaping | {len(by('font shaping'))} | the IndoPak font joins the letters into one glyph (لا) |",
+        f"| Calligraphy position | {len(by(CALLIGRAPHY))} | same letters coloured, placed apart by the two scripts (reviewed) |",
+        f"| Browser (Chromium) | {len(by('browser'))} | a mark coloured alone, painted in its letter's colour in Chromium |",
+        "",
+        "## All rows",
+        "",
+        "| Surah:Ayah | Word | Expected colour/span | Actual colour/span | Error type | Model | Category | Root cause |",
+        "| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |",
     ]
-    for ref, wi, u, ip, exp, act, kind, why in rows:
-        lines.append(f"| {ref} w{wi} | {u} ({ip.strip()}) | {fmt(exp)} | {fmt(act)} | {kind} | {why} |")
+    order = {"UNREVIEWED": 0, "font shaping": 1, CALLIGRAPHY: 2, "browser": 3}
+    for r in sorted(rows, key=lambda r: (order.get(r.category, 9), int(r.ref.split(":")[1]), r.word)):
+        lines.append(f"| {r.ref} w{r.word} | {r.uthmani} ({r.indopak.strip()}) | {fmt(r.expected)} | {fmt(r.actual)} | "
+                     f"{r.kind} | {r.model} | {r.category} | {r.cause} |")
     return "\n".join(lines) + "\n"
 
 
@@ -712,10 +790,10 @@ def main(argv):
     text = report(rows, stats, surah, first, last)
     if rep:
         Path(rep).write_text(text, encoding="utf8")
-    pct = 100 * stats["words matching V4"] / max(1, stats["words"])
-    print(f"surah {surah} ayahs {first}-{last}: {dict(stats)}  match {pct:.1f}%")
-    for ref, wi, u, ip, exp, act, kind, why in rows:
-        print(f"   {ref} w{wi} {u}: {kind}  expected {fmt(exp)}  actual {fmt(act)}  — {why}")
+    print(f"surah {surah} ayahs {first}-{last}: {dict(stats)}")
+    for r in rows:
+        print(f"   [{r.model}/{r.category}] {r.ref} w{r.word} {r.uthmani}: {r.kind}  expected {fmt(r.expected)}"
+              f"  actual {fmt(r.actual)}  — {r.cause}")
 
 
 if __name__ == "__main__":

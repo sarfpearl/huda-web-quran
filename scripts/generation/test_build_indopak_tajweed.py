@@ -22,18 +22,20 @@ spec.loader.exec_module(b)
 FIXTURE = HERE / "fixtures/tajweed-2-1-20.json"
 SILENT, MADD2, MADD246, MUTTASIL, MADD6, GHUNNAH, QALQALAH, TAFKHIM = range(8)
 
-# Positional differences left after the fix (Surah:Ayah, word, error type) —
-# a change here is a regression or an improvement: update it knowingly.
+# Glyph-model differences left (Surah:Ayah, word, error type, category) — a
+# change here is a regression or an improvement: update it knowingly.
 KNOWN = {
     # The IndoPak font draws لا as one glyph: the alef's madd can't be painted
     # apart from the lam (the maddah mark, its own glyph, carries it).
-    ("2:9", 7, "span"), ("2:9", 7, "ligature limit"),
-    ("2:12", 1, "span"), ("2:12", 1, "ligature limit"),
-    ("2:13", 13, "span"), ("2:13", 13, "ligature limit"),
-    # Same letters coloured; the two calligraphies place them differently.
-    ("2:4", 12, "span"), ("2:7", 9, "span"), ("2:7", 12, "span"), ("2:8", 10, "span"),
-    ("2:9", 10, "span"), ("2:19", 11, "span"), ("2:19", 16, "span"), ("2:19", 19, "shifted"),
-    ("2:20", 4, "span"), ("2:20", 19, "span"),
+    ("2:9", 7, "span", "font shaping"), ("2:9", 7, "ligature limit", "font shaping"),
+    ("2:12", 1, "span", "font shaping"), ("2:12", 1, "ligature limit", "font shaping"),
+    ("2:13", 13, "span", "font shaping"), ("2:13", 13, "ligature limit", "font shaping"),
+    # Same letters coloured; the two calligraphies place them differently
+    # (reviewed letter by letter on the comparison sheet).
+    *{(r, w, k, "calligraphy position") for r, w, k in [
+        ("2:4", 12, "span"), ("2:7", 9, "span"), ("2:7", 12, "span"), ("2:8", 10, "span"),
+        ("2:9", 10, "span"), ("2:19", 11, "span"), ("2:19", 16, "span"), ("2:19", 19, "shifted"),
+        ("2:20", 4, "span"), ("2:20", 19, "span")]},
 }
 
 
@@ -175,7 +177,7 @@ class Build(unittest.TestCase):
         for a, x in self.ayah.items():
             for w in range(1, len(x["w"]) + 1):
                 ip, icol, liga = self.painted(a, w)
-                self.assertEqual(b.paint_errors(self.shaper, ip, icol, liga), [], f"2:{a} w{w}")
+                self.assertEqual(b.paint_errors(self.shaper, ip, icol, liga, "glyph"), [], f"2:{a} w{w}")
 
     def test_no_liga_only_without_lam_alef(self):
         for a, x in self.ayah.items():
@@ -191,9 +193,66 @@ class Build(unittest.TestCase):
         self.assertLess(segs[TAFKHIM][1], segs[MADD246][1])
 
     def test_v4_comparison_regressions(self):
-        found = {(r[0], r[1], r[6]) for r in self.rows}
+        found = {(r.ref, r.word, r.kind, r.category) for r in self.rows if r.model == "glyph"}
         self.assertEqual(found, KNOWN)
         self.assertEqual(self.stats["words"], 230)
+        self.assertEqual(self.stats["words matching V4 (glyph)"], 217)
+
+    def test_no_unreviewed_difference(self):
+        # Every difference from V4 is explained: no genuine colour mismatch left.
+        self.assertEqual([r for r in self.rows if r.category == "UNREVIEWED"], [])
+
+    # ── Option 1: the name of Allah ──
+
+    def allah_words(self):
+        for a, x in self.ayah.items():
+            for wi, runs in enumerate(x["w"]):
+                letters = [b.NORM.get(ch, ch) for ch, _ in letter_colours(runs)]
+                if any(letters[i:i + 3] == ["ل", "ل", "ه"] for i in range(len(letters))):
+                    yield a, wi + 1, runs
+
+    def test_allah_liga_off_only_where_coloured(self):
+        seen = 0
+        for a, w, runs in self.allah_words():
+            seen += 1
+            lc = letter_colours(runs)
+            heavy = any(c == TAFKHIM for ch, c in lc if ch == "ل")
+            self.assertEqual((w - 1) in self.ayah[a].get("nl", []), heavy, f"2:{a} w{w}")
+            ip, icol, liga = self.painted(a, w)
+            for model in b.MODELS:
+                self.assertEqual(b.paint_errors(self.shaper, ip, icol, liga, model), [], f"2:{a} w{w} {model}")
+            self.assertEqual(self.issues(a, w), [], f"2:{a} w{w}")
+        self.assertEqual(seen, 9)
+
+    def test_allah_both_lams_blue_heh_plain(self):
+        for a, w, runs in self.allah_words():
+            lc = letter_colours(runs)
+            i = next(i for i in range(len(lc) - 2) if [b.NORM.get(c, c) for c, _ in lc[i:i + 3]] == ["ل", "ل", "ه"])
+            lams, heh = {lc[i][1], lc[i + 1][1]}, lc[i + 2][1]
+            self.assertEqual(len(lams), 1, f"2:{a} w{w}: both lams alike")
+            self.assertIsNone(heh, f"2:{a} w{w}: ه plain")
+        # بِاللّٰهِ (2:8) after a kasra: plain, the ligature kept.
+        self.assertNotIn(5, self.ayah[8].get("nl", []))
+        self.assertTrue(all(c != TAFKHIM for _, c in colours_of(self.word(8, 6))))
+
+    # ── The data's madd on the vowel before its letter ──
+
+    def test_madd_on_its_letter_not_the_vowel(self):
+        # يُوۡقِنُوۡنَ (2:4): the rule data marks the madd on the ن's damma; the
+        # و carries it (as in V4), the ن stays plain.
+        self.assertEqual(letter_colours(self.word(4, 12)),
+                         [("ي", None), ("و", None), ("ق", TAFKHIM), ("ن", None), ("و", MADD246), ("ن", None)])
+
+    # ── Chromium paints a mark in its letter's colour ──
+
+    def test_chromium_mark_rows_are_browser_rows(self):
+        chromium = [r for r in self.rows if r.model == "chromium"]
+        self.assertTrue(chromium)
+        self.assertTrue(all(r.category == "browser" for r in chromium))
+        # A small alef coloured alone (ذٰلِكَ) is the glyph model's colour, Chromium's plain.
+        ip, icol, liga = self.painted(2, 1)
+        self.assertEqual(b.paint_errors(self.shaper, ip, icol, liga, "glyph"), [])
+        self.assertTrue(b.paint_errors(self.shaper, ip, icol, liga, "chromium"))
 
     def test_committed_data_is_current(self):
         committed = json.loads((b.OUT / "2.json").read_text())
