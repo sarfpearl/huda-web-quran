@@ -11,7 +11,11 @@ import {
 } from "@/lib/data/quranGlyphs";
 
 type Run = [text: string, colour: number | null];
-type Ayah = { a: number; w: Run[][] };
+/** `nl`: words drawn with the font's `liga` off — a colour changes inside
+ *  one of its ligatures there (a glyph is painted in one colour). */
+type Ayah = { a: number; w: Run[][]; nl?: number[] };
+
+const NO_LIGA = { fontFeatureSettings: '"liga" 0' } as const;
 
 const SIZES = [28, 34, 42];
 
@@ -94,7 +98,7 @@ export function IndoPakTajweedPreview() {
         )}
 
         <div className="mt-2 divide-y divide-white/10">
-          {ayahs?.map(({ a, w }) => {
+          {ayahs?.map(({ a, w, nl }) => {
             const u = uthmani?.get(a);
             return (
               <div key={a} className="grid gap-x-6 gap-y-2 py-5 md:grid-cols-2">
@@ -119,7 +123,7 @@ export function IndoPakTajweedPreview() {
                   <span className="text-[11px] uppercase tracking-wider text-sand-300/50 md:hidden">IndoPak · prototype</span>
                   <p dir="rtl" lang="ar" className="font-arabic quran-indopak" style={{ fontSize: SIZES[size], lineHeight: 2.1 }}>
                     {w.map((runs, wi) => (
-                      <span key={wi}>
+                      <span key={wi} style={coloured && nl?.includes(wi) ? NO_LIGA : undefined}>
                         {runs.map(([text, c], ri) =>
                           coloured && c !== null ? (
                             <span key={ri} style={{ color: TAJWEED_LEGEND[c]?.color }}>

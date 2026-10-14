@@ -422,23 +422,37 @@ Khatt: plain text only), so the colours are worked out per letter and carried
 onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
 
 - [x] Generator `scripts/generation/build-indopak-tajweed.py` (fontTools +
-      brotli; `.py` is git-ignored — add with `git add -f`):
-      rules per letter from tarekeldeeb/quran-tajweed-embedded (CC BY 4.0,
-      downloaded, not committed — URLs in the script) + QPC conventions
-      (Tafkhim for خ ص ض غ ط ق ظ / heavy ر / the lam of Allah; idgham greys
-      the merged noon / tanween and greens the letter it merges into; madd
-      colours on the madd letter / mark; madd ʿāriḍ at pause marks); Uthmani
-      ↔ IndoPak letters aligned per word (LCS). QA: every word's colours vs
-      its QPC V4 word glyph's COLR layers.
-- [x] Al-Baqarah 1–20 → `public/data/quran-indopak-tajweed/2.json`:
-      227 / 230 words match V4 (98.7%). Known misses: ٱلصَّلَوٰةَ's small
-      alef (on another letter in IndoPak), ٱلْمَوْتِ (leen at a pause),
-      قَامُوا۟.
+      brotli + uharfbuzz; `.py` is git-ignored — add with `git add -f`):
+      rule letters from tarekeldeeb/quran-tajweed-embedded (CC BY 4.0,
+      downloaded, not committed — URLs in the script; Al-Baqarah 1–20 in
+      `scripts/generation/fixtures/tajweed-2-1-20.json`) with the QPC
+      conventions (idgham greys the merged noon / tanween and greens the
+      letter it merges into; madd colours on the madd letter / mark; ikhfa /
+      iqlab on the tanween / small meem); Tafkhim and a madd ʿāriḍ at a pause
+      mark — no rule in that data — from the QPC V4 layers by position, on
+      letters that can carry them (ر with a kasra / after one: never);
+      Uthmani ↔ IndoPak letters aligned per word (LCS).
+- [x] **Ligatures (2026-10-14, the 2:2 لِّلۡمُتَّقِيۡنَ bug):** a glyph is
+      painted in one colour — its first character's — and the IndoPak font's
+      `liga` draws يۡن, تر, بر, لله, لا … as one glyph, so the ي's orange
+      spread onto the ن, a ر's blue vanished in تر, Allah's blue vanished.
+      The generator shapes every word with the font (HarfBuzz) and lists the
+      words to draw with `liga` off (`nl`, 14 in 1–20); لا stays a ligature.
+- [x] QA, positional (`docs/qa/indopak-tajweed-2-1-20.md`): painted glyph
+      segments vs the QPC V4 layer contours, per word. Before the fix 204 /
+      230 words matched (the earlier "98.7%" compared only the set of
+      colours); now 217 / 230, every character painted in its data colour.
+      Left: 3 × لا (the alef's madd shows on the maddah only — the lam-alef
+      is one glyph) and 10 words where the same letters are coloured but the
+      two calligraphies place them apart (checked by eye on the dev page).
+- [x] Tests: `python3 -m unittest scripts/generation/test_build_indopak_tajweed.py`
+      (18: verse 2's لَا / هُدًى / لِّلۡمُتَّقِيۡنَ, marks, several colours in a
+      word, word boundaries, normalisation, unmatched letters, the lam of
+      Allah, tarqiq, text preserved, paint = data, the V4 comparison).
+- [x] Al-Baqarah 1–20 → `public/data/quran-indopak-tajweed/2.json`.
 - [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
       Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
       Preview: `huda-web-quran-git-proto-indopak-tajweed-hu-da-right-guidance.vercel.app/dev/indopak-tajweed`.
-- [x] Checked in Chromium (desktop + 390 px): letters join across the
-      colour spans.
 - [ ] **Owner:** iPhone Safari — letters still join where the colour changes
       inside a word, colours on the same letters as the Uthmani column.
 - [ ] Then: all 114 Surahs (review the QA miss list), the reader / verse
