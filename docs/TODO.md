@@ -429,7 +429,7 @@ and text are used unmodified, and the credits are shown** (About → credits).
       don't change it, a forged `CF-Connecting-IP` is refused by Cloudflare.
 - [x] **Drop the temporary probe** — gone on the live DB (anon RPC → PGRST202,
       checked 2026-10-07).
-- [ ] **Comment spam guard** (2026-10-11, `fix/comment-spam-guard`,
+- [x] **Comment spam guard** (2026-10-11, `fix/comment-spam-guard`,
       `supabase/migrations/20261011120000_quran_comment_spam_guard.sql`) —
       a comment or name with a link (http(s)://, www., t.me/, wa.me/, a bare
       domain) is saved hidden and shows once an admin unhides it in
@@ -439,6 +439,9 @@ and text are used unmodified, and the credits are shown** (About → credits).
       characters. Tested on a local Postgres 16 with all migrations.
       **Owner:** run the migration in the Supabase SQL editor, then post a
       comment with a link on the live site and check it lands under Hidden.
+      Live: the migration is applied (2026-10-14 anon probe of
+      `quran_has_link` → permission denied, i.e. present) and the owner checked
+      a link comment lands under Hidden.
 - [ ] **Later, if spam still gets through:** Cloudflare Turnstile on comments.
 - [x] **Admin login** — `/admin/comments` signs in with an email magic link
       (Supabase Auth); only users in `public.admins` can moderate. The
@@ -451,4 +454,4 @@ and text are used unmodified, and the credits are shown** (About → credits).
       others from calling it. Check after deploy: Vercel → Project → Cron Jobs
       shows the job and its last run is 200.
 - [ ] Supabase Free plan has no automatic backups — consider Pro before
-      relying on the data.
+      relying on the data. (Owner, 2026-10-14: not needed now.)
