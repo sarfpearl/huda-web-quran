@@ -7,6 +7,7 @@ import { quranImageUrl } from "@/lib/data/quran";
 import { hasVideo } from "@/lib/data/videoManifest";
 import { clipUrl } from "@/lib/data/videoVersions";
 import { refreshBackdrops } from "@/lib/refreshBackdrops";
+import { hideBrokenImage, showLoadedImage } from "@/lib/brokenImage";
 
 interface SurahCinematicBackgroundProps {
   surahNumber: number;
@@ -195,7 +196,11 @@ export function SurahCinematicBackground({
         src={quranImageUrl("surah", surahNumber)}
         alt=""
         decoding="async"
-        onLoad={refreshBackdrops}
+        onLoad={(e) => {
+          showLoadedImage(e);
+          refreshBackdrops();
+        }}
+        onError={hideBrokenImage}
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
       />
 

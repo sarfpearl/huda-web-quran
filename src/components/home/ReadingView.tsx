@@ -184,10 +184,15 @@ export function ReadingView({
   // (isFallbackVerses): shown blank past ayah 1, so fetch it again shortly.
   const [retry, setRetry] = useState(0);
   useEffect(() => setRetry(0), [surahsKey, reciterId]);
+  // The Surahs shown: a new reciter alone keeps the text (and the reader's
+  // place) up while its verses load — clearing it scrolled back to the top
+  // and glided down through the Surah to the recited ayah again.
+  const versesForRef = useRef<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    if (retry === 0) {
+    if (retry === 0 && versesForRef.current !== surahsKey) {
+      versesForRef.current = surahsKey;
       setVerses(null);
       setFailed(false);
       scrollRef.current?.scrollTo({ top: 0 });
