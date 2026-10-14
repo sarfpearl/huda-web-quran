@@ -1,7 +1,7 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Antigravity / Claude / any AI assistant continuing this project  
-> **Last Updated:** 2026-10-11  
+> **Last Updated:** 2026-10-14  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
 > **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
@@ -11,17 +11,17 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-11, after PR #79.*
+*Snapshot: 2026-10-14, after PR #104.*
 
 | Item | Status |
 | :--- | :--- |
-| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs |
+| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font) |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `289ac85` — Merge PR #79 (`feat/imran-clips-batch`) |
-| **Latest merged PRs** | #75 HANDOFF status · #76 Supabase keep-alive cron · #77 Juz Next on the last ayah → next Juz · #78 comment spam guard · #79 Aal-Imran clip batch script |
-| **Open PRs** | This HANDOFF update only |
+| **`main`** | `e2188c3` — Merge PR #104 (`fix/indopak-panel-divider`) |
+| **Latest merged PRs** | #100–#104 IndoPak QuranWBW font live & UI polish · #98 Supabase IP hardening · #97 Next.js 15.5.27 + React 19 · #95 pinch text sizing · #90–#93 Focus reading mode · #91 Zawal & Jumu'ah · #82 repeat/shuffle player mode · #78/102 comment spam guard live |
+| **Open PRs** | Video manifest update (all 187 clips active) & HANDOFF refresh |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
-| **Local working tree** | `main`, clean |
+| **Local working tree** | clean |
 
 ---
 
@@ -54,9 +54,16 @@
 14. **App language + Settings** (#74): UI language separate from the ayah meaning — English default, 10 languages (`src/lib/i18n/`, `t(lang, "English")`, localStorage `huda-ui-lang`); Settings (gear beside Close in the Surah & Juz sheet) holds it. Tamil at the Latin size; reading view opens at the heading; square lock-screen art.
 15. **2026-10-11** (#76–#79):
     - **Supabase keep-alive** (#76): Vercel Cron (`vercel.json`) calls `/api/keepalive` daily at 03:17 UTC; it runs the read-only `get_quran_view_counts` RPC so the Free project never pauses. Optional `CRON_SECRET` limits the route to Vercel Cron.
-    - **Juz Next** (#77): lock-screen / headset Next on a Juz's last ayah goes on to the next Juz (30 → 1), like the player's >| (`setAyahSequenceNext` in `AudioPlayerContext`, registered by `ImmersiveHomeClient`). It used to replay the last ayah.
-    - **Comment spam guard** (#78): `supabase/migrations/20261011120000_quran_comment_spam_guard.sql` — a comment or name with a link is saved hidden until an admin unhides it; the same text within 24 h is refused (same browser id, or same IP for 20+ characters). Messages in all 10 languages. **Not live until the owner runs the migration.**
-    - **Aal-Imran clips** (#79): `scripts/generation/generate_vertex_imran_batch.mjs` holds the 16 scene prompts (03a–10b) with `--list` / `--dry-run` / `--only`; nothing rendered yet.
+    - **Juz Next** (#77): lock-screen / headset Next on a Juz's last ayah goes on to the next Juz (30 → 1), like the player's >| (`setAyahSequenceNext` in `AudioPlayerContext`, registered by `ImmersiveHomeClient`).
+    - **Comment spam guard** (#78, #102): `supabase/migrations/20261011120000_quran_comment_spam_guard.sql` applied and verified live — links held for review, duplicate comments refused within 24h. Messages in all 10 languages.
+    - **Aal-Imran clips** (#79): 16 scene prompts prepared; rendered on Mac and uploaded to R2 (all 03a–10b live HTTP 200).
+16. **2026-10-11 → 2026-10-14** (#80–#104):
+    - **IndoPak script & font live** (#100, #103, #104): QuranWBW granted written permission for the font and text (free, unmodified, credits). Self-hosted font `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`. Script picker in Tajweed panel; Tajweed switch hidden in IndoPak.
+    - **Next.js 15.5.27 + React 19** (#97): upgraded dependencies.
+    - **Reading & Player UX**: Repeat / shuffle mode (#82); focus reading mode with full-screen text and auto-hiding controls (#90–#93); pinch-to-zoom text size (#95); seamless reciter switching continuing from the exact word/ayah (#101).
+    - **Prayer times**: Zawal (solar noon) and Friday Jumu'ah display (#91); Sunset row (#86).
+    - **All 187 background video clips active**: all 20 Aal-Imran chapters active in `videoManifest.ts` (manifest up from 171 to 187 clips, 0 missing).
+    - **Storage consolidation**: 12.58 GB of video cache and redundant files safely cleaned up (`.media-work` cache, raw masters, QA frames, test renders). Single high-quality master format maintained (UHD 4K where available, 1080p for others). Total video storage reduced from 17.8 GB to 5.2 GB.
 
 ### Cloudflare R2 Media Migration
 - **Bucket:** `huda-quran-media`
@@ -106,16 +113,22 @@
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
-- [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
+- [x] **IndoPak font licence:** granted by QuranWBW (2026-10-11); font self-hosted and live (PR #100, #103, #104).
 - [x] Supabase test data cleared (2026-10-07).
-- [ ] **Comment spam guard:** links held for review, duplicates refused — migration `20261011120000_quran_comment_spam_guard.sql` must be run in the Supabase SQL editor (owner). Turnstile only if spam still gets through — see `docs/TODO.md`.
+- [x] **Comment spam guard:** migration applied and verified live on Supabase (PR #78, #102).
 - [x] Supabase Free-plan pause — daily Vercel Cron → `/api/keepalive` (2026-10-11). No automatic backups on Free — see `docs/TODO.md`.
+- [x] **16 Aal-Imran chapter clips:** rendered, verified live on R2, and active in `videoManifest.ts` (all 187 clips live, 0 missing).
+- [x] **Video storage consolidation (2026-10-14):** 12.58 GB freed by removing redundant raw masters, QA frames, test renders, and `.media-work` cache; single high-quality master format (UHD 4K where available, 1080p for others).
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
-- [ ] 16 Aal-Imran chapter clips (03a–10b, ayahs 33–200) never rendered — prompts ready in `scripts/generation/generate_vertex_imran_batch.mjs`; owner renders on the Mac (Vertex credentials, paid), then `reencode-videos.mjs --new`.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
 
+### Done (2026-10-11 → 2026-10-14)
+- [x] PRs #80–#104 merged and live — see §2 item 16 and §6.
+- [x] Video manifest updated: all 187 clips on R2 active in the app.
+- [x] Video storage consolidation: 12.58 GB reclaimed.
+
 ### Done (2026-10-11)
-- [x] PRs #75–#79 merged — see §2 item 15 and §6. Owner still to: run the spam-guard migration; check Vercel → Cron Jobs shows `/api/keepalive` with a 200 run; render the Aal-Imran clips; delete the merged branches on GitHub (the session's git proxy refuses branch deletes).
+- [x] PRs #75–#79 merged — see §2 item 15 and §6.
 
 ### Done (2026-10-07 → 10-10)
 - [x] PRs #24–#74 merged and live — see §2 items 9–14 and §6.
@@ -141,7 +154,7 @@
 
 ## 5. Git / Uncommitted Work
 
-*2026-10-11: `main` working tree clean; only this HANDOFF PR open.*
+*2026-10-14: working tree clean; PR branch for video manifest & HANDOFF update open.*
 
 > [!WARNING]
 > **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`.
@@ -150,6 +163,31 @@
 
 ## 6. Important Git History
 
+- `e2188c3` — **PR #104** `fix/indopak-panel-divider`: no stray divider under the script picker in IndoPak
+- `cc5f628` — **PR #103** `fix/indopak-hide-tajweed`: hide the Tajweed switch in IndoPak
+- `09e9503` — **PR #102** `docs/todo-spam-guard-done`: comment spam guard is live; backups deferred
+- `a8b2046` — **PR #101** `fix/reciter-change-reading-scroll`: carry on word by word when reciter changes
+- `45723a6` — **PR #100** `feat/indopak-font`: ship IndoPak with QuranWBW font (permission granted)
+- `0b54dde` — **PR #99** `fix/source-map-js`: source-map-js 1.2.1 → 1.2.2
+- `e054d3f` — **PR #98** `fix/supabase-ip-hardening`: trust only cf-connecting-ip; caps hold under concurrency
+- `c695c85` — **PR #97** `feat/next15-react19`: Next.js 15.5.27 + React 19
+- `d6ff4d4` — **PR #96** `fix/no-auto-browser-after-tap`: don't auto-open Surah browser once visitor taps
+- `1bbda98` — **PR #95** `fix/reader-pinch-textsize-boxes`: pinch to size text; Live count back in compact player
+- `e98c852` — **PR #94** `fix/standalone-audio-blocked-notice`: notice when home-screen app gets no sound
+- `a3b5c37` — **PR #93** `fix/reading-focus-flicker`: no full-screen flicker on short Surahs
+- `41cdb67` — **PR #92** `feat/remember-translation`: remember translation toggle per browser
+- `fe450c3` — **PR #91** `feat/prayer`: Zawal row, Jumu'ah on Fridays (sheet and time pill)
+- `5f0f090` — **PR #90** `feat/reading-focus-full-colour`: focus reading mode uses whole screen
+- `7ffb24f` — **PR #89** `fix/ipad-resume-player`: fix recitation stuck silent after app switch
+- `5eb62fc` — **PR #88** `fix/supabase-raise-ip-caps`: raise per-IP limits (500 new browsers/day, 60 comments/hr)
+- `a5c2686` — **PR #87** `fix/supabase-function-grants`: close internal helper functions to API
+- `3afebc9` — **PR #86** `fix/home-pills-sunset`: location follows device, Sunset row in prayer times
+- `f2be116` — **PR #85** `feat/settings-language-row`: App language row opens its own page
+- `afd375f` — **PR #84** `feat/comment-name-step-ux`: clearer name step with save icon
+- `e85b2df` — **PR #83** `feat/reading-mode-toast-dim`: mode toast + dim unread glyph words
+- `d87f8c6` — **PR #82** `feat/repeat-next-shuffle-mode`: repeat / next / shuffle player modes
+- `0c7bc1c` — **PR #81** `fix/harden-next-artwork`: harden Next.js and artwork image processing
+- `18251b2` — **PR #80** `docs/handoff-status-1011b`: HANDOFF status after PR #79
 - `289ac85` — **PR #79** `feat/imran-clips-batch`: batch script + 16 prompts for Aal-Imran 03a–10b
 - `46cfb6b` — **PR #78** `fix/comment-spam-guard`: links held for review, duplicates refused (migration to run)
 - `22fb33d` — **PR #77** `fix/juz-next-at-last-ayah`: Next on a Juz's last ayah → next Juz
