@@ -106,13 +106,18 @@
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
-- [ ] **IndoPak font licence:** waiting on QuranWBW's written permission; then self-host the font and set `NEXT_PUBLIC_INDOPAK=1` in Vercel. Steps in `docs/TODO.md`.
+- [x] **IndoPak font licence:** granted by QuranWBW on 2026-10-11 (free, no ads / paywall, unmodified, credits shown); IndoPak is live — `docs/TODO.md` → *IndoPak script*.
+- [ ] **IndoPak Tajweed colours (prototype):** branch `proto/indopak-tajweed`, dev page `/dev/indopak-tajweed` (Al-Baqarah 1–20, 98.7% of words match the QPC V4 colours). Waiting on the owner's iPhone Safari check — `docs/TODO.md` → *IndoPak Tajweed colours*.
 - [x] Supabase test data cleared (2026-10-07).
 - [ ] **Comment spam guard:** links held for review, duplicates refused — migration `20261011120000_quran_comment_spam_guard.sql` must be run in the Supabase SQL editor (owner). Turnstile only if spam still gets through — see `docs/TODO.md`.
 - [x] Supabase Free-plan pause — daily Vercel Cron → `/api/keepalive` (2026-10-11). No automatic backups on Free — see `docs/TODO.md`.
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
 - [ ] 16 Aal-Imran chapter clips (03a–10b, ayahs 33–200) never rendered — prompts ready in `scripts/generation/generate_vertex_imran_batch.mjs`; owner renders on the Mac (Vertex credentials, paid), then `reencode-videos.mjs --new`.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
+
+### Done (2026-10-14)
+- [x] **PR #101** `fix/reciter-change-reading-scroll`: changing the reciter keeps the reading-mode view in place (no jump to the Surah start) and carries on word by word — the word being recited again from its start, or the next word once its voice has finished (Surah and per-ayah Juz; Audio Only reciters still restart). Picker hint "Continues from the same word". A backdrop image that fails to load is hidden (no Safari "?" icon).
+- [x] **PR #103** `fix/indopak-hide-tajweed`: no Tajweed switch / legend in IndoPak.
 
 ### Done (2026-10-11)
 - [x] PRs #75–#79 merged — see §2 item 15 and §6. Owner still to: run the spam-guard migration; check Vercel → Cron Jobs shows `/api/keepalive` with a 200 run; render the Aal-Imran clips; delete the merged branches on GitHub (the session's git proxy refuses branch deletes).

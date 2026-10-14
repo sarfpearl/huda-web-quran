@@ -408,10 +408,42 @@ and text are used unmodified, and the credits are shown** (About → credits).
       `public/data/quran-indopak/` (`scripts/generation/fetch-indopak-words.mjs`,
       Quran.com `text_indopak`); word sync, highlight and tap-to-seek unchanged.
 - [x] "Uthmani | IndoPak" picker in the Tajweed panel (default Uthmani; a
-      pick is remembered in `huda:script`); Tajweed colours are Uthmani-only.
+      pick is remembered in `huda:script`); Tajweed colours are Uthmani-only —
+      in IndoPak the panel and Settings show no Tajweed switch or legend
+      (PR #103, 2026-10-14).
 - [x] Reading mode keeps the Madani 604-page layout and page numbers.
 - [x] Font self-hosted unmodified: `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`
       (`'IndoPak'` in `globals.css`); credits on the About page.
+
+### IndoPak Tajweed colours — prototype (2026-10-14, branch `proto/indopak-tajweed`)
+
+No Tajweed-coloured IndoPak text or font exists (QUL, Quran.com, Digital
+Khatt: plain text only), so the colours are worked out per letter and carried
+onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
+
+- [x] Generator `scripts/generation/build-indopak-tajweed.py` (fontTools +
+      brotli; `.py` is git-ignored — add with `git add -f`):
+      rules per letter from tarekeldeeb/quran-tajweed-embedded (CC BY 4.0,
+      downloaded, not committed — URLs in the script) + QPC conventions
+      (Tafkhim for خ ص ض غ ط ق ظ / heavy ر / the lam of Allah; idgham greys
+      the merged noon / tanween and greens the letter it merges into; madd
+      colours on the madd letter / mark; madd ʿāriḍ at pause marks); Uthmani
+      ↔ IndoPak letters aligned per word (LCS). QA: every word's colours vs
+      its QPC V4 word glyph's COLR layers.
+- [x] Al-Baqarah 1–20 → `public/data/quran-indopak-tajweed/2.json`:
+      227 / 230 words match V4 (98.7%). Known misses: ٱلصَّلَوٰةَ's small
+      alef (on another letter in IndoPak), ٱلْمَوْتِ (leen at a pause),
+      قَامُوا۟.
+- [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
+      Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
+      Preview: `huda-web-quran-git-proto-indopak-tajweed-hu-da-right-guidance.vercel.app/dev/indopak-tajweed`.
+- [x] Checked in Chromium (desktop + 390 px): letters join across the
+      colour spans.
+- [ ] **Owner:** iPhone Safari — letters still join where the colour changes
+      inside a word, colours on the same letters as the Uthmani column.
+- [ ] Then: all 114 Surahs (review the QA miss list), the reader / verse
+      view drawing the coloured runs, the Tajweed switch back in IndoPak
+      (undo PR #103's hiding), the dataset's CC BY credit on the About page.
 
 ## Quran views · live · comments · likes (Supabase)
 
