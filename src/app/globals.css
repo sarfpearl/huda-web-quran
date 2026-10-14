@@ -641,11 +641,6 @@ textarea,
   .huda-tab-gold::after { animation: none; opacity: 0; }
 }
 
-/* IndoPak script (src/lib/data/quranScript.ts): Quran.com's text_indopak is
-   encoded for "AlQuran IndoPak by QuranWBW", declared as 'IndoPak' once
-   QuranWBW grants permission (docs/TODO.md). Until then Noto Naskh Arabic
-   (OFL) draws it — a few words use that font's private-use marks and show
-   as boxes, which is why IndoPak stays development-only for now. */
 /* Tanzil-encoded fallback text (src/lib/data verses) — only while the QPC
    text isn't there: the Hafs font draws its U+06DF (small rounded zero) as a
    dotted circle; Amiri draws it properly. */
@@ -654,6 +649,16 @@ textarea,
   font-family: var(--font-amiri), 'Traditional Arabic', serif;
 }
 
+/* IndoPak script (src/lib/data/quranScript.ts): Quran.com's text_indopak is
+   encoded for "AlQuran IndoPak by QuranWBW" (it uses that font's own marks),
+   self-hosted unmodified with QuranWBW's written permission (2026-10-11: the
+   app stays free, no ads, credits on the About page). No local() first: an
+   installed copy may be another version. */
+@font-face {
+  font-family: 'IndoPak';
+  src: url('/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2') format('woff2');
+  font-display: swap;
+}
 .font-arabic.quran-indopak {
   font-family: 'IndoPak', var(--font-naskh), 'Uthmanic Hafs', serif;
 }
