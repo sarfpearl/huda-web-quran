@@ -8,6 +8,7 @@ import { JuzCinematicBackground } from "./JuzCinematicBackground";
 import { quranImageUrl } from "@/lib/data/service";
 import { mediaUrl } from "@/lib/media";
 import { refreshBackdrops } from "@/lib/refreshBackdrops";
+import { hideBrokenImage } from "@/lib/brokenImage";
 
 interface ImmersiveBackgroundProps {
   categorySlug: string;
@@ -83,6 +84,7 @@ export function ImmersiveBackground({
               fill
               priority
               unoptimized={true}
+              onError={hideBrokenImage}
               className="object-cover object-center [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
             />
           </motion.div>
@@ -107,6 +109,7 @@ export function ImmersiveBackground({
               fill
               priority
               unoptimized={true}
+              onError={hideBrokenImage}
               className="object-cover object-center [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
             />
           </div>
@@ -137,6 +140,7 @@ export function ImmersiveBackground({
               fill
               priority
               unoptimized={true}
+              onError={hideBrokenImage}
               className="object-cover object-center [image-rendering:-webkit-optimize-contrast] contrast-[1.06] saturate-[1.04]"
             />
           </motion.div>
@@ -181,6 +185,7 @@ function SceneElements({ categorySlug }: { categorySlug: string }) {
           alt=""
           fill
           priority
+          onError={hideBrokenImage}
           className="object-cover object-center"
         />
         {/* Vignette Overlay */}
