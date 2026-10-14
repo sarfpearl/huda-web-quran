@@ -409,41 +409,36 @@ export function ImmersiveHeader({
                     </div>
                   </div>
                 )}
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showTajweed && script !== "indopak"}
-                  aria-disabled={script === "indopak"}
-                  onClick={script === "indopak" ? undefined : onToggleTajweed}
-                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 ${
-                    script === "indopak" ? "cursor-not-allowed opacity-50" : "hover:bg-white/5 cursor-pointer"
-                  }`}
-                >
-                  <span className="flex flex-col text-left">
-                    <span className={`text-sm font-semibold`}>
-                      {t(language, "Tajweed colours")}
-                    </span>
-                    {script === "indopak" && (
-                      <span className={`text-[11px] text-sand-300/70`}>{t(language, "Uthmani script only")}</span>
-                    )}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${showTajweed && script !== "indopak" ? "bg-amber-400/90" : "bg-white/20"}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${showTajweed && script !== "indopak" ? "left-[1.375rem]" : "left-0.5"}`}
-                    />
-                  </span>
-                </button>
-                <ul className={`mt-1 grid gap-1.5 px-2 pb-1 pt-2 border-t border-white/10 ${showTajweed && script !== "indopak" ? "" : "opacity-50"}`}>
-                  {TAJWEED_LEGEND.map((r) => (
-                    <li key={r.color} className="flex items-center gap-2.5 text-xs text-sand-100/90">
-                      <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
-                      <span>{t(language, r.en)}</span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}
+                {script !== "indopak" && (
+                  <>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showTajweed}
+                      onClick={onToggleTajweed}
+                      className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 hover:bg-white/5 cursor-pointer"
+                    >
+                      <span className="text-sm font-semibold">{t(language, "Tajweed colours")}</span>
+                      <span
+                        aria-hidden="true"
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${showTajweed ? "bg-amber-400/90" : "bg-white/20"}`}
+                      >
+                        <span
+                          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${showTajweed ? "left-[1.375rem]" : "left-0.5"}`}
+                        />
+                      </span>
+                    </button>
+                    <ul className={`mt-1 grid gap-1.5 px-2 pb-1 pt-2 border-t border-white/10 ${showTajweed ? "" : "opacity-50"}`}>
+                      {TAJWEED_LEGEND.map((r) => (
+                        <li key={r.color} className="flex items-center gap-2.5 text-xs text-sand-100/90">
+                          <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
+                          <span>{t(language, r.en)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
             )}
           </div>

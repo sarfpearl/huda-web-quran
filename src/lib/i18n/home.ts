@@ -67,7 +67,6 @@ const strings: Strings = {
   "Quran script": { ta: "குர்ஆன் எழுத்துரு", ur: "قرآن کا رسم الخط", ml: "ഖുർആൻ ലിപി", hi: "क़ुरआन की लिपि", id: "Khat Al-Qur'an", bn: "কুরআনের লিপি", tr: "Kur'an hattı", fr: "Écriture du Coran", ms: "Khat al-Quran" },
   Uthmani: { ta: "உஸ்மானி", ur: "عثمانی", ml: "ഉസ്മാനി", hi: "उस्मानी", id: "Utsmani", bn: "উসমানী", tr: "Osmanî", fr: "Othmani", ms: "Uthmani" },
   IndoPak: { ta: "இந்தோபாக்", ur: "انڈو پاک", ml: "ഇന്തോപാക്", hi: "इंडोपाक", id: "IndoPak", bn: "ইন্দোপাক", tr: "IndoPak", fr: "IndoPak", ms: "IndoPak" },
-  "Uthmani script only": { ta: "உஸ்மானி எழுத்துருவில் மட்டும்", ur: "صرف عثمانی رسم الخط میں", ml: "ഉസ്മാനി ലിപിയിൽ മാത്രം", hi: "केवल उस्मानी लिपि में", id: "Hanya khat Utsmani", bn: "শুধু উসমানী লিপিতে", tr: "Yalnızca Osmanî hatta", fr: "Écriture othmani uniquement", ms: "Khat Uthmani sahaja" },
   // Tajweed legend (TAJWEED_LEGEND .en in lib/data/quranGlyphs)
   "Silent letter": { ta: "உச்சரிக்கப்படாத எழுத்து", ur: "خاموش حرف", ml: "ഉച്ചരിക്കാത്ത അക്ഷരം", hi: "ख़ामोश अक्षर", id: "Huruf tidak dibaca", bn: "নীরব অক্ষর", tr: "Okunmayan harf", fr: "Lettre muette", ms: "Huruf tidak dibaca" },
   "Normal madd (2)": { ta: "இயல்பான மத் (2)", ur: "مدِ طبعی (2)", ml: "സാധാരണ മദ്ദ് (2)", hi: "मद्दे तबई (2)", id: "Mad thabi'i (2)", bn: "মাদ্দে তবয়ী (2)", tr: "Tabii med (2)", fr: "Madd naturel (2)", ms: "Mad asli (2)" },

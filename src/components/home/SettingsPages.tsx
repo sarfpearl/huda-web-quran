@@ -296,15 +296,12 @@ export function QuranTextPage() {
           </div>
         </div>
       )}
-      <div className={GROUP}>
-        <Switch
-          on={s.showTajweed && !indoPak}
-          label={t(lang, "Tajweed colours")}
-          sub={indoPak ? t(lang, "Uthmani script only") : undefined}
-          onToggle={s.onToggleTajweed}
-          disabled={indoPak}
-        />
-      </div>
+      {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}
+      {!indoPak && (
+        <div className={GROUP}>
+          <Switch on={s.showTajweed} label={t(lang, "Tajweed colours")} onToggle={s.onToggleTajweed} />
+        </div>
+      )}
     </div>
   );
 }
