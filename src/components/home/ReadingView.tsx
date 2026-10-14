@@ -586,7 +586,10 @@ export function ReadingView({
   const showContinue =
     Boolean(target) &&
     (targetHere ? Boolean(pages) && !targetInView : Boolean(isMark ? onOpenMark : onOpenAyah)) &&
-    targetKey !== activeKey;
+    targetKey !== activeKey &&
+    // Following an estimate (Audio Only): the last read isn't kept up, so
+    // « Continue reading » would point somewhere stale.
+    !(!active && follow && !isMark);
   const goToAyah = (r: AyahRef) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -632,9 +635,9 @@ export function ReadingView({
     const el = scrollRef.current;
     if (!el || !pages || openedRef.current === surahsKey) return;
     openedRef.current = surahsKey;
-    if (active && active.ayah !== 1) return;
+    if (followed && followed.ayah !== 1) return;
     if (scrollToPage && Date.now() - scrollToPage.at <= 8000) return;
-    const surah = active?.surah ?? plan.all.find((p) => p.ctx === "cur")?.ref.surah;
+    const surah = followed?.surah ?? plan.all.find((p) => p.ctx === "cur")?.ref.surah;
     const head = el.querySelector<HTMLElement>(`[data-head="${surah}"]`);
     if (head) el.scrollTop += head.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
   }, [pages, surahsKey]); // eslint-disable-line react-hooks/exhaustive-deps

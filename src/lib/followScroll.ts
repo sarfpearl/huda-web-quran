@@ -20,13 +20,19 @@ export function stopFollow(el: HTMLElement) {
  */
 export function followScroll(el: HTMLElement, target: () => number, glide = false) {
   const running = follows.get(el);
+  const max = () => el.scrollHeight - el.clientHeight;
+  const clamp = (y: number) => Math.max(0, Math.min(max(), y));
   if (running) {
     running.target = target;
     running.glide ||= glide;
+    // Far off mid-follow (a drag along the seek bar): jump, not a reading-pace
+    // crawl through everything between.
+    if (!running.glide && Math.abs(clamp(target()) - el.scrollTop) > el.clientHeight) {
+      el.scrollTop = clamp(target());
+      running.v = 0;
+    }
     return;
   }
-  const max = () => el.scrollHeight - el.clientHeight;
-  const clamp = (y: number) => Math.max(0, Math.min(max(), y));
   // A hidden tab runs no frames; far off (a seek, a new Surah): jump there.
   if (document.hidden || (!glide && Math.abs(clamp(target()) - el.scrollTop) > el.clientHeight)) {
     el.scrollTop = clamp(target());
