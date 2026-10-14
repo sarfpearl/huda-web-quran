@@ -1,13 +1,13 @@
 # TODO
 
-## Open items (updated 2026-10-07)
+## Open items (updated 2026-10-14)
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
-**Still open (2026-10-07, end of day):** the rest of the real-phone checks
-(below); IndoPak font licence (no reply yet — stays dev-only); 16 Aal-Imran
-chapter clips that were never rendered (those scenes show the image).
-Everything else is merged and live (#26 … #52).
+**Still open (2026-10-14):** the rest of the real-phone checks (below).
+Everything else is merged and live (#26 … #104), including the IndoPak
+font, comment spam guard, all 187 background video clips, and 12.58 GB
+video storage consolidation.
 
 - [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
@@ -88,12 +88,12 @@ Everything else is merged and live (#26 … #52).
       deleted after the recovery (was `e575c56`); its generation scripts and
       `docs/REAL_FOOTAGE_LICENSES.md` (Mixkit sources for the ayah clips) are
       in `main`.
-      **2026-10-11:** the 16 prompts (03a–10b) are in
-      `scripts/generation/generate_vertex_imran_batch.mjs` (`--list`,
-      `--dry-run --only=03a`, `--only=03a`); same pipeline as 02c (Veo 3.1
-      Fast, 8 s, 1080p, loop seam, QA frames). Owner: render on the Mac (paid),
-      check `qa_frames/`, then `reencode-videos.mjs --new --only=003-aal-e-imran`
-      and `video-manifest.mjs`.
+      **2026-10-14:** all 16 Aal-Imran chapter clips (03a–10b) rendered,
+      verified on R2 (HTTP 200), and added to `src/lib/data/videoManifest.ts`
+      (all 187 candidate clips now active, 0 missing).
+- [x] **Video storage consolidation** (2026-10-14) — 12.58 GB freed across
+      `.media-work`, `public/videos`, and `assets/video-masters`; single
+      high-quality master format (UHD 4K where available, 1080p for others).
 - [x] **Offline** (2026-10-07, `feat/offline`, PR #45) —
       `public/sw.js`, registered in production only
       (`src/components/layout/ServiceWorker.tsx`): pages network-first →
