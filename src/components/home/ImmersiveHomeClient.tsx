@@ -372,8 +372,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
     const isPlayingJuz = Boolean(activeBayan && isQuranTrackId(activeBayan.id));
 
-    // Rule: switching to a WORD SYNC reciter keeps the current ayah (their own
-    // timings place it exactly). Switching to an AUDIO ONLY reciter restarts the
+    // Rule: switching to a WORD SYNC reciter carries on from the NEXT ayah —
+    // the old reciter's ayah counts as heard, the new voice picks up after it
+    // (their own timings place it exactly; the last ayah stays on itself). Switching to an AUDIO ONLY reciter restarts the
     // Surah / Juz from its first ayah — without timings its ayah positions are
     // only estimates, so resuming "the same ayah" would land somewhere else.
     const keepAyah = reciterHasWordTiming(reciter);
@@ -398,11 +399,17 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     // Every reciter (including Maher) streams the Juz's EXACT ayahs in their own
     // voice, ayah-by-ayah from everyayah.com, so the ayah progress bar / word
     // highlight stay consistent. If a per-ayah sequence is already playing,
-    // resume at the SAME ayah instead of restarting from the first one.
+    // resume at the NEXT ayah instead of restarting from the first one.
+    // Still in the Juz's opening prelude: its first ayah.
+    const nextJuzIndex = (count: number) => {
+      const seq = player.ayahSequence;
+      if (!keepAyah || !seq) return 0;
+      return seq.preType ? seq.index : Math.min(seq.index + 1, count - 1);
+    };
     if (isPlayingJuz && activeJuz) {
       const ayahUrls = buildJuzAyahUrls(activeJuz.id, reciter.id);
       if (ayahUrls && ayahUrls.length > 0) {
-        const resumeIndex = keepAyah ? player.ayahSequence?.index ?? 0 : 0;
+        const resumeIndex = nextJuzIndex(ayahUrls.length);
         const startUrl = ayahUrls[Math.min(resumeIndex, ayahUrls.length - 1)] ?? ayahUrls[0];
         const displayTrack = quranJuzToTrackForReciter(activeJuz, reciter, startUrl);
         setSelectedReciter(reciter);
@@ -419,11 +426,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     //    starting Surah, instead of jumping to Al-Fatihah.
     //  - Playing a Surah → the same Surah (keep the listener's place).
     // Juz playing ayah-by-ayah but the new reciter has no per-ayah audio → keep
-    // the place: continue the SURAH + ayah the Juz was on in full-surah audio.
-    const juzPair =
-      keepAyah && isPlayingJuz && activeJuz && player.ayahSequence
-        ? getJuzAyahPairs(activeJuz.id)[player.ayahSequence.index] ?? null
-        : null;
+    // the place: continue at the Juz's next SURAH + ayah in full-surah audio.
+    const seqPairs = keepAyah && isPlayingJuz && activeJuz && player.ayahSequence ? getJuzAyahPairs(activeJuz.id) : [];
+    const juzPair = seqPairs.length ? seqPairs[nextJuzIndex(seqPairs.length)] ?? null : null;
     const currentSurahNum = juzPair
       ? juzPair[0]
       : isPlayingJuz
@@ -437,15 +442,18 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     const newTrack = quranSurahToTrack(targetSurah, reciter);
     const reciterSurahTracks = getSurahTracksForReciter(reciter);
 
-    // Keep the listener on the SAME ayah. Each reciter paces differently, so the
-    // old reciter's timestamp would land on a different ayah — resolve that
-    // ayah's start in the NEW reciter's own timeline first, then start the new
-    // track right there (skipping the Bismillah prelude). Juz → from the top.
+    // Carry on from the NEXT ayah. Each reciter paces differently, so the old
+    // reciter's timestamp would land on a different ayah — resolve that ayah's
+    // start in the NEW reciter's own timeline first, then start the new track
+    // right there (skipping the Bismillah prelude). Juz → from the top.
+    const curAyah = currentVerse?.ayahNumber ?? 0;
     const resumeAyah = !keepAyah
       ? 0
       : juzPair
       ? juzPair[1]
-      : !isPlayingJuz && !player.isPrelude ? currentVerse?.ayahNumber ?? 0 : 0;
+      : !isPlayingJuz && !player.isPrelude && curAyah > 0
+      ? Math.min(curAyah + 1, targetSurah.verses || curAyah)
+      : 0;
     const wasPlaying = player.isPlaying;
 
     // Swap the displayed track only together with the audio — setting it before

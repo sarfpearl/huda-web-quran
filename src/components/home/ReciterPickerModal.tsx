@@ -229,7 +229,7 @@ export function ReciterPickerModal({
         <div className="min-w-0">
           <p className={`text-xs font-semibold ${syncFilter === "word" ? "text-emerald-300" : "text-amber-300"}`}>
             {syncFilter === "word"
-              ? t(lang, "Continues from the same ayah")
+              ? t(lang, "Continues from the next ayah")
               : t(lang, "Starts again from Ayah 1")}
           </p>
           <p className={`mt-0.5 text-[10px] leading-snug text-sand-50/90`}>
