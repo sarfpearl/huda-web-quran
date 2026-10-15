@@ -1,15 +1,19 @@
 # 📜 HuDa Web Quran — Real-World Footage Licensing & Semantic Audit Ledger
 
-All video assets below are **100% authentic real-world video footage** recorded using real professional cinema cameras, drones, wildlife telephoto lenses, and astrophotography equipment.
+> **Scope Note (Audited 2026-10-14):**  
+> This ledger applies **strictly and exclusively to the 8 curated Ayah-level video assets** listed below (Surah 2: Al-Baqarah pilot).  
+> All other full-Surah and multi-chapter background loops across the app (Surahs 1–114, Juz, Aal-Imran 01a–10b) are synthetic cinematic landscapes generated via **Google Cloud Vertex AI (Veo 3.1)** and are comprehensively documented in [`docs/AI_SYNTHETIC_VIDEO_REGISTRY.md`](file:///Users/pearl-9744/Claude/Projects/huda-web-quran/docs/AI_SYNTHETIC_VIDEO_REGISTRY.md).
 
-**Strict Prohibitions**:
+All video assets listed in this document are **100% authentic real-world video footage** recorded using real professional cinema cameras, drones, wildlife telephoto lenses, and astrophotography equipment.
+
+**Strict Prohibitions for these Ayah Assets**:
 - ❌ NO AI video generation (Veo, Sora, RunWay, Luma, Pika).
 - ❌ NO synthetic animations or AI-generated landscapes.
 - ❌ NO 2D image pan/zoom (Ken Burns).
 - ❌ NO Books / Manuscripts / Knowledge footage (Category completely removed).
 - ❌ NO text, Arabic calligraphy, ayah numbers, translations, or watermarks embedded in video.
 
-All footage is sourced under verified, unrestricted free commercial and web usage licenses with zero royalty obligations.
+All footage below is sourced under verified, unrestricted free commercial and web usage licenses with zero royalty obligations.
 
 ---
 

@@ -1,7 +1,7 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Antigravity / Claude / any AI assistant continuing this project  
-> **Last Updated:** 2026-10-14  
+> **Last Updated:** 2026-10-15  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
 > **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
@@ -11,15 +11,15 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-14, after PR #104.*
+*Snapshot: 2026-10-15, after PR #106.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font) |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `e2188c3` — Merge PR #104 (`fix/indopak-panel-divider`) |
-| **Latest merged PRs** | #100–#104 IndoPak QuranWBW font live & UI polish · #98 Supabase IP hardening · #97 Next.js 15.5.27 + React 19 · #95 pinch text sizing · #90–#93 Focus reading mode · #91 Zawal & Jumu'ah · #82 repeat/shuffle player mode · #78/102 comment spam guard live |
-| **Open PRs** | Video manifest update (all 187 clips active) & HANDOFF refresh |
+| **`main`** | `06b868e` — Merge PR #106 (`feat/audio-only-reading-follow`) |
+| **Latest merged PRs** | #106 Audio Only reading follow · #105 Video manifest update (187 clips) & HANDOFF · #100–#104 IndoPak QuranWBW font live & UI polish · #98 Supabase IP hardening · #97 Next.js 15.5.27 + React 19 · #95 pinch text sizing · #90–#93 Focus reading mode · #91 Zawal & Jumu'ah · #82 repeat/shuffle player mode |
+| **Open PRs** | None |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Local working tree** | clean |
 
@@ -118,14 +118,17 @@
 - [x] **Comment spam guard:** migration applied and verified live on Supabase (PR #78, #102).
 - [x] Supabase Free-plan pause — daily Vercel Cron → `/api/keepalive` (2026-10-11). No automatic backups on Free — see `docs/TODO.md`.
 - [x] **16 Aal-Imran chapter clips:** rendered, verified live on R2, and active in `videoManifest.ts` (all 187 clips live, 0 missing).
+- [x] **Surah 2 (Al-Baqarah) Final Verification (2026-10-15):** All 44 chapters covering Verses 1–286 verified 100% continuous (0 gaps), all 44 video assets confirmed live HTTP 200 on R2, 8 real-footage Ayah clips verified, real vs synthetic video registries audited.
 - [x] **Video storage consolidation (2026-10-14):** 12.58 GB freed by removing redundant raw masters, QA frames, test renders, and `.media-work` cache; single high-quality master format (UHD 4K where available, 1080p for others).
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
 
-### Done (2026-10-11 → 2026-10-14)
+### Done (2026-10-14 → 2026-10-15)
+- [x] PR #105 merged: Video manifest updated (all 187 clips active) and HANDOFF refresh.
+- [x] PR #106 merged: Audio Only reading auto-scroll and follow jumps on seek drag.
+- [x] Surah 2 final verification: all 44 chapters and 8 Ayah clips verified live on Cloudflare R2; registries separated.
+- [x] Video pipeline QA: 0.40s loop crossfade POC and mobile portrait vs CSS object-cover evaluated.
 - [x] PRs #80–#104 merged and live — see §2 item 16 and §6.
-- [x] Video manifest updated: all 187 clips on R2 active in the app.
-- [x] Video storage consolidation: 12.58 GB reclaimed.
 
 ### Done (2026-10-11)
 - [x] PRs #75–#79 merged — see §2 item 15 and §6.
