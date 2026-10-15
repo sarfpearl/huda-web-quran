@@ -19,6 +19,49 @@ const NO_LIGA = { fontFeatureSettings: '"liga" 0' } as const;
 
 const SIZES = [28, 34, 42];
 
+// Browser check (one screenshot on a device): the same cases as
+// scripts/qa/indopak-tajweed-webkit.py. Chromium and WebKitGTK 2.52.6 give
+// the "expected" column; the marks row is what decides the next step.
+const T = "#3b82f6";
+const CHECKS: { html: string; liga: boolean; expect: string }[] = [
+  { html: `لِّلۡمُتَّقِ<b>يۡ</b>نَ`, liga: true, expect: "liga on: ي and ن blue (ligature)" },
+  { html: `لِّلۡمُتَّقِ<b>يۡ</b>نَ`, liga: false, expect: "liga off: ي blue, ن white" },
+  { html: `اشۡتَ<b>ر</b>َوُا`, liga: true, expect: "liga on: no blue (ligature)" },
+  { html: `اشۡتَ<b>ر</b>َوُا`, liga: false, expect: "liga off: ر blue" },
+  { html: `<i>ا</i><b>للّٰ</b>هُ`, liga: false, expect: "Allah: ا grey, both ل blue, ه white" },
+  { html: `غِشَاوَة<b>ٌ</b>`, liga: true, expect: "mark: tanween blue? (Chromium / WebKitGTK: no)" },
+  { html: `ذ<b>ٰ</b>لِكَ`, liga: true, expect: "mark: small alef blue? (Chromium / WebKitGTK: no)" },
+  { html: `اِلَّا<b>ۤ</b>`, liga: true, expect: "mark: maddah blue? (Chromium / WebKitGTK: no)" },
+];
+
+function BrowserCheck() {
+  const [ua, setUa] = useState("");
+  useEffect(() => setUa(navigator.userAgent), []);
+  return (
+    <section className="mt-6 rounded-xl border border-white/15 p-3">
+      <h2 className="text-sm font-semibold">Browser check — screenshot this box</h2>
+      <p className="mt-1 break-all text-[11px] text-sand-300/70">{ua}</p>
+      <style>{`.bc b{font-weight:normal;color:${T}} .bc i{font-style:normal;color:#999}`}</style>
+      <ol className="mt-2 grid gap-x-4 sm:grid-cols-2">
+        {CHECKS.map((c, i) => (
+          <li key={i} className="flex items-center justify-between gap-3 border-t border-white/10 py-1">
+            <span className="text-xs text-sand-300/90">
+              {i + 1}. {c.expect}
+            </span>
+            <span
+              dir="rtl"
+              lang="ar"
+              className="bc font-arabic quran-indopak shrink-0 text-white"
+              style={{ fontSize: 44, lineHeight: 1.6, ...(c.liga ? {} : NO_LIGA) }}
+              dangerouslySetInnerHTML={{ __html: c.html }}
+            />
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export function IndoPakTajweedPreview() {
   const [ayahs, setAyahs] = useState<Ayah[] | null>(null);
   const [uthmani, setUthmani] = useState<Map<number, GlyphVerse> | null>(null);
@@ -86,6 +129,8 @@ export function IndoPakTajweedPreview() {
             </li>
           ))}
         </ul>
+
+        <BrowserCheck />
 
         {failed && <p className="mt-8 text-red-300">Couldn&apos;t load the prototype data.</p>}
         {!ayahs && !failed && <p className="mt-8 text-sand-300/70">Loading…</p>}
