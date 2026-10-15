@@ -9,6 +9,7 @@ import {
   loadPageFont,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
+import { GlyphWordSvg, useGlyphPaths, type GlyphFile } from "./GlyphWords";
 
 type Run = [text: string, colour: number | null];
 /** `nl`: words drawn with the font's `liga` off — a colour changes inside
@@ -34,7 +35,14 @@ const CHECKS: { html: string; liga: boolean; expect: string }[] = [
   { html: `اِلَّا<b>ۤ</b>`, liga: true, expect: "mark: maddah blue? (Chromium / WebKitGTK: no)" },
 ];
 
-function BrowserCheck() {
+// Glyph-drawn marks (rows 9–11): the words of the mark rows, drawn glyph by glyph.
+const GLYPH_CHECKS: { a: number; w: number; expect: string }[] = [
+  { a: 7, w: 9, expect: "glyphs: tanween grey" },
+  { a: 2, w: 1, expect: "glyphs: small alef pink" },
+  { a: 9, w: 7, expect: "glyphs: maddah pink-red" },
+];
+
+function BrowserCheck({ glyphs, paths, texts }: { glyphs: GlyphFile | null; paths: Map<number, string> | null; texts: Ayah[] | null }) {
   const [ua, setUa] = useState("");
   useEffect(() => setUa(navigator.userAgent), []);
   return (
@@ -57,6 +65,24 @@ function BrowserCheck() {
             />
           </li>
         ))}
+        {GLYPH_CHECKS.map((c, i) => {
+          const word = glyphs?.ayahs.find((x) => x.a === c.a)?.w[c.w - 1];
+          const text = texts?.find((x) => x.a === c.a)?.w[c.w - 1].map(([t]) => t).join("") ?? "";
+          return (
+            <li key={`g${i}`} className="flex items-center justify-between gap-3 border-t border-white/10 py-1">
+              <span className="text-xs text-sand-300/90">
+                {CHECKS.length + i + 1}. {c.expect}
+              </span>
+              <span dir="rtl" className="shrink-0 py-1">
+                {word && glyphs && paths ? (
+                  <GlyphWordSvg word={word} text={text} file={glyphs} paths={paths} size={44} />
+                ) : (
+                  <span className="text-xs text-sand-300/60">Loading…</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
@@ -68,6 +94,14 @@ export function IndoPakTajweedPreview() {
   const [failed, setFailed] = useState(false);
   const [coloured, setColoured] = useState(true);
   const [size, setSize] = useState(1);
+  const [glyphs, setGlyphs] = useState<GlyphFile | null>(null);
+  const paths = useGlyphPaths(glyphs);
+
+  useEffect(() => {
+    fetch("/data/quran-indopak-tajweed/2.glyphs.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setGlyphs, () => {});
+  }, []);
 
   useEffect(() => {
     fetch("/data/quran-indopak-tajweed/2.json")
@@ -130,7 +164,7 @@ export function IndoPakTajweedPreview() {
           ))}
         </ul>
 
-        <BrowserCheck />
+        <BrowserCheck glyphs={glyphs} paths={paths} texts={ayahs} />
 
         {failed && <p className="mt-8 text-red-300">Couldn&apos;t load the prototype data.</p>}
         {!ayahs && !failed && <p className="mt-8 text-sand-300/70">Loading…</p>}
@@ -138,7 +172,7 @@ export function IndoPakTajweedPreview() {
         {ayahs && (
           <div className="mt-8 hidden grid-cols-2 gap-6 text-xs uppercase tracking-wider text-sand-300/60 md:grid">
             <span>Uthmani · QPC V4 (app)</span>
-            <span>IndoPak · prototype</span>
+            <span>IndoPak · text (top) · glyphs, SVG (below)</span>
           </div>
         )}
 
@@ -181,6 +215,24 @@ export function IndoPakTajweedPreview() {
                       </span>
                     ))}
                     <span className="font-sans text-base text-sand-300/60"> ({a})</span>
+                  </p>
+                  <span className="text-[11px] uppercase tracking-wider text-sand-300/50">IndoPak · glyphs (SVG)</span>
+                  <p dir="rtl" lang="ar" className="flex flex-wrap items-center gap-x-[0.3em] gap-y-1" style={{ fontSize: SIZES[size] }}>
+                    {glyphs && paths
+                      ? glyphs.ayahs
+                          .find((x) => x.a === a)
+                          ?.w.map((gw, wi) => (
+                            <GlyphWordSvg
+                              key={wi}
+                              word={gw}
+                              text={w[wi].map(([t]) => t).join("")}
+                              file={glyphs}
+                              paths={paths}
+                              size={SIZES[size]}
+                              coloured={coloured}
+                            />
+                          ))
+                      : <span className="font-sans text-sm text-sand-300/60">Loading…</span>}
                   </p>
                 </div>
               </div>

@@ -282,6 +282,21 @@ class Shaper:
         f.save(data)
         self.font = hb.Font(hb.Face(hb.Blob(data.getvalue())))
         self.order = f.getGlyphOrder()
+        self.metrics = {"upem": f["head"].unitsPerEm, "ascent": f["hhea"].ascent, "descent": -f["hhea"].descent}
+
+    def layout(self, text, liga=True):
+        """(advance, [(glyph id, x, y, first char index)]): the word as drawn,
+        x / y in font units from its left edge / the baseline (y up)."""
+        buf = hb.Buffer()
+        buf.add_str(text)
+        buf.guess_segment_properties()
+        buf.cluster_level = hb.BufferClusterLevel.MONOTONE_CHARACTERS
+        hb.shape(self.font, buf, {} if liga else {"liga": False})
+        out, x = [], 0
+        for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
+            out.append((info.codepoint, x + pos.x_offset, pos.y_offset, info.cluster))
+            x += pos.x_advance
+        return x, out
 
     def shape(self, text, liga=True, graphemes=False):
         """[(first char index, glyph name, x0, x1)] in visual order, x in font
@@ -621,7 +636,7 @@ def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
     glyph_data = json.loads((GLYPHS / f"{surah}.json").read_text())
     indopak = json.loads((INDOPAK / f"{surah}.json").read_text())
     bismillah = len(text_of[(1, 1)]) + 1 if (1, 1) in text_of else 40
-    stats, rows, result = Counter(), [], []
+    stats, rows, result, glyph_ayahs = Counter(), [], [], []
     for gv, iv in zip(glyph_data, indopak):
         a = gv["a"]
         if a < first or a > last:
@@ -638,7 +653,7 @@ def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
             stats["skipped ayahs"] += 1
             result.append({"a": a, "w": [[[t, None]] for t in iv["w"]]})
             continue
-        words, no_liga = [], []
+        words, no_liga, gwords = [], [], []
         for wi, ((at, wchars), ip, (code, page, qpc)) in enumerate(zip(u_words, iv["w"], gv["w"])):
             wcol = colour[at: at + len(wchars)]
             icol = map_word(wchars, wcol, ip, stats)
@@ -652,6 +667,10 @@ def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
                 no_liga.append(wi)
                 stats["words drawn with liga off"] += 1
             words.append(runs_of(ip, icol))
+            # The word as glyphs, each in its colour (the glyph model): drawn
+            # glyph by glyph (SVG), a mark shows its own colour in any browser.
+            adv, glyphs = shaper.layout(ip, liga=not off)
+            gwords.append({"adv": adv, "g": [[gid, x, y, icol[c]] for gid, x, y, c in glyphs]})
             key, u = (f"{surah}:{a}", wi + 1), "".join(wchars)
             stats["words"] += 1
             glyph_issues = []
@@ -678,10 +697,12 @@ def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
             for n in notes:
                 stats["ligature limits"] += 1
                 rows.append(Row(*key, u, ip, None, None, "ligature limit", n, "glyph", "font shaping"))
+        glyph_ayahs.append({"a": a, "w": gwords})
         entry = {"a": a, "w": words}
         if no_liga:
             entry["nl"] = no_liga
         result.append(entry)
+    build.glyphs = {**shaper.metrics, "font": INDOPAK_FONT.name, "ayahs": glyph_ayahs}
     return result, rows, stats
 
 
@@ -792,6 +813,8 @@ def main(argv):
     result, rows, stats = build(rule_data, surah, first, last)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{surah}.json").write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+    # Glyph layout (ids and positions only — the outlines stay in the font).
+    (OUT / f"{surah}.glyphs.json").write_text(json.dumps(build.glyphs, separators=(",", ":")))
     last = min(last, max(r["a"] for r in result))
     text = report(rows, stats, surah, first, last)
     if rep:

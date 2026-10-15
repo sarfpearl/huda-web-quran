@@ -479,11 +479,25 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
       normally (Option 1 confirmed); a mark coloured alone doesn't show — as
       in Chromium and WebKitGTK. (Liga on, iPhone doesn't spread يۡن's ي
       colour onto the ن; liga off is right everywhere.)
-- [ ] **Decide:** a mark coloured alone (madd 2's small alef, a grey
-      tanween, لا's maddah, iqlab's small meem) shows in no browser tested —
-      Chromium, WebKitGTK, iPhone Safari. The fix that works everywhere is
-      drawing the coloured words as glyphs (SVG, or a generated colour font
-      as QPC V4 does), with the text kept for copy / screen readers.
+- [x] **Glyph rendering (2026-10-15, decided: yes):** a mark coloured alone
+      (madd 2's small alef, a grey tanween, لا's maddah, iqlab's small meem)
+      shows in no browser as text — so each word is also drawn glyph by glyph
+      as SVG, every glyph in its colour: the layout (glyph ids + positions,
+      HarfBuzz at build time) in `public/data/quran-indopak-tajweed/2.glyphs.json`,
+      the outlines read in the browser from the self-hosted IndoPak WOFF2
+      itself (`fontkit` 2.0.4, MIT) — the font is used as it is, not modified
+      or re-encoded (QuranWBW's condition). `src/app/dev/indopak-tajweed/GlyphWords.tsx`;
+      the dev page shows it under each IndoPak ayah, and browser-check rows
+      9–11. Chromium: the small alef's pink and لا's maddah show (38 / 44 px,
+      0 as text); WebKitGTK renders it too.
+- [ ] **Owner:** iPhone — browser-check rows 9–11 (tanween grey, small
+      alef pink, maddah pink-red, drawn as glyphs).
+- [ ] Glyph rendering, before the reader: text selection / copy (the SVG
+      has the text as its accessible name only), the recited word's gold
+      highlight and tap-to-seek on SVG words, line wrapping and size with
+      the reader's text scale, performance on a whole Surah, and whether
+      drawing the font's outlines as SVG is within QuranWBW's permission
+      (ask them).
 - [ ] Then: all 114 Surahs (review the QA miss list), the reader / verse
       view drawing the coloured runs, the Tajweed switch back in IndoPak
       (undo PR #103's hiding), the dataset's CC BY credit on the About page.
