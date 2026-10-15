@@ -12,7 +12,10 @@ Paint models:
   on a mark alone (a madd's small alef, a grey tanween, a maddah) does not show there.
 - **WebKit** (Safari's engine, WebKitGTK 2.52.6 — `scripts/qa/indopak-tajweed-webkit.py`): the same
   as Chromium — liga off fixes the ligatures and Allah's lams, a mark coloured alone doesn't show.
-- iPhone Safari itself (WebKit with CoreText shaping): **not tested on a device**.
+- **iPhone Safari** (iOS 18.7, WebKit 605.1.15, CoreText; owner's device, 2026-10-15, the dev
+  page's browser check): liga off keeps يۡن's ن white and تر's ر blue, Allah's lams blue with the
+  ه white; a mark coloured alone doesn't show. (With liga on, يۡن's ي colour does not spread
+  onto the ن there, unlike Chromium / WebKitGTK — liga off is right in all three.)
 
 Words: 230 · matching V4 — glyph model: 217 / 230 (94.3%) · Chromium: 190 / 230 (82.6%)
 Drawn with liga off: 15 · paint errors (glyph model): 0

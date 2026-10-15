@@ -440,10 +440,10 @@ def resolve_ligatures(shaper, ip, icol, notes=None):
 
 # Paint models. "glyph": every glyph in its first character's colour — a
 # ligature in one colour, a mark in its own (an engine that colours marks
-# apart from their letter). "chromium": measured in Chromium (2026-10-14) and
-# WebKitGTK 2.52.6, Safari's engine (2026-10-15) — also a mark is painted in
-# its letter's colour (a whole grapheme in one colour), so a colour on a mark
-# alone doesn't show there.
+# apart from their letter). "chromium": measured in Chromium (2026-10-14),
+# WebKitGTK 2.52.6 and iPhone Safari (iOS 18.7) (2026-10-15) — also a mark is
+# painted in its letter's colour (a whole grapheme in one colour), so a colour
+# on a mark alone doesn't show in any of them.
 MODELS = ("glyph", "chromium")
 
 
@@ -751,7 +751,10 @@ def report(rows, stats, surah, first, last):
         "  on a mark alone (a madd's small alef, a grey tanween, a maddah) does not show there.",
         "- **WebKit** (Safari's engine, WebKitGTK 2.52.6 — `scripts/qa/indopak-tajweed-webkit.py`): the same",
         "  as Chromium — liga off fixes the ligatures and Allah's lams, a mark coloured alone doesn't show.",
-        "- iPhone Safari itself (WebKit with CoreText shaping): **not tested on a device**.",
+        "- **iPhone Safari** (iOS 18.7, WebKit 605.1.15, CoreText; owner's device, 2026-10-15, the dev",
+        "  page's browser check): liga off keeps يۡن's ن white and تر's ر blue, Allah's lams blue with the",
+        "  ه white; a mark coloured alone doesn't show. (With liga on, يۡن's ي colour does not spread",
+        "  onto the ن there, unlike Chromium / WebKitGTK — liga off is right in all three.)",
         "",
         f"Words: {n} · matching V4 — glyph model: {pct('glyph')} · Chromium: {pct('chromium')}",
         f"Drawn with liga off: {stats['words drawn with liga off']} · paint errors (glyph model): "

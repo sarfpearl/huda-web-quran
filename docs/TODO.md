@@ -473,12 +473,17 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
       the ه white; a mark coloured alone (tanween, small alef, لا's maddah)
       doesn't show. (WebKitGTK shapes with HarfBuzz, iPhone Safari with
       CoreText.)
-- [ ] **Owner:** iPhone Safari on a device, `/dev/indopak-tajweed` — to
-      confirm the WebKitGTK result.
-- [ ] **Decide:** marks coloured alone don't show in Chromium. The fix that
-      works in every browser is drawing the coloured words as glyphs (SVG
-      or a generated colour font, as QPC V4 does), with the text kept for
-      copy / screen readers.
+- [x] **iPhone Safari (2026-10-15)** — iOS 18.7, WebKit 605.1.15, the dev
+      page's browser check (owner's screenshots): liga off keeps يۡن's ن
+      white and تر's ر blue; Allah's two lams blue, the ه white, joined
+      normally (Option 1 confirmed); a mark coloured alone doesn't show — as
+      in Chromium and WebKitGTK. (Liga on, iPhone doesn't spread يۡن's ي
+      colour onto the ن; liga off is right everywhere.)
+- [ ] **Decide:** a mark coloured alone (madd 2's small alef, a grey
+      tanween, لا's maddah, iqlab's small meem) shows in no browser tested —
+      Chromium, WebKitGTK, iPhone Safari. The fix that works everywhere is
+      drawing the coloured words as glyphs (SVG, or a generated colour font
+      as QPC V4 does), with the text kept for copy / screen readers.
 - [ ] Then: all 114 Surahs (review the QA miss list), the reader / verse
       view drawing the coloured runs, the Tajweed switch back in IndoPak
       (undo PR #103's hiding), the dataset's CC BY credit on the About page.
