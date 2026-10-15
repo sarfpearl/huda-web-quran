@@ -10,7 +10,9 @@ Paint models:
   its own. The data is built for this model.
 - **chromium** — measured in Chromium: a mark is painted in its letter's colour too, so a colour
   on a mark alone (a madd's small alef, a grey tanween, a maddah) does not show there.
-- iPhone Safari (WebKit / CoreText): **not tested yet**.
+- **WebKit** (Safari's engine, WebKitGTK 2.52.6 — `scripts/qa/indopak-tajweed-webkit.py`): the same
+  as Chromium — liga off fixes the ligatures and Allah's lams, a mark coloured alone doesn't show.
+- iPhone Safari itself (WebKit with CoreText shaping): **not tested on a device**.
 
 Words: 230 · matching V4 — glyph model: 217 / 230 (94.3%) · Chromium: 190 / 230 (82.6%)
 Drawn with liga off: 15 · paint errors (glyph model): 0

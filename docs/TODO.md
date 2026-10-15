@@ -467,12 +467,14 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
 - [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
       Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
       Preview: `huda-web-quran-git-proto-indopak-tajweed-hu-da-right-guidance.vercel.app/dev/indopak-tajweed`.
-- [ ] **Owner:** iPhone Safari (not tested — no WebKit here; Linux WebKit
-      wouldn't be CoreText anyway) — on `/dev/indopak-tajweed`: letters join
-      where the colour changes inside a word; Allah's two lams blue with the
-      ه white and normally joined; لِّلۡمُتَّقِيۡنَ's ن white; whether a mark
-      coloured alone shows its colour (ذٰلِكَ's small alef pink, هُدًى's
-      tanween grey).
+- [x] **WebKit (2026-10-15):** Safari's engine as WebKitGTK 2.52.6
+      (`scripts/qa/indopak-tajweed-webkit.py`, Xvfb) paints like Chromium:
+      liga off keeps يۡن's ن white and تر's ر blue, Allah's two lams blue with
+      the ه white; a mark coloured alone (tanween, small alef, لا's maddah)
+      doesn't show. (WebKitGTK shapes with HarfBuzz, iPhone Safari with
+      CoreText.)
+- [ ] **Owner:** iPhone Safari on a device, `/dev/indopak-tajweed` — to
+      confirm the WebKitGTK result.
 - [ ] **Decide:** marks coloured alone don't show in Chromium. The fix that
       works in every browser is drawing the coloured words as glyphs (SVG
       or a generated colour font, as QPC V4 does), with the text kept for
