@@ -1,0 +1,735 @@
+{
+  "surahNumber": 3,
+  "surahName": "Aal-Imran",
+  "totalVerses": 200,
+  "auditedAt": "2026-10-16T09:21:19.135Z",
+  "primaryReciter": "alafasy",
+  "timingMethod": "Quran.com QDC Acoustic Word Segmentation",
+  "scenes": [
+    {
+      "sceneId": "scene-001",
+      "verses": "1-9",
+      "verseCount": 9,
+      "alafasyTiming": {
+        "startSec": 0,
+        "endSec": 179.56,
+        "durationSec": 179.56,
+        "normalizedRange": [
+          0,
+          0.0375
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 0.08,
+        "endSec": 129.52,
+        "durationSec": 129.44,
+        "normalizedRange": [
+          0,
+          0.0385
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 3,
+        "endSec": 173.31,
+        "durationSec": 170.31,
+        "normalizedRange": [
+          0.0007,
+          0.0396
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-002",
+      "verses": "10-20",
+      "verseCount": 11,
+      "alafasyTiming": {
+        "startSec": 179.56,
+        "endSec": 455.26,
+        "durationSec": 275.7,
+        "normalizedRange": [
+          0.0375,
+          0.095
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 130.48,
+        "endSec": 344.44,
+        "durationSec": 213.96,
+        "normalizedRange": [
+          0.0388,
+          0.1023
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 173.41,
+        "endSec": 468.81,
+        "durationSec": 295.4,
+        "normalizedRange": [
+          0.0396,
+          0.1072
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-003",
+      "verses": "21-32",
+      "verseCount": 12,
+      "alafasyTiming": {
+        "startSec": 455.26,
+        "endSec": 746.53,
+        "durationSec": 291.27,
+        "normalizedRange": [
+          0.095,
+          0.1558
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 345,
+        "endSec": 560.3,
+        "durationSec": 215.3,
+        "normalizedRange": [
+          0.1025,
+          0.1664
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 468.93,
+        "endSec": 757.92,
+        "durationSec": 288.99,
+        "normalizedRange": [
+          0.1072,
+          0.1733
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-004",
+      "verses": "33-41",
+      "verseCount": 9,
+      "alafasyTiming": {
+        "startSec": 746.53,
+        "endSec": 993.18,
+        "durationSec": 246.65,
+        "normalizedRange": [
+          0.1558,
+          0.2073
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 561,
+        "endSec": 719.38,
+        "durationSec": 158.38,
+        "normalizedRange": [
+          0.1666,
+          0.2137
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 758.42,
+        "endSec": 954.54,
+        "durationSec": 196.12,
+        "normalizedRange": [
+          0.1734,
+          0.2182
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-005",
+      "verses": "42-51",
+      "verseCount": 10,
+      "alafasyTiming": {
+        "startSec": 993.18,
+        "endSec": 1200.19,
+        "durationSec": 207.01,
+        "normalizedRange": [
+          0.2073,
+          0.2505
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 719.98,
+        "endSec": 877.56,
+        "durationSec": 157.58,
+        "normalizedRange": [
+          0.2138,
+          0.2606
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 954.74,
+        "endSec": 1156.74,
+        "durationSec": 202,
+        "normalizedRange": [
+          0.2183,
+          0.2645
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-006",
+      "verses": "52-63",
+      "verseCount": 12,
+      "alafasyTiming": {
+        "startSec": 1200.19,
+        "endSec": 1429.17,
+        "durationSec": 228.98,
+        "normalizedRange": [
+          0.2505,
+          0.2983
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 877.78,
+        "endSec": 1038.72,
+        "durationSec": 160.94,
+        "normalizedRange": [
+          0.2607,
+          0.3085
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 1157,
+        "endSec": 1365.33,
+        "durationSec": 208.33,
+        "normalizedRange": [
+          0.2645,
+          0.3121
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-007",
+      "verses": "64-80",
+      "verseCount": 17,
+      "alafasyTiming": {
+        "startSec": 1429.17,
+        "endSec": 1856.17,
+        "durationSec": 427,
+        "normalizedRange": [
+          0.2983,
+          0.3874
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 1039.06,
+        "endSec": 1375.06,
+        "durationSec": 336,
+        "normalizedRange": [
+          0.3086,
+          0.4084
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 1365.51,
+        "endSec": 1767.43,
+        "durationSec": 401.92,
+        "normalizedRange": [
+          0.3122,
+          0.4041
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-008",
+      "verses": "81-91",
+      "verseCount": 11,
+      "alafasyTiming": {
+        "startSec": 1856.17,
+        "endSec": 2117.16,
+        "durationSec": 260.99,
+        "normalizedRange": [
+          0.3874,
+          0.4419
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 1375.46,
+        "endSec": 1559.34,
+        "durationSec": 183.88,
+        "normalizedRange": [
+          0.4085,
+          0.4631
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 1767.54,
+        "endSec": 1982.16,
+        "durationSec": 214.62,
+        "normalizedRange": [
+          0.4041,
+          0.4532
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-009",
+      "verses": "92-101",
+      "verseCount": 10,
+      "alafasyTiming": {
+        "startSec": 2117.16,
+        "endSec": 2324.79,
+        "durationSec": 207.63,
+        "normalizedRange": [
+          0.4419,
+          0.4852
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 1559.9,
+        "endSec": 1712,
+        "durationSec": 152.1,
+        "normalizedRange": [
+          0.4633,
+          0.5085
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 1982.38,
+        "endSec": 2175.95,
+        "durationSec": 193.57,
+        "normalizedRange": [
+          0.4532,
+          0.4975
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-010",
+      "verses": "102-109",
+      "verseCount": 8,
+      "alafasyTiming": {
+        "startSec": 2324.79,
+        "endSec": 2513.64,
+        "durationSec": 188.85,
+        "normalizedRange": [
+          0.4852,
+          0.5247
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 1712.62,
+        "endSec": 1830.88,
+        "durationSec": 118.26,
+        "normalizedRange": [
+          0.5086,
+          0.5438
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 2176.19,
+        "endSec": 2351.47,
+        "durationSec": 175.28,
+        "normalizedRange": [
+          0.4975,
+          0.5376
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-011",
+      "verses": "110-120",
+      "verseCount": 11,
+      "alafasyTiming": {
+        "startSec": 2513.64,
+        "endSec": 2828.45,
+        "durationSec": 314.81,
+        "normalizedRange": [
+          0.5247,
+          0.5904
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 1830.88,
+        "endSec": 2049.22,
+        "durationSec": 218.34,
+        "normalizedRange": [
+          0.5438,
+          0.6086
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 2352.13,
+        "endSec": 2630.51,
+        "durationSec": 278.38,
+        "normalizedRange": [
+          0.5378,
+          0.6014
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-012",
+      "verses": "121-129",
+      "verseCount": 9,
+      "alafasyTiming": {
+        "startSec": 2828.45,
+        "endSec": 2986.99,
+        "durationSec": 158.54,
+        "normalizedRange": [
+          0.5904,
+          0.6235
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2049.7,
+        "endSec": 2157.18,
+        "durationSec": 107.48,
+        "normalizedRange": [
+          0.6088,
+          0.6407
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 2630.59,
+        "endSec": 2766.4,
+        "durationSec": 135.81,
+        "normalizedRange": [
+          0.6014,
+          0.6325
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-013",
+      "verses": "130-143",
+      "verseCount": 14,
+      "alafasyTiming": {
+        "startSec": 2986.99,
+        "endSec": 3253.58,
+        "durationSec": 266.59,
+        "normalizedRange": [
+          0.6235,
+          0.6791
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2157.64,
+        "endSec": 2324.74,
+        "durationSec": 167.1,
+        "normalizedRange": [
+          0.6408,
+          0.6904
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 2766.67,
+        "endSec": 3025.04,
+        "durationSec": 258.37,
+        "normalizedRange": [
+          0.6325,
+          0.6916
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-014",
+      "verses": "144-148",
+      "verseCount": 5,
+      "alafasyTiming": {
+        "startSec": 3253.58,
+        "endSec": 3389.84,
+        "durationSec": 136.26,
+        "normalizedRange": [
+          0.6791,
+          0.7075
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2325.2,
+        "endSec": 2414.48,
+        "durationSec": 89.28,
+        "normalizedRange": [
+          0.6906,
+          0.7171
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 3025.21,
+        "endSec": 3144.2,
+        "durationSec": 118.99,
+        "normalizedRange": [
+          0.6916,
+          0.7188
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-015",
+      "verses": "149-155",
+      "verseCount": 7,
+      "alafasyTiming": {
+        "startSec": 3389.84,
+        "endSec": 3652.2,
+        "durationSec": 262.36,
+        "normalizedRange": [
+          0.7075,
+          0.7623
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2415,
+        "endSec": 2587.34,
+        "durationSec": 172.34,
+        "normalizedRange": [
+          0.7173,
+          0.7684
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 3144.35,
+        "endSec": 3347.49,
+        "durationSec": 203.14,
+        "normalizedRange": [
+          0.7189,
+          0.7653
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-016",
+      "verses": "156-171",
+      "verseCount": 16,
+      "alafasyTiming": {
+        "startSec": 3652.2,
+        "endSec": 4024.62,
+        "durationSec": 372.42,
+        "normalizedRange": [
+          0.7623,
+          0.84
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2587.82,
+        "endSec": 2839.84,
+        "durationSec": 252.02,
+        "normalizedRange": [
+          0.7686,
+          0.8434
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 3347.63,
+        "endSec": 3673.02,
+        "durationSec": 325.39,
+        "normalizedRange": [
+          0.7653,
+          0.8397
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-017",
+      "verses": "172-180",
+      "verseCount": 9,
+      "alafasyTiming": {
+        "startSec": 4024.62,
+        "endSec": 4255.23,
+        "durationSec": 230.61,
+        "normalizedRange": [
+          0.84,
+          0.8882
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2840.4,
+        "endSec": 2993.94,
+        "durationSec": 153.54,
+        "normalizedRange": [
+          0.8436,
+          0.8892
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 3673.14,
+        "endSec": 3877.64,
+        "durationSec": 204.5,
+        "normalizedRange": [
+          0.8398,
+          0.8865
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-018",
+      "verses": "181-189",
+      "verseCount": 9,
+      "alafasyTiming": {
+        "startSec": 4255.23,
+        "endSec": 4491.95,
+        "durationSec": 236.72,
+        "normalizedRange": [
+          0.8882,
+          0.9376
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 2994.54,
+        "endSec": 3161.34,
+        "durationSec": 166.8,
+        "normalizedRange": [
+          0.8894,
+          0.9389
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 3877.68,
+        "endSec": 4082.07,
+        "durationSec": 204.39,
+        "normalizedRange": [
+          0.8865,
+          0.9333
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-019",
+      "verses": "190-195",
+      "verseCount": 6,
+      "alafasyTiming": {
+        "startSec": 4491.95,
+        "endSec": 4680.77,
+        "durationSec": 188.82,
+        "normalizedRange": [
+          0.9376,
+          0.977
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 3161.94,
+        "endSec": 3287.8,
+        "durationSec": 125.86,
+        "normalizedRange": [
+          0.9391,
+          0.9765
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 4082.13,
+        "endSec": 4259.58,
+        "durationSec": 177.45,
+        "normalizedRange": [
+          0.9333,
+          0.9738
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    },
+    {
+      "sceneId": "scene-020",
+      "verses": "196-200",
+      "verseCount": 5,
+      "alafasyTiming": {
+        "startSec": 4680.77,
+        "endSec": 4791.79,
+        "durationSec": 111.02,
+        "normalizedRange": [
+          0.977,
+          1.0002
+        ]
+      },
+      "sudaisTiming": {
+        "startSec": 3288.4,
+        "endSec": 3367,
+        "durationSec": 78.6,
+        "normalizedRange": [
+          0.9767,
+          1
+        ]
+      },
+      "dosariTiming": {
+        "startSec": 4259.71,
+        "endSec": 4374.2,
+        "durationSec": 114.49,
+        "normalizedRange": [
+          0.9739,
+          1
+        ]
+      },
+      "continuityCheck": {
+        "gapToNextSec": 0,
+        "status": "SEAMLESS"
+      }
+    }
+  ],
+  "fullRecitationContinuity": {
+    "startSec": 0,
+    "alafasyTotalDurationSec": 4791,
+    "status": "100% CONTINUOUS (ZERO GAPS)"
+  }
+}

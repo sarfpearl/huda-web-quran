@@ -338,74 +338,9 @@ export const SURAH_VERSE_VIDEOS_REGISTRY: Record<number, Record<number, SurahVer
       status: "APPROVED",
     },
   },
-  // Surah 3: Aal-e-Imran — Hero 1 Native 4K Master
-  3: {
-    ...Object.fromEntries(
-      [1, 2, 3, 4, 5, 6, 7, 8, 9].map((ayah) => [
-        ayah,
-        {
-          surahNumber: 3,
-          ayahNumber: ayah,
-          videoPath: "/videos/surah/003-aal-e-imran/01a-the-immutable-foundation-and-muhkamat.mp4",
-          theme: "The Immutable Foundation, Muhkamat & Steadfast Faith (Hero 1 - Native 4K)",
-          category: "Desert / Weathered Granite Strata & Dawn Mist",
-          visualSubject: "Documentary tripod view of rugged Western Arabian granite formations and ancient geological strata standing firm under calm dawn sky.",
-          source: "HuDa Master Production (Veo 3.1 4K)",
-          originalUrl: "/videos/surah/003-aal-e-imran/01a-the-immutable-foundation-and-muhkamat.mp4",
-          license: "HuDa Master Production",
-          resolution: "3840x2160 / 1920x1080 (Hero 1 Native 4K / Web Derivative)",
-          recitationDuration: 25.0,
-          videoDuration: 8.0,
-          loopMethod: "Seamless Soft Loop (Static Master)",
-          status: "APPROVED" as const,
-        },
-      ])
-    ),
-    // Subchapter 02A: Verses 10–17 — The Wealth of This World and the Better Return
-    ...Object.fromEntries(
-      [10, 11, 12, 13, 14, 15, 16, 17].map((ayah) => [
-        ayah,
-        {
-          surahNumber: 3,
-          ayahNumber: ayah,
-          videoPath: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
-          theme: "The Wealth of This World and the Better Return (Standard 1080p)",
-          category: "Wadi Valley / Alluvial Terraces & Pre-Dawn Stream",
-          visualSubject: "Authentic documentary static view of a shallow clear stream trickling through weathered dry-stone boundaries in a Western Arabian agricultural wadi under calm pre-dawn light.",
-          source: "HuDa Master Production (Veo 3.1 1080p)",
-          originalUrl: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
-          license: "HuDa Master Production",
-          resolution: "1920x1080 (Full HD Web Derivative)",
-          recitationDuration: 20.0,
-          videoDuration: 8.0,
-          loopMethod: "Seamless Soft Loop (Static Master)",
-          status: "APPROVED" as const,
-        },
-      ])
-    ),
-    // Subchapter 02B: Verses 18–25 — The Supreme Testimony of Tawhid, Equity & The Day of Reckoning
-    ...Object.fromEntries(
-      [18, 19, 20, 21, 22, 23, 24, 25].map((ayah) => [
-        ayah,
-        {
-          surahNumber: 3,
-          ayahNumber: ayah,
-          videoPath: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
-          theme: "The Supreme Testimony of Tawhid, Equity & The Day of Reckoning (Standard 1080p)",
-          category: "Plateau / Tuwaiq Escarpment Sedimentary Bedrock",
-          visualSubject: "Authentic documentary static view of the Tuwaiq Escarpment limestone plateau with weathered bedrock pavement and clear mid-morning daylight.",
-          source: "HuDa Master Production (Veo 3.1 1080p)",
-          originalUrl: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
-          license: "HuDa Master Production",
-          resolution: "1920x1080 (Full HD Web Derivative)",
-          recitationDuration: 20.0,
-          videoDuration: 8.0,
-          loopMethod: "Seamless Soft Loop (Static Master)",
-          status: "APPROVED" as const,
-        },
-      ])
-    ),
-  },
+  // Surah 3: Aal-Imran — 20-Scene Real-Footage Sequence Initiative
+  // All scenes currently ASSET_PENDING in docs/surah-003-real-footage/
+  // Strict rule: ZERO AI-generated footage permitted in this registry.
 };
 
 /**

@@ -1,0 +1,1992 @@
+{
+  "surah": {
+    "number": 3,
+    "name": "Aal-Imran",
+    "arabicName": "آل عمران",
+    "verseCount": 200,
+    "revelation": "Medinan",
+    "language": "ar",
+    "productionStatus": "manifest-ready-real-footage-pilot-in-progress",
+    "architecture": "20-block-thematic-real-footage-sequence"
+  },
+  "approvedVisualRatings": {
+    "shot03": {
+      "rating": 5,
+      "outcome": "preferred-opening-reference",
+      "url": "https://www.pexels.com/video/sunrise-in-the-mountain-valley-5910274/",
+      "listedSpecs": {
+        "resolution": "1920x1080",
+        "aspectRatio": "16:9",
+        "durationSeconds": 5
+      }
+    },
+    "shot01": {
+      "rating": 4,
+      "outcome": "secondary-reference",
+      "url": "https://www.pexels.com/video/mountain-sunrise-over-forested-valley-33185411/",
+      "listedSpecs": {
+        "resolution": "3840x2160",
+        "aspectRatio": "16:9",
+        "durationSeconds": 13
+      }
+    },
+    "shot02": {
+      "rating": 2,
+      "outcome": "reject-default-not-to-use"
+    },
+    "shot04": {
+      "rating": 2,
+      "outcome": "reject-default-not-to-use"
+    }
+  },
+  "constraints": {
+    "realFootageOnly": true,
+    "aiGeneratedImagesOrVideoAllowed": false,
+    "stillImageToVideoAllowed": false,
+    "proceduralBackgroundsAllowed": false,
+    "placeholderVideoAllowed": false,
+    "desktopAspectRatio": "16:9",
+    "mobileAspectRatio": "9:20",
+    "neverDepictAllahProphetsOrAngels": true,
+    "recitationTimingMustBeMeasuredNotGuessed": true,
+    "assetLicenseMustBeChecked": true
+  },
+  "timingPolicy": {
+    "status": "verified-acoustic-boundaries",
+    "primaryReferenceReciter": "alafasy",
+    "supportedReciters": [
+      "alafasy",
+      "sudais",
+      "dosari",
+      "abdulbaset",
+      "minshawi",
+      "hussary",
+      "shuraim",
+      "shatri",
+      "tunaiji"
+    ],
+    "rule": "Derive exact scene boundaries from selected reciter QDC timings; never guess timestamps"
+  },
+  "scenes": [
+    {
+      "id": "scene-001",
+      "verses": {
+        "start": 1,
+        "end": 9,
+        "count": 9
+      },
+      "theme": "Opening, tawhid, revelation and clear/ambiguous verses",
+      "visualConcept": "Use Shot 03 as a short opening reference, then distinct real mountain-dawn footage with natural light.",
+      "avoidances": "Repeated 5-sec loop padding; look of rejected Shot 02/04.",
+      "assetStatus": "source-reference-only",
+      "preferredSource": "https://www.pexels.com/video/sunrise-in-the-mountain-valley-5910274/",
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 0,
+          "endSec": 179.56,
+          "durationSec": 179.56,
+          "normalizedRange": [
+            0,
+            0.0375
+          ]
+        },
+        "sudais": {
+          "startSec": 0.08,
+          "endSec": 129.52,
+          "durationSec": 129.44,
+          "normalizedRange": [
+            0,
+            0.0385
+          ]
+        },
+        "dosari": {
+          "startSec": 3,
+          "endSec": 173.31,
+          "durationSec": 170.31,
+          "normalizedRange": [
+            0.0007,
+            0.0396
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 0,
+          "endSec": 182.5,
+          "durationSec": 182.5,
+          "normalizedRange": [
+            0,
+            0.0347
+          ]
+        },
+        "minshawi": {
+          "startSec": 0,
+          "endSec": 177.52,
+          "durationSec": 177.52,
+          "normalizedRange": [
+            0,
+            0.0342
+          ]
+        },
+        "hussary": {
+          "startSec": 0,
+          "endSec": 272.07,
+          "durationSec": 272.07,
+          "normalizedRange": [
+            0,
+            0.0394
+          ]
+        },
+        "shuraim": {
+          "startSec": 0,
+          "endSec": 105.607,
+          "durationSec": 105.61,
+          "normalizedRange": [
+            0,
+            0.0374
+          ]
+        },
+        "shatri": {
+          "startSec": 0,
+          "endSec": 156.052,
+          "durationSec": 156.05,
+          "normalizedRange": [
+            0,
+            0.0374
+          ]
+        },
+        "tunaiji": {
+          "startSec": 0,
+          "endSec": 171.2,
+          "durationSec": 171.2,
+          "normalizedRange": [
+            0,
+            0.039
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-002",
+      "verses": {
+        "start": 10,
+        "end": 20,
+        "count": 11
+      },
+      "theme": "Worldly wealth, belief and devotion",
+      "visualConcept": "Real twilight-to-dawn landscapes, distant city silhouettes, open horizon.",
+      "avoidances": "Inappropriate foreign religious symbolism or speculative divine visuals.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 179.56,
+          "endSec": 455.26,
+          "durationSec": 275.7,
+          "normalizedRange": [
+            0.0375,
+            0.095
+          ]
+        },
+        "sudais": {
+          "startSec": 130.48,
+          "endSec": 344.44,
+          "durationSec": 213.96,
+          "normalizedRange": [
+            0.0388,
+            0.1023
+          ]
+        },
+        "dosari": {
+          "startSec": 173.41,
+          "endSec": 468.81,
+          "durationSec": 295.4,
+          "normalizedRange": [
+            0.0396,
+            0.1072
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 182.5,
+          "endSec": 463.76,
+          "durationSec": 281.26,
+          "normalizedRange": [
+            0.0347,
+            0.0881
+          ]
+        },
+        "minshawi": {
+          "startSec": 177.52,
+          "endSec": 471.26,
+          "durationSec": 293.74,
+          "normalizedRange": [
+            0.0342,
+            0.0907
+          ]
+        },
+        "hussary": {
+          "startSec": 272.07,
+          "endSec": 693.88,
+          "durationSec": 421.81,
+          "normalizedRange": [
+            0.0394,
+            0.1006
+          ]
+        },
+        "shuraim": {
+          "startSec": 105.597,
+          "endSec": 282.045,
+          "durationSec": 176.45,
+          "normalizedRange": [
+            0.0374,
+            0.0998
+          ]
+        },
+        "shatri": {
+          "startSec": 156.052,
+          "endSec": 390.664,
+          "durationSec": 234.61,
+          "normalizedRange": [
+            0.0374,
+            0.0936
+          ]
+        },
+        "tunaiji": {
+          "startSec": 171.2,
+          "endSec": 429.19,
+          "durationSec": 257.99,
+          "normalizedRange": [
+            0.039,
+            0.0977
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-003",
+      "verses": {
+        "start": 21,
+        "end": 32,
+        "count": 12
+      },
+      "theme": "Truth, divine authority, love and obedience",
+      "visualConcept": "Verified manuscript/library detail, open paths and restrained architecture; no fabricated Arabic text.",
+      "avoidances": "Fabricated Arabic/Quranic calligraphy, speculative representations of divine authority.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 455.26,
+          "endSec": 746.53,
+          "durationSec": 291.27,
+          "normalizedRange": [
+            0.095,
+            0.1558
+          ]
+        },
+        "sudais": {
+          "startSec": 345,
+          "endSec": 560.3,
+          "durationSec": 215.3,
+          "normalizedRange": [
+            0.1025,
+            0.1664
+          ]
+        },
+        "dosari": {
+          "startSec": 468.93,
+          "endSec": 757.92,
+          "durationSec": 288.99,
+          "normalizedRange": [
+            0.1072,
+            0.1733
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 463.76,
+          "endSec": 765.56,
+          "durationSec": 301.8,
+          "normalizedRange": [
+            0.0881,
+            0.1455
+          ]
+        },
+        "minshawi": {
+          "startSec": 471.26,
+          "endSec": 774.79,
+          "durationSec": 303.53,
+          "normalizedRange": [
+            0.0907,
+            0.1492
+          ]
+        },
+        "hussary": {
+          "startSec": 693.88,
+          "endSec": 1038.5,
+          "durationSec": 344.62,
+          "normalizedRange": [
+            0.1006,
+            0.1506
+          ]
+        },
+        "shuraim": {
+          "startSec": 282.036,
+          "endSec": 456.515,
+          "durationSec": 174.48,
+          "normalizedRange": [
+            0.0998,
+            0.1615
+          ]
+        },
+        "shatri": {
+          "startSec": 390.664,
+          "endSec": 635.813,
+          "durationSec": 245.15,
+          "normalizedRange": [
+            0.0936,
+            0.1524
+          ]
+        },
+        "tunaiji": {
+          "startSec": 429.19,
+          "endSec": 691.9,
+          "durationSec": 262.71,
+          "normalizedRange": [
+            0.0977,
+            0.1576
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-004",
+      "verses": {
+        "start": 33,
+        "end": 41,
+        "count": 9
+      },
+      "theme": "Family of Imran, Maryam narrative begins, Zakariyya's prayer",
+      "visualConcept": "Quiet stone courtyard, garden, water and soft natural light; no person reenactments.",
+      "avoidances": "Direct actor depiction or reenactment of Maryam or Zakariyya.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 746.53,
+          "endSec": 993.18,
+          "durationSec": 246.65,
+          "normalizedRange": [
+            0.1558,
+            0.2073
+          ]
+        },
+        "sudais": {
+          "startSec": 561,
+          "endSec": 719.38,
+          "durationSec": 158.38,
+          "normalizedRange": [
+            0.1666,
+            0.2137
+          ]
+        },
+        "dosari": {
+          "startSec": 758.42,
+          "endSec": 954.54,
+          "durationSec": 196.12,
+          "normalizedRange": [
+            0.1734,
+            0.2182
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 765.56,
+          "endSec": 1011.14,
+          "durationSec": 245.58,
+          "normalizedRange": [
+            0.1455,
+            0.1921
+          ]
+        },
+        "minshawi": {
+          "startSec": 774.79,
+          "endSec": 989.82,
+          "durationSec": 215.03,
+          "normalizedRange": [
+            0.1492,
+            0.1906
+          ]
+        },
+        "hussary": {
+          "startSec": 1038.5,
+          "endSec": 1335.27,
+          "durationSec": 296.77,
+          "normalizedRange": [
+            0.1506,
+            0.1936
+          ]
+        },
+        "shuraim": {
+          "startSec": 456.506,
+          "endSec": 614.352,
+          "durationSec": 157.85,
+          "normalizedRange": [
+            0.1615,
+            0.2174
+          ]
+        },
+        "shatri": {
+          "startSec": 635.813,
+          "endSec": 824.728,
+          "durationSec": 188.91,
+          "normalizedRange": [
+            0.1524,
+            0.1977
+          ]
+        },
+        "tunaiji": {
+          "startSec": 691.9,
+          "endSec": 891.53,
+          "durationSec": 199.63,
+          "normalizedRange": [
+            0.1576,
+            0.203
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-005",
+      "verses": {
+        "start": 42,
+        "end": 51,
+        "count": 10
+      },
+      "theme": "Glad tidings to Maryam and the signs associated with Isa",
+      "visualConcept": "Courtyard, morning mist, natural light and trees; no depiction of Isa, Maryam or angels.",
+      "avoidances": "Direct depiction of Isa or angels; Christian/Islamic iconography without context.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 993.18,
+          "endSec": 1200.19,
+          "durationSec": 207.01,
+          "normalizedRange": [
+            0.2073,
+            0.2505
+          ]
+        },
+        "sudais": {
+          "startSec": 719.98,
+          "endSec": 877.56,
+          "durationSec": 157.58,
+          "normalizedRange": [
+            0.2138,
+            0.2606
+          ]
+        },
+        "dosari": {
+          "startSec": 954.74,
+          "endSec": 1156.74,
+          "durationSec": 202,
+          "normalizedRange": [
+            0.2183,
+            0.2645
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 1011.14,
+          "endSec": 1264.34,
+          "durationSec": 253.2,
+          "normalizedRange": [
+            0.1921,
+            0.2402
+          ]
+        },
+        "minshawi": {
+          "startSec": 989.82,
+          "endSec": 1202.72,
+          "durationSec": 212.9,
+          "normalizedRange": [
+            0.1906,
+            0.2316
+          ]
+        },
+        "hussary": {
+          "startSec": 1335.27,
+          "endSec": 1666.84,
+          "durationSec": 331.57,
+          "normalizedRange": [
+            0.1936,
+            0.2417
+          ]
+        },
+        "shuraim": {
+          "startSec": 614.343,
+          "endSec": 751.45,
+          "durationSec": 137.11,
+          "normalizedRange": [
+            0.2174,
+            0.2659
+          ]
+        },
+        "shatri": {
+          "startSec": 824.728,
+          "endSec": 1005.742,
+          "durationSec": 181.01,
+          "normalizedRange": [
+            0.1977,
+            0.2411
+          ]
+        },
+        "tunaiji": {
+          "startSec": 891.53,
+          "endSec": 1102.14,
+          "durationSec": 210.61,
+          "normalizedRange": [
+            0.203,
+            0.251
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-006",
+      "verses": {
+        "start": 52,
+        "end": 63,
+        "count": 12
+      },
+      "theme": "Isa's message, disciples and the argument presented in the passage",
+      "visualConcept": "Real old stone architecture, desert hills and non-identifiable distant crowds; no reenactments.",
+      "avoidances": "Reenactments of Isa, disciples, or any sacred historical figures.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 1200.19,
+          "endSec": 1429.17,
+          "durationSec": 228.98,
+          "normalizedRange": [
+            0.2505,
+            0.2983
+          ]
+        },
+        "sudais": {
+          "startSec": 877.78,
+          "endSec": 1038.72,
+          "durationSec": 160.94,
+          "normalizedRange": [
+            0.2607,
+            0.3085
+          ]
+        },
+        "dosari": {
+          "startSec": 1157,
+          "endSec": 1365.33,
+          "durationSec": 208.33,
+          "normalizedRange": [
+            0.2645,
+            0.3121
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 1264.34,
+          "endSec": 1511.73,
+          "durationSec": 247.39,
+          "normalizedRange": [
+            0.2402,
+            0.2872
+          ]
+        },
+        "minshawi": {
+          "startSec": 1202.72,
+          "endSec": 1422.7,
+          "durationSec": 219.98,
+          "normalizedRange": [
+            0.2316,
+            0.2739
+          ]
+        },
+        "hussary": {
+          "startSec": 1666.84,
+          "endSec": 2023.69,
+          "durationSec": 356.85,
+          "normalizedRange": [
+            0.2417,
+            0.2934
+          ]
+        },
+        "shuraim": {
+          "startSec": 751.441,
+          "endSec": 884.29,
+          "durationSec": 132.85,
+          "normalizedRange": [
+            0.2659,
+            0.3129
+          ]
+        },
+        "shatri": {
+          "startSec": 1005.742,
+          "endSec": 1202.597,
+          "durationSec": 196.86,
+          "normalizedRange": [
+            0.2411,
+            0.2883
+          ]
+        },
+        "tunaiji": {
+          "startSec": 1102.14,
+          "endSec": 1314.85,
+          "durationSec": 212.71,
+          "normalizedRange": [
+            0.251,
+            0.2994
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-007",
+      "verses": {
+        "start": 64,
+        "end": 80,
+        "count": 17
+      },
+      "theme": "Dialogue with the People of the Book and Ibrahim's faith",
+      "visualConcept": "Real stone architecture, hands reading authentic manuscripts, broad landscapes.",
+      "avoidances": "Speculative staged dialogue reenactments; unverified historical claims.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 1429.17,
+          "endSec": 1856.17,
+          "durationSec": 427,
+          "normalizedRange": [
+            0.2983,
+            0.3874
+          ]
+        },
+        "sudais": {
+          "startSec": 1039.06,
+          "endSec": 1375.06,
+          "durationSec": 336,
+          "normalizedRange": [
+            0.3086,
+            0.4084
+          ]
+        },
+        "dosari": {
+          "startSec": 1365.51,
+          "endSec": 1767.43,
+          "durationSec": 401.92,
+          "normalizedRange": [
+            0.3122,
+            0.4041
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 1511.73,
+          "endSec": 2037.57,
+          "durationSec": 525.84,
+          "normalizedRange": [
+            0.2872,
+            0.3871
+          ]
+        },
+        "minshawi": {
+          "startSec": 1422.7,
+          "endSec": 1908.45,
+          "durationSec": 485.75,
+          "normalizedRange": [
+            0.2739,
+            0.3674
+          ]
+        },
+        "hussary": {
+          "startSec": 2023.69,
+          "endSec": 2666.83,
+          "durationSec": 643.14,
+          "normalizedRange": [
+            0.2934,
+            0.3867
+          ]
+        },
+        "shuraim": {
+          "startSec": 884.28,
+          "endSec": 1143.143,
+          "durationSec": 258.86,
+          "normalizedRange": [
+            0.3129,
+            0.4045
+          ]
+        },
+        "shatri": {
+          "startSec": 1202.597,
+          "endSec": 1577.615,
+          "durationSec": 375.02,
+          "normalizedRange": [
+            0.2883,
+            0.3781
+          ]
+        },
+        "tunaiji": {
+          "startSec": 1314.85,
+          "endSec": 1737.69,
+          "durationSec": 422.84,
+          "normalizedRange": [
+            0.2994,
+            0.3957
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-008",
+      "verses": {
+        "start": 81,
+        "end": 91,
+        "count": 11
+      },
+      "theme": "Covenant, accountability, faith and rejection",
+      "visualConcept": "Sky, mountains and authentic manuscript/library footage.",
+      "avoidances": "Artificial CGI text overlays, exaggerated dark fantasy aesthetics.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 1856.17,
+          "endSec": 2117.16,
+          "durationSec": 260.99,
+          "normalizedRange": [
+            0.3874,
+            0.4419
+          ]
+        },
+        "sudais": {
+          "startSec": 1375.46,
+          "endSec": 1559.34,
+          "durationSec": 183.88,
+          "normalizedRange": [
+            0.4085,
+            0.4631
+          ]
+        },
+        "dosari": {
+          "startSec": 1767.54,
+          "endSec": 1982.16,
+          "durationSec": 214.62,
+          "normalizedRange": [
+            0.4041,
+            0.4532
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 2037.57,
+          "endSec": 2383.68,
+          "durationSec": 346.11,
+          "normalizedRange": [
+            0.3871,
+            0.4529
+          ]
+        },
+        "minshawi": {
+          "startSec": 1908.45,
+          "endSec": 2202.95,
+          "durationSec": 294.5,
+          "normalizedRange": [
+            0.3674,
+            0.4241
+          ]
+        },
+        "hussary": {
+          "startSec": 2666.83,
+          "endSec": 3037.81,
+          "durationSec": 370.98,
+          "normalizedRange": [
+            0.3867,
+            0.4405
+          ]
+        },
+        "shuraim": {
+          "startSec": 1143.134,
+          "endSec": 1292.602,
+          "durationSec": 149.47,
+          "normalizedRange": [
+            0.4044,
+            0.4573
+          ]
+        },
+        "shatri": {
+          "startSec": 1577.615,
+          "endSec": 1808.306,
+          "durationSec": 230.69,
+          "normalizedRange": [
+            0.3781,
+            0.4334
+          ]
+        },
+        "tunaiji": {
+          "startSec": 1737.69,
+          "endSec": 1973.03,
+          "durationSec": 235.34,
+          "normalizedRange": [
+            0.3957,
+            0.4493
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-009",
+      "verses": {
+        "start": 92,
+        "end": 101,
+        "count": 10
+      },
+      "theme": "Generosity, the sacred House and pilgrimage",
+      "visualConcept": "Prefer verified real Ka'bah/Masjid al-Haram footage with usage rights; otherwise neutral landscape without false place claims.",
+      "avoidances": "Fabricated Ka'bah lookalikes or claiming generic architecture as Ka'bah/Haram without proof.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 2117.16,
+          "endSec": 2324.79,
+          "durationSec": 207.63,
+          "normalizedRange": [
+            0.4419,
+            0.4852
+          ]
+        },
+        "sudais": {
+          "startSec": 1559.9,
+          "endSec": 1712,
+          "durationSec": 152.1,
+          "normalizedRange": [
+            0.4633,
+            0.5085
+          ]
+        },
+        "dosari": {
+          "startSec": 1982.38,
+          "endSec": 2175.95,
+          "durationSec": 193.57,
+          "normalizedRange": [
+            0.4532,
+            0.4975
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 2383.68,
+          "endSec": 2652.96,
+          "durationSec": 269.28,
+          "normalizedRange": [
+            0.4529,
+            0.5041
+          ]
+        },
+        "minshawi": {
+          "startSec": 2202.95,
+          "endSec": 2453.15,
+          "durationSec": 250.2,
+          "normalizedRange": [
+            0.4241,
+            0.4723
+          ]
+        },
+        "hussary": {
+          "startSec": 3037.81,
+          "endSec": 3343.95,
+          "durationSec": 306.14,
+          "normalizedRange": [
+            0.4405,
+            0.4848
+          ]
+        },
+        "shuraim": {
+          "startSec": 1292.593,
+          "endSec": 1418.26,
+          "durationSec": 125.67,
+          "normalizedRange": [
+            0.4573,
+            0.5018
+          ]
+        },
+        "shatri": {
+          "startSec": 1808.306,
+          "endSec": 1982.403,
+          "durationSec": 174.1,
+          "normalizedRange": [
+            0.4334,
+            0.4752
+          ]
+        },
+        "tunaiji": {
+          "startSec": 1973.03,
+          "endSec": 2163.53,
+          "durationSec": 190.5,
+          "normalizedRange": [
+            0.4493,
+            0.4927
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-010",
+      "verses": {
+        "start": 102,
+        "end": 109,
+        "count": 8
+      },
+      "theme": "Community unity and calling toward good",
+      "visualConcept": "Real mosque exteriors/interiors and non-identifiable congregation or service footage.",
+      "avoidances": "Face-identifiable close-ups; actor reenactments; unverified mosque claims.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 2324.79,
+          "endSec": 2513.64,
+          "durationSec": 188.85,
+          "normalizedRange": [
+            0.4852,
+            0.5247
+          ]
+        },
+        "sudais": {
+          "startSec": 1712.62,
+          "endSec": 1830.88,
+          "durationSec": 118.26,
+          "normalizedRange": [
+            0.5086,
+            0.5438
+          ]
+        },
+        "dosari": {
+          "startSec": 2176.19,
+          "endSec": 2351.47,
+          "durationSec": 175.28,
+          "normalizedRange": [
+            0.4975,
+            0.5376
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 2652.96,
+          "endSec": 2881.55,
+          "durationSec": 228.59,
+          "normalizedRange": [
+            0.5041,
+            0.5475
+          ]
+        },
+        "minshawi": {
+          "startSec": 2453.15,
+          "endSec": 2658.16,
+          "durationSec": 205.01,
+          "normalizedRange": [
+            0.4723,
+            0.5118
+          ]
+        },
+        "hussary": {
+          "startSec": 3343.95,
+          "endSec": 3575.46,
+          "durationSec": 231.51,
+          "normalizedRange": [
+            0.4848,
+            0.5184
+          ]
+        },
+        "shuraim": {
+          "startSec": 1418.251,
+          "endSec": 1522.106,
+          "durationSec": 103.86,
+          "normalizedRange": [
+            0.5018,
+            0.5385
+          ]
+        },
+        "shatri": {
+          "startSec": 1982.403,
+          "endSec": 2128.801,
+          "durationSec": 146.4,
+          "normalizedRange": [
+            0.4752,
+            0.5103
+          ]
+        },
+        "tunaiji": {
+          "startSec": 2163.53,
+          "endSec": 2328.95,
+          "durationSec": 165.42,
+          "normalizedRange": [
+            0.4927,
+            0.5304
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-011",
+      "verses": {
+        "start": 110,
+        "end": 120,
+        "count": 11
+      },
+      "theme": "Community responsibility, faith and warnings",
+      "visualConcept": "Real marketplace/city/community footage and natural landscapes.",
+      "avoidances": "Caricaturing or vilifying specific individuals or communities.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 2513.64,
+          "endSec": 2828.45,
+          "durationSec": 314.81,
+          "normalizedRange": [
+            0.5247,
+            0.5904
+          ]
+        },
+        "sudais": {
+          "startSec": 1830.88,
+          "endSec": 2049.22,
+          "durationSec": 218.34,
+          "normalizedRange": [
+            0.5438,
+            0.6086
+          ]
+        },
+        "dosari": {
+          "startSec": 2352.13,
+          "endSec": 2630.51,
+          "durationSec": 278.38,
+          "normalizedRange": [
+            0.5378,
+            0.6014
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 2881.55,
+          "endSec": 3238.47,
+          "durationSec": 356.92,
+          "normalizedRange": [
+            0.5475,
+            0.6153
+          ]
+        },
+        "minshawi": {
+          "startSec": 2658.16,
+          "endSec": 3058.51,
+          "durationSec": 400.35,
+          "normalizedRange": [
+            0.5118,
+            0.5889
+          ]
+        },
+        "hussary": {
+          "startSec": 3575.46,
+          "endSec": 4041.75,
+          "durationSec": 466.29,
+          "normalizedRange": [
+            0.5184,
+            0.586
+          ]
+        },
+        "shuraim": {
+          "startSec": 1522.097,
+          "endSec": 1703.905,
+          "durationSec": 181.81,
+          "normalizedRange": [
+            0.5385,
+            0.6029
+          ]
+        },
+        "shatri": {
+          "startSec": 2128.801,
+          "endSec": 2404.045,
+          "durationSec": 275.24,
+          "normalizedRange": [
+            0.5103,
+            0.5762
+          ]
+        },
+        "tunaiji": {
+          "startSec": 2328.95,
+          "endSec": 2635.05,
+          "durationSec": 306.1,
+          "normalizedRange": [
+            0.5304,
+            0.6001
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-012",
+      "verses": {
+        "start": 121,
+        "end": 129,
+        "count": 9
+      },
+      "theme": "Context for the events of Uhud and reliance on Allah",
+      "visualConcept": "Verified real Mount Uhud/Madinah location footage if available; otherwise generic rocky mountains without claiming the location.",
+      "avoidances": "Staged battle reenactments; false Mount Uhud location claims.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 2828.45,
+          "endSec": 2986.99,
+          "durationSec": 158.54,
+          "normalizedRange": [
+            0.5904,
+            0.6235
+          ]
+        },
+        "sudais": {
+          "startSec": 2049.7,
+          "endSec": 2157.18,
+          "durationSec": 107.48,
+          "normalizedRange": [
+            0.6088,
+            0.6407
+          ]
+        },
+        "dosari": {
+          "startSec": 2630.59,
+          "endSec": 2766.4,
+          "durationSec": 135.81,
+          "normalizedRange": [
+            0.6014,
+            0.6325
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 3238.47,
+          "endSec": 3399.49,
+          "durationSec": 161.02,
+          "normalizedRange": [
+            0.6153,
+            0.6459
+          ]
+        },
+        "minshawi": {
+          "startSec": 3058.51,
+          "endSec": 3255.47,
+          "durationSec": 196.96,
+          "normalizedRange": [
+            0.5889,
+            0.6268
+          ]
+        },
+        "hussary": {
+          "startSec": 4041.75,
+          "endSec": 4273.33,
+          "durationSec": 231.58,
+          "normalizedRange": [
+            0.586,
+            0.6196
+          ]
+        },
+        "shuraim": {
+          "startSec": 1703.896,
+          "endSec": 1794.222,
+          "durationSec": 90.33,
+          "normalizedRange": [
+            0.6029,
+            0.6348
+          ]
+        },
+        "shatri": {
+          "startSec": 2404.045,
+          "endSec": 2540.819,
+          "durationSec": 136.77,
+          "normalizedRange": [
+            0.5762,
+            0.609
+          ]
+        },
+        "tunaiji": {
+          "startSec": 2635.05,
+          "endSec": 2783.58,
+          "durationSec": 148.53,
+          "normalizedRange": [
+            0.6001,
+            0.6339
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-013",
+      "verses": {
+        "start": 130,
+        "end": 143,
+        "count": 14
+      },
+      "theme": "Warning against usury, obedience and trials",
+      "visualConcept": "Real rocky terrain, routes and mountain slopes.",
+      "avoidances": "Equating modern financial B-roll directly with Quranic verses.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 2986.99,
+          "endSec": 3253.58,
+          "durationSec": 266.59,
+          "normalizedRange": [
+            0.6235,
+            0.6791
+          ]
+        },
+        "sudais": {
+          "startSec": 2157.64,
+          "endSec": 2324.74,
+          "durationSec": 167.1,
+          "normalizedRange": [
+            0.6408,
+            0.6904
+          ]
+        },
+        "dosari": {
+          "startSec": 2766.67,
+          "endSec": 3025.04,
+          "durationSec": 258.37,
+          "normalizedRange": [
+            0.6325,
+            0.6916
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 3399.49,
+          "endSec": 3666.96,
+          "durationSec": 267.47,
+          "normalizedRange": [
+            0.6459,
+            0.6967
+          ]
+        },
+        "minshawi": {
+          "startSec": 3255.47,
+          "endSec": 3535.87,
+          "durationSec": 280.4,
+          "normalizedRange": [
+            0.6268,
+            0.6808
+          ]
+        },
+        "hussary": {
+          "startSec": 4273.33,
+          "endSec": 4637.34,
+          "durationSec": 364.01,
+          "normalizedRange": [
+            0.6196,
+            0.6724
+          ]
+        },
+        "shuraim": {
+          "startSec": 1794.213,
+          "endSec": 1931.363,
+          "durationSec": 137.15,
+          "normalizedRange": [
+            0.6348,
+            0.6833
+          ]
+        },
+        "shatri": {
+          "startSec": 2540.819,
+          "endSec": 2759.353,
+          "durationSec": 218.53,
+          "normalizedRange": [
+            0.609,
+            0.6614
+          ]
+        },
+        "tunaiji": {
+          "startSec": 2783.58,
+          "endSec": 3007.64,
+          "durationSec": 224.06,
+          "normalizedRange": [
+            0.6339,
+            0.685
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-014",
+      "verses": {
+        "start": 144,
+        "end": 148,
+        "count": 5
+      },
+      "theme": "Perseverance, prophetic mission and steadfastness",
+      "visualConcept": "Quiet mountain path, dawn and broad natural landscapes; no prophetic depiction.",
+      "avoidances": "Any actor or visual depiction of the Prophet or sacred figures.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 3253.58,
+          "endSec": 3389.84,
+          "durationSec": 136.26,
+          "normalizedRange": [
+            0.6791,
+            0.7075
+          ]
+        },
+        "sudais": {
+          "startSec": 2325.2,
+          "endSec": 2414.48,
+          "durationSec": 89.28,
+          "normalizedRange": [
+            0.6906,
+            0.7171
+          ]
+        },
+        "dosari": {
+          "startSec": 3025.21,
+          "endSec": 3144.2,
+          "durationSec": 118.99,
+          "normalizedRange": [
+            0.6916,
+            0.7188
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 3666.96,
+          "endSec": 3807.51,
+          "durationSec": 140.55,
+          "normalizedRange": [
+            0.6967,
+            0.7234
+          ]
+        },
+        "minshawi": {
+          "startSec": 3535.87,
+          "endSec": 3688.65,
+          "durationSec": 152.78,
+          "normalizedRange": [
+            0.6808,
+            0.7102
+          ]
+        },
+        "hussary": {
+          "startSec": 4637.34,
+          "endSec": 4833.37,
+          "durationSec": 196.03,
+          "normalizedRange": [
+            0.6724,
+            0.7008
+          ]
+        },
+        "shuraim": {
+          "startSec": 1931.354,
+          "endSec": 2005.027,
+          "durationSec": 73.67,
+          "normalizedRange": [
+            0.6833,
+            0.7094
+          ]
+        },
+        "shatri": {
+          "startSec": 2759.353,
+          "endSec": 2863.114,
+          "durationSec": 103.76,
+          "normalizedRange": [
+            0.6614,
+            0.6863
+          ]
+        },
+        "tunaiji": {
+          "startSec": 3007.64,
+          "endSec": 3122.24,
+          "durationSec": 114.6,
+          "normalizedRange": [
+            0.685,
+            0.7111
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-015",
+      "verses": {
+        "start": 149,
+        "end": 155,
+        "count": 7
+      },
+      "theme": "Setback at Uhud and lessons from it",
+      "visualConcept": "Verified Mount Uhud footage or generic rocky hills; no battle reenactment.",
+      "avoidances": "AI warfare spectacle, battlefield reenactment, bloodshed or violence.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 3389.84,
+          "endSec": 3652.2,
+          "durationSec": 262.36,
+          "normalizedRange": [
+            0.7075,
+            0.7623
+          ]
+        },
+        "sudais": {
+          "startSec": 2415,
+          "endSec": 2587.34,
+          "durationSec": 172.34,
+          "normalizedRange": [
+            0.7173,
+            0.7684
+          ]
+        },
+        "dosari": {
+          "startSec": 3144.35,
+          "endSec": 3347.49,
+          "durationSec": 203.14,
+          "normalizedRange": [
+            0.7189,
+            0.7653
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 3807.51,
+          "endSec": 4099.32,
+          "durationSec": 291.81,
+          "normalizedRange": [
+            0.7234,
+            0.7789
+          ]
+        },
+        "minshawi": {
+          "startSec": 3688.65,
+          "endSec": 4012.64,
+          "durationSec": 323.99,
+          "normalizedRange": [
+            0.7102,
+            0.7726
+          ]
+        },
+        "hussary": {
+          "startSec": 4833.37,
+          "endSec": 5231.91,
+          "durationSec": 398.54,
+          "normalizedRange": [
+            0.7008,
+            0.7586
+          ]
+        },
+        "shuraim": {
+          "startSec": 2005.018,
+          "endSec": 2153.553,
+          "durationSec": 148.53,
+          "normalizedRange": [
+            0.7094,
+            0.7619
+          ]
+        },
+        "shatri": {
+          "startSec": 2863.114,
+          "endSec": 3107.068,
+          "durationSec": 243.95,
+          "normalizedRange": [
+            0.6863,
+            0.7447
+          ]
+        },
+        "tunaiji": {
+          "startSec": 3122.24,
+          "endSec": 3365.57,
+          "durationSec": 243.33,
+          "normalizedRange": [
+            0.7111,
+            0.7665
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-016",
+      "verses": {
+        "start": 156,
+        "end": 171,
+        "count": 16
+      },
+      "theme": "Trials, courage, martyrs and steadfast faith",
+      "visualConcept": "Real mountain landscapes, quiet remembrance spaces and natural light; no staged deaths or unverifiable graves.",
+      "avoidances": "Staged death scenes; linking random graves to specific martyrs without verified proof.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 3652.2,
+          "endSec": 4024.62,
+          "durationSec": 372.42,
+          "normalizedRange": [
+            0.7623,
+            0.84
+          ]
+        },
+        "sudais": {
+          "startSec": 2587.82,
+          "endSec": 2839.84,
+          "durationSec": 252.02,
+          "normalizedRange": [
+            0.7686,
+            0.8434
+          ]
+        },
+        "dosari": {
+          "startSec": 3347.63,
+          "endSec": 3673.02,
+          "durationSec": 325.39,
+          "normalizedRange": [
+            0.7653,
+            0.8397
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 4099.32,
+          "endSec": 4478.98,
+          "durationSec": 379.66,
+          "normalizedRange": [
+            0.7789,
+            0.851
+          ]
+        },
+        "minshawi": {
+          "startSec": 4012.64,
+          "endSec": 4428.69,
+          "durationSec": 416.05,
+          "normalizedRange": [
+            0.7726,
+            0.8527
+          ]
+        },
+        "hussary": {
+          "startSec": 5231.91,
+          "endSec": 5819.41,
+          "durationSec": 587.5,
+          "normalizedRange": [
+            0.7586,
+            0.8438
+          ]
+        },
+        "shuraim": {
+          "startSec": 2153.544,
+          "endSec": 2370.806,
+          "durationSec": 217.26,
+          "normalizedRange": [
+            0.7619,
+            0.8388
+          ]
+        },
+        "shatri": {
+          "startSec": 3107.068,
+          "endSec": 3423.965,
+          "durationSec": 316.9,
+          "normalizedRange": [
+            0.7447,
+            0.8207
+          ]
+        },
+        "tunaiji": {
+          "startSec": 3365.57,
+          "endSec": 3718.03,
+          "durationSec": 352.46,
+          "normalizedRange": [
+            0.7665,
+            0.8467
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-017",
+      "verses": {
+        "start": 172,
+        "end": 180,
+        "count": 9
+      },
+      "theme": "Steadfastness after hardship, generosity and accountability",
+      "visualConcept": "Real sunrise paths, community support details and landscapes.",
+      "avoidances": "Presenting symbolic landscape as literal historical evidence.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 4024.62,
+          "endSec": 4255.23,
+          "durationSec": 230.61,
+          "normalizedRange": [
+            0.84,
+            0.8882
+          ]
+        },
+        "sudais": {
+          "startSec": 2840.4,
+          "endSec": 2993.94,
+          "durationSec": 153.54,
+          "normalizedRange": [
+            0.8436,
+            0.8892
+          ]
+        },
+        "dosari": {
+          "startSec": 3673.14,
+          "endSec": 3877.64,
+          "durationSec": 204.5,
+          "normalizedRange": [
+            0.8398,
+            0.8865
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 4478.98,
+          "endSec": 4708.07,
+          "durationSec": 229.09,
+          "normalizedRange": [
+            0.851,
+            0.8946
+          ]
+        },
+        "minshawi": {
+          "startSec": 4428.69,
+          "endSec": 4663.45,
+          "durationSec": 234.76,
+          "normalizedRange": [
+            0.8527,
+            0.8979
+          ]
+        },
+        "hussary": {
+          "startSec": 5819.41,
+          "endSec": 6127.9,
+          "durationSec": 308.49,
+          "normalizedRange": [
+            0.8438,
+            0.8885
+          ]
+        },
+        "shuraim": {
+          "startSec": 2370.796,
+          "endSec": 2508.753,
+          "durationSec": 137.96,
+          "normalizedRange": [
+            0.8388,
+            0.8876
+          ]
+        },
+        "shatri": {
+          "startSec": 3423.965,
+          "endSec": 3616.982,
+          "durationSec": 193.02,
+          "normalizedRange": [
+            0.8207,
+            0.867
+          ]
+        },
+        "tunaiji": {
+          "startSec": 3718.03,
+          "endSec": 3923.83,
+          "durationSec": 205.8,
+          "normalizedRange": [
+            0.8467,
+            0.8936
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-018",
+      "verses": {
+        "start": 181,
+        "end": 189,
+        "count": 9
+      },
+      "theme": "Accountability, impermanence and divine sovereignty",
+      "visualConcept": "Real night sky, mountains, manuscripts and natural shadows; no CGI universe.",
+      "avoidances": "Fantasy sci-fi CGI space renders, ominous artificial effects.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 4255.23,
+          "endSec": 4491.95,
+          "durationSec": 236.72,
+          "normalizedRange": [
+            0.8882,
+            0.9376
+          ]
+        },
+        "sudais": {
+          "startSec": 2994.54,
+          "endSec": 3161.34,
+          "durationSec": 166.8,
+          "normalizedRange": [
+            0.8894,
+            0.9389
+          ]
+        },
+        "dosari": {
+          "startSec": 3877.68,
+          "endSec": 4082.07,
+          "durationSec": 204.39,
+          "normalizedRange": [
+            0.8865,
+            0.9333
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 4708.07,
+          "endSec": 4963.11,
+          "durationSec": 255.04,
+          "normalizedRange": [
+            0.8946,
+            0.943
+          ]
+        },
+        "minshawi": {
+          "startSec": 4663.45,
+          "endSec": 4910.48,
+          "durationSec": 247.03,
+          "normalizedRange": [
+            0.8979,
+            0.9454
+          ]
+        },
+        "hussary": {
+          "startSec": 6127.9,
+          "endSec": 6476.7,
+          "durationSec": 348.8,
+          "normalizedRange": [
+            0.8885,
+            0.9391
+          ]
+        },
+        "shuraim": {
+          "startSec": 2508.743,
+          "endSec": 2655.4,
+          "durationSec": 146.66,
+          "normalizedRange": [
+            0.8876,
+            0.9395
+          ]
+        },
+        "shatri": {
+          "startSec": 3616.982,
+          "endSec": 3837.243,
+          "durationSec": 220.26,
+          "normalizedRange": [
+            0.867,
+            0.9198
+          ]
+        },
+        "tunaiji": {
+          "startSec": 3923.83,
+          "endSec": 4135.94,
+          "durationSec": 212.11,
+          "normalizedRange": [
+            0.8936,
+            0.9419
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-019",
+      "verses": {
+        "start": 190,
+        "end": 195,
+        "count": 6
+      },
+      "theme": "Reflection on the heavens and earth, supplication",
+      "visualConcept": "Real night sky, stars, mountain ranges and sunrise footage.",
+      "avoidances": "Procedural CGI starfields or artificial space simulations.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 4491.95,
+          "endSec": 4680.77,
+          "durationSec": 188.82,
+          "normalizedRange": [
+            0.9376,
+            0.977
+          ]
+        },
+        "sudais": {
+          "startSec": 3161.94,
+          "endSec": 3287.8,
+          "durationSec": 125.86,
+          "normalizedRange": [
+            0.9391,
+            0.9765
+          ]
+        },
+        "dosari": {
+          "startSec": 4082.13,
+          "endSec": 4259.58,
+          "durationSec": 177.45,
+          "normalizedRange": [
+            0.9333,
+            0.9738
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 4963.11,
+          "endSec": 5152.99,
+          "durationSec": 189.88,
+          "normalizedRange": [
+            0.943,
+            0.9791
+          ]
+        },
+        "minshawi": {
+          "startSec": 4910.48,
+          "endSec": 5092.17,
+          "durationSec": 181.69,
+          "normalizedRange": [
+            0.9454,
+            0.9804
+          ]
+        },
+        "hussary": {
+          "startSec": 6476.7,
+          "endSec": 6748.19,
+          "durationSec": 271.49,
+          "normalizedRange": [
+            0.9391,
+            0.9784
+          ]
+        },
+        "shuraim": {
+          "startSec": 2655.391,
+          "endSec": 2762.415,
+          "durationSec": 107.02,
+          "normalizedRange": [
+            0.9395,
+            0.9774
+          ]
+        },
+        "shatri": {
+          "startSec": 3837.243,
+          "endSec": 4065.973,
+          "durationSec": 228.73,
+          "normalizedRange": [
+            0.9198,
+            0.9746
+          ]
+        },
+        "tunaiji": {
+          "startSec": 4135.94,
+          "endSec": 4292.94,
+          "durationSec": 157,
+          "normalizedRange": [
+            0.9419,
+            0.9777
+          ]
+        }
+      }
+    },
+    {
+      "id": "scene-020",
+      "verses": {
+        "start": 196,
+        "end": 200,
+        "count": 5
+      },
+      "theme": "Closing reminders, patience and perseverance",
+      "visualConcept": "A new real dawn shot matching Shot 03's natural-light direction without reusing the same clip.",
+      "avoidances": "Direct reuse of Shot 03 clip; synthetic sunrise animations.",
+      "assetStatus": "asset-pending",
+      "preferredSource": null,
+      "timingByReciter": {
+        "alafasy": {
+          "startSec": 4680.77,
+          "endSec": 4791.79,
+          "durationSec": 111.02,
+          "normalizedRange": [
+            0.977,
+            1.0002
+          ]
+        },
+        "sudais": {
+          "startSec": 3288.4,
+          "endSec": 3367,
+          "durationSec": 78.6,
+          "normalizedRange": [
+            0.9767,
+            1
+          ]
+        },
+        "dosari": {
+          "startSec": 4259.71,
+          "endSec": 4374.2,
+          "durationSec": 114.49,
+          "normalizedRange": [
+            0.9739,
+            1
+          ]
+        },
+        "abdulbaset": {
+          "startSec": 5152.99,
+          "endSec": 5264.28,
+          "durationSec": 111.29,
+          "normalizedRange": [
+            0.9791,
+            1.0002
+          ]
+        },
+        "minshawi": {
+          "startSec": 5092.17,
+          "endSec": 5194.12,
+          "durationSec": 101.95,
+          "normalizedRange": [
+            0.9804,
+            1
+          ]
+        },
+        "hussary": {
+          "startSec": 6748.19,
+          "endSec": 6897.98,
+          "durationSec": 149.79,
+          "normalizedRange": [
+            0.9784,
+            1.0001
+          ]
+        },
+        "shuraim": {
+          "startSec": 2762.405,
+          "endSec": 2826.109,
+          "durationSec": 63.7,
+          "normalizedRange": [
+            0.9774,
+            0.9999
+          ]
+        },
+        "shatri": {
+          "startSec": 4065.973,
+          "endSec": 4172.623,
+          "durationSec": 106.65,
+          "normalizedRange": [
+            0.9746,
+            1.0001
+          ]
+        },
+        "tunaiji": {
+          "startSec": 4292.94,
+          "endSec": 4391.98,
+          "durationSec": 99.04,
+          "normalizedRange": [
+            0.9777,
+            1.0002
+          ]
+        }
+      }
+    }
+  ]
+}

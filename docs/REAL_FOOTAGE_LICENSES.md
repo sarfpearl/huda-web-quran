@@ -171,3 +171,29 @@ All footage below is sourced under verified, unrestricted free commercial and we
 * **Final Encoded File**: `public/videos/ayah/002/255.mp4` (1920×1080, 10.00s, H.264 CRF 19)
 * **Loop Quality**: Broadcast overlap crossfade (seam difference: R=2.77, G=1.61, B=2.82 — practically 0 difference).
 * **Status**: **APPROVED**
+
+---
+
+## 🏛️ Surah 3 (Aal-Imran) — 20-Scene Real-Footage Production Initiative
+
+> **Initiative Date:** 2026-10-16  
+> **Classification:** Tier A — Authentic Real-World Camera Footage  
+> **Canonical Manifest:** [`docs/surah-003-real-footage/surah-003-scenes.json`](file:///Users/pearl-9744/Claude/Projects/huda-web-quran/docs/surah-003-real-footage/surah-003-scenes.json)  
+> **Source Audit Ledger:** [`docs/surah-003-real-footage/source-audit.csv`](file:///Users/pearl-9744/Claude/Projects/huda-web-quran/docs/surah-003-real-footage/source-audit.csv)  
+> **Acoustic Timing QA:** [`docs/surah-003-real-footage/timing-qa.json`](file:///Users/pearl-9744/Claude/Projects/huda-web-quran/docs/surah-003-real-footage/timing-qa.json)  
+> **Visual QA Audit:** [`docs/surah-003-real-footage/visual-qa.md`](file:///Users/pearl-9744/Claude/Projects/huda-web-quran/docs/surah-003-real-footage/visual-qa.md)  
+
+### Architectural Principles:
+1. **100% Real Camera Footage Only:** Absolutely ZERO AI-generated images or video (Veo, Sora, RunWay, Luma, Pika), zero static-image animations, zero procedural/gradient backgrounds, and zero placeholder MP4s.
+2. **Sacred Personage Prohibition:** Absolute prohibition against depicting Allah, prophets, angels, Maryam, Isa, Zakariyya, or companions. Only reverent natural landscapes, restrained stone architecture, and authentic manuscripts may be used.
+3. **User Visual Reference Ratings:**
+   - **Shot 03 (5/5):** Pexels 5910274 (1920×1080, 5s). Approved as short opening reference ONLY. Strictly forbidden from repeated looping to pad time.
+   - **Shot 01 (4/5):** Pexels 33185411 (3840×2160, 13s). Secondary visual reference.
+   - **Shot 02 & Shot 04 (2/5):** REJECTED by default; strictly excluded.
+4. **Authentic Place Integrity:** Verses 92–101 (Bakkah/Ka'bah) and 121–155 (Mount Uhud) require verified authentic footage or generic mountain disclaimers. Never falsely label generic terrain as Ka'bah or Mount Uhud.
+5. **Acoustic Word-Sync Derivation:** Timings are derived strictly from verified reciter QDC segmentation (Alafasy, Sudais, Dosari, etc.), never estimated or guessed.
+
+### 20-Scene Block Summary:
+- **Scene 001 (Verses 1–9):** Opening, tawhid, revelation. Shot 03 opening reference. `source-reference-only`.
+- **Scenes 002–020 (Verses 10–200):** 19 dedicated thematic blocks covering the full 200 verses. Status: `ASSET_PENDING` awaiting verified licensed real-footage downloads.
+
