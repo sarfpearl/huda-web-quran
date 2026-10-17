@@ -413,6 +413,12 @@ and text are used unmodified, and the credits are shown** (About → credits).
 - [x] Font self-hosted unmodified: `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`
       (`'IndoPak'` in `globals.css`); credits on the About page.
 
+- [ ] **IndoPak Tajweed colours — waiting on QuranWBW.** Their reply
+      (2026-10-14): no IndoPak Tajweed data or font exists yet, and colouring
+      their font breaks its ligatures; they are building IndoPak Mushaf Tajweed
+      fonts, likely more than a year away. Until then IndoPak has no Tajweed
+      switch (PR #103). Don't colour the IndoPak text in CSS.
+
 ## Quran views · live · comments · likes (Supabase)
 
 - [x] **Clear test data before launch** — done 2026-10-07 (see Open items).
