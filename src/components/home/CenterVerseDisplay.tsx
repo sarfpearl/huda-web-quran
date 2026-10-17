@@ -212,14 +212,23 @@ function overflows(pane: HTMLElement) {
   return ((pane.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + pad > pane.clientHeight + 2;
 }
 
-function AyahOrnament({ n }: { n: number }) {
+/**
+ * IndoPak pause marks (ج ط ۙ ؕ, the ruku ع, …) closing an ayah. The IndoPak
+ * font draws them up to 0.54em PAST the word's end (over where its own ayah
+ * sign would sit), so right beside our larger rosette they land on it.
+ */
+const INDOPAK_END_MARKS = /[\u0615\u06D6-\u06DC\uE000-\uF8FF][\u0615\u06D6-\u06DC\uE000-\uF8FF\u200b\u200f\u2002\u2003 ]*$/;
+
+function AyahOrnament({ n, clearMarks = false }: { n: number; clearMarks?: boolean }) {
   const lang = useUiLang();
   return (
     <span
       lang="ar"
       dir="rtl"
       aria-label={`${word("ayah", lang)} ${n}`}
-      className="font-arabic text-amber-300 select-none align-middle mx-1.5 tracking-normal [letter-spacing:0] text-[1.2em]"
+      // clearMarks: a wider gap on the word's side (0.5em × 1.2 = 0.6em of the
+      // text) so the pause marks show in it instead of over the rosette.
+      className={`font-arabic text-amber-300 select-none align-middle ml-1.5 ${clearMarks ? "mr-[0.5em]" : "mr-1.5"} tracking-normal [letter-spacing:0] text-[1.2em]`}
     >
       {toArabicNumerals(n)}
     </span>
@@ -750,7 +759,7 @@ export function CenterVerseDisplay({
                             {glyphs.e[0]}
                           </span>
                         ) : (
-                          <AyahOrnament n={ayahNum} />
+                          <AyahOrnament n={ayahNum} clearMarks={indoPak && INDOPAK_END_MARKS.test(w.word)} />
                         )}
                       </span>
                     );
