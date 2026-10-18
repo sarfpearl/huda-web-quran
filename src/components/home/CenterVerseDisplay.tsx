@@ -220,10 +220,12 @@ function AyahOrnament({ n, indoPak = false }: { n: number; indoPak?: boolean }) 
       dir="rtl"
       aria-label={`${word("ayah", lang)} ${n}`}
       // IndoPak draws end-of-ayah waqf marks (e.g. ؕ U+0615, ۙ U+06D9) whose ink
-      // overflows the last word's box toward the ornament; widen the gap on the
-      // preceding-word side only (inline-start in RTL) so they never collide.
+      // overflows the last word's box toward the ornament, and the number itself
+      // IS the rosette (wider for 2–3 digits). Give it an em-based gap — bigger on
+      // the preceding-word side (inline-start in RTL) — so the clearance scales
+      // with the Arabic size (22px→84px) instead of a fixed px that shrinks away.
       className={`font-arabic text-amber-300 select-none align-middle tracking-normal [letter-spacing:0] text-[1.2em] ${
-        indoPak ? "ms-[18px] me-1.5" : "mx-1.5"
+        indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
       }`}
     >
       {toArabicNumerals(n)}
