@@ -399,7 +399,9 @@ export function TopicPickerModal({
           <span
             lang="ar"
             dir="rtl"
-            className="mt-1.5 line-clamp-2 block text-right font-arabic text-base leading-[1.9] text-sand-50/90"
+            // quran-tanzil → Amiri: the stored text is Tanzil-encoded and the
+            // Hafs font draws U+06DF as a dotted circle; Amiri renders it right.
+            className="quran-tanzil mt-1.5 line-clamp-2 block text-right font-arabic text-base leading-[1.9] text-sand-50/90"
           >
             {h.arabic}
             <span className="mx-1 text-amber-300">{toArabicNumerals(h.ayah)}</span>
