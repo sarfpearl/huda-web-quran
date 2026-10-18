@@ -4,7 +4,7 @@
 Draws test words with the IndoPak font in WebKitGTK and counts the pixels of
 the test colour, to see what the engine paints:
 
-  - a ligature (يۡن, تر) with the colour on one of its letters — liga on / off;
+  - a ligature (يْن, تر) with the colour on one of its letters — liga on / off;
   - the name of Allah with both lams coloured, liga off (Option 1);
   - a mark coloured alone (tanween, small alef, لا's maddah).
 
@@ -31,10 +31,10 @@ GREY = "#999999"
 
 # (label, html, expect the test colour to show?, liga off?)
 CASES = [
-    ("ligature يۡن, ي coloured, liga on — spreads onto ن", "لِّلۡمُتَّقِ<b>يۡ</b>نَ", "wide", False),
-    ("ligature يۡن, ي coloured, liga off — ي only", "لِّلۡمُتَّقِ<b>يۡ</b>نَ", "narrow", True),
-    ("ligature تر, ر coloured, liga on — lost", "اشۡتَ<b>ر</b>َوُا", "none", False),
-    ("ligature تر, ر coloured, liga off — ر shows", "اشۡتَ<b>ر</b>َوُا", "some", True),
+    ("ligature يْن, ي coloured, liga on — spreads onto ن", "لِّلْمُتَّقِ<b>يْ</b>نَ", "wide", False),
+    ("ligature يْن, ي coloured, liga off — ي only", "لِّلْمُتَّقِ<b>يْ</b>نَ", "narrow", True),
+    ("ligature تر, ر coloured, liga on — lost", "اشْتَ<b>ر</b>َوُا", "none", False),
+    ("ligature تر, ر coloured, liga off — ر shows", "اشْتَ<b>ر</b>َوُا", "some", True),
     ("Allah, both lams coloured, liga off", f'<span style="color:{GREY}">ا</span><b>للّٰ</b>هُ', "some", True),
     ("mark alone: tanween", "غِشَاوَة<b>ٌ</b>", "some", False),
     ("mark alone: small alef", "ذ<b>ٰ</b>لِكَ", "some", False),

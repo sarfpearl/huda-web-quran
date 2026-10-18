@@ -470,6 +470,9 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
       Allah and Option 1, tarqiq, madd on its letter, text preserved, paint =
       data, Chromium rows, the V4 comparison, no unreviewed difference).
 - [x] Al-Baqarah 1–20 → `public/data/quran-indopak-tajweed/2.json`.
+- [x] **Sukun (2026-10-18):** the words are drawn with U+0652 (the font's
+      jazm) for the source's U+06E1 (a hollow ring), as the app does since
+      PR #116 — the same QA result.
 - [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
       Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
       Preview: the Vercel link on draft PR #115 (+ `/dev/indopak-tajweed`).

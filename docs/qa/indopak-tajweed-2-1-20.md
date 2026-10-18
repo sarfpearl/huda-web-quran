@@ -39,42 +39,42 @@ Drawn with liga off: 15 · paint errors (glyph model): 0
 | 2:12 w1 | أَلَآ (اَلَا ۤ) | — | — | ligature limit | glyph | font shaping | ligature 'لَا': [3] painted plain |
 | 2:13 w13 | أَلَآ (اَلَاۤ) | madd 4/5 0.36–1.00 | madd 4/5 0.65–1.00 | span | glyph | font shaping | ligature: ligature 'لَا': [3] painted plain |
 | 2:13 w13 | أَلَآ (اَلَاۤ) | — | — | ligature limit | glyph | font shaping | ligature 'لَا': [3] painted plain |
-| 2:4 w12 | يُوقِنُونَ (يُوۡقِنُوۡنَؕ‏) | madd 2/4/6 0.56–0.86 | madd 2/4/6 0.48–0.60 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:4 w12 | يُوقِنُونَ (يُوْقِنُوْنَؕ‏) | madd 2/4/6 0.56–0.86 | madd 2/4/6 0.48–0.60 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
 | 2:7 w9 | غِشَٰوَةٌ (غِشَاوَةٌ ) | silent 0.79–1.00 | silent 0.61–0.69 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:7 w12 | عَظِيمٌ (عَظِيۡمٌ‏) | madd 2/4/6 0.50–0.76 | madd 2/4/6 0.39–0.56 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:8 w10 | هُم (هُمۡ) | ghunnah 0.61–1.00 | ghunnah 0.36–1.00 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:9 w10 | يَشْعُرُونَ (يَشۡعُرُوۡنَؕ‏) | madd 2/4/6 0.67–0.86 | madd 2/4/6 0.57–0.66 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:19 w11 | فِىٓ (فِىۡۤ) | madd 4/5 0.02–1.00 | madd 4/5 0.36–1.00 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:19 w16 | ٱلْمَوْتِ (الۡمَوۡتِ​ؕ) | madd 2/4/6 0.43–0.72 | madd 2/4/6 0.33–0.48 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:19 w19 | بِٱلْكَٰفِرِينَ (بِالۡكٰفِرِيۡنَ‏) | madd 2 0.51–0.54 | madd 2 0.36–0.38 | shifted | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:20 w4 | أَبْصَٰرَهُمْ (اَبۡصَارَهُمۡ​ؕ) | tafkhim 0.17–0.75 | tafkhim 0.15–0.53 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
-| 2:20 w19 | وَأَبْصَٰرِهِمْ (وَاَبۡصَارِهِمۡ​ؕ) | tafkhim 0.28–0.60 | tafkhim 0.22–0.40 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:7 w12 | عَظِيمٌ (عَظِيْمٌ‏) | madd 2/4/6 0.50–0.76 | madd 2/4/6 0.39–0.56 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:8 w10 | هُم (هُمْ) | ghunnah 0.61–1.00 | ghunnah 0.36–1.00 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:9 w10 | يَشْعُرُونَ (يَشْعُرُوْنَؕ‏) | madd 2/4/6 0.67–0.86 | madd 2/4/6 0.57–0.66 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:19 w11 | فِىٓ (فِىْۤ) | madd 4/5 0.02–1.00 | madd 4/5 0.36–1.00 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:19 w16 | ٱلْمَوْتِ (الْمَوْتِ​ؕ) | madd 2/4/6 0.43–0.72 | madd 2/4/6 0.33–0.48 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:19 w19 | بِٱلْكَٰفِرِينَ (بِالْكٰفِرِيْنَ‏) | madd 2 0.51–0.54 | madd 2 0.36–0.38 | shifted | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:20 w4 | أَبْصَٰرَهُمْ (اَبْصَارَهُمْ​ؕ) | tafkhim 0.17–0.75 | tafkhim 0.15–0.53 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
+| 2:20 w19 | وَأَبْصَٰرِهِمْ (وَاَبْصَارِهِمْ​ؕ) | tafkhim 0.28–0.60 | tafkhim 0.22–0.40 | span | glyph | calligraphy position | cross-script position (calligraphy) or mapping |
 | 2:2 w1 | ذَٰلِكَ (ذٰلِكَ) | madd 2 0.25–0.33 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:2 w2 | ٱلْكِتَٰبُ (الۡڪِتٰبُ) | madd 2 0.71–0.75 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:2 w4 | رَيْبَ (رَيۡبَۛۚۖ) | tafkhim 0.00–0.44 | tafkhim 0.00–0.17 | span | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:2 w5 | فِيهِ (فِيۡهِۛۚ) | madd 2/4/6 0.33–0.68 | madd 2/4/6 0.19–0.44 | span | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:2 w2 | ٱلْكِتَٰبُ (الْڪِتٰبُ) | madd 2 0.71–0.75 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:2 w4 | رَيْبَ (رَيْبَۛۚۖ) | tafkhim 0.00–0.44 | tafkhim 0.00–0.17 | span | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:2 w5 | فِيهِ (فِيْهِۛۚ) | madd 2/4/6 0.33–0.68 | madd 2/4/6 0.19–0.44 | span | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:2 w6 | هُدًى (هُدًى) | silent 0.34–0.59 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:3 w5 | ٱلصَّلَوٰةَ (الصَّلٰوةَ) | madd 2 0.71–0.77 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:3 w7 | رَزَقْنَٰهُمْ (رَزَقۡنٰهُمۡ) | madd 2 0.56–0.61 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:3 w8 | يُنفِقُونَ (يُنۡفِقُوۡنَۙ‏) | madd 2/4/6 0.61–0.89 | madd 2/4/6 0.50–0.62 | span | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:3 w7 | رَزَقْنَٰهُمْ (رَزَقْنٰهُمْ) | madd 2 0.56–0.61 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:3 w8 | يُنفِقُونَ (يُنْفِقُوْنَۙ‏) | madd 2/4/6 0.61–0.89 | madd 2/4/6 0.50–0.62 | span | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:5 w1 | أُو۟لَٰٓئِكَ (اُولٰٓٮِٕكَ) | madd 4/5 0.37–0.54 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:5 w3 | هُدًى (هُدًى) | silent 0.34–0.62 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:5 w6 | وَأُو۟لَٰٓئِكَ (وَاُولٰٓٮِٕكَ) | madd 4/5 0.49–0.63 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:7 w9 | غِشَٰوَةٌ (غِشَاوَةٌ ) | silent 0.79–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:9 w1 | يُخَٰدِعُونَ (يُخٰدِعُوۡنَ) | madd 2 0.30–0.34 | tafkhim 0.09–0.30 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:9 w1 | يُخَٰدِعُونَ (يُخٰدِعُوۡنَ) | tafkhim 0.01–0.29 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:9 w1 | يُخَٰدِعُونَ (يُخٰدِعُوْنَ) | madd 2 0.30–0.34 | tafkhim 0.09–0.30 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:9 w1 | يُخَٰدِعُونَ (يُخٰدِعُوْنَ) | tafkhim 0.01–0.29 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:9 w7 | إِلَّآ (اِلَّاۤ) | madd 4/5 0.45–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:10 w3 | مَّرَضٌ (مَّرَضٌۙ) | ghunnah 0.61–0.84 | tafkhim 0.16–1.00 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:10 w3 | مَّرَضٌ (مَّرَضٌۙ) | tafkhim 0.22–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:10 w6 | مَرَضًا (مَرَضًا ​ۚ) | silent 0.48–0.71 | tafkhim 0.23–0.87 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:10 w6 | مَرَضًا (مَرَضًا ​ۚ) | tafkhim 0.21–0.90 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:10 w9 | أَلِيمٌۢ (اَلِيۡمٌۢۙ) | ghunnah 0.88–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:10 w9 | أَلِيمٌۢ (اَلِيْمٌۢۙ) | ghunnah 0.88–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:12 w1 | أَلَآ (اَلَا ۤ) | madd 4/5 0.37–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:12 w5 | وَلَٰكِن (وَلٰـكِنۡ) | madd 2 0.25–0.29 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:12 w5 | وَلَٰكِن (وَلٰـكِنْ) | madd 2 0.25–0.29 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:13 w13 | أَلَآ (اَلَاۤ) | madd 4/5 0.36–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:13 w17 | وَلَٰكِن (وَلٰـكِنۡ) | madd 2 0.27–0.31 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:14 w10 | شَيَٰطِينِهِمْ (شَيٰطِيۡنِهِمۡۙ) | madd 2 0.31–0.34 | tafkhim 0.25–0.39 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:14 w10 | شَيَٰطِينِهِمْ (شَيٰطِيۡنِهِمۡۙ) | tafkhim 0.35–0.51 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:13 w17 | وَلَٰكِن (وَلٰـكِنْ) | madd 2 0.27–0.31 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:14 w10 | شَيَٰطِينِهِمْ (شَيٰطِيْنِهِمْۙ) | madd 2 0.31–0.34 | tafkhim 0.25–0.39 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:14 w10 | شَيَٰطِينِهِمْ (شَيٰطِيْنِهِمْۙ) | tafkhim 0.35–0.51 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:16 w1 | أُو۟لَٰٓئِكَ (اُولٰٓٮِٕكَ) | madd 4/5 0.30–0.45 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:16 w4 | ٱلضَّلَٰلَةَ (الضَّلٰلَةَ) | madd 2 0.69–0.74 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:17 w5 | نَارًا (نَارًا ​ۚ) | ghunnah 0.59–0.92 | tafkhim 0.52–0.86 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
@@ -83,14 +83,14 @@ Drawn with liga off: 15 · paint errors (glyph model): 0
 | 2:17 w15 | ظُلُمَٰتٍ (ظُلُمٰتٍ) | madd 2 0.60–0.64 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:18 w1 | صُمٌّۢ (صُمٌّۢ) | ghunnah 0.59–1.00 | tafkhim 0.00–0.49 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:18 w1 | صُمٌّۢ (صُمٌّۢ) | tafkhim 0.00–0.60 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:18 w3 | عُمْىٌ (عُمۡىٌ) | ghunnah 0.69–0.98 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:18 w3 | عُمْىٌ (عُمْىٌ) | ghunnah 0.69–0.98 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:19 w2 | كَصَيِّبٍ (كَصَيِّبٍ) | silent 0.74–0.92 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:19 w6 | ظُلُمَٰتٌ (ظُلُمٰتٌ) | silent 0.75–0.95 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
 | 2:19 w6 | ظُلُمَٰتٌ (ظُلُمٰتٌ) | madd 2 0.57–0.62 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:19 w7 | وَرَعْدٌ (وَّرَعۡدٌ) | silent 0.77–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:19 w8 | وَبَرْقٌ (وَّبَرۡقٌ​ ۚ) | silent 0.71–0.95 | tafkhim 0.36–1.00 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:19 w8 | وَبَرْقٌ (وَّبَرۡقٌ​ ۚ) | tafkhim 0.45–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:19 w18 | مُحِيطٌۢ (مُحِيۡطٌ​ۢ) | ghunnah 0.82–0.92 | tafkhim 0.70–1.00 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:19 w18 | مُحِيطٌۢ (مُحِيۡطٌ​ۢ) | tafkhim 0.51–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:19 w19 | بِٱلْكَٰفِرِينَ (بِالۡكٰفِرِيۡنَ‏) | madd 2 0.51–0.54 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
-| 2:20 w24 | شَىْءٍ (شَىۡءٍ) | ghunnah 0.72–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:19 w7 | وَرَعْدٌ (وَّرَعْدٌ) | silent 0.77–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:19 w8 | وَبَرْقٌ (وَّبَرْقٌ​ ۚ) | silent 0.71–0.95 | tafkhim 0.36–1.00 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:19 w8 | وَبَرْقٌ (وَّبَرْقٌ​ ۚ) | tafkhim 0.45–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:19 w18 | مُحِيطٌۢ (مُحِيْطٌ​ۢ) | ghunnah 0.82–0.92 | tafkhim 0.70–1.00 | wrong colour | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:19 w18 | مُحِيطٌۢ (مُحِيْطٌ​ۢ) | tafkhim 0.51–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:19 w19 | بِٱلْكَٰفِرِينَ (بِالْكٰفِرِيْنَ‏) | madd 2 0.51–0.54 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |
+| 2:20 w24 | شَىْءٍ (شَىْءٍ) | ghunnah 0.72–1.00 | — | missing | chromium | browser | a mark coloured alone: Chromium paints it in its letter's colour |

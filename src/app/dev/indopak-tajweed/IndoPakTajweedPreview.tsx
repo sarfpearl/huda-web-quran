@@ -39,10 +39,10 @@ function AyahNumber({ n }: { n: number }) {
 // the "expected" column; the marks row is what decides the next step.
 const T = "#3b82f6";
 const CHECKS: { html: string; liga: boolean; expect: string }[] = [
-  { html: `لِّلۡمُتَّقِ<b>يۡ</b>نَ`, liga: true, expect: "liga on: ي and ن blue (ligature)" },
-  { html: `لِّلۡمُتَّقِ<b>يۡ</b>نَ`, liga: false, expect: "liga off: ي blue, ن white" },
-  { html: `اشۡتَ<b>ر</b>َوُا`, liga: true, expect: "liga on: no blue (ligature)" },
-  { html: `اشۡتَ<b>ر</b>َوُا`, liga: false, expect: "liga off: ر blue" },
+  { html: `لِّلْمُتَّقِ<b>يْ</b>نَ`, liga: true, expect: "liga on: ي and ن blue (ligature)" },
+  { html: `لِّلْمُتَّقِ<b>يْ</b>نَ`, liga: false, expect: "liga off: ي blue, ن white" },
+  { html: `اشْتَ<b>ر</b>َوُا`, liga: true, expect: "liga on: no blue (ligature)" },
+  { html: `اشْتَ<b>ر</b>َوُا`, liga: false, expect: "liga off: ر blue" },
   { html: `<i>ا</i><b>للّٰ</b>هُ`, liga: false, expect: "Allah: ا grey, both ل blue, ه white" },
   { html: `غِشَاوَة<b>ٌ</b>`, liga: true, expect: "mark: tanween blue? (Chromium / WebKitGTK: no)" },
   { html: `ذ<b>ٰ</b>لِكَ`, liga: true, expect: "mark: small alef blue? (Chromium / WebKitGTK: no)" },

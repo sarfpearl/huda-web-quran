@@ -628,13 +628,20 @@ def compare(ref, ours):
 
 # ── Build ───────────────────────────────────────────────────────────────────
 
+def as_drawn(word):
+    """The IndoPak word as the app draws it (quranGlyphs.ts plainIndoPak): the
+    source's sukun U+06E1, a hollow ring in this font, as U+0652, its jazm."""
+    return word.replace("\u06E1", "\u0652")
+
+
 def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
     """(ayahs for the JSON, diagnostic rows, stats)."""
     text_of, rules_of = load_rules(rule_data)
     shaper = shaper or Shaper()
     v4 = v4 or V4()
     glyph_data = json.loads((GLYPHS / f"{surah}.json").read_text())
-    indopak = json.loads((INDOPAK / f"{surah}.json").read_text())
+    indopak = [{**v, "w": [as_drawn(t) for t in v["w"]]}
+               for v in json.loads((INDOPAK / f"{surah}.json").read_text())]
     bismillah = len(text_of[(1, 1)]) + 1 if (1, 1) in text_of else 40
     stats, rows, result, glyph_ayahs = Counter(), [], [], []
     for gv, iv in zip(glyph_data, indopak):

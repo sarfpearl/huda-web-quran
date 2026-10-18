@@ -170,8 +170,11 @@ class Build(unittest.TestCase):
     # ── All of Al-Baqarah 1–20 ──
 
     def test_text_and_order_preserved(self):
+        # The source text, with only the sukun as the app draws it (U+06E1 → U+0652).
         for a, x in self.ayah.items():
-            self.assertEqual(["".join(t for t, _ in runs) for runs in x["w"]], self.indopak[a]["w"], f"2:{a}")
+            self.assertEqual(["".join(t for t, _ in runs) for runs in x["w"]],
+                             [b.as_drawn(t) for t in self.indopak[a]["w"]], f"2:{a}")
+            self.assertNotIn("\u06E1", "".join(t for runs in x["w"] for t, _ in runs), f"2:{a}")
 
     def test_every_colour_painted_as_given(self):
         for a, x in self.ayah.items():
