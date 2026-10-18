@@ -653,6 +653,46 @@ export function TopicPickerModal({
                 <AboutView />
               ) : (
                 <>
+                  {/* 3. Search Input Box — above the tabs */}
+                  <div className="relative mt-4">
+                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder={
+                        isFavourites
+                          ? t(lang, "Search favourites...")
+                          : t(lang, "Search a Surah, word, topic or 2:255...")
+                      }
+                      aria-label={
+                        isFavourites ? t(lang, "Search favourites") : t(lang, "Search the Quran")
+                      }
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setVerseTopicKey(null);
+                        setSearchQuery(e.target.value);
+                      }}
+                      className={cn(
+                        "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
+                        !isFavourites && voiceSupported ? "pr-11" : "pr-4",
+                      )}
+                    />
+                    {!isFavourites && voiceSupported && (
+                      <button
+                        type="button"
+                        onClick={listening ? stopVoice : startVoice}
+                        aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
+                        className={cn(
+                          "absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors cursor-pointer",
+                          listening
+                            ? "bg-red-500/20 text-red-300 animate-pulse"
+                            : "text-sand-200/60 hover:bg-white/10 hover:text-white",
+                        )}
+                      >
+                        <MicIcon className="text-base" />
+                      </button>
+                    )}
+                  </div>
+
                   {/* 2a. Favourites: Surah | Juz */}
                   {isFavourites && (
                     <div role="tablist" className={cn("my-3", TAB_TRACK)}>
@@ -702,46 +742,6 @@ export function TopicPickerModal({
                     </button>
                   </div>
                   )}
-
-                  {/* 3. Search Input Box */}
-                  <div className="relative mb-3">
-                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder={
-                        isFavourites
-                          ? t(lang, "Search favourites...")
-                          : t(lang, "Search a Surah, word, topic or 2:255...")
-                      }
-                      aria-label={
-                        isFavourites ? t(lang, "Search favourites") : t(lang, "Search the Quran")
-                      }
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setVerseTopicKey(null);
-                        setSearchQuery(e.target.value);
-                      }}
-                      className={cn(
-                        "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
-                        !isFavourites && voiceSupported ? "pr-11" : "pr-4",
-                      )}
-                    />
-                    {!isFavourites && voiceSupported && (
-                      <button
-                        type="button"
-                        onClick={listening ? stopVoice : startVoice}
-                        aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
-                        className={cn(
-                          "absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors cursor-pointer",
-                          listening
-                            ? "bg-red-500/20 text-red-300 animate-pulse"
-                            : "text-sand-200/60 hover:bg-white/10 hover:text-white",
-                        )}
-                      >
-                        <MicIcon className="text-base" />
-                      </button>
-                    )}
-                  </div>
 
                   {/* Topic chips (browser): a keyword preset searched across all. */}
                   {!isFavourites && (
