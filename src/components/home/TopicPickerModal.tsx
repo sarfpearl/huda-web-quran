@@ -36,7 +36,7 @@ import { getSessionId } from "@/lib/audio/session";
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { UI_LANGS, surahNameIn, t, uiLocale, useSetUiLang, useUiLang, word } from "@/lib/uiLang";
 
-type ModalTab = "surah" | "quran" | "verse";
+type ModalTab = "surah" | "quran";
 
 interface TopicPickerModalProps {
   surahTracks?: BayanWithRelations[];
@@ -86,6 +86,15 @@ const MORPH_RING: React.CSSProperties = {
 function pinToTrigger(el: HTMLElement, r: DOMRect) {
   el.style.top = `${r.top}px`;
   el.style.right = `${document.documentElement.clientWidth - r.right}px`;
+}
+
+/** A small section heading between result groups (Surah · Juz · Verses). */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-1 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-sand-200/50">
+      {children}
+    </p>
+  );
 }
 
 export function TopicPickerModal({
@@ -294,13 +303,21 @@ export function TopicPickerModal({
 
   const filteredSurah = searchSurahs(QURAN_SURAHS, searchQuery);
 
-  // Verse search: debounced, only while the Verse tab is active. The index is
-  // fetched on first use (loadSearchIndex memoizes it); a topic chip runs the
-  // same engine with OR semantics over its keywords.
-  const verseQuery = activeTab === "verse" ? searchQuery.trim() : "";
+  // One common search box (browser variant): a non-empty query — or a topic
+  // chip — searches Surahs, Juz AND verses together. Verses come from the
+  // prebuilt index (loadSearchIndex memoizes it, fetched on first search);
+  // a topic chip runs the same engine with OR semantics over its keywords.
   const [verseTopicKey, setVerseTopicKey] = useState<string | null>(null);
+  const trimmedQuery = searchQuery.trim();
+  const isSearching = !isFavourites && (trimmedQuery.length >= 2 || !!verseTopicKey);
+  const verseQuery = isSearching ? trimmedQuery : "";
   useEffect(() => {
-    if (activeTab !== "verse") return;
+    if (!isSearching) {
+      setVerseHits(null);
+      setVerseRef(null);
+      setVerseLoading(false);
+      return;
+    }
     const topic = verseTopicKey ? VERSE_TOPICS.find((x) => x.key === verseTopicKey) : null;
     const terms = topic ? topic.terms.join(" ") : verseQuery;
     if (!terms || terms.length < 2) {
@@ -329,7 +346,7 @@ export function TopicPickerModal({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [activeTab, verseQuery, verseTopicKey]);
+  }, [isSearching, verseQuery, verseTopicKey]);
 
   // Voice input (Web Speech API, no AI). Absent in some browsers → hide the mic.
   const [listening, setListening] = useState(false);
@@ -658,8 +675,9 @@ export function TopicPickerModal({
                     </div>
                   )}
 
-                  {/* 2. Segmented Navigation Tabs (Surah | Juz) */}
-                  {!isFavourites && (
+                  {/* 2. Segmented Navigation Tabs (Surah | Juz) — browse only;
+                      hidden while searching, when results span all three. */}
+                  {!isFavourites && !isSearching && (
                   <div className={cn("my-3", TAB_TRACK)}>
                     <button
                       type="button"
@@ -682,23 +700,52 @@ export function TopicPickerModal({
                     >
                       {word("juz", lang)}
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("verse")}
-                      className={cn(
-                        TAB,
-                        activeTab === "verse" ? SELECTED_TAB : UNSELECTED_TAB,
-                      )}
-                    >
-                      {t(lang, "Verse")}
-                    </button>
                   </div>
                   )}
 
-                  {/* Verse tab: topic chips (keyword presets, like the box). */}
-                  {!isFavourites && activeTab === "verse" && (
-                    <div className="no-scrollbar -mx-1 mb-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  {/* 3. Search Input Box */}
+                  <div className="relative mb-3">
+                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder={
+                        isFavourites
+                          ? t(lang, "Search favourites...")
+                          : t(lang, "Search a Surah, word, topic or 2:255...")
+                      }
+                      aria-label={
+                        isFavourites ? t(lang, "Search favourites") : t(lang, "Search the Quran")
+                      }
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setVerseTopicKey(null);
+                        setSearchQuery(e.target.value);
+                      }}
+                      className={cn(
+                        "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
+                        !isFavourites && voiceSupported ? "pr-11" : "pr-4",
+                      )}
+                    />
+                    {!isFavourites && voiceSupported && (
+                      <button
+                        type="button"
+                        onClick={listening ? stopVoice : startVoice}
+                        aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
+                        className={cn(
+                          "absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors cursor-pointer",
+                          listening
+                            ? "bg-red-500/20 text-red-300 animate-pulse"
+                            : "text-sand-200/60 hover:bg-white/10 hover:text-white",
+                        )}
+                      >
+                        <MicIcon className="text-base" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Topic chips (browser): a keyword preset searched across all. */}
+                  {!isFavourites && (
+                    <div className="no-scrollbar -mx-1 mb-2 flex gap-2 overflow-x-auto px-1 pb-1">
                       {VERSE_TOPICS.map((topic) => (
                         <button
                           key={topic.key}
@@ -720,66 +767,15 @@ export function TopicPickerModal({
                     </div>
                   )}
 
-                  {/* 3. Search Input Box */}
-                  <div className="relative mb-3">
-                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder={
-                        isFavourites
-                          ? t(lang, "Search favourites...")
-                          : activeTab === "surah"
-                          ? t(lang, "Search Surah...")
-                          : activeTab === "verse"
-                          ? t(lang, "Search a word, topic or 2:255...")
-                          : t(lang, "Search Juz or page no...")
-                      }
-                      aria-label={
-                        isFavourites
-                          ? t(lang, "Search favourites")
-                          : activeTab === "surah"
-                          ? t(lang, "Search Surah")
-                          : activeTab === "verse"
-                          ? t(lang, "Search the Quran")
-                          : t(lang, "Search Juz or page number")
-                      }
-                      value={searchQuery}
-                      onChange={(e) => {
-                        if (activeTab === "verse") setVerseTopicKey(null);
-                        setSearchQuery(e.target.value);
-                      }}
-                      className={cn(
-                        "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
-                        activeTab === "verse" && voiceSupported ? "pr-11" : "pr-4",
-                      )}
-                    />
-                    {activeTab === "verse" && voiceSupported && (
-                      <button
-                        type="button"
-                        onClick={listening ? stopVoice : startVoice}
-                        aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
-                        className={cn(
-                          "absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors cursor-pointer",
-                          listening
-                            ? "bg-red-500/20 text-red-300 animate-pulse"
-                            : "text-sand-200/60 hover:bg-white/10 hover:text-white",
-                        )}
-                      >
-                        <MicIcon className="text-base" />
-                      </button>
-                    )}
-                  </div>
-
                   {/* 4. Scrollable List Content using ContentListCard */}
                   <div ref={listRef} className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
-                    {/* A. SURAH TAB (114 Surahs) */}
-                    {!isFavourites && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
+                    {/* BROWSE (box empty): the selected tab's full list. */}
+                    {!isFavourites && !isSearching && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
+                    {!isFavourites && !isSearching && activeTab === "quran" && filteredJuz.map(renderJuzCard)}
 
-                    {/* B. QURAN TAB (30 Juz) */}
-                    {!isFavourites && activeTab === "quran" && filteredJuz.map(renderJuzCard)}
-
-                    {/* C. VERSE TAB — full-text / topic / reference search */}
-                    {!isFavourites && activeTab === "verse" && (
+                    {/* SEARCH (box typed or topic chosen): Surahs, Juz & verses
+                        together — one common search across all three. */}
+                    {!isFavourites && isSearching && (
                       <>
                         {/* A recognised reference jumps straight to the ayah. */}
                         {verseRef && (
@@ -805,21 +801,34 @@ export function TopicPickerModal({
                           </button>
                         )}
 
+                        {/* Matching Surahs (text query only, not a topic chip). */}
+                        {!verseTopicKey && filteredSurah.length > 0 && (
+                          <>
+                            <SectionLabel>{word("surah", lang)}</SectionLabel>
+                            {filteredSurah.slice(0, 8).map(renderSurahCard)}
+                          </>
+                        )}
+
+                        {/* Matching Juz. */}
+                        {!verseTopicKey && filteredJuz.length > 0 && filteredJuz.length < QURAN_JUZ.length && (
+                          <>
+                            <SectionLabel>{word("juz", lang)}</SectionLabel>
+                            {filteredJuz.map(renderJuzCard)}
+                          </>
+                        )}
+
+                        {/* Matching verses (hidden when a pure reference matched
+                            nothing else — the jump row above is the answer). */}
+                        {(verseLoading || !!verseHits?.length || !verseRef) && (
+                          <SectionLabel>{word("verses", lang)}</SectionLabel>
+                        )}
                         {verseLoading && (
                           <div className="h-16 animate-pulse rounded-2xl bg-white/5" aria-busy="true" />
                         )}
-
                         {!verseLoading && verseHits?.map(renderVerseCard)}
-
                         {!verseLoading && !verseRef && verseHits !== null && verseHits.length === 0 && (
-                          <p className="px-2 py-8 text-center text-xs text-sand-200/60">
+                          <p className="px-2 py-6 text-center text-xs text-sand-200/60">
                             {t(lang, "No verses found. Try another word or spelling.")}
-                          </p>
-                        )}
-
-                        {!verseLoading && verseHits === null && !verseRef && (
-                          <p className="px-2 py-8 text-center text-xs text-sand-200/60">
-                            {t(lang, "Search any word, a topic above, or a reference like 2:255.")}
                           </p>
                         )}
                       </>
