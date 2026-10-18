@@ -1,14 +1,18 @@
 /*
- * Builds public/data/search-index.json — one compact entry per ayah so the
- * content browser's Verse tab can search the whole Quran offline, across every
- * shipped language, forgiving of spelling.
+ * Builds the content browser's offline verse-search index, SPLIT BY LANGUAGE so
+ * a search downloads only what it needs instead of one 16 MB file.
  *
- * Each entry is a 3-tuple [key, displayArabic, searchBlob]:
- *   key          "2:255"
- *   displayArabic original Uthmani text (shown in the result row)
- *   searchBlob    normalized Arabic + English + Tamil + the 8 translation
- *                 languages, folded by src/lib/data/searchNormalize.mjs so the
- *                 query folds the same way (see verseSearch.ts).
+ *   public/data/search-index.json        core, always loaded:
+ *                                         [key, displayArabic, arBlob+enBlob]
+ *   public/data/search-index-<lang>.json one blob string per ayah (Mushaf
+ *                                         order), loaded only when the UI is in
+ *                                         that language (ta, ur, ml, …).
+ *
+ * The core carries Arabic (the recitation script + transliteration folding) and
+ * English (the universal fallback). Every other language sits in its own file;
+ * verseSearch.ts fetches the one matching the UI language on demand and folds
+ * the query with the same normalizers (searchNormalize.mjs) so spelling and
+ * diacritics don't matter.
  *
  * Run: node scripts/generation/build-search-index.mjs
  */
@@ -20,11 +24,15 @@ import { normLatin, normArabic, normIndic } from "../../src/lib/data/searchNorma
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const VERSES_DIR = path.join(root, "public/data/quran-verses");
 const TRANS_DIR = path.join(root, "public/data/quran-translations");
-const OUT = path.join(root, "public/data/search-index.json");
+const DATA_DIR = path.join(root, "public/data");
+const CORE_OUT = path.join(DATA_DIR, "search-index.json");
+const langOut = (id) => path.join(DATA_DIR, `search-index-${id}.json`);
 
-// The 8 per-Surah translation languages (en & ta ride inside the verse files),
-// each with the normalizer that fits its script.
-const TRANS_LANGS = [
+// Languages kept in their own lazily-loaded file. en & ta ride inside the verse
+// files; the 8 others each have a per-Surah translation file. Each carries the
+// normalizer that fits its script.
+const EXTRA_LANGS = [
+  { id: "ta", norm: normIndic, field: "textTamil" },
   { id: "ur", norm: normIndic },
   { id: "ml", norm: normIndic },
   { id: "hi", norm: normIndic },
@@ -36,37 +44,42 @@ const TRANS_LANGS = [
 ];
 
 const readJson = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
-/** Unique normalized tokens of a string (keeps the blob small, no repeats). */
+/** Unique normalized tokens of a string (keeps each blob small, no repeats). */
 const dedupe = (s) => [...new Set(s.split(" ").filter(Boolean))].join(" ");
 
-const index = [];
+const core = [];
+const extra = Object.fromEntries(EXTRA_LANGS.map(({ id }) => [id, []]));
 let verseCount = 0;
 
 for (let surah = 1; surah <= 114; surah++) {
   const verses = readJson(path.join(VERSES_DIR, `${surah}.json`));
   // Per-language arrays for this Surah (ayah order); missing file → skip that lang.
-  const trans = TRANS_LANGS.map(({ id, norm }) => {
-    const file = path.join(TRANS_DIR, id, `${surah}.json`);
-    return { arr: fs.existsSync(file) ? readJson(file) : null, norm };
-  });
+  const extraArr = Object.fromEntries(
+    EXTRA_LANGS.map(({ id, field }) => {
+      if (field) return [id, null]; // rides inside the verse file
+      const file = path.join(TRANS_DIR, id, `${surah}.json`);
+      return [id, fs.existsSync(file) ? readJson(file) : null];
+    }),
+  );
 
   verses.forEach((v, i) => {
-    const parts = [
-      normArabic(v.textArabic),
-      normLatin(v.textEnglish),
-      normIndic(v.textTamil),
-    ];
-    for (const { arr, norm } of trans) {
-      if (arr && typeof arr[i] === "string") parts.push(norm(arr[i]));
+    const coreBlob = dedupe(`${normArabic(v.textArabic)} ${normLatin(v.textEnglish)}`.replace(/\s+/g, " ").trim());
+    core.push([`${surah}:${v.ayahNumber}`, v.textArabic, coreBlob]);
+    for (const { id, norm, field } of EXTRA_LANGS) {
+      const txt = field ? v[field] : extraArr[id]?.[i];
+      extra[id].push(typeof txt === "string" ? dedupe(norm(txt)) : "");
     }
-    const blob = dedupe(parts.join(" ").replace(/\s+/g, " ").trim());
-    index.push([`${surah}:${v.ayahNumber}`, v.textArabic, blob]);
     verseCount++;
   });
 }
 
-fs.writeFileSync(OUT, JSON.stringify(index));
-const mb = (fs.statSync(OUT).size / 1e6).toFixed(2);
-console.log(`Wrote ${verseCount} ayah entries → ${path.relative(root, OUT)} (${mb} MB)`);
-const sample = index.find((e) => e[0] === "2:255");
-console.log("Sample 2:255 blob tokens:", sample ? sample[2].split(" ").length : "MISSING");
+const mb = (p) => (fs.statSync(p).size / 1e6).toFixed(2);
+fs.writeFileSync(CORE_OUT, JSON.stringify(core));
+console.log(`Wrote ${verseCount} ayah entries → ${path.relative(root, CORE_OUT)} (${mb(CORE_OUT)} MB)`);
+for (const { id } of EXTRA_LANGS) {
+  const p = langOut(id);
+  fs.writeFileSync(p, JSON.stringify(extra[id]));
+  console.log(`  + ${path.relative(root, p)} (${mb(p)} MB)`);
+}
+const sample = core.find((e) => e[0] === "2:255");
+console.log("Sample 2:255 core tokens:", sample ? sample[2].split(" ").length : "MISSING");

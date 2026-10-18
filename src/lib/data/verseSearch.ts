@@ -22,20 +22,68 @@ export interface VerseHit {
 
 const versesOf = (surah: number) => QURAN_SURAHS[surah - 1]?.verses ?? 0;
 
-// ---- Index loading (fetched once, memoized) --------------------------------
+// ---- Index loading (split by language, fetched on demand, memoized) ---------
+//
+// The core file (Arabic + English) is always loaded; every other language sits
+// in its own file and is fetched only when the UI is in that language, then its
+// per-ayah blob is folded into the core entry. This keeps a typical search at a
+// few MB instead of the ~16 MB single-file index.
 
-let indexPromise: Promise<IndexEntry[]> | null = null;
+/** Languages that have their own lazily-loaded blob file (see build script). */
+const EXTRA_LANGS = new Set(["ta", "ur", "ml", "hi", "id", "bn", "tr", "fr", "ms"]);
 
-export function loadSearchIndex(): Promise<IndexEntry[]> {
-  if (!indexPromise) {
-    indexPromise = fetch("/data/search-index.json")
-      .then((r) => (r.ok ? (r.json() as Promise<IndexEntry[]>) : Promise.reject(new Error("index"))))
+let corePromise: Promise<IndexEntry[]> | null = null;
+const langBlobs = new Map<string, Promise<string[]>>();
+const mergedIndex = new Map<string, Promise<IndexEntry[]>>();
+
+function fetchJson<T>(url: string): Promise<T> {
+  return fetch(url).then((r) => (r.ok ? (r.json() as Promise<T>) : Promise.reject(new Error(url))));
+}
+
+function loadCore(): Promise<IndexEntry[]> {
+  if (!corePromise) {
+    corePromise = fetchJson<IndexEntry[]>("/data/search-index.json").catch((e) => {
+      corePromise = null; // let a later search retry
+      throw e;
+    });
+  }
+  return corePromise;
+}
+
+function loadLangBlobs(lang: string): Promise<string[]> {
+  let p = langBlobs.get(lang);
+  if (!p) {
+    p = fetchJson<string[]>(`/data/search-index-${lang}.json`).catch((e) => {
+      langBlobs.delete(lang); // let a later search retry
+      throw e;
+    });
+    langBlobs.set(lang, p);
+  }
+  return p;
+}
+
+/**
+ * The verse index folded for `lang`: core (Arabic + English) always, plus the
+ * UI language's blobs merged in when it has its own file. Defaults to core-only.
+ */
+export function loadSearchIndex(lang?: string): Promise<IndexEntry[]> {
+  if (!lang || !EXTRA_LANGS.has(lang)) return loadCore();
+  let p = mergedIndex.get(lang);
+  if (!p) {
+    p = Promise.all([loadCore(), loadLangBlobs(lang)])
+      .then(([core, blobs]) =>
+        core.map((e, i): IndexEntry => {
+          const extra = blobs[i];
+          return extra ? [e[0], e[1], `${e[2]} ${extra}`] : e;
+        }),
+      )
       .catch((e) => {
-        indexPromise = null; // let a later search retry
+        mergedIndex.delete(lang); // let a later search retry
         throw e;
       });
+    mergedIndex.set(lang, p);
   }
-  return indexPromise;
+  return p;
 }
 
 // ---- Verse-reference parsing ------------------------------------------------
