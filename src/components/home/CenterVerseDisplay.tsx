@@ -657,7 +657,7 @@ export function CenterVerseDisplay({
 
   return (
     <div
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 md:px-10 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-1 sm:px-1.5 md:px-2 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
       style={stageInsets}
     >
       <div
@@ -709,10 +709,10 @@ export function CenterVerseDisplay({
             data-fit-max-mobile={44}
             dir="rtl"
             lang="ar"
-            className={`font-arabic ${indoPak ? "quran-indopak" : ""} ${tanzilFallback ? "quran-tanzil" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-4 sm:px-8 md:px-4 py-2 sm:py-3 ${arabicSizeClass}`}
+            className={`font-arabic ${indoPak ? "quran-indopak" : ""} ${tanzilFallback ? "quran-tanzil" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-2 sm:px-4 md:px-2 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
-              <span className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-0">
+              <span className="flex flex-wrap justify-center items-center gap-x-[0.3em] sm:gap-x-[0.35em] gap-y-0">
                 {displayWords.map((w, idx) => {
                   const wordId = `${wordIdPrefix}:${idx + 1}`;
                   const state: WordState = !hasWordTiming

@@ -151,7 +151,12 @@ export function fetchSurahGlyphs(surahNumber: number): Promise<GlyphVerse[] | nu
  * The ۞ / ۩ marks come off the text as they do off the glyphs.
  */
 const indoPakCache = new Map<number, Promise<GlyphVerse[] | null>>();
-const plainIndoPak = (t: string) => t.replace(/^\u06DE\s*/, "").replace(/\s*\u06E9/, "").trim();
+// Our IndoPak source marks sukun with U+06E1 (SMALL HIGH DOTLESS HEAD OF KHAH),
+// which the QuranWBW Nastaleeq font draws as a hollow ring. Quran.com's text uses
+// U+0652 (ARABIC SUKUN), which the same font draws as the small filled jazm \u2014
+// swap to it so the mark reads as the proper head-of-khah, not an open circle.
+const plainIndoPak = (t: string) =>
+  t.replace(/^\u06DE\s*/, "").replace(/\s*\u06E9/, "").replace(/\u06E1/g, "\u0652").trim();
 export function fetchSurahIndoPak(surahNumber: number): Promise<GlyphVerse[] | null> {
   let p = indoPakCache.get(surahNumber);
   if (!p) {
