@@ -4,11 +4,14 @@
   "private": true,
   "description": "HuDa Web Quran. An immersive Holy Quran & Islamic Bayan listening platform.",
   "scripts": {
+    "predev": "node scripts/generation/build-search-index.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/generation/build-search-index.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "build:search-index": "node scripts/generation/build-search-index.mjs",
     "generate:quran-images": "node scripts/generation/generate-quran-images.mjs",
     "generate:quran-images-free": "node scripts/generation/generate-quran-images-free.mjs"
   },

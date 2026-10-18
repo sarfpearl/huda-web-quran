@@ -39,3 +39,7 @@ scratch/
 
 # Video re-encode work dir (scripts/tools/reencode-videos.mjs): R2 backups + encodes
 /.media-work
+
+# Generated search index (built by prebuild/predev; too big for git)
+/public/data/search-index.json
+/public/data/search-index-*.json

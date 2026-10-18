@@ -48,6 +48,9 @@ interface ReadingViewProps {
   reciterId?: string | null;
   /** Ayah being recited, or null when nothing is. */
   active?: AyahRef | null;
+  /** Without a known recited ayah (Audio Only: an estimate from the playback
+   *  position), the ayah to keep in view while reciting — never highlighted. */
+  follow?: AyahRef | null;
   /** Tap an ayah → recite from it. */
   onSeekAyah?: (surah: number, ayah: number) => void;
   /** Tajweed colours (QPC V4 page fonts), as the main verse view. */
@@ -130,6 +133,7 @@ export function ReadingView({
   label,
   reciterId,
   active = null,
+  follow = null,
   onSeekAyah,
   tajweed = false,
   script = "uthmani",
@@ -357,6 +361,9 @@ export function ReadingView({
   // ran on below the player until the next ayah began. Scrolling by hand
   // (drag / wheel, not a tap) pauses following for a few seconds.
   const activeKey = active ? `${active.surah}:${active.ayah}` : null;
+  // The ayah the view follows: the recited one, else the estimate.
+  const followed = active ?? follow;
+  const followKey = followed ? `${followed.surah}:${followed.ayah}` : null;
   const userScrollAtRef = useRef(0);
   // Scrolled away by hand: after 7 s left alone, the view glides back to the
   // recited word (it used to jump there after 4 s); seeking returns at once.
@@ -420,23 +427,23 @@ export function ReadingView({
     // The recitation moved other than on to the next ayah (a seek, Prev /
     // Next): follow it wherever it is.
     const prev = prevActiveRef.current;
-    prevActiveRef.current = active;
-    if (active && prev) {
+    prevActiveRef.current = followed;
+    if (followed && prev) {
       const n = nextRef(prev);
-      const same = prev.surah === active.surah && prev.ayah === active.ayah;
-      if (!same && !(n && n.surah === active.surah && n.ayah === active.ayah)) awayRef.current = false;
+      const same = prev.surah === followed.surah && prev.ayah === followed.ayah;
+      if (!same && !(n && n.surah === followed.surah && n.ayah === followed.ayah)) awayRef.current = false;
     }
-  }, [activeKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [followKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || !activeKey || !pages) return;
+    if (!el || !followKey || !pages) return;
     if (Date.now() - userScrollAtRef.current < IDLE_MS) return;
-    const ayah = el.querySelector<HTMLElement>(`[data-key="${activeKey}"]`);
+    const ayah = el.querySelector<HTMLElement>(`[data-key="${followKey}"]`);
     // Before its first word (or without word timing) aim at the ayah's first
     // word, not the ayah box: an ayah starting mid-line otherwise pulled the
     // view back up a line between ayahs.
     const word = el.querySelector<HTMLElement>(
-      `[data-key="${activeKey}"] [data-word-idx="${Math.max(0, activeWordIndex)}"]`
+      `[data-key="${followKey}"] [data-word-idx="${active ? Math.max(0, activeWordIndex) : 0}"]`
     );
     const target = word || ayah;
     if (!target) return;
@@ -466,7 +473,7 @@ export function ReadingView({
     // The recited Surah's heading is as high as following goes, and its
     // first ayah opens with the heading at the top — not the previous
     // Surah's last ayahs above it.
-    const [surahNo, ayahNo] = activeKey.split(":");
+    const [surahNo, ayahNo] = followKey.split(":");
     const head = el.querySelector<HTMLElement>(`[data-head="${surahNo}"]`);
     followScroll(el, () => {
       const box = el.getBoundingClientRect();
@@ -478,7 +485,7 @@ export function ReadingView({
       if (pinnedPageRef.current === null || !section) return aim;
       return Math.max(aim, el.scrollTop + section.getBoundingClientRect().top - box.top - PAGE_TOP_PX);
     }, glide);
-  }, [activeKey, activeWordIndex, pages, idleTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [followKey, activeWordIndex, pages, idleTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Last read: where reading stopped before this view opened (a snapshot, so
   // it doesn't chase the reader); the position saved for next time is the
@@ -579,7 +586,10 @@ export function ReadingView({
   const showContinue =
     Boolean(target) &&
     (targetHere ? Boolean(pages) && !targetInView : Boolean(isMark ? onOpenMark : onOpenAyah)) &&
-    targetKey !== activeKey;
+    targetKey !== activeKey &&
+    // Following an estimate (Audio Only): the last read isn't kept up, so
+    // « Continue reading » would point somewhere stale.
+    !(!active && follow && !isMark);
   const goToAyah = (r: AyahRef) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -625,9 +635,9 @@ export function ReadingView({
     const el = scrollRef.current;
     if (!el || !pages || openedRef.current === surahsKey) return;
     openedRef.current = surahsKey;
-    if (active && active.ayah !== 1) return;
+    if (followed && followed.ayah !== 1) return;
     if (scrollToPage && Date.now() - scrollToPage.at <= 8000) return;
-    const surah = active?.surah ?? plan.all.find((p) => p.ctx === "cur")?.ref.surah;
+    const surah = followed?.surah ?? plan.all.find((p) => p.ctx === "cur")?.ref.surah;
     const head = el.querySelector<HTMLElement>(`[data-head="${surah}"]`);
     if (head) el.scrollTop += head.getBoundingClientRect().top - el.getBoundingClientRect().top - PAGE_TOP_PX;
   }, [pages, surahsKey]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -995,7 +1005,14 @@ export function ReadingView({
               ) : (
                 <span
                   aria-label={`${word("ayah", lang)} ${ref.ayah}`}
-                  className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+                  // IndoPak end-of-ayah waqf marks (e.g. ؕ U+0615, ۙ U+06D9) overflow
+                  // the last word's box toward the ornament, and the number itself IS
+                  // the rosette (wider for 2–3 digits). Use an em-based gap — bigger on
+                  // the preceding-word side (inline-start in RTL) — so clearance scales
+                  // with the reader size instead of a fixed px that shrinks away.
+                  className={`font-arabic align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0] ${
+                    indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
+                  }`}
                 >
                   {toArabicNumerals(ref.ayah)}
                 </span>

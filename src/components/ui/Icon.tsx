@@ -58,6 +58,13 @@ export const SearchIcon = (p: IconProps) => (
     <path d="m20 20-3.5-3.5" />
   </Base>
 );
+export const MicIcon = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M6 11a6 6 0 0 0 12 0" />
+    <path d="M12 17v4" />
+  </Base>
+);
 export const HomeIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M4 11.5 12 4l8 7.5" />

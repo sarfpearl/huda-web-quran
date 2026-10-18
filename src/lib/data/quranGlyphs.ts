@@ -290,6 +290,40 @@ export function unloadPageFont(page: number): void {
   fontCache.delete(page);
 }
 
+/*
+ * IndoPak waqf (stop) signs legend, grouped Stop / Pause / Continue (the way
+ * reciters learn them). Each `mark` is the actual character used in the IndoPak
+ * data (public/data/quran-indopak) — standard Unicode waqf marks plus the
+ * QuranWBW font's own PUA glyphs (E01A ز, E01B ص, E01C ق, E01E قف, E01F وقفة,
+ * E022 ع ruku), verified by rendering them in the font. `base` means the mark
+ * sits above a letter, so a tatweel carrier is shown under it. Shown only for
+ * the IndoPak script.
+ */
+export type WaqfGroup = "stop" | "pause" | "continue";
+/*
+ * `mark` is the sign's full Arabic-letter form (م, ج, ط …), drawn large and
+ * clearly — the teaching-chart style — rather than the tiny superscript the
+ * sign takes inside the running text.
+ */
+export const WAQF_LEGEND: { mark: string; en: string; group: WaqfGroup }[] = [
+  // Stop
+  { mark: "م", en: "Compulsory stop", group: "stop" }, // م
+  { mark: "قف", en: "Anticipation mark", group: "stop" }, // قف
+  { mark: "∴", en: "Embracing stop (one of the two)", group: "stop" }, // ∴
+  { mark: "ع", en: "End of section (Ruku’)", group: "stop" }, // ع
+  // Pause
+  { mark: "ط", en: "Absolute pause", group: "pause" }, // ط
+  { mark: "ج", en: "Permissible stop", group: "pause" }, // ج
+  { mark: "ص", en: "Licensed pause", group: "pause" }, // ص
+  { mark: "س", en: "Silence (no breath)", group: "pause" }, // س
+  { mark: "وقفه", en: "Longer pause (no breath)", group: "pause" }, // وقفہ
+  // Continue
+  { mark: "صلى", en: "Preference for continuation", group: "continue" }, // صلى
+  { mark: "ز", en: "Better to continue", group: "continue" }, // ز
+  { mark: "لا", en: "No need to stop", group: "continue" }, // لا
+  { mark: "ق", en: "No need to stop", group: "continue" }, // ق
+];
+
 /** Legend (Quran.com's grouping), colours = the fonts' dark palette. */
 export const TAJWEED_LEGEND: { color: string; en: string; ta: string }[] = [
   { color: "#999999", en: "Silent letter", ta: "உச்சரிக்கப்படாத எழுத்து" },

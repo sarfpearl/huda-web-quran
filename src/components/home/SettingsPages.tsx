@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
+import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 
@@ -191,11 +192,24 @@ export function TranslationPage() {
                   : "bg-white/[0.04] border-white/5 text-sand-100 hover:bg-white/[0.08] hover:border-white/15",
               )}
             >
-              <span className="flex flex-col">
-                <span className={cn("text-sm font-bold", c.id === "ta" && "font-tamil")} style={c.font && c.id !== "ta" ? { fontFamily: c.font } : undefined}>
-                  {c.label}
+              <span className="flex min-w-0 items-center gap-3">
+                {/* A circle with the language's own first letter. */}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/15 bg-white/10 text-base font-bold text-sand-50",
+                    c.id === "ta" && "font-tamil",
+                  )}
+                  style={c.font && c.id !== "ta" ? { fontFamily: c.font } : undefined}
+                >
+                  {[...c.label][0]}
                 </span>
-                <span className="text-xs text-sand-200/60">{c.hint}</span>
+                <span className="flex min-w-0 flex-col">
+                  <span className={cn("truncate text-sm font-bold", c.id === "ta" && "font-tamil")} style={c.font && c.id !== "ta" ? { fontFamily: c.font } : undefined}>
+                    {c.label}
+                  </span>
+                  <span className="truncate text-xs text-sand-200/60">{c.hint}</span>
+                </span>
               </span>
               {selected && (
                 <span className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full", s.showMeaning ? SELECTED_BADGE : "border border-white/25 text-sand-300/60")}>
@@ -294,6 +308,8 @@ export function QuranTextPage() {
               </button>
             ))}
           </div>
+          {/* IndoPak: a key to the waqf (stop) signs in the text. */}
+          {indoPak && <WaqfLegend lang={lang} />}
         </div>
       )}
       {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}
