@@ -1571,6 +1571,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             openRequest={browserOpenRequest}
             surahTracks={surahTracksForCurrentReciter}
             onSelectJuz={handleSelectJuz}
+            onOpenAyah={openSurahAt}
           />
         </HomeSettingsProvider>
       </ImmersiveHeader>
