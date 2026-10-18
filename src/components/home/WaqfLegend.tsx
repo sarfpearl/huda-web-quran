@@ -27,16 +27,16 @@ export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
             <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full bg-current ${g.dot}`} />
             {t(lang, g.title)}
           </p>
-          <ul className="grid gap-1.5">
+          <ul className="grid gap-2">
             {WAQF_LEGEND.filter((r) => r.group === g.id).map((r) => (
-              <li key={r.mark} className="flex items-center gap-2.5 text-xs text-sand-100/90">
+              <li key={r.mark} className="flex items-center gap-3 text-[13px] text-sand-100/90">
                 <span
                   lang="ar"
                   dir="rtl"
                   aria-hidden="true"
-                  className={`font-arabic quran-indopak grid h-9 w-9 shrink-0 place-items-center rounded-full border text-2xl leading-none ${g.disc}`}
+                  className={`font-arabic grid h-11 w-11 shrink-0 place-items-center rounded-full border leading-none ${g.disc} ${[...r.mark].length > 1 ? "text-xl" : "text-3xl"}`}
                 >
-                  {r.base ? `ـ${r.mark}` : r.mark}
+                  {r.mark}
                 </span>
                 <span>{t(lang, r.en)}</span>
               </li>

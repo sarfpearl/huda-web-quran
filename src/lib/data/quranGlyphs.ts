@@ -300,23 +300,28 @@ export function unloadPageFont(page: number): void {
  * the IndoPak script.
  */
 export type WaqfGroup = "stop" | "pause" | "continue";
-export const WAQF_LEGEND: { mark: string; base: boolean; en: string; group: WaqfGroup }[] = [
+/*
+ * `mark` is the sign's full Arabic-letter form (م, ج, ط …), drawn large and
+ * clearly — the teaching-chart style — rather than the tiny superscript the
+ * sign takes inside the running text.
+ */
+export const WAQF_LEGEND: { mark: string; en: string; group: WaqfGroup }[] = [
   // Stop
-  { mark: "ۘ", base: true, en: "Compulsory stop", group: "stop" },
-  { mark: "", base: false, en: "Anticipation mark", group: "stop" },
-  { mark: "ۛ", base: true, en: "Embracing stop (one of the two)", group: "stop" },
-  { mark: "", base: false, en: "End of section (Ruku’)", group: "stop" },
+  { mark: "م", en: "Compulsory stop", group: "stop" }, // م
+  { mark: "قف", en: "Anticipation mark", group: "stop" }, // قف
+  { mark: "∴", en: "Embracing stop (one of the two)", group: "stop" }, // ∴
+  { mark: "ع", en: "End of section (Ruku’)", group: "stop" }, // ع
   // Pause
-  { mark: "ؕ", base: true, en: "Absolute pause", group: "pause" },
-  { mark: "ۚ", base: true, en: "Permissible stop", group: "pause" },
-  { mark: "", base: true, en: "Licensed pause", group: "pause" },
-  { mark: "ۜ", base: true, en: "Silence (no breath)", group: "pause" },
-  { mark: "", base: false, en: "Longer pause (no breath)", group: "pause" },
+  { mark: "ط", en: "Absolute pause", group: "pause" }, // ط
+  { mark: "ج", en: "Permissible stop", group: "pause" }, // ج
+  { mark: "ص", en: "Licensed pause", group: "pause" }, // ص
+  { mark: "س", en: "Silence (no breath)", group: "pause" }, // س
+  { mark: "وقفه", en: "Longer pause (no breath)", group: "pause" }, // وقفہ
   // Continue
-  { mark: "ۖ", base: true, en: "Preference for continuation", group: "continue" },
-  { mark: "", base: true, en: "Better to continue", group: "continue" },
-  { mark: "ۙ", base: true, en: "No need to stop", group: "continue" },
-  { mark: "", base: false, en: "No need to stop", group: "continue" },
+  { mark: "صلى", en: "Preference for continuation", group: "continue" }, // صلى
+  { mark: "ز", en: "Better to continue", group: "continue" }, // ز
+  { mark: "لا", en: "No need to stop", group: "continue" }, // لا
+  { mark: "ق", en: "No need to stop", group: "continue" }, // ق
 ];
 
 /** Legend (Quran.com's grouping), colours = the fonts' dark palette. */
