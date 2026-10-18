@@ -330,7 +330,9 @@ export function TopicPickerModal({
     setVerseLoading(true);
     let cancelled = false;
     const timer = setTimeout(() => {
-      loadSearchIndex()
+      // Load the core index plus the UI language's own blobs (ta, ur, … are
+      // lazy; Arabic/English ride in core), so a search fetches only what it needs.
+      loadSearchIndex(lang)
         .then((index) => {
           if (cancelled) return;
           setVerseHits(searchVerses(index, terms, { anyTerm: !!topic }));
@@ -346,7 +348,7 @@ export function TopicPickerModal({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [isSearching, verseQuery, verseTopicKey]);
+  }, [isSearching, verseQuery, verseTopicKey, lang]);
 
   // Voice input (Web Speech API, no AI). Absent in some browsers → hide the mic.
   const [listening, setListening] = useState(false);
