@@ -68,19 +68,30 @@ export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
           const g = GROUPS.find((x) => x.id === sel)!;
           return (
             <li key={r.mark} className="flex items-center gap-3 text-[13px] text-sand-100/90">
+              {/* Arabic glyphs sit high on their line box and vary per letter,
+                  so CSS line-centering looks off. An SVG <text> with
+                  dominant-baseline="central" centres each glyph on the disc's
+                  geometric middle, consistently. */}
               <span
-                lang="ar"
-                dir="rtl"
                 aria-hidden="true"
                 className={cn(
-                  "font-arabic grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border leading-none",
+                  "grid h-11 w-11 shrink-0 place-items-center rounded-full border",
                   g.disc,
-                  [...r.mark].length > 1 ? "text-xl" : "text-3xl",
                 )}
               >
-                {/* Arabic sits high on its line box; nudge down to optically
-                    centre the glyph in the disc. */}
-                <span className="block translate-y-[0.16em] leading-none">{r.mark}</span>
+                <svg viewBox="0 0 44 44" className="h-full w-full">
+                  <text
+                    x="22"
+                    y="22"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="currentColor"
+                    fontSize={[...r.mark].length > 1 ? 17 : 26}
+                    className="font-arabic"
+                  >
+                    {r.mark}
+                  </text>
+                </svg>
               </span>
               <span>{t(lang, r.en)}</span>
             </li>
