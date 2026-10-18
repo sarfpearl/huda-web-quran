@@ -23,7 +23,7 @@ import { HoverTooltips } from "@/components/player/HoverTooltips";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import { ReciterPickerModal } from "./ReciterPickerModal";
 import { OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
-import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
+import { TAJWEED_LEGEND, WAQF_LEGEND } from "@/lib/data/quranGlyphs";
 
 /** How long the Tajweed panel stays open untouched before hiding itself. */
 const TAJWEED_AUTO_HIDE_MS = 4000;
@@ -408,6 +408,24 @@ export function ImmersiveHeader({
                         </button>
                       ))}
                     </div>
+                    {/* IndoPak: a key to the waqf (stop) signs in the text. */}
+                    {script === "indopak" && (
+                      <ul className="mt-2 grid gap-1.5 border-t border-white/10 px-1 pt-2">
+                        {WAQF_LEGEND.map((r) => (
+                          <li key={r.mark} className="flex items-center gap-2.5 text-xs text-sand-100/90">
+                            <span
+                              lang="ar"
+                              dir="rtl"
+                              aria-hidden="true"
+                              className="font-arabic quran-indopak grid h-6 w-7 shrink-0 place-items-center text-lg leading-none text-amber-200"
+                            >
+                              {r.base ? `ـ${r.mark}` : r.mark}
+                            </span>
+                            <span>{t(language, r.en)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
                 {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}

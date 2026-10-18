@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
+import { WAQF_LEGEND } from "@/lib/data/quranGlyphs";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 
@@ -294,6 +295,24 @@ export function QuranTextPage() {
               </button>
             ))}
           </div>
+          {/* IndoPak: a key to the waqf (stop) signs in the text. */}
+          {indoPak && (
+            <ul className="mt-3 grid gap-1.5 border-t border-white/10 pt-3">
+              {WAQF_LEGEND.map((r) => (
+                <li key={r.mark} className="flex items-center gap-2.5 text-xs text-sand-100/90">
+                  <span
+                    lang="ar"
+                    dir="rtl"
+                    aria-hidden="true"
+                    className="font-arabic quran-indopak grid h-6 w-7 shrink-0 place-items-center text-lg leading-none text-amber-200"
+                  >
+                    {r.base ? `ـ${r.mark}` : r.mark}
+                  </span>
+                  <span>{t(lang, r.en)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}

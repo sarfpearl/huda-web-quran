@@ -290,6 +290,30 @@ export function unloadPageFont(page: number): void {
   fontCache.delete(page);
 }
 
+/*
+ * IndoPak waqf (stop) signs legend. Each `mark` is the actual character used in
+ * the IndoPak data (public/data/quran-indopak) — standard Unicode waqf marks
+ * plus the QuranWBW font's own PUA glyphs (E01A ز, E01B ص, E01C ق, E01E قف,
+ * E01F وقفة, E022 ع ruku), verified by rendering them in the font. `base` means
+ * the mark sits above a letter, so a tatweel carrier is shown under it. Meanings
+ * follow the Indo-Pak waqf convention. Shown only for the IndoPak script.
+ */
+export const WAQF_LEGEND: { mark: string; base: boolean; en: string }[] = [
+  { mark: "ۘ", base: true, en: "Must stop" },
+  { mark: "ؕ", base: true, en: "Pause" },
+  { mark: "ۚ", base: true, en: "Stop or continue" },
+  { mark: "", base: true, en: "Better to continue" },
+  { mark: "ۖ", base: true, en: "Better to continue" },
+  { mark: "", base: true, en: "Can stop, better to continue" },
+  { mark: "", base: false, en: "Do not stop" },
+  { mark: "ۙ", base: true, en: "Do not stop" },
+  { mark: "", base: false, en: "Stop" },
+  { mark: "ۜ", base: true, en: "Pause without breath" },
+  { mark: "", base: false, en: "Longer pause without breath" },
+  { mark: "ۛ", base: true, en: "Stop at only one of the two" },
+  { mark: "", base: false, en: "End of section (Ruku’)" },
+];
+
 /** Legend (Quran.com's grouping), colours = the fonts' dark palette. */
 export const TAJWEED_LEGEND: { color: string; en: string; ta: string }[] = [
   { color: "#999999", en: "Silent letter", ta: "உச்சரிக்கப்படாத எழுத்து" },
