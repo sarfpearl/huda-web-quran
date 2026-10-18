@@ -212,14 +212,19 @@ function overflows(pane: HTMLElement) {
   return ((pane.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + pad > pane.clientHeight + 2;
 }
 
-function AyahOrnament({ n }: { n: number }) {
+function AyahOrnament({ n, indoPak = false }: { n: number; indoPak?: boolean }) {
   const lang = useUiLang();
   return (
     <span
       lang="ar"
       dir="rtl"
       aria-label={`${word("ayah", lang)} ${n}`}
-      className="font-arabic text-amber-300 select-none align-middle mx-1.5 tracking-normal [letter-spacing:0] text-[1.2em]"
+      // IndoPak draws end-of-ayah waqf marks (e.g. ؕ U+0615, ۙ U+06D9) whose ink
+      // overflows the last word's box toward the ornament; widen the gap on the
+      // preceding-word side only (inline-start in RTL) so they never collide.
+      className={`font-arabic text-amber-300 select-none align-middle tracking-normal [letter-spacing:0] text-[1.2em] ${
+        indoPak ? "ms-[18px] me-1.5" : "mx-1.5"
+      }`}
     >
       {toArabicNumerals(n)}
     </span>
@@ -750,7 +755,7 @@ export function CenterVerseDisplay({
                             {glyphs.e[0]}
                           </span>
                         ) : (
-                          <AyahOrnament n={ayahNum} />
+                          <AyahOrnament n={ayahNum} indoPak={indoPak} />
                         )}
                       </span>
                     );
@@ -762,7 +767,7 @@ export function CenterVerseDisplay({
               <span>
                 {activeItem.textArabic}
                 {showOrnament && (
-                  <AyahOrnament n={ayahNum} />
+                  <AyahOrnament n={ayahNum} indoPak={indoPak} />
                 )}
               </span>
             )}

@@ -1005,7 +1005,12 @@ export function ReadingView({
               ) : (
                 <span
                   aria-label={`${word("ayah", lang)} ${ref.ayah}`}
-                  className="font-arabic mx-1.5 align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+                  // IndoPak end-of-ayah waqf marks (e.g. ؕ U+0615, ۙ U+06D9) overflow
+                  // the last word's box toward the ornament; widen the preceding-word
+                  // side only (inline-start in RTL) so they never collide.
+                  className={`font-arabic align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0] ${
+                    indoPak ? "ms-[18px] me-1.5" : "mx-1.5"
+                  }`}
                 >
                   {toArabicNumerals(ref.ayah)}
                 </span>
