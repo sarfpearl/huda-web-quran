@@ -1074,7 +1074,7 @@ export function ReadingView({
           key={`t${out.length}`}
           lang="ar"
           dir="rtl"
-          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-center text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
+          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-justify [text-align-last:center] text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
         >
           {parts.map((p, i) => renderPart(p, `${p.ref.surah}:${p.ref.ayah}:${p.from}:${i}`))}
         </p>

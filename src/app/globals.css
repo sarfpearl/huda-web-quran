@@ -93,6 +93,14 @@
   .font-arabic :where(span, div, p) {
     font-family: inherit;
   }
+  /* body sets Poppins cv02/03/04/11 (UI-font character variants); inherited into
+     a Quran font they remap glyphs — in IndoPak the jazm/sukun (U+06E1) becomes a
+     large hollow circle instead of the small head-of-khah. Reset to each Quran
+     font's own defaults (matches Quran.com, which uses no feature overrides). */
+  .font-arabic,
+  .font-arabic :where(span, div, p) {
+    font-feature-settings: normal;
+  }
   html,
   body {
     max-width: 100vw;
