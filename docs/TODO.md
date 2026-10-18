@@ -473,6 +473,11 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
 - [x] **Sukun (2026-10-18):** the words are drawn with U+0652 (the font's
       jazm) for the source's U+06E1 (a hollow ring), as the app does since
       PR #116 — the same QA result.
+- [ ] **Asked QuranWBW (2026-10-18, owner's email):** is the glyph-by-glyph
+      drawing within the permission, and is showing U+06E1 as U+0652 (PR #116,
+      live) acceptable? Sent with `docs/qa/quranwbw-screenshots/huda-indopak-tajweed-sheet.pdf`.
+      Waiting on their reply — nothing ships until then; a no on the sukun
+      means reverting #116's swap.
 - [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
       Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
       Preview: the Vercel link on draft PR #115 (+ `/dev/indopak-tajweed`).
