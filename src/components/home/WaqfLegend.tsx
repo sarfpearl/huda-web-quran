@@ -1,9 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { WAQF_LEGEND, type WaqfGroup } from "@/lib/data/quranGlyphs";
 import { cn } from "@/lib/utils";
 import { t, useUiLang, type UiLang } from "@/lib/uiLang";
+
+/*
+ * A waqf letter centred on the disc by its INK, not its font box. Arabic
+ * glyphs carry very different ascenders/descenders (ط sits high, ج hangs low),
+ * so dominantBaseline="central" — which centres the font's em-box — leaves each
+ * letter visibly off by up to ~10px. Measure the drawn ink with a canvas and
+ * put its optical middle on the disc's geometric centre, re-measuring once the
+ * Arabic web font has loaded.
+ */
+const DISC = 44; // SVG viewBox units (matches the h-11 w-11 disc)
+const MID = DISC / 2;
+
+function WaqfGlyph({ mark, size }: { mark: string; size: number }) {
+  const textRef = useRef<SVGTextElement>(null);
+  // Fallback before measuring: the font-box centre (what we had before).
+  const [baseY, setBaseY] = useState(MID);
+  useEffect(() => {
+    let cancelled = false;
+    const measure = () => {
+      const el = textRef.current;
+      if (!el) return;
+      const ctx = document.createElement("canvas").getContext("2d");
+      if (!ctx) return;
+      ctx.font = `${size}px ${getComputedStyle(el).fontFamily}`;
+      const m = ctx.measureText(mark);
+      const asc = m.actualBoundingBoxAscent;
+      const desc = m.actualBoundingBoxDescent;
+      if (!(asc >= 0) || !(desc >= -size)) return; // metrics unavailable
+      // Ink middle sits (desc-asc)/2 below the baseline; place it on MID.
+      if (!cancelled) setBaseY(MID - (desc - asc) / 2);
+    };
+    measure();
+    document.fonts?.ready?.then(() => { if (!cancelled) measure(); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [mark, size]);
+  return (
+    <svg viewBox={`0 0 ${DISC} ${DISC}`} className="h-full w-full">
+      <text
+        ref={textRef}
+        x={MID}
+        y={baseY}
+        textAnchor="middle"
+        fill="currentColor"
+        fontSize={size}
+        className="font-arabic"
+      >
+        {mark}
+      </text>
+    </svg>
+  );
+}
 
 /*
  * The IndoPak waqf (stop) signs, filtered by group — Stop / Pause / Continue
@@ -68,10 +119,8 @@ export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
           const g = GROUPS.find((x) => x.id === sel)!;
           return (
             <li key={r.mark} className="flex items-center gap-3 text-[13px] text-sand-100/90">
-              {/* Arabic glyphs sit high on their line box and vary per letter,
-                  so CSS line-centering looks off. An SVG <text> with
-                  dominant-baseline="central" centres each glyph on the disc's
-                  geometric middle, consistently. */}
+              {/* Each sign is optically centred on its disc by its ink
+                  (WaqfGlyph), so letters with tall/low strokes line up. */}
               <span
                 aria-hidden="true"
                 className={cn(
@@ -79,19 +128,7 @@ export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
                   g.disc,
                 )}
               >
-                <svg viewBox="0 0 44 44" className="h-full w-full">
-                  <text
-                    x="22"
-                    y="22"
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fill="currentColor"
-                    fontSize={[...r.mark].length > 1 ? 17 : 26}
-                    className="font-arabic"
-                  >
-                    {r.mark}
-                  </text>
-                </svg>
+                <WaqfGlyph mark={r.mark} size={[...r.mark].length > 1 ? 17 : 26} />
               </span>
               <span>{t(lang, r.en)}</span>
             </li>
