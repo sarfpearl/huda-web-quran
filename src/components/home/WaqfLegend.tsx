@@ -1,0 +1,49 @@
+"use client";
+
+import { WAQF_LEGEND, type WaqfGroup } from "@/lib/data/quranGlyphs";
+import { t, useUiLang, type UiLang } from "@/lib/uiLang";
+
+/*
+ * The IndoPak waqf (stop) signs, grouped Stop / Pause / Continue with a colour
+ * per group (brown-red / amber / green, as reciters' charts show them). Each
+ * sign is drawn large in the IndoPak font inside a coloured disc so the mark is
+ * clearly legible; the meaning is translated into the UI language. Used by the
+ * Tajweed panel (ImmersiveHeader) and the Script settings page, IndoPak only.
+ */
+const GROUPS: { id: WaqfGroup; title: string; disc: string; dot: string }[] = [
+  { id: "stop", title: "Stop", disc: "bg-rose-950/70 border-rose-400/40 text-rose-50", dot: "text-rose-300" },
+  { id: "pause", title: "Pause", disc: "bg-amber-900/60 border-amber-400/40 text-amber-50", dot: "text-amber-300" },
+  { id: "continue", title: "Continue", disc: "bg-emerald-900/60 border-emerald-400/40 text-emerald-50", dot: "text-emerald-300" },
+];
+
+export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
+  const uiLang = useUiLang();
+  const lang = langProp ?? uiLang;
+  return (
+    <div className="mt-2 grid gap-3 border-t border-white/10 pt-3">
+      {GROUPS.map((g) => (
+        <div key={g.id}>
+          <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-sand-200/70">
+            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full bg-current ${g.dot}`} />
+            {t(lang, g.title)}
+          </p>
+          <ul className="grid gap-1.5">
+            {WAQF_LEGEND.filter((r) => r.group === g.id).map((r) => (
+              <li key={r.mark} className="flex items-center gap-2.5 text-xs text-sand-100/90">
+                <span
+                  lang="ar"
+                  dir="rtl"
+                  aria-hidden="true"
+                  className={`font-arabic quran-indopak grid h-9 w-9 shrink-0 place-items-center rounded-full border text-2xl leading-none ${g.disc}`}
+                >
+                  {r.base ? `ـ${r.mark}` : r.mark}
+                </span>
+                <span>{t(lang, r.en)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
