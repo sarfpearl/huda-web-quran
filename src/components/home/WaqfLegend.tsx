@@ -34,9 +34,11 @@ export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
                   lang="ar"
                   dir="rtl"
                   aria-hidden="true"
-                  className={`font-arabic grid h-11 w-11 shrink-0 place-items-center rounded-full border leading-none ${g.disc} ${[...r.mark].length > 1 ? "text-xl" : "text-3xl"}`}
+                  className={`font-arabic grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border ${g.disc} ${[...r.mark].length > 1 ? "text-xl" : "text-3xl"}`}
                 >
-                  {r.mark}
+                  {/* Arabic sits high on its line box; nudge down to optically
+                      centre the glyph in the disc. */}
+                  <span className="block leading-none translate-y-[0.08em]">{r.mark}</span>
                 </span>
                 <span>{t(lang, r.en)}</span>
               </li>
