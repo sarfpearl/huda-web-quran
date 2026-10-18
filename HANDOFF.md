@@ -1,7 +1,7 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Antigravity / Claude / any AI assistant continuing this project  
-> **Last Updated:** 2026-10-15  
+> **Last Updated:** 2026-10-18  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
 > **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
@@ -11,17 +11,17 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-15, after PR #106.*
+*Snapshot: 2026-10-18, after PR #117.*
 
 | Item | Status |
 | :--- | :--- |
-| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font) |
+| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font); verse/topic/voice search in the content browser |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `06b868e` — Merge PR #106 (`feat/audio-only-reading-follow`) |
-| **Latest merged PRs** | #106 Audio Only reading follow · #105 Video manifest update (187 clips) & HANDOFF · #100–#104 IndoPak QuranWBW font live & UI polish · #98 Supabase IP hardening · #97 Next.js 15.5.27 + React 19 · #95 pinch text sizing · #90–#93 Focus reading mode · #91 Zawal & Jumu'ah · #82 repeat/shuffle player mode |
+| **`main`** | `7a028ab` — chore(sw): bump cache VERSION v2 → v3 (#117) |
+| **Latest merged PRs** | #117 sw cache VERSION v3 · #116 IndoPak sukun/justify fixes · #114 search index split by language · #113 waqf-legend centring · #112 search box above tabs · #111/#110/#109/#107 IndoPak + verse/topic/voice search · #106 Audio Only reading follow · #105 Video manifest (187 clips) |
 | **Open PRs** | None |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
-| **Local working tree** | clean |
+| **Local working tree** | **not clean** — see §5: a new, uncommitted automated video-generation pipeline (`.agents/`, `data/`, `scripts/pipeline/`, `tests/`, `review_surah_*.html`, `docs/VIDEO_BUDGET_LEDGER.json`) plus 2 modified files |
 
 ---
 
@@ -92,6 +92,36 @@
 
 ---
 
+## 2a. 🎬 Automated Video Pipeline — IN PROGRESS, uncommitted (2026-10-18)
+
+> This is new, **not yet committed**, work set up specifically for **Antigravity** to drive next. It generates per-Surah cinematic background clips (Veo 3.1-fast + Gemini stills) in thematic 5–10 ayah sets, replacing the older ad-hoc clip scripts in §2 item 10/16.
+
+- **Antigravity skill:** `.agents/skills/surah-video-production/SKILL.md` — Antigravity auto-discovers skills under `.agents/skills/<name>/SKILL.md`. Triggers on "complete video production for Surah N", "plan next clip", "advance Surah workflow", "remediate video defects".
+- **Safety rules:** `.agents/rules/video-pipeline-gates.md` — strict **16-state lifecycle** per clip (`CLIP_PLAN_PENDING_APPROVAL` → … → `COMPLETED`), decoupled human approval gates (plan / image / video-gen / video-review / PR-merge / prod-deploy must each be separate approvals), the ₹600 INR hard-stop reserve floor must never be breached, verse text only from local `public/data/quran-verses/<surah>.json` (never fabricate/alter), resume polling instead of re-submitting a paid Veo op, and **never touch `videoManifest.ts` / R2 / Vercel during planning or local staging**.
+- **Pipeline code:** `scripts/pipeline/` (new, ~10,350 lines) — `surah-orchestrator.mjs`, `surah-state-machine.mjs`, `surah-pipeline.mjs`, `generation-adapter.mjs` / `image-generation-adapter.mjs` (Veo + Gemini calls), `surah-qa-composite.mjs`, `visual-evaluator.mjs`, `seam-processor.mjs` (0.40s crossfade), `surah-staging.mjs`, `complete-pilot-postprocessing.mjs`, `surah-meaning-overrides.mjs`, `generate_surah114_storyboard_videos.mjs`.
+- **Budget guard:** `scripts/tools/video-budget-guard.mjs` + ledger `docs/VIDEO_BUDGET_LEDGER.json` — project `project-04027e7d-9805-47dc-bdf` (Veo), cost **₹76.791/video** clip + ₹2.55/still, starting credit ₹28,796.63, hard-stop floor ₹600. As of the last ledger entry (2026-10-16T13:34): 16 successful generations, 0 failed, **₹27,550.12 remaining**.
+- **Progress tracker:** `data/progress.json` — `pipelineVersion 1.0.0`, `currentSurah: 9`, `completedSurahCount: 5`.
+  | Surah | Verses | Status | Notes |
+  | :--- | :--- | :--- | :--- |
+  | 3 | 200 | `LOCAL_APPROVED` | 117/200 ayahs done, **83 pending** — not yet deployed |
+  | 4 | 176 | `DEPLOYED` | 25/25 sets, deployed 2026-10-18T10:06 |
+  | 5 | 120 | `DEPLOYED` | 17/17 sets |
+  | 6 | 165 | `DEPLOYED` | 23/23 sets |
+  | 7 | 206 | `DEPLOYED` | 29/29 sets |
+  | 8 | 75 | `DEPLOYED` | 11/11 sets |
+  | 9 | 129 | `LOCAL_READY` | 18/18 sets, **awaiting deploy** (per-Surah QA review: `review_surah_9.html`) |
+  | 10–114 | — | not started | next up after 9 |
+- **QA review files (uncommitted, repo root):** `review_surah_3.html` … `review_surah_9.html` — human-facing composite review pages per Surah, one set per thematic clip, generated by `surah-qa-composite.mjs`.
+- **Tests:** `tests/pipeline/image-video-lifecycle.test.mjs`, `tests/pipeline/visual-evaluator.test.mjs`.
+- **For Antigravity, pick up here:**
+  1. Surah 3 is mid-flight (`LOCAL_APPROVED`, 83 ayahs still pending) — finish its remaining sets before moving on, or confirm with the owner whether to deploy what's done first.
+  2. Surah 9 (`LOCAL_READY`) is fully generated and QA-reviewed locally but **not deployed** — needs the deploy step (state 13→16: commit → push → PR → review → merge → prod deploy → live verify) per the 16-state gate file.
+  3. Surah 10 onward: run the orchestrator fresh per the skill's "plan next clip" flow.
+  4. Check `docs/VIDEO_BUDGET_LEDGER.json`'s `estimatedRemainingCreditINR` before any new paid generation, and never let it cross the ₹600 floor.
+  5. None of this is committed to git yet (see §5) — decide with the owner whether to commit the pipeline code/tests now (separately from per-Surah video assets, which are large media and should stay out of the sandboxed git proxy push — it 408s on big pushes).
+
+---
+
 ## 3. Production R2 Media Issue — ✅ RESOLVED (verified 2026-10-05)
 
 - **Cause:** Vercel env var `NEXT_PUBLIC_MEDIA_BASE_URL` was saved with a trailing `"4f"` (`…r2.dev4f`) → DNS failure (503) and `/_next/image` rejections (400).
@@ -111,6 +141,8 @@
 ### Open
 
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
+
+- [ ] **Primary next step (Antigravity):** continue the automated video pipeline — see §2a. Finish Surah 3's remaining 83 ayahs, deploy Surah 9, then proceed Surah 10 → 114.
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [x] **IndoPak font licence:** granted by QuranWBW (2026-10-11); font self-hosted and live (PR #100, #103, #104).
@@ -157,15 +189,42 @@
 
 ## 5. Git / Uncommitted Work
 
-*2026-10-14: working tree clean; PR branch for video manifest & HANDOFF update open.*
+*2026-10-18: working tree NOT clean — see §2a for what this is.*
+
+| Path | Type | What it is |
+| :--- | :--- | :--- |
+| `package-lock.json` | modified | dependency lock update |
+| `scripts/tools/upload-to-r2.mjs` | modified | R2 upload tool changes (check diff before committing) |
+| `.agents/` | untracked | Antigravity skill (`skills/surah-video-production/SKILL.md`) + safety rules (`rules/video-pipeline-gates.md`) |
+| `AGENTS.md` | untracked | repo-level AI-assistant instructions (Tamil replies, reply structure) |
+| `data/progress.json` | untracked | video pipeline progress tracker (§2a) |
+| `docs/VIDEO_BUDGET_LEDGER.json` | untracked | Veo generation spend ledger (§2a) |
+| `review_surah_3.html` … `review_surah_9.html` | untracked | per-Surah video QA review pages (§2a) |
+| `scripts/generation/generate_surah3_trial_remediation.mjs` | untracked | Surah 3 remediation script |
+| `scripts/pipeline/` | untracked | the pipeline codebase (§2a) |
+| `scripts/tools/video-budget-guard.mjs` | untracked | budget-floor guard (§2a) |
+| `tests/` | untracked | pipeline unit tests (§2a) |
+
+None of this has been committed, pushed, or reviewed — it's exactly as left before handing off to Antigravity. Review with the owner before committing: separate the pipeline **code** (small, safe to commit) from any generated **video/image assets** it produced under `scratch/` (large media — do not push).
 
 > [!WARNING]
-> **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`.
+> **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`. **This applies directly to the Claude ↔ Antigravity handoff now** — if both touch this checkout at once, expect the same collision.
 
 ---
 
 ## 6. Important Git History
 
+- `7a028ab` — **PR #117** `chore/sw-cache-v3`: bump service-worker cache VERSION v2 → v3
+- `11f0613` — **PR #116** `fix/indopak-sukun-justify`: sukun renders as filled jazm; tighten immersive & justify reading
+- `fff9898` — **PR #114** `perf/search-index-split`: verse search index split by language, loaded on demand
+- `b071351` — **PR #113** `fix/waqf-legend-centre`: optically centre each waqf sign by its ink
+- `8363c8f` — **PR #112** `fix/search-above-tabs`: move search box above the Surah/Juz tabs
+- `7f14c54` — **PR #111** `fix/indopak-ayah-gap`: scale ayah-number ↔ waqf gap with Arabic size
+- `1ac5f01` — **PR #110** `fix/indopak-ayah-overlap`: stop ayah-number ornament overlapping waqf marks
+- `620f7aa` — **PR #109** `feat/content-search`: verse, topic & voice search in the content browser
+- `38eb0bd` / `34772e3` — **PR #107** `docs/indopak-tajweed-note`: IndoPak Tajweed colours wait on QuranWBW's future font
+- `c6777f2` — video: bump video versions for remediated Surah 3 clips 01a, 02c, 10a
+- `a8f1c40` — docs: separate authentic real-footage registry from synthetic AI registry; verify Surah 2
 - `e2188c3` — **PR #104** `fix/indopak-panel-divider`: no stray divider under the script picker in IndoPak
 - `cc5f628` — **PR #103** `fix/indopak-hide-tajweed`: hide the Tajweed switch in IndoPak
 - `09e9503` — **PR #102** `docs/todo-spam-guard-done`: comment spam guard is live; backups deferred
