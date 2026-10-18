@@ -9,6 +9,7 @@ import {
   loadPageFont,
   type GlyphVerse,
 } from "@/lib/data/quranGlyphs";
+import { toArabicNumerals } from "@/lib/data/quranVerses";
 import { GlyphWordSvg, useGlyphPaths, type GlyphFile } from "./GlyphWords";
 
 type Run = [text: string, colour: number | null];
@@ -19,6 +20,19 @@ type Ayah = { a: number; w: Run[][]; nl?: number[] };
 const NO_LIGA = { fontFeatureSettings: '"liga" 0' } as const;
 
 const SIZES = [28, 34, 42];
+
+/** The reader's IndoPak ayah number (ReadingView): the end-of-ayah waqf marks
+ *  overflow toward it, so an em gap, wider on the preceding word's side. */
+function AyahNumber({ n }: { n: number }) {
+  return (
+    <span
+      lang="ar"
+      className="font-arabic ms-[0.55em] me-[0.3em] align-middle text-[1.1em] text-amber-300 select-none [letter-spacing:0]"
+    >
+      {toArabicNumerals(n)}
+    </span>
+  );
+}
 
 // Browser check (one screenshot on a device): the same cases as
 // scripts/qa/indopak-tajweed-webkit.py. Chromium and WebKitGTK 2.52.6 give
@@ -200,7 +214,7 @@ export function IndoPakTajweedPreview() {
                 </div>
                 <div>
                   <span className="text-[11px] uppercase tracking-wider text-sand-300/50 md:hidden">IndoPak · prototype</span>
-                  <p dir="rtl" lang="ar" className="font-arabic quran-indopak" style={{ fontSize: SIZES[size], lineHeight: 2.1 }}>
+                  <p dir="rtl" lang="ar" className="font-arabic quran-indopak" style={{ fontSize: SIZES[size], lineHeight: 2.3 }}>
                     {w.map((runs, wi) => (
                       <span key={wi} style={coloured && nl?.includes(wi) ? NO_LIGA : undefined}>
                         {runs.map(([text, c], ri) =>
@@ -214,7 +228,7 @@ export function IndoPakTajweedPreview() {
                         )}{" "}
                       </span>
                     ))}
-                    <span className="font-sans text-base text-sand-300/60"> ({a})</span>
+                    <AyahNumber n={a} />
                   </p>
                   <span className="text-[11px] uppercase tracking-wider text-sand-300/50">IndoPak · glyphs (SVG)</span>
                   <p dir="rtl" lang="ar" className="flex flex-wrap items-center gap-x-[0.3em] gap-y-1" style={{ fontSize: SIZES[size] }}>
@@ -233,6 +247,7 @@ export function IndoPakTajweedPreview() {
                             />
                           ))
                       : <span className="font-sans text-sm text-sand-300/60">Loading…</span>}
+                    {glyphs && paths && <AyahNumber n={a} />}
                   </p>
                 </div>
               </div>
