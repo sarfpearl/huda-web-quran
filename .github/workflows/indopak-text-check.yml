@@ -1,0 +1,35 @@
+# Weekly: has Quran.com's IndoPak text (text_indopak_nastaleeq) changed since
+# we fetched it? Opens an issue (or comments on the open one) when it has;
+# never changes the data — see scripts/qa/check-indopak-nastaleeq.mjs.
+name: IndoPak text check
+
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - id: check
+        run: node scripts/qa/check-indopak-nastaleeq.mjs report.md
+      - if: steps.check.outputs.changed != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="IndoPak text changed on Quran.com"
+          num=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [ -n "$num" ]; then
+            gh issue comment "$num" --body-file report.md
+          else
+            gh issue create --title "$title" --body-file report.md
+          fi
