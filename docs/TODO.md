@@ -486,6 +486,9 @@ onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
       the font's own small meem (U+F64A / U+F65D) as the iqlab mark; glyph
       220 / 230, Chromium 198 / 230, genuine mismatch 0 (2:2 w2 and 2:10 w9
       reviewed: calligraphy position).
+- [x] **iPhone Safari, glyph rows (2026-10-19, iOS 18.7, owner's screenshots):**
+      browser check 9–11 drawn glyph by glyph show the mark colours — the grey
+      tanween, the pink small alef, the pink-red maddah — as in Chromium.
 - [ ] **Asked QuranWBW (2026-10-18, owner's email):** is the glyph-by-glyph
       drawing within the permission, and is showing U+06E1 as U+0652 (PR #116,
       live) acceptable? Sent with `docs/qa/quranwbw-screenshots/huda-indopak-tajweed-sheet.pdf`.
