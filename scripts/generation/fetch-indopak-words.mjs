@@ -7,7 +7,9 @@
  * (public/data/quran-glyphs) and so as the reciters' word timings — the word
  * highlight and tap-to-seek work unchanged.
  *
- * Source: Quran.com `text_indopak`, copied verbatim. It is encoded for the
+ * Source: Quran.com / Quran Foundation API `text_indopak_nastaleeq`, copied
+ * verbatim — the text QuranWBW asked us to use (2026-10-19: `text_indopak` is
+ * the older, deprecated IndoPak of legacy Quran.com). It is encoded for the
  * "AlQuran IndoPak by QuranWBW" font (it uses that font's private-use
  * characters), which may only be used with QuranWBW's written permission —
  * see docs/TODO.md before shipping it.
@@ -41,14 +43,14 @@ async function get(url) {
 await mkdir(OUT, { recursive: true });
 for (let n = 1; n <= 114; n++) {
   const json = await get(
-    `https://api.quran.com/api/v4/verses/by_chapter/${n}?words=true&per_page=300&word_fields=text_indopak`
+    `https://api.quran.com/api/v4/verses/by_chapter/${n}?words=true&per_page=300&word_fields=text_indopak_nastaleeq`
   );
   const glyphs = JSON.parse(await readFile(resolve(GLYPHS, `${n}.json`), "utf8"));
   const verses = json.verses.map((v, i) => {
     const words = v.words
       .filter((w) => w.char_type_name === "word")
       .flatMap((w) => {
-        const text = w.text_indopak.trim();
+        const text = w.text_indopak_nastaleeq.trim();
         if (!SPLIT_POSITIONS.has(`${n}:${v.verse_number}:${w.position}`)) return [text];
         return text.split(/\s+/);
       });
