@@ -33,9 +33,8 @@ KNOWN = {
     # Same letters coloured; the two calligraphies place them differently
     # (reviewed letter by letter on the comparison sheet).
     *{(r, w, k, "calligraphy position") for r, w, k in [
-        ("2:4", 12, "span"), ("2:7", 9, "span"), ("2:7", 12, "span"), ("2:8", 10, "span"),
-        ("2:9", 10, "span"), ("2:19", 11, "span"), ("2:19", 16, "span"), ("2:19", 19, "shifted"),
-        ("2:20", 4, "span"), ("2:20", 19, "span")]},
+        ("2:2", 2, "shifted"), ("2:4", 12, "span"), ("2:7", 12, "span"), ("2:8", 10, "span"),
+        ("2:10", 9, "span"), ("2:19", 11, "span"), ("2:19", 19, "shifted")]},
 }
 
 
@@ -95,7 +94,7 @@ class Build(unittest.TestCase):
         # لِّلۡمُتَّقِيۡنَ: ق Tafkhim, ي madd 2/4/6, ن plain — and painted so:
         # the font's يۡن ligature would spread the ي's orange onto the ن.
         lc = letter_colours(self.word(2, 7))
-        self.assertEqual(lc, [("ل", None), ("ل", None), ("م", None), ("ت", None), ("ق", TAFKHIM), ("ي", MADD246), ("ن", None)])
+        self.assertEqual(lc, [("ل", None), ("ل", None), ("م", None), ("ت", None), ("ق", TAFKHIM), ("ی", MADD246), ("ن", None)])
         self.assertIn(6, self.ayah[2]["nl"])
         ip, icol, liga = self.painted(2, 7)
         self.assertFalse(liga)
@@ -105,7 +104,8 @@ class Build(unittest.TestCase):
 
     def test_verse2_matches_v4(self):
         for w in range(1, len(self.ayah[2]["w"]) + 1):
-            self.assertEqual(self.issues(2, w), [], f"2:2 w{w}")
+            if ("2:2", w) not in b.REVIEW:  # w2: reviewed calligraphy position
+                self.assertEqual(self.issues(2, w), [], f"2:2 w{w}")
 
     # ── Marks, several colours, word boundaries, normalisation ──
 
@@ -133,12 +133,12 @@ class Build(unittest.TestCase):
         self.assertIsNone(letter_colours(self.word(2, 7))[0][1])
 
     def test_unicode_normalisation(self):
-        # ٱلۡكِتَٰبُ ↔ الۡڪِتٰبُ: ٱ → ا (hamzat al-wasl grey), ك ↔ ڪ aligned (the
-        # small alef pink on the ت in both).
+        # ٱلۡكِتَٰبُ ↔ الْكِتٰبُ: ٱ → ا (hamzat al-wasl grey), the small alef pink
+        # on the ت in both; لِّلۡمُتَّقِينَ ↔ لِّلْمُتَّقِیْنَ: ي ↔ ی aligned (madd).
         cs = colours_of(self.word(2, 2))
         self.assertEqual(cs[0], ("ا", SILENT))
         self.assertIn(("ٰ", MADD2), cs)
-        self.assertIn("ڪ", "".join(ch for ch, _ in cs))
+        self.assertIn(("ی", MADD246), letter_colours(self.word(2, 7)))
 
     def test_mark_on_a_neighbouring_letter(self):
         # ٱلصَّلَوٰةَ ↔ الصَّلٰوةَ: the small alef sits on the و in Uthmani,
@@ -170,11 +170,8 @@ class Build(unittest.TestCase):
     # ── All of Al-Baqarah 1–20 ──
 
     def test_text_and_order_preserved(self):
-        # The source text, with only the sukun as the app draws it (U+06E1 → U+0652).
         for a, x in self.ayah.items():
-            self.assertEqual(["".join(t for t, _ in runs) for runs in x["w"]],
-                             [b.as_drawn(t) for t in self.indopak[a]["w"]], f"2:{a}")
-            self.assertNotIn("\u06E1", "".join(t for runs in x["w"] for t, _ in runs), f"2:{a}")
+            self.assertEqual(["".join(t for t, _ in runs) for runs in x["w"]], self.indopak[a]["w"], f"2:{a}")
 
     def test_every_colour_painted_as_given(self):
         for a, x in self.ayah.items():
@@ -199,7 +196,7 @@ class Build(unittest.TestCase):
         found = {(r.ref, r.word, r.kind, r.category) for r in self.rows if r.model == "glyph"}
         self.assertEqual(found, KNOWN)
         self.assertEqual(self.stats["words"], 230)
-        self.assertEqual(self.stats["words matching V4 (glyph)"], 217)
+        self.assertEqual(self.stats["words matching V4 (glyph)"], 220)
 
     def test_no_unreviewed_difference(self):
         # Every difference from V4 is explained: no genuine colour mismatch left.
@@ -244,7 +241,7 @@ class Build(unittest.TestCase):
         # يُوۡقِنُوۡنَ (2:4): the rule data marks the madd on the ن's damma; the
         # و carries it (as in V4), the ن stays plain.
         self.assertEqual(letter_colours(self.word(4, 12)),
-                         [("ي", None), ("و", None), ("ق", TAFKHIM), ("ن", None), ("و", MADD246), ("ن", None)])
+                         [("ی", None), ("و", None), ("ق", TAFKHIM), ("ن", None), ("و", MADD246), ("ن", None)])
 
     # ── Chromium paints a mark in its letter's colour ──
 

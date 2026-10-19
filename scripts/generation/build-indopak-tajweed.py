@@ -103,17 +103,17 @@ LETTER = re.compile(r"[ء-غف-يٱ-ۓە]")
 PLAIN = re.compile(r"[\sۖ-ۜ۞۩​-‏]")
 TANWEEN = set("ًࣰٌࣱٍࣲٗٞ")
 MADD = set("ٰٓۤ")
-MARK_CLASS = [TANWEEN, MADD, set("ۭۢ")]
 HEAVY = set("خصضغطقظ")
 # What a rule colours (QPC): a madd its madd letter / mark, a ghunnah family
 # rule its noon / meem / tanween — the letter carrying it keeps its own colour.
 # (A necessary madd keeps its whole span: QPC colours the letters of الٓمٓ red.)
 MADD_RULES = {"madd_2", "madd_246", "madd_munfasil", "madd_muttasil"}
-MADD_CHARS = set("اويىٰٓۥۦۤ")
-# The madd letter a vowel lengthens into: damma → و, kasra → ي / ى, fatha → ا / ى.
-LONG_AFTER = {"ُ": "و", "ِ": "يى", "َ": "اى"}
+MADD_CHARS = set("اويىیٰٓۥۦۤ")
+# The madd letter a vowel lengthens into: damma → و, kasra → ي / ى / ی, fatha → ا / ى / ی.
+LONG_AFTER = {"ُ": "و", "ِ": "يىی", "َ": "اىی"}
 NASAL_RULES = {"ghunnah", "ikhfa", "ikhfa_shafawi", "iqlab"}
-IQLAB_MARKS = set("ۭۢ")  # small meem
+IQLAB_MARKS = set("ۭۢ")  # small meem (text_indopak_nastaleeq: also the font's U+F64A / U+F65D)
+MARK_CLASS = [TANWEEN, MADD, IQLAB_MARKS]
 NASAL_MARKS = IQLAB_MARKS | TANWEEN
 NASAL_CHARS = set("نم") | NASAL_MARKS
 PAUSE = re.compile(r"[ۖ-ۜ]")
@@ -628,20 +628,13 @@ def compare(ref, ours):
 
 # ── Build ───────────────────────────────────────────────────────────────────
 
-def as_drawn(word):
-    """The IndoPak word as the app draws it (quranGlyphs.ts plainIndoPak): the
-    source's sukun U+06E1, a hollow ring in this font, as U+0652, its jazm."""
-    return word.replace("\u06E1", "\u0652")
-
-
 def build(rule_data, surah, first=1, last=999, shaper=None, v4=None):
     """(ayahs for the JSON, diagnostic rows, stats)."""
     text_of, rules_of = load_rules(rule_data)
     shaper = shaper or Shaper()
     v4 = v4 or V4()
     glyph_data = json.loads((GLYPHS / f"{surah}.json").read_text())
-    indopak = [{**v, "w": [as_drawn(t) for t in v["w"]]}
-               for v in json.loads((INDOPAK / f"{surah}.json").read_text())]
+    indopak = json.loads((INDOPAK / f"{surah}.json").read_text())
     bismillah = len(text_of[(1, 1)]) + 1 if (1, 1) in text_of else 40
     stats, rows, result, glyph_ayahs = Counter(), [], [], []
     for gv, iv in zip(glyph_data, indopak):
@@ -720,6 +713,8 @@ Row = namedtuple("Row", "ref word uthmani indopak expected actual kind cause mod
 # letters carry the same colours; the two calligraphies place them apart.
 CALLIGRAPHY = "calligraphy position"
 REVIEW = {
+    ("2:2", 2): CALLIGRAPHY,    # الْكِتٰبُ: the small alef on the ت (text_indopak_nastaleeq's ك, not ڪ: the ت sits right of where V4 has it)
+    ("2:10", 9): CALLIGRAPHY,   # اَلِیْمٌ: the tanween and the small meem green — the text puts the meem after the waqf sign
     ("2:4", 12): CALLIGRAPHY,   # يُوۡقِنُوۡنَ: و orange (the data's madd on the ن's damma moved to it)
     ("2:7", 9): CALLIGRAPHY,    # غِشَاوَةٌ: the tanween's grey (on ة in both)
     ("2:7", 12): CALLIGRAPHY,   # عَظِيۡمٌ: ي orange
