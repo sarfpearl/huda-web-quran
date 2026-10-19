@@ -1,10 +1,10 @@
 {
   "pipelineVersion": "1.0.0",
   "lastUpdated": "2026-10-18T23:24:13.335Z",
-  "currentSurah": 16,
+  "currentSurah": 17,
   "status": "RUNNING",
   "totalSurahs": 114,
-  "completedSurahCount": 13,
+  "completedSurahCount": 14,
   "surahs": {
     "3": {
       "surahNumber": 3,
@@ -175,6 +175,19 @@
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
       "lastUpdated": "2026-10-19T02:05:39.705Z",
       "deployedAt": "2026-10-19T02:05:39.706Z"
+    },
+    "17": {
+      "surahNumber": 17,
+      "surahName": "Al-Isra",
+      "totalVerses": 111,
+      "totalSets": 16,
+      "completedSets": 16,
+      "completedCount": 111,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/review_surah_17.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-19T03:15:53.517Z",
+      "deployedAt": "2026-10-19T03:15:53.518Z"
     }
   }
 }

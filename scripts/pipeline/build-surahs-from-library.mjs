@@ -692,6 +692,141 @@ export const THEMATIC_LIBRARY_MAP = {
         librarySource: "public/videos/surah_4/set_21_ayah_141-147.mp4"
       }
     ]
+  },
+  "17": {
+    nameEnglish: "Al-Isra",
+    nameArabic: "الإسراء",
+    totalVerses: 111,
+    sets: [
+      {
+        setIndex: 1,
+        startAyah: 1,
+        endAyah: 8,
+        themeName: "The Night Journey (Al-Isra) & Warnings to Bani Isra'il",
+        themeTamil: "அல்-இஸ்ரா இரவுப் பயணம் & பனூ இஸ்ராயீல்களுக்கு எச்சரிக்கை",
+        librarySource: "public/videos/surah_4/set_16_ayah_106-112.mp4"
+      },
+      {
+        setIndex: 2,
+        startAyah: 9,
+        endAyah: 15,
+        themeName: "Quran Guides to What is Upright & Deeds Bound to the Neck",
+        themeTamil: "நேரான வழியைக் காட்டும் திருக்குர்ஆன் & கழுத்தில் மாட்டப்படும் செயலேடு",
+        librarySource: "public/videos/surah_6/set_12_ayah_78-84.mp4"
+      },
+      {
+        setIndex: 3,
+        startAyah: 16,
+        endAyah: 22,
+        themeName: "Destruction of Transgressing Generations & World vs Hereafter",
+        themeTamil: "வரம்பு மீறிய சமுதாயங்களின் அழிவு & இம்மை மறுமை நற்பேறுகள்",
+        librarySource: "public/videos/surah_4/set_08_ayah_50-56.mp4"
+      },
+      {
+        setIndex: 4,
+        startAyah: 23,
+        endAyah: 30,
+        themeName: "Supreme Kindness to Parents ('Say Not Uff') & Balanced Spending",
+        themeTamil: "பெற்றோருக்கு நற்கடமை ('சீ' என்று கூட கூறலாகாது) & செலவழிப்பில் நடுநிலை",
+        librarySource: "public/videos/surah_4/set_03_ayah_15-21.mp4"
+      },
+      {
+        setIndex: 5,
+        startAyah: 31,
+        endAyah: 39,
+        themeName: "Divine Commandments: Life, Chastity, Orphan Wealth & Honest Scales",
+        themeTamil: "வறுமைக்கு அஞ்சி குழந்தைகளைக் கொல்லாமை, ஒழுக்கம், அனாதை சொத்து & நீதியான அளவை",
+        librarySource: "public/videos/surah_4/set_02_ayah_8-14.mp4"
+      },
+      {
+        setIndex: 6,
+        startAyah: 40,
+        endAyah: 48,
+        themeName: "Exalted Above False Claims & Seven Heavens Glorifying Allah",
+        themeTamil: "இணைவைப்பாளர்களின் வீண் கற்பனைகள் & ஏழு வானங்களும் அல்லாஹ்வைத் துதித்தல்",
+        librarySource: "public/videos/surah_10/set_01_ayah_1-7.mp4"
+      },
+      {
+        setIndex: 7,
+        startAyah: 49,
+        endAyah: 55,
+        themeName: "Resurrection from Bones & Dust & Speaking What is Best",
+        themeTamil: "எலும்புகளும் உடைந்த துகள்களும் மீண்டும் உயிர்ப்பிக்கப்படுதல் & அழகிய நல்வார்த்தைகள்",
+        librarySource: "public/videos/surah_4/set_01_ayah_1-7.mp4"
+      },
+      {
+        setIndex: 8,
+        startAyah: 56,
+        endAyah: 65,
+        themeName: "Powerless Idols, Iblis Refusing Prostration & Trial of Cursed Tree",
+        themeTamil: "அதிகாரமற்ற பொய் தெய்வங்கள், இப்லீஸின் மறுப்பு & சபிக்கப்பட்ட மரத்தின் சோதனை",
+        librarySource: "public/videos/surah_4/set_20_ayah_134-140.mp4"
+      },
+      {
+        setIndex: 9,
+        startAyah: 66,
+        endAyah: 72,
+        themeName: "Ships Driven by Grace Across Seas & Honor of Children of Adam",
+        themeTamil: "கடலில் கப்பல்களைச் செலுத்துபவன் & ஆதமுடைய மக்களின் மேன்மை",
+        librarySource: "public/videos/surah_10/set_04_ayah_22-28.mp4"
+      },
+      {
+        setIndex: 10,
+        startAyah: 73,
+        endAyah: 80,
+        themeName: "Steadfastness, Prayer at Sunset, Fajr Dawn Angels & Tahajjud",
+        themeTamil: "சோதனைகளில் உறுதிப்பாடு, தொழுகை, ஃபஜ்ர் வானவர்கள் & தஹஜ்ஜுத் (மகாமன் மஹ்மூதா)",
+        librarySource: "public/videos/surah_4/set_21_ayah_141-147.mp4"
+      },
+      {
+        setIndex: 11,
+        startAyah: 81,
+        endAyah: 85,
+        themeName: "'Truth Has Arrived', Quran Healing & Knowledge of the Spirit (Ruh)",
+        themeTamil: "\"சத்தியம் வந்தது, அசத்தியம் அழிந்தது\", குர்ஆனின் நிவாரணம் & ரூஹ் (உயிர்) பற்றிய அறிவு",
+        librarySource: "public/videos/surah_4/set_13_ayah_85-91.mp4"
+      },
+      {
+        setIndex: 12,
+        startAyah: 86,
+        endAyah: 93,
+        themeName: "Disbelievers Demanding Miracles (Gushing Springs, Orchard, Sky)",
+        themeTamil: "இணைவைப்பாளர்கள் கோரிய அற்புதங்கள் (நீரூற்று, பேரீச்சைத் தோட்டம், வானம் பிளத்தல்)",
+        librarySource: "public/videos/surah_4/set_24_ayah_162-168.mp4"
+      },
+      {
+        setIndex: 13,
+        startAyah: 94,
+        endAyah: 100,
+        themeName: "Mortal Messengers, Reckoning & Vast Treasures of Lord's Mercy",
+        themeTamil: "மனிதத் தூதர்கள், மறுமை விசாரணை & இறை அருளின் பொக்கிஷங்கள்",
+        librarySource: "public/videos/surah_10/set_08_ayah_50-56.mp4"
+      },
+      {
+        setIndex: 14,
+        startAyah: 101,
+        endAyah: 104,
+        themeName: "Nine Clear Signs to Musa & Pharaoh Drowned in the Deep Sea",
+        themeTamil: "மூஸா நபிக்கு 9 தெளிவான அத்தாட்சிகள் & மூழ்கடிக்கப்பட்ட ஃபிர்அவ்ன்",
+        librarySource: "public/videos/surah_10/set_14_ayah_92-98.mp4"
+      },
+      {
+        setIndex: 15,
+        startAyah: 105,
+        endAyah: 109,
+        themeName: "Quran Revealed in Truth & Weeping Prostration of Believers",
+        themeTamil: "உண்மையுடன் இறங்கிய குர்ஆன் & அழுது சிரம் பணியும் பயபக்தியாளர்கள்",
+        librarySource: "public/videos/surah_4/set_11_ayah_71-77.mp4"
+      },
+      {
+        setIndex: 16,
+        startAyah: 110,
+        endAyah: 111,
+        themeName: "'Call Upon Allah or Ar-Rahman' & Praise to the One Who Has No Son",
+        themeTamil: "\"அல்லாஹ் அல்லது அர்-ரஹ்மான் என்று அழையுங்கள்\" & புகழனைத்தும் மகனற்ற ஏக இறைவனுக்கே",
+        librarySource: "public/videos/surah_4/set_25_ayah_169-176.mp4"
+      }
+    ]
   }
 };
 
