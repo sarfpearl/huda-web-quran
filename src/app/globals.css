@@ -657,7 +657,7 @@ textarea,
   font-family: var(--font-amiri), 'Traditional Arabic', serif;
 }
 
-/* IndoPak script (src/lib/data/quranScript.ts): Quran.com's text_indopak is
+/* IndoPak script (src/lib/data/quranScript.ts): Quran.com's text_indopak_nastaleeq is
    encoded for "AlQuran IndoPak by QuranWBW" (it uses that font's own marks),
    self-hosted unmodified with QuranWBW's written permission (2026-10-11: the
    app stays free, no ads, credits on the About page). No local() first: an

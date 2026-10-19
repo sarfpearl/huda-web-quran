@@ -407,6 +407,15 @@ and text are used unmodified, and the credits are shown** (About → credits).
 - [x] IndoPak word text at the glyph data's word positions —
       `public/data/quran-indopak/` (`scripts/generation/fetch-indopak-words.mjs`,
       Quran.com `text_indopak`); word sync, highlight and tap-to-seek unchanged.
+- [x] **Text → `text_indopak_nastaleeq` (2026-10-19, QuranWBW's request:
+      `text_indopak` is the older, deprecated IndoPak).** The API has it per
+      verse only, so the script places it on the words by its letters against
+      the glyph data's Uthmani words (6230 verses word by word, 6 letter by
+      letter; 2 words are one font glyph: 18:19 وَلْيَتَلَطَّفْ, 73:20 ثُلُثَيِ).
+      Its sukun is U+0652 (the jazm), so PR #116's U+06E1 → U+0652 swap is gone —
+      the text is drawn as it comes. It also fixes a few verses whose words the
+      old text had shifted (56:45, 74:46, 93:7, 103:3). The verse text as
+      fetched: `scripts/generation/fixtures/indopak-nastaleeq/` (offline re-run).
 - [x] "Uthmani | IndoPak" picker in the Tajweed panel (default Uthmani; a
       pick is remembered in `huda:script`); Tajweed colours are Uthmani-only.
 - [x] Reading mode keeps the Madani 604-page layout and page numbers.
