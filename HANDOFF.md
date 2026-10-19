@@ -11,15 +11,15 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-18, after PR #117.*
+*Snapshot: 2026-10-19, after PR #119.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font); verse/topic/voice search in the content browser |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `7a028ab` — chore(sw): bump cache VERSION v2 → v3 (#117) |
-| **Latest merged PRs** | #117 sw cache VERSION v3 · #116 IndoPak sukun/justify fixes · #114 search index split by language · #113 waqf-legend centring · #112 search box above tabs · #111/#110/#109/#107 IndoPak + verse/topic/voice search · #106 Audio Only reading follow · #105 Video manifest (187 clips) |
-| **Open PRs** | None |
+| **`main`** | `a32855a` — Merge PR #119: weekly check for changes to Quran.com's IndoPak text |
+| **Latest merged PRs** | #119 weekly IndoPak text check (GitHub Action) · #118 IndoPak text → `text_indopak_nastaleeq` · #117 sw cache VERSION v3 · #116 IndoPak sukun/justify fixes · #114 search index split by language · #113 waqf-legend centring · #112 search box above tabs · #111/#110/#109/#107 IndoPak + verse/topic/voice search · #106 Audio Only reading follow · #105 Video manifest (187 clips) |
+| **Open PRs** | #115 **draft, do not merge** — IndoPak Tajweed prototype (`proto/indopak-tajweed`, dev page `/dev/indopak-tajweed`, kept open for its preview link) |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Local working tree** | **not clean** — see §5: a new, uncommitted automated video-generation pipeline (`.agents/`, `data/`, `scripts/pipeline/`, `tests/`, `review_surah_*.html`, `docs/VIDEO_BUDGET_LEDGER.json`) plus 2 modified files |
 
@@ -152,8 +152,14 @@
 - [x] **16 Aal-Imran chapter clips:** rendered, verified live on R2, and active in `videoManifest.ts` (all 187 clips live, 0 missing).
 - [x] **Surah 2 (Al-Baqarah) Final Verification (2026-10-15):** All 44 chapters covering Verses 1–286 verified 100% continuous (0 gaps), all 44 video assets confirmed live HTTP 200 on R2, 8 real-footage Ayah clips verified, real vs synthetic video registries audited.
 - [x] **Video storage consolidation (2026-10-14):** 12.58 GB freed by removing redundant raw masters, QA frames, test renders, and `.media-work` cache; single high-quality master format (UHD 4K where available, 1080p for others).
+- [ ] **IndoPak Tajweed colours (prototype, PR #115 draft):** Al-Baqarah 1–20 drawn glyph by glyph (SVG) in the Uthmani QPC V4 colours — QuranWBW approved the approach (2026-10-19, "acceptable, no additional conditions") and asked for a live preview: owner sends them the Vercel **Share** link (set to "Anyone with the link"; set it back to "Only people with access" once they've looked). QA glyph 220/230, genuine mismatch 0; Chromium + iPhone Safari checked. Before the reader: text selection / copy, active-word highlight, tap-to-seek, wrapping, whole-Surah performance — `docs/TODO.md` → *IndoPak Tajweed colours*.
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
+
+### Done (2026-10-18 → 2026-10-19)
+- [x] **PR #118** `fix/indopak-nastaleeq-text`: IndoPak text switched to Quran.com's `text_indopak_nastaleeq` (QuranWBW's request — `text_indopak` is deprecated) and drawn as it comes: #116's sukun swap removed (the new text's sukun is already the jazm). Placed on the words by letters against the glyph data's Uthmani words; fixes a few shifted verses (56:45, 74:46, 93:7, 103:3).
+- [x] **PR #119** `chore/indopak-text-check`: weekly GitHub Action (Mondays 03:17 UTC, or Actions → Run workflow) — opens an issue "IndoPak text changed on Quran.com" if the text differs from our copy; never changes the data. First run 2026-10-19: no change.
+- [x] QuranWBW asked (owner's email, 2026-10-18) and answered (2026-10-19): glyph-by-glyph Tajweed drawing acceptable; use `text_indopak_nastaleeq`; their own IndoPak Tajweed fonts are years away.
 
 ### Done (2026-10-14 → 2026-10-15)
 - [x] PR #105 merged: Video manifest updated (all 187 clips active) and HANDOFF refresh.
@@ -214,6 +220,8 @@ None of this has been committed, pushed, or reviewed — it's exactly as left be
 
 ## 6. Important Git History
 
+- `a32855a` — **PR #119** `chore/indopak-text-check`: weekly GitHub Action — issue when Quran.com's IndoPak text changes
+- `543ed99` — **PR #118** `fix/indopak-nastaleeq-text`: IndoPak text → `text_indopak_nastaleeq`, drawn as it comes (no sukun swap)
 - `7a028ab` — **PR #117** `chore/sw-cache-v3`: bump service-worker cache VERSION v2 → v3
 - `11f0613` — **PR #116** `fix/indopak-sukun-justify`: sukun renders as filled jazm; tighten immersive & justify reading
 - `fff9898` — **PR #114** `perf/search-index-split`: verse search index split by language, loaded on demand
@@ -364,7 +372,7 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 | Service | Purpose | Where |
 | :--- | :--- | :--- |
 | quranicaudio.com | Audio for the 9 Word Sync reciters | `quranReciters.ts` |
-| Quran.com API (QDC / qurancdn) | Word timings, QPC V4 Tajweed fonts, IndoPak word text — fetched once by scripts | `fetch-reciter-timings.mjs`, `fetch-qpc-v4.mjs`, `fetch-indopak-words.mjs` |
+| Quran.com API (QDC / qurancdn) | Word timings, QPC V4 Tajweed fonts, IndoPak text (`text_indopak_nastaleeq`) — fetched by scripts; the IndoPak text is checked weekly for changes | `fetch-reciter-timings.mjs`, `fetch-qpc-v4.mjs`, `dump-indopak-nastaleeq.mjs` + `fetch-indopak-words.mjs`, `.github/workflows/indopak-text-check.yml` |
 | mp3quran.net | Audio for the other 42 (Audio Only) reciters | `quranReciters.ts` |
 | everyayah.com | Per-ayah clips so any reciter can recite a Juz | `EVERYAYAH_FOLDERS` |
 | alquran.cloud | Translations (10 languages), built into `public/data/quran-translations/` by script | `build-quran-translations.mjs`, `quranVerses.ts` |
@@ -383,5 +391,5 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 7. **Tajweed:** QPC V4 COLRv1 glyph fonts (one glyph per word).
 8. **Keep features focused and minimal:** Maintain simple design system, no unnecessary heavy layers.
 9. **Quran only:** Bayan / talks / YouTube were removed on 2026-10-06. Don't reintroduce them unless the owner asks.
-10. **IndoPak stays development-only** until QuranWBW grants the font licence. Don't ship it to production with the Noto fallback.
+10. **IndoPak follows QuranWBW's permission:** their font self-hosted unmodified, Quran.com's `text_indopak_nastaleeq` drawn as it comes (no code-point changes), credits shown, app free with no ads. Tajweed colours in IndoPak only glyph by glyph (prototype, PR #115) — never CSS colour on the text.
 11. **One AI session per checkout** (or separate worktrees); stage files by name.
