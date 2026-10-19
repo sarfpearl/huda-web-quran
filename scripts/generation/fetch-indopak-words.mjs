@@ -41,16 +41,21 @@ const LETTER = /[\u0621-\u064A\u066E-\u06D3\u06D5\u06EE\u06EF]/;
 /** The letters of a word, to check a new word is the same word as before. */
 const skeleton = (t) => [...t].filter((c) => LETTER.test(c)).join("");
 
-// The API has text_indopak_nastaleeq per verse only (not per word), and some
-// words are written in two parts (وَ يُقِيۡمُوۡنَ). Split on spaces — a token
-// without a letter (a waqf mark, ۞, ۩) joins the one before it, or after it at
-// the start; the ayah number is dropped — then group the parts as the previous
-// word text (text_indopak, same positions) groups them.
+// The API has text_indopak_nastaleeq per verse only (not per word). Split on
+// spaces — a token without a letter (a waqf mark, ۞, ۩) joins the one before
+// it, or after it at the start; the ayah number is dropped. One part per word
+// when the counts match; else grouped as the previous word text (text_indopak,
+// same positions) groups them (it writes some words in two parts: وَ يُقِيۡمُوۡنَ).
+const marksSeen = new Map();
 function parts(text) {
   const out = [];
   let lead = "";
   for (const tok of text.trim().split(/\s+/)) {
-    if (/^[\u0660-\u0669\u06F0-\u06F9\u06DD]+$/.test(tok)) continue;
+    if (/^[\p{Nd}\u06DD]+$/u.test(tok)) continue;
+    if (!LETTER.test(tok)) {
+      const k = [...tok].map((c) => "U+" + c.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")).join(" ");
+      marksSeen.set(k, (marksSeen.get(k) ?? 0) + 1);
+    }
     if (LETTER.test(tok)) {
       out.push(lead + tok);
       lead = "";
@@ -78,10 +83,10 @@ for (let n = 1; n <= 114; n++) {
     const p = parts(v.text_indopak_nastaleeq);
     const n = sizes(old);
     const g = glyphs[i];
-    if (!g || g.a !== a || old.length !== g.w.length || n.reduce((x, y) => x + y, 0) !== p.length) {
+    if (!g || g.a !== a || (p.length !== g.w.length && n.reduce((x, y) => x + y, 0) !== p.length)) {
       throw new Error(`${v.verse_key}: ${p.length} parts, ${n.join("+")} before, ${g?.w.length} glyph words\n${v.text_indopak_nastaleeq}`);
     }
-    const w = group(p, n);
+    const w = p.length === g.w.length ? p : group(p, n);
     w.forEach((t, j) => {
       if (old[j] !== t) changed++;
       if (old[j] && skeleton(old[j]) !== skeleton(t)) differ.push(`${v.verse_key}:${j + 1} ${old[j]} → ${t}`);
@@ -95,3 +100,5 @@ for (let n = 1; n <= 114; n++) {
 process.stdout.write(`\ndone — ${changed} words changed\n`);
 // Letters that differ from the old text: expected none (only marks change).
 process.stdout.write(`letters differ: ${differ.length}\n${differ.slice(0, 30).join("\n")}\n`);
+// Tokens without a letter that were joined to a word — check none is an ayah number.
+process.stdout.write(`joined marks: ${[...marksSeen].map(([k, c]) => `${k} ×${c}`).join(", ")}\n`);
