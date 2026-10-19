@@ -416,6 +416,11 @@ and text are used unmodified, and the credits are shown** (About → credits).
       the text is drawn as it comes. It also fixes a few verses whose words the
       old text had shifted (56:45, 74:46, 93:7, 103:3). The verse text as
       fetched: `scripts/generation/fixtures/indopak-nastaleeq/` (offline re-run).
+- [x] **Weekly check (2026-10-19):** `.github/workflows/indopak-text-check.yml`
+      (Mondays, or Actions → Run workflow) compares Quran.com's text with that
+      copy (`scripts/qa/check-indopak-nastaleeq.mjs`) and opens an issue —
+      "IndoPak text changed on Quran.com" — listing the changed verses. It
+      never changes the data: re-fetch and review by hand.
 - [x] "Uthmani | IndoPak" picker in the Tajweed panel (default Uthmani; a
       pick is remembered in `huda:script`); Tajweed colours are Uthmani-only.
 - [x] Reading mode keeps the Madani 604-page layout and page numbers.
