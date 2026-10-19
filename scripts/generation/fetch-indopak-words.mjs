@@ -28,9 +28,6 @@ const ROOT = resolve(__dirname, "../..");
 const OUT = resolve(ROOT, "public/data/quran-indopak");
 const GLYPHS = resolve(ROOT, "public/data/quran-glyphs");
 
-/** Same split as fetch-qpc-v4.mjs: one Quran.com position timed as two words. */
-const SPLIT_POSITIONS = new Set(["37:130:3"]);
-
 async function get(url) {
   for (let attempt = 1; attempt <= 5; attempt++) {
     const res = await fetch(url);
@@ -40,27 +37,61 @@ async function get(url) {
   throw new Error(`failed: ${url}`);
 }
 
+const LETTER = /[\u0621-\u064A\u066E-\u06D3\u06D5\u06EE\u06EF]/;
+/** The letters of a word, to check a new word is the same word as before. */
+const skeleton = (t) => [...t].filter((c) => LETTER.test(c)).join("");
+
+// The API has text_indopak_nastaleeq per verse only (not per word), and some
+// words are written in two parts (وَ يُقِيۡمُوۡنَ). Split on spaces — a token
+// without a letter (a waqf mark, ۞, ۩) joins the one before it, or after it at
+// the start; the ayah number is dropped — then group the parts as the previous
+// word text (text_indopak, same positions) groups them.
+function parts(text) {
+  const out = [];
+  let lead = "";
+  for (const tok of text.trim().split(/\s+/)) {
+    if (/^[\u0660-\u0669\u06F0-\u06F9\u06DD]+$/.test(tok)) continue;
+    if (LETTER.test(tok)) {
+      out.push(lead + tok);
+      lead = "";
+    } else if (out.length) out[out.length - 1] += tok;
+    else lead += tok;
+  }
+  return out;
+}
+const sizes = (old) => old.map((w) => w.trim().split(/\s+/).filter((t) => LETTER.test(t)).length);
+function group(p, n) {
+  let i = 0;
+  return n.map((k) => p.slice(i, (i += k)).join(" "));
+}
+
 await mkdir(OUT, { recursive: true });
+let changed = 0;
+const differ = [];
 for (let n = 1; n <= 114; n++) {
-  const json = await get(
-    `https://api.quran.com/api/v4/verses/by_chapter/${n}?words=true&per_page=300&word_fields=text_indopak_nastaleeq`
-  );
+  const json = await get(`https://api.quran.com/api/v4/quran/verses/indopak_nastaleeq?chapter_number=${n}`);
   const glyphs = JSON.parse(await readFile(resolve(GLYPHS, `${n}.json`), "utf8"));
+  const before = JSON.parse(await readFile(resolve(OUT, `${n}.json`), "utf8").catch(() => "[]"));
   const verses = json.verses.map((v, i) => {
-    const words = v.words
-      .filter((w) => w.char_type_name === "word")
-      .flatMap((w) => {
-        const text = w.text_indopak_nastaleeq.trim();
-        if (!SPLIT_POSITIONS.has(`${n}:${v.verse_number}:${w.position}`)) return [text];
-        return text.split(/\s+/);
-      });
+    const a = Number(v.verse_key.split(":")[1]);
+    const old = before.find((x) => x.a === a)?.w ?? [];
+    const p = parts(v.text_indopak_nastaleeq);
+    const n = sizes(old);
     const g = glyphs[i];
-    if (!g || g.a !== v.verse_number || g.w.length !== words.length) {
-      throw new Error(`${n}:${v.verse_number}: ${words.length} IndoPak words, ${g?.w.length} glyph words`);
+    if (!g || g.a !== a || old.length !== g.w.length || n.reduce((x, y) => x + y, 0) !== p.length) {
+      throw new Error(`${v.verse_key}: ${p.length} parts, ${n.join("+")} before, ${g?.w.length} glyph words\n${v.text_indopak_nastaleeq}`);
     }
-    return { a: v.verse_number, w: words };
+    const w = group(p, n);
+    w.forEach((t, j) => {
+      if (old[j] !== t) changed++;
+      if (old[j] && skeleton(old[j]) !== skeleton(t)) differ.push(`${v.verse_key}:${j + 1} ${old[j]} → ${t}`);
+    });
+    return { a, w };
   });
+  if (verses.length !== glyphs.length) throw new Error(`${n}: ${verses.length} verses, ${glyphs.length} glyph verses`);
   await writeFile(resolve(OUT, `${n}.json`), JSON.stringify(verses));
   process.stdout.write(`${n} `);
 }
-process.stdout.write("\ndone\n");
+process.stdout.write(`\ndone — ${changed} words changed\n`);
+// Letters that differ from the old text: expected none (only marks change).
+process.stdout.write(`letters differ: ${differ.length}\n${differ.slice(0, 30).join("\n")}\n`);
