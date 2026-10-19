@@ -146,6 +146,7 @@
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [x] **IndoPak font licence:** granted by QuranWBW (2026-10-11); font self-hosted and live (PR #100, #103, #104).
+- [ ] **IndoPak Tajweed colours (prototype):** branch `proto/indopak-tajweed`, dev page `/dev/indopak-tajweed` (Al-Baqarah 1–20; text + glyph-by-glyph SVG rows), draft PR #115 (preview only, not to merge). Asked QuranWBW on 2026-10-18 (glyph drawing + the #116 sukun swap) — waiting on their reply; also the owner's iPhone check of the glyph rows — `docs/TODO.md` → *IndoPak Tajweed colours*.
 - [x] Supabase test data cleared (2026-10-07).
 - [x] **Comment spam guard:** migration applied and verified live on Supabase (PR #78, #102).
 - [x] Supabase Free-plan pause — daily Vercel Cron → `/api/keepalive` (2026-10-11). No automatic backups on Free — see `docs/TODO.md`.
@@ -161,6 +162,10 @@
 - [x] Surah 2 final verification: all 44 chapters and 8 Ayah clips verified live on Cloudflare R2; registries separated.
 - [x] Video pipeline QA: 0.40s loop crossfade POC and mobile portrait vs CSS object-cover evaluated.
 - [x] PRs #80–#104 merged and live — see §2 item 16 and §6.
+
+### Done (2026-10-14)
+- [x] **PR #101** `fix/reciter-change-reading-scroll`: changing the reciter keeps the reading-mode view in place (no jump to the Surah start) and carries on word by word — the word being recited again from its start, or the next word once its voice has finished (Surah and per-ayah Juz; Audio Only reciters still restart). Picker hint "Continues from the same word". A backdrop image that fails to load is hidden (no Safari "?" icon).
+- [x] **PR #103** `fix/indopak-hide-tajweed`: no Tajweed switch / legend in IndoPak.
 
 ### Done (2026-10-11)
 - [x] PRs #75–#79 merged — see §2 item 15 and §6.

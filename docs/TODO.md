@@ -417,7 +417,9 @@ and text are used unmodified, and the credits are shown** (About → credits).
       old text had shifted (56:45, 74:46, 93:7, 103:3). The verse text as
       fetched: `scripts/generation/fixtures/indopak-nastaleeq/` (offline re-run).
 - [x] "Uthmani | IndoPak" picker in the Tajweed panel (default Uthmani; a
-      pick is remembered in `huda:script`); Tajweed colours are Uthmani-only.
+      pick is remembered in `huda:script`); Tajweed colours are Uthmani-only —
+      in IndoPak the panel and Settings show no Tajweed switch or legend
+      (PR #103, 2026-10-14).
 - [x] Reading mode keeps the Madani 604-page layout and page numbers.
 - [x] Font self-hosted unmodified: `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`
       (`'IndoPak'` in `globals.css`); credits on the About page.
@@ -427,6 +429,108 @@ and text are used unmodified, and the credits are shown** (About → credits).
       their font breaks its ligatures; they are building IndoPak Mushaf Tajweed
       fonts, likely more than a year away. Until then IndoPak has no Tajweed
       switch (PR #103). Don't colour the IndoPak text in CSS.
+
+### IndoPak Tajweed colours — prototype (2026-10-14, branch `proto/indopak-tajweed`)
+
+No Tajweed-coloured IndoPak text or font exists (QUL, Quran.com, Digital
+Khatt: plain text only), so the colours are worked out per letter and carried
+onto the IndoPak words, to match the QPC V4 Tajweed the app draws for Uthmani.
+
+- [x] Generator `scripts/generation/build-indopak-tajweed.py` (fontTools +
+      brotli + uharfbuzz; `.py` is git-ignored — add with `git add -f`):
+      rule letters from tarekeldeeb/quran-tajweed-embedded (CC BY 4.0,
+      downloaded, not committed — URLs in the script; Al-Baqarah 1–20 in
+      `scripts/generation/fixtures/tajweed-2-1-20.json`) with the QPC
+      conventions (idgham greys the merged noon / tanween and greens the
+      letter it merges into; madd colours on the madd letter / mark; ikhfa /
+      iqlab on the tanween / small meem); Tafkhim and a madd ʿāriḍ at a pause
+      mark — no rule in that data — from the QPC V4 layers by position, on
+      letters that can carry them (ر with a kasra / after one: never);
+      Uthmani ↔ IndoPak letters aligned per word (LCS).
+- [x] **Ligatures (2026-10-14, the 2:2 لِّلۡمُتَّقِيۡنَ bug):** a glyph is
+      painted in one colour — its first character's — and the IndoPak font's
+      `liga` draws يۡن, تر, بر, لله, لا … as one glyph, so the ي's orange
+      spread onto the ن, a ر's blue vanished in تر, Allah's blue vanished.
+      The generator shapes every word with the font (HarfBuzz) and lists the
+      words to draw with `liga` off (`nl`, 14 in 1–20); لا stays a ligature.
+- [x] **Allah (Option 1, 2026-10-14):** a name of Allah whose lams are
+      heavy is drawn with `liga` off (8 of 9 in 1–20): both lams blue, the
+      ه plain, joined normally; بِاللّٰهِ (after a kasra, no colour) keeps its
+      ligature. Checked in Chromium against V4 letter by letter.
+- [x] **Found while reviewing (2026-10-14):** the rule data marks some madds
+      on the vowel before the madd letter (2:4 يُوقِنُونَ: on the ن's damma) —
+      the madd letter now carries it.
+- [x] **Chromium paints a mark in its letter's colour** (measured: a
+      coloured tanween / small alef / maddah / sukun alone shows plain; a
+      `unicode-bidi: isolate` span colours it but detaches it from its
+      letter; ZWJ doesn't help). A colour on a mark alone (madd 2's small
+      alef, a grey tanween, لا's maddah, iqlab's small meem) is not visible
+      in Chromium. QA reports two paint models: glyph 217 / 230, Chromium
+      190 / 230 (`docs/qa/indopak-tajweed-2-1-20.md`).
+- [x] QA, positional: painted glyph segments vs the QPC V4 layer contours,
+      per word, each difference categorised — genuine mismatch 0, font
+      shaping 6 rows (3 × لا), calligraphy position 10 (same letters,
+      reviewed on a word-level comparison sheet), browser (Chromium) 45.
+      Before the ligature fix 204 / 230 words matched (the earlier "98.7%"
+      compared only the set of colours).
+- [x] Tests: `python3 -m unittest scripts/generation/test_build_indopak_tajweed.py`
+      (23: verse 2's لَا / هُدًى / لِّلۡمُتَّقِيۡنَ, marks, several colours in a
+      word, word boundaries, normalisation, unmatched letters, the lam of
+      Allah and Option 1, tarqiq, madd on its letter, text preserved, paint =
+      data, Chromium rows, the V4 comparison, no unreviewed difference).
+- [x] Al-Baqarah 1–20 → `public/data/quran-indopak-tajweed/2.json`.
+- [x] **Sukun (2026-10-18):** the words are drawn with U+0652 (the font's
+      jazm) for the source's U+06E1 (a hollow ring), as the app does since
+      PR #116 — the same QA result.
+- [x] **Rebuilt on text_indopak_nastaleeq (2026-10-19, PR #118):** its ی, and
+      the font's own small meem (U+F64A / U+F65D) as the iqlab mark; glyph
+      220 / 230, Chromium 198 / 230, genuine mismatch 0 (2:2 w2 and 2:10 w9
+      reviewed: calligraphy position).
+- [x] **iPhone Safari, glyph rows (2026-10-19, iOS 18.7, owner's screenshots):**
+      browser check 9–11 drawn glyph by glyph show the mark colours — the grey
+      tanween, the pink small alef, the pink-red maddah — as in Chromium.
+- [ ] **Asked QuranWBW (2026-10-18, owner's email):** is the glyph-by-glyph
+      drawing within the permission, and is showing U+06E1 as U+0652 (PR #116,
+      live) acceptable? Sent with `docs/qa/quranwbw-screenshots/huda-indopak-tajweed-sheet.pdf`.
+      Waiting on their reply — nothing ships until then; a no on the sukun
+      means reverting #116's swap.
+- [x] Dev page `/dev/indopak-tajweed` (noindex): the app's Uthmani QPC V4
+      Tajweed beside each IndoPak ayah; colours on / off, 28 / 34 / 42 px.
+      Preview: the Vercel link on draft PR #115 (+ `/dev/indopak-tajweed`).
+- [x] **WebKit (2026-10-15):** Safari's engine as WebKitGTK 2.52.6
+      (`scripts/qa/indopak-tajweed-webkit.py`, Xvfb) paints like Chromium:
+      liga off keeps يۡن's ن white and تر's ر blue, Allah's two lams blue with
+      the ه white; a mark coloured alone (tanween, small alef, لا's maddah)
+      doesn't show. (WebKitGTK shapes with HarfBuzz, iPhone Safari with
+      CoreText.)
+- [x] **iPhone Safari (2026-10-15)** — iOS 18.7, WebKit 605.1.15, the dev
+      page's browser check (owner's screenshots): liga off keeps يۡن's ن
+      white and تر's ر blue; Allah's two lams blue, the ه white, joined
+      normally (Option 1 confirmed); a mark coloured alone doesn't show — as
+      in Chromium and WebKitGTK. (Liga on, iPhone doesn't spread يۡن's ي
+      colour onto the ن; liga off is right everywhere.)
+- [x] **Glyph rendering (2026-10-15, decided: yes):** a mark coloured alone
+      (madd 2's small alef, a grey tanween, لا's maddah, iqlab's small meem)
+      shows in no browser as text — so each word is also drawn glyph by glyph
+      as SVG, every glyph in its colour: the layout (glyph ids + positions,
+      HarfBuzz at build time) in `public/data/quran-indopak-tajweed/2.glyphs.json`,
+      the outlines read in the browser from the self-hosted IndoPak WOFF2
+      itself (`fontkit` 2.0.4, MIT) — the font is used as it is, not modified
+      or re-encoded (QuranWBW's condition). `src/app/dev/indopak-tajweed/GlyphWords.tsx`;
+      the dev page shows it under each IndoPak ayah, and browser-check rows
+      9–11. Chromium: the small alef's pink and لا's maddah show (38 / 44 px,
+      0 as text); WebKitGTK renders it too.
+- [ ] **Owner:** iPhone — browser-check rows 9–11 (tanween grey, small
+      alef pink, maddah pink-red, drawn as glyphs).
+- [ ] Glyph rendering, before the reader: text selection / copy (the SVG
+      has the text as its accessible name only), the recited word's gold
+      highlight and tap-to-seek on SVG words, line wrapping and size with
+      the reader's text scale, performance on a whole Surah, and whether
+      drawing the font's outlines as SVG is within QuranWBW's permission
+      (ask them).
+- [ ] Then: all 114 Surahs (review the QA miss list), the reader / verse
+      view drawing the coloured runs, the Tajweed switch back in IndoPak
+      (undo PR #103's hiding), the dataset's CC BY credit on the About page.
 
 ## Quran views · live · comments · likes (Supabase)
 
