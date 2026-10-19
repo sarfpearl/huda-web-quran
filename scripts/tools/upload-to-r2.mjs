@@ -87,6 +87,24 @@ const isForce = args.includes("--force");
 const categoryFilterArg = args.find((a) => a.startsWith("--category="));
 const categoryFilter = categoryFilterArg ? categoryFilterArg.split("=")[1].toLowerCase() : null;
 
+// New flags: --surah=4-8 or --surah=5,6,8 and --sets-only
+const setsOnly = args.includes("--sets-only");
+const surahArg = args.find((a) => a.startsWith("--surah="));
+let allowedSurahs = null;
+if (surahArg) {
+  const val = surahArg.split("=")[1];
+  allowedSurahs = new Set();
+  if (val.includes("-")) {
+    const [start, end] = val.split("-").map((v) => parseInt(v.trim(), 10));
+    for (let s = start; s <= end; s++) allowedSurahs.add(s);
+  } else {
+    val.split(",").forEach((v) => {
+      const num = parseInt(v.trim(), 10);
+      if (!isNaN(num)) allowedSurahs.add(num);
+    });
+  }
+}
+
 // ── 3. TARGET MAPPINGS & FILE EXTENSIONS ──────────────────────────────────────
 
 const MAPPINGS = [
@@ -159,10 +177,28 @@ function discoverFiles(dirPath, remotePrefix, category) {
         if (IGNORED_EXTENSIONS.has(ext)) continue;
 
         const mimeType = MIME_MAP[ext];
-        if (!mimeType) continue; // Skip unknown extensions
+        if (!mimeType) continue;
 
         const relativeToTargetDir = path.relative(dirPath, fullPath);
         const r2Key = `${remotePrefix}/${relativeToTargetDir}`.replace(/\\/g, "/");
+
+        // Apply video-specific filters (surah range and sets-only)
+        if (category === "videos") {
+          const surahMatch = relativeToTargetDir.match(/surah_(\d+)/);
+          if (surahMatch) {
+            const sNum = parseInt(surahMatch[1], 10);
+            if (allowedSurahs && !allowedSurahs.has(sNum)) {
+              continue;
+            }
+            if (setsOnly && !entry.name.startsWith("set_")) {
+              continue;
+            }
+          } else if (allowedSurahs || setsOnly) {
+            // If filtering specifically by surah or sets-only, skip root/non-surah videos
+            continue;
+          }
+        }
+
         const stat = fs.statSync(fullPath);
 
         results.push({
@@ -322,12 +358,12 @@ async function main() {
 
         console.log(`${progress} ⬆️  UPLOADING: ${file.r2Key} (${formatBytes(file.size)})...`);
 
-        const stream = fs.createReadStream(file.fullPath);
+        const body = fs.readFileSync(file.fullPath);
         await r2.send(
           new PutObjectCommand({
             Bucket: R2_BUCKET_NAME,
             Key: file.r2Key,
-            Body: stream,
+            Body: body,
             ContentLength: file.size,
             ContentType: file.mimeType,
             CacheControl: "public, max-age=31536000, immutable",
