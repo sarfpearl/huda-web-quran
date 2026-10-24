@@ -396,6 +396,10 @@ export function TopicPickerModal({
     typeof navigator !== "undefined" &&
     (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
   const recInstanceRef = useRef<SpeechRecognition | null>(null);
+  // Started again within a few seconds of the last one ending, iOS opens the
+  // mic but gives it only silence (?voicedebug log: audiostart, then "No
+  // speech detected"): wait out the rest of ~4 s first, already "listening".
+  const voiceEndedAtRef = useRef(0);
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -407,6 +411,7 @@ export function TopicPickerModal({
         recognitionRef.current.stop();
       } catch {}
       recognitionRef.current = null;
+      voiceEndedAtRef.current = Date.now();
     }
     setListening(false);
     setHearing(false);
@@ -500,6 +505,7 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
+        voiceEndedAtRef.current = Date.now();
       };
 
       rec.onerror = (e) => {
@@ -515,27 +521,38 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
+        voiceEndedAtRef.current = Date.now();
       };
 
-      try {
-        rec.start();
-        vlog("start() called");
-      } catch (err) {
-        vlog(`start() threw ${(err as DOMException)?.name}`);
-        // The reused instance is still winding down: once more, shortly.
-        if ((err as DOMException)?.name !== "InvalidStateError") throw err;
-        window.setTimeout(() => {
-          try {
-            rec.start();
-          } catch {}
-        }, 300);
+      const startRec = () => {
+        if (recognitionRef.current !== rec) return; // stopped meanwhile
+        try {
+          rec.start();
+          vlog("start() called");
+        } catch (err) {
+          vlog(`start() threw ${(err as DOMException)?.name}`);
+          // Still winding down: once more, shortly.
+          if ((err as DOMException)?.name !== "InvalidStateError") throw err;
+          window.setTimeout(() => {
+            try {
+              rec.start();
+            } catch {}
+          }, 500);
+        }
+      };
+      const wait = isIos ? Math.max(0, 4000 - (Date.now() - voiceEndedAtRef.current)) : 0;
+      if (wait > 0) {
+        vlog(`waiting ${wait} ms`);
+        window.setTimeout(startRec, wait);
+      } else {
+        startRec();
       }
       setListening(true);
 
       // Auto-stop after 8 seconds of no input to avoid perpetual listening state
       voiceTimeoutRef.current = window.setTimeout(() => {
         stopVoice();
-      }, 8000);
+      }, 8000 + wait);
       // In the home-screen app it can also just never start.
       if (isIosStandalone) {
         window.setTimeout(() => {
@@ -543,7 +560,7 @@ export function TopicPickerModal({
             stopVoice();
             showDictationHint();
           }
-        }, 2500);
+        }, 2500 + wait);
       }
     } catch (err) {
       console.warn("Failed to start speech recognition:", err);
