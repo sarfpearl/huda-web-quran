@@ -396,18 +396,6 @@ export function TopicPickerModal({
     typeof navigator !== "undefined" &&
     (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
   const recInstanceRef = useRef<SpeechRecognition | null>(null);
-  // The player pins the audio session to "playback"; on iOS the second
-  // recognition then got a live mic with only silence (audiostart, no
-  // speech). "auto" while listening lets WebKit record; "playback" after.
-  const setAudioSession = (type: "auto" | "playback") => {
-    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
-    if (!session) return;
-    try {
-      session.type = type;
-    } catch {
-      /* not supported */
-    }
-  };
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -422,7 +410,6 @@ export function TopicPickerModal({
     }
     setListening(false);
     setHearing(false);
-    setAudioSession("playback");
   }, []);
 
   // TEMP (?voicedebug): on-screen log of the recognition events, to find on
@@ -513,7 +500,6 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
-        setAudioSession("playback");
       };
 
       rec.onerror = (e) => {
@@ -529,13 +515,11 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
-        setAudioSession("playback");
       };
 
-      setAudioSession("auto");
       try {
         rec.start();
-        vlog(`start() called · session=${(navigator as Navigator & { audioSession?: { type: string } }).audioSession?.type}`);
+        vlog("start() called");
       } catch (err) {
         vlog(`start() threw ${(err as DOMException)?.name}`);
         // The reused instance is still winding down: once more, shortly.
