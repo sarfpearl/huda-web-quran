@@ -191,16 +191,17 @@ export function CompactBayanPlayer({
 
   // Collapsed = compact pill (cover + transport). Small mobile screens open on the
   // compact pill or remembered choice; it also shrinks once playback starts.
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
+  // Starts full on the server and at hydration (a lazy initial state read from
+  // localStorage mismatched the server HTML, and React kept the stale classes:
+  // the full card showed through the compact pill); the remembered / small-screen
+  // choice is applied before the first paint.
+  const [collapsed, setCollapsed] = useState(false);
+  useLayoutEffect(() => {
     try {
       const saved = localStorage.getItem(COLLAPSED_KEY);
-      if (saved !== null) return saved === "1";
-      return window.innerWidth < 768;
-    } catch {
-      return false;
-    }
-  });
+      setCollapsed(saved !== null ? saved === "1" : window.innerWidth < 768);
+    } catch {}
+  }, []);
   useEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
@@ -651,14 +652,14 @@ export function CompactBayanPlayer({
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 p-2 px-3`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 max-[369px]:gap-1.5 p-2 px-3 max-[369px]:px-2`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className={`${compactBtn} ${NARROW_HIDE}`}
+          className={compactBtn}
           aria-label={prevTrackLabel}
           title={prevTrackTip}
           data-tooltip={prevTrackTip}
@@ -688,7 +689,7 @@ export function CompactBayanPlayer({
           onPointerMove={onRingPointerMove}
           onPointerUp={endScrub}
           onPointerCancel={endScrub}
-          className="group relative h-16 w-16 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+          className="group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
         >
           <div
             aria-hidden="true"
@@ -763,7 +764,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className={`${compactBtn} ${NARROW_HIDE}`}
+          className={compactBtn}
           aria-label={nextTrackLabel}
           title={nextTrackTip}
           data-tooltip={nextTrackTip}
@@ -1006,7 +1007,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onPrevTrack ?? player.previous)(); }}
-          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_HIDE}`}
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_BTN}`}
           aria-label={prevTrackLabel}
           title={prevTrackTip}
           data-tooltip={prevTrackTip}
@@ -1018,7 +1019,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
@@ -1034,7 +1035,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); (onNextTrack ?? player.next)(); }}
-          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_HIDE}`}
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_BTN}`}
           aria-label={nextTrackLabel}
           title={nextTrackTip}
           data-tooltip={nextTrackTip}
@@ -1045,7 +1046,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => toggleCollapsed(true)}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer ${NARROW_BTN}`}
           aria-label={t(language, "Minimize player")}
           title={t(language, "Minimize player")}
         >
@@ -1248,7 +1249,7 @@ function titleButtonProps(onClick: () => void, tooltip: string, label: string) {
 }
 
 const volumeBtn =
-  "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** A corner radius capped at half the short side (rounded-full reports 9999px). */
 function radiusOf(r: DOMRect, radius: number) {
@@ -1368,12 +1369,12 @@ const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition
 const viewShown = "opacity-100 blur-0 duration-300 delay-150 ease-out";
 const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-in";
 
-/** Very narrow screens: Prev / Next Surah are left out so the player's
- *  transport row (play, volume, minimize / expand) fits without clipping. */
-const NARROW_HIDE = "max-[369px]:hidden";
+/** Very narrow screens (320px): the transport buttons shrink to 40px so all
+ *  five (volume, prev, play, next, minimize / expand) fit without clipping. */
+const NARROW_BTN = "max-[369px]:h-10 max-[369px]:w-10";
 
 const compactBtn =
-  "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 // 32px wide (44px hit area via tap-44): with the cover shown, the pill

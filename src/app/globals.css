@@ -276,6 +276,21 @@
   }
 }
 
+/* Voice search wave (VoiceWaveIcon) while the mic hears speech: each line
+   rises and falls from its centre, out of step with its neighbours. */
+.voice-wave-live path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: equalizer 0.9s ease-in-out infinite;
+}
+.voice-wave-live path:nth-child(2) { animation-delay: -0.3s; }
+.voice-wave-live path:nth-child(3) { animation-delay: -0.6s; }
+.voice-wave-live path:nth-child(4) { animation-delay: -0.15s; }
+.voice-wave-live path:nth-child(5) { animation-delay: -0.45s; }
+@media (prefers-reduced-motion: reduce) {
+  .voice-wave-live path { animation: none; }
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
