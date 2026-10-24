@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-10-21T21:59:45+05:30",
+  "directory": "public/videos/surah_1",
+  "reason": "Rollback baseline for Surah 1 symlink boundary fix",
+  "previousSymlinks": {
+    "ayah_1.mp4": "../../../assets/video-masters/001-al-fatihah/scenes/01-praise-mercy.mp4",
+    "ayah_2.mp4": "ayah_1.mp4",
+    "ayah_3.mp4": "../../../assets/video-masters/001-al-fatihah/scenes/02-divine-judgment.mp4",
+    "ayah_4.mp4": "ayah_3.mp4",
+    "ayah_5.mp4": "../../../assets/video-masters/001-al-fatihah/scenes/03-worship-and-help.mp4",
+    "ayah_6.mp4": "../../../assets/video-masters/001-al-fatihah/scenes/04-guidance.mp4",
+    "ayah_7.mp4": "ayah_6.mp4"
+  },
+  "newSymlinks": {
+    "ayah_1.mp4": "../Inbox/surah_001_scene_01-praise-mercy.mp4",
+    "ayah_2.mp4": "ayah_1.mp4",
+    "ayah_3.mp4": "../Inbox/surah_001_scene_02-divine-judgment.mp4",
+    "ayah_4.mp4": "ayah_3.mp4",
+    "ayah_5.mp4": "../Inbox/surah_001_scene_03-worship-and-help.mp4",
+    "ayah_6.mp4": "../Inbox/surah_001_scene_04-guidance.mp4",
+    "ayah_7.mp4": "ayah_6.mp4"
+  }
+}

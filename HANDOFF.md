@@ -1,7 +1,7 @@
 # 🕌 HuDa Web Quran — Project Handoff
 
 > **For:** Antigravity / Claude / any AI assistant continuing this project  
-> **Last Updated:** 2026-10-18  
+> **Last Updated:** 2026-10-24  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
 > **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
@@ -11,17 +11,17 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-19, after PR #119.*
+*Snapshot: 2026-10-24, after PR #127.*
 
 | Item | Status |
 | :--- | :--- |
-| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font); verse/topic/voice search in the content browser |
+| **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font); verse/topic/voice search in content browser |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `a32855a` — Merge PR #119: weekly check for changes to Quran.com's IndoPak text |
-| **Latest merged PRs** | #119 weekly IndoPak text check (GitHub Action) · #118 IndoPak text → `text_indopak_nastaleeq` · #117 sw cache VERSION v3 · #116 IndoPak sukun/justify fixes · #114 search index split by language · #113 waqf-legend centring · #112 search box above tabs · #111/#110/#109/#107 IndoPak + verse/topic/voice search · #106 Audio Only reading follow · #105 Video manifest (187 clips) |
-| **Open PRs** | #115 **draft, do not merge** — IndoPak Tajweed prototype (`proto/indopak-tajweed`, dev page `/dev/indopak-tajweed`, kept open for its preview link) |
+| **`main`** | `91b7fc2` — Merge PR #127: Android player navigation bar clearance and standalone layout overflow |
+| **Latest merged PRs** | #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
+| **Open PRs** | #115 **draft, do not merge** — IndoPak Tajweed prototype (`proto/indopak-tajweed`, dev page `/dev/indopak-tajweed`, kept open for preview) |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
-| **Local working tree** | **not clean** — see §5: a new, uncommitted automated video-generation pipeline (`.agents/`, `data/`, `scripts/pipeline/`, `tests/`, `review_surah_*.html`, `docs/VIDEO_BUDGET_LEDGER.json`) plus 2 modified files |
+| **Video Production & R2 Storage** | Pipeline active for Surahs 18–34; Surahs 19, 23, 25, 26, 28, 30, 31, 32 video sets verified and added to `videoManifest.ts`; Cloudflare R2 Phase 3–8 cleanup & deduplication completed |
 
 ---
 
@@ -162,6 +162,20 @@
 3. Mondays: the **IndoPak text check** Action — an issue "IndoPak text changed on Quran.com" means re-run `dump-indopak-nastaleeq.mjs` + `fetch-indopak-words.mjs`, review, PR.
 4. Still open from before: the video pipeline (§2a) and the real-phone checks (above).
 
+### Done (2026-10-24)
+- [x] **PR #127** `fix/android-player-navigation-bar-clearance`: Android 3-button navigation bar clearance with `max(env(safe-area-inset-bottom,0px), var(--vv-bottom,0px))` on player dock and reading view; scope standalone html/body height and minHeight stretch to iOS only.
+- [x] **PR #126** `fix/ios-search-alignment-and-voice-input`: iOS search under-alignment fixed, 20px threshold for iPad floating shortcut bar, streaming voice recognition with Web Speech API, and `#search`/`#browse` deep links.
+- [x] **PR #125** `fix/mobile-player-keyboard-scroll`: Android virtual keyboard auto-dismiss on search result tap and scroll, pause teleprompter followScroll on touch/wheel, clamp `--vv-bottom` to 0 when not typing, compact pill player default on mobile (< 768px).
+- [x] **Cloudflare R2 Storage Capacity & Cleanup Audit**: 7-phase cleanup completed; consolidated video storage and deduplication reports (`docs/R2_STORAGE_CAPACITY_REPORT.md`, `docs/STAGE1_R2_COMPRESSION_ROLLOUT_REPORT.md`, `docs/FINAL_VIDEO_CLEANUP_AND_VALIDATION_REPORT.md`).
+- [x] **Surah Video Manifest Expansion**: Video sets for Surahs 19, 23, 25, 26, 28, 30, 31, 32 verified and registered in `src/lib/data/videoManifest.ts` and `data/progress.json`.
+
+### Done (2026-10-19 → 2026-10-23)
+- [x] **PR #124** `docs/handoff-share-link`: Share link sent to QuranWBW; documentation refresh.
+- [x] **PR #123** `feat/surah-17-al-isra`: Complete video production and manifest integration for Surah 17 Al-Isra.
+- [x] **PR #122** `docs/handoff-2026-10-19`: IndoPak text switched to `text_indopak_nastaleeq`, weekly check workflow.
+- [x] **PR #121** `feat/surah-16-an-nahl`: Complete video production and manifest integration for Surah 16 An-Nahl.
+- [x] **PR #120** `feat/surah-15-al-hijr`: Complete video production and manifest integration for Surah 15 Al-Hijr.
+
 ### Done (2026-10-18 → 2026-10-19)
 - [x] **PR #118** `fix/indopak-nastaleeq-text`: IndoPak text switched to Quran.com's `text_indopak_nastaleeq` (QuranWBW's request — `text_indopak` is deprecated) and drawn as it comes: #116's sukun swap removed (the new text's sukun is already the jazm). Placed on the words by letters against the glyph data's Uthmani words; fixes a few shifted verses (56:45, 74:46, 93:7, 103:3).
 - [x] **PR #119** `chore/indopak-text-check`: weekly GitHub Action (Mondays 03:17 UTC, or Actions → Run workflow) — opens an issue "IndoPak text changed on Quran.com" if the text differs from our copy; never changes the data. First run 2026-10-19: no change.
@@ -226,6 +240,14 @@ None of this has been committed, pushed, or reviewed — it's exactly as left be
 
 ## 6. Important Git History
 
+- `91b7fc2` — **PR #127** `fix/android-player-navigation-bar-clearance`: Android 3-button navigation bar clearance and standalone layout overflow
+- `6ec25e4` — **PR #126** `fix/ios-search-alignment-and-voice-input`: iOS search under-alignment, keyboard clearance, and voice recognition
+- `6d8cf51` — **PR #125** `fix/android-mobile-player-keyboard-scroll`: Android player dock sizing, keyboard dismissal, and scroll conflicts
+- `db4638a` — **PR #124** `docs/handoff-share-link`: Share link sent to QuranWBW
+- `faa4be5` — **PR #123** `feat/surah-17-al-isra`: Complete video production and manifest integration for Surah 17 Al-Isra
+- `a0c3ee8` — **PR #122** `docs/handoff-2026-10-19`: IndoPak text switched to `text_indopak_nastaleeq`, weekly check workflow
+- `4f686dc` — **PR #121** `feat/surah-16-an-nahl`: Complete video production and manifest integration for Surah 16 An-Nahl
+- `fefd7a0` — **PR #120** `feat/surah-15-al-hijr`: Complete video production and manifest integration for Surah 15 Al-Hijr
 - `a32855a` — **PR #119** `chore/indopak-text-check`: weekly GitHub Action — issue when Quran.com's IndoPak text changes
 - `543ed99` — **PR #118** `fix/indopak-nastaleeq-text`: IndoPak text → `text_indopak_nastaleeq`, drawn as it comes (no sukun swap)
 - `7a028ab` — **PR #117** `chore/sw-cache-v3`: bump service-worker cache VERSION v2 → v3
