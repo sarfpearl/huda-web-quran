@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
-import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02, VoiceSearchIcon } from "@/components/ui/Icon";
+import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -1011,7 +1011,7 @@ export function TopicPickerModal({
                           : "bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white ring-gold-300/60 hover:scale-105",
                       )}
                     >
-                      <VoiceSearchIcon className="text-[26px]" />
+                      {listening ? <VoiceWaveIcon className="text-[26px]" /> : <VoiceSearchIcon className="text-[26px]" />}
                     </button>
                   )}
                   </div>
