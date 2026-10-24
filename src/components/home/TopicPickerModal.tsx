@@ -393,10 +393,8 @@ export function TopicPickerModal({
   const isIos =
     typeof navigator !== "undefined" &&
     (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
-  // When a voice search last ended (0 = none yet this page), and whether
-  // the current one heard speech — for the silent-mic fallback below.
+  // When a voice search last ended (0 = none yet on this page).
   const voiceEndedAtRef = useRef(0);
-  const heardRef = useRef(false);
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -414,21 +412,20 @@ export function TopicPickerModal({
     setHearing(false);
   }, []);
 
-  // TEMP (?voicedebug): on-screen log of the recognition events, to find on
-  // the iPhone why later voice searches hear nothing. Remove before merge.
-  const voiceDebug = typeof window !== "undefined" && window.location.search.includes("voicedebug");
-  const [voiceLog, setVoiceLog] = useState<string[]>([]);
-  const vlog = useCallback((m: string) => {
-    if (!voiceDebug) return;
-    const t0 = new Date().toISOString().slice(17, 23);
-    setVoiceLog((l) => [...l.slice(-14), `${t0} ${m}`]);
-  }, [voiceDebug]);
-
   const startVoice = useCallback(() => {
-    vlog(`tap · ctor=${!!(window.SpeechRecognition || window.webkitSpeechRecognition)} standalone=${isIosStandalone} session=${(navigator as Navigator & { audioSession?: { type: string; state?: string } }).audioSession?.type}/${(navigator as Navigator & { audioSession?: { state?: string } }).audioSession?.state}`);
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Ctor) {
       // Still inside the tap, so iOS opens the keyboard (and its 🎤).
+      searchInputRef.current?.focus();
+      showDictationHint();
+      return;
+    }
+
+    // iOS Safari gives a page's second voice search a mic with only silence
+    // (WebKit bug; checked on the owner's iPhone 13, iOS 27.0.1 — new or
+    // reused recognizer, a wait, other audio-session types: no change). So
+    // after the first, open the keyboard and point to its own dictation.
+    if (isIos && voiceEndedAtRef.current > 0) {
       searchInputRef.current?.focus();
       showDictationHint();
       return;
@@ -455,23 +452,16 @@ export function TopicPickerModal({
       rec.lang = targetLocale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
 
       let started = false;
-      const recX = rec as SpeechRecognition & Record<string, unknown>;
-      for (const ev of ["audiostart", "audioend", "soundstart", "nomatch"]) recX[`on${ev}`] = () => vlog(ev);
       rec.onstart = () => {
-        vlog("start");
         started = true;
         setListening(true);
       };
 
-      heardRef.current = false;
       rec.onspeechstart = () => {
-        heardRef.current = true;
-        vlog("speechstart");
         setHearing(true);
       };
 
       rec.onresult = (e: SpeechRecognitionEvent) => {
-        heardRef.current = true;
         setHearing(true);
         let transcript = "";
         for (let i = 0; i < e.results.length; ++i) {
@@ -479,7 +469,6 @@ export function TopicPickerModal({
           if (item) transcript += item;
         }
         const clean = transcript.trim();
-        vlog(`result "${clean}" final=${!!e.results[e.results.length - 1]?.isFinal}`);
         if (clean) {
           setVerseTopicKey(null);
           setSearchQuery(clean);
@@ -495,7 +484,6 @@ export function TopicPickerModal({
 
       // An older session's late end / error must not reset this one.
       rec.onend = () => {
-        vlog(`end (current=${recognitionRef.current === rec})`);
         if (recognitionRef.current !== rec) return;
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
@@ -508,7 +496,6 @@ export function TopicPickerModal({
       };
 
       rec.onerror = (e) => {
-        vlog(`error ${(e as Event & { error?: string; message?: string }).error} ${(e as Event & { message?: string }).message ?? ""}`);
         console.warn("Speech recognition error:", e);
         if (recognitionRef.current !== rec) return;
         // Refused or unavailable (the home-screen app): point to dictation.
@@ -527,9 +514,7 @@ export function TopicPickerModal({
         if (recognitionRef.current !== rec) return; // stopped meanwhile
         try {
           rec.start();
-          vlog("start() called");
         } catch (err) {
-          vlog(`start() threw ${(err as DOMException)?.name}`);
           // Still winding down: once more, shortly.
           if ((err as DOMException)?.name !== "InvalidStateError") throw err;
           window.setTimeout(() => {
@@ -541,18 +526,6 @@ export function TopicPickerModal({
       };
       // Started inside the tap: iOS ignores a start() made later.
       startRec();
-      // iOS: a later search can get a live mic with only silence (audiostart,
-      // then nothing). Not the first one, which works: after 4 s with no
-      // speech, stop and point to the keyboard's dictation instead.
-      if (isIos && voiceEndedAtRef.current > 0) {
-        window.setTimeout(() => {
-          if (recognitionRef.current === rec && !heardRef.current) {
-            vlog("silent mic → dictation hint");
-            stopVoice();
-            showDictationHint();
-          }
-        }, 4000);
-      }
       setListening(true);
 
       // Auto-stop after 8 seconds of no input to avoid perpetual listening state
@@ -574,7 +547,7 @@ export function TopicPickerModal({
       searchInputRef.current?.focus();
       showDictationHint();
     }
-  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint, vlog]);
+  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint]);
 
   // The same click when listening ends — tapped off, timed out or finished.
   const wasListeningRef = useRef(false);
@@ -1108,17 +1081,12 @@ export function TopicPickerModal({
                   </div>
 
                   {/* Voice search: a floating gold button over the list. */}
-                  {voiceDebug && voiceLog.length > 0 && (
-                    <pre className="absolute left-2 top-2 z-20 max-h-[60%] max-w-[85%] overflow-auto whitespace-pre-wrap rounded-lg bg-black/90 p-2 text-[10px] leading-tight text-green-300">
-                      {voiceLog.join("\n")}
-                    </pre>
-                  )}
                   {!isFavourites && voiceSupported && dictationHint && (
                     <p
                       role="status"
                       className="absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
                     >
-                      {t(lang, "Voice search isn't available here. Tap the search box, then 🎤 on the keyboard.")}
+                      {t(lang, "Tap 🎤 on the keyboard to search by voice.")}
                     </p>
                   )}
                   {!isFavourites && voiceSupported && (
