@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
 import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
+import { playClick } from "@/lib/clickSound";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -365,6 +366,8 @@ export function TopicPickerModal({
 
   // Voice input (Web Speech API, no AI). Absent in some browsers or iOS PWA → hide the mic.
   const [listening, setListening] = useState(false);
+  // The mic hears speech: the wave on the voice button moves.
+  const [hearing, setHearing] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const voiceTimeoutRef = useRef<number | null>(null);
 
@@ -393,6 +396,7 @@ export function TopicPickerModal({
       recognitionRef.current = null;
     }
     setListening(false);
+    setHearing(false);
   }, []);
 
   const startVoice = useCallback(() => {
@@ -401,6 +405,7 @@ export function TopicPickerModal({
 
     // Stop any existing session
     stopVoice();
+    playClick();
 
     // Pause audio recitation so iOS / mobile microphone can clearly record user speech
     if (player.isPlaying) {
@@ -422,7 +427,10 @@ export function TopicPickerModal({
         setListening(true);
       };
 
+      rec.onspeechstart = () => setHearing(true);
+
       rec.onresult = (e: SpeechRecognitionEvent) => {
+        setHearing(true);
         let transcript = "";
         for (let i = 0; i < e.results.length; ++i) {
           const item = e.results[i]?.[0]?.transcript;
@@ -436,6 +444,7 @@ export function TopicPickerModal({
       };
 
       rec.onspeechend = () => {
+        setHearing(false);
         try {
           rec.stop();
         } catch {}
@@ -447,6 +456,7 @@ export function TopicPickerModal({
           voiceTimeoutRef.current = null;
         }
         setListening(false);
+        setHearing(false);
         recognitionRef.current = null;
       };
 
@@ -457,6 +467,7 @@ export function TopicPickerModal({
           voiceTimeoutRef.current = null;
         }
         setListening(false);
+        setHearing(false);
         recognitionRef.current = null;
       };
 
@@ -472,6 +483,13 @@ export function TopicPickerModal({
       stopVoice();
     }
   }, [lang, player, stopVoice]);
+
+  // The same click when listening ends — tapped off, timed out or finished.
+  const wasListeningRef = useRef(false);
+  useEffect(() => {
+    if (wasListeningRef.current && !listening) playClick();
+    wasListeningRef.current = listening;
+  }, [listening]);
 
   // Stop listening when the panel closes.
   useEffect(() => {
@@ -1005,13 +1023,14 @@ export function TopicPickerModal({
                       aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
                       aria-pressed={listening}
                       className={cn(
-                        "absolute bottom-3 right-3 z-10 grid h-14 w-14 place-items-center rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 transition-transform cursor-pointer active:scale-90",
-                        listening
-                          ? "bg-red-500 text-white ring-red-300/60 animate-pulse"
-                          : "bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white ring-gold-300/60 hover:scale-105",
+                        "absolute bottom-3 right-3 z-10 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-gold-300/60 transition-transform cursor-pointer hover:scale-105 active:scale-90",
                       )}
                     >
-                      {listening ? <VoiceWaveIcon className="text-[26px]" /> : <VoiceSearchIcon className="text-[26px]" />}
+                      {listening ? (
+                        <VoiceWaveIcon className={cn("text-[26px]", hearing && "voice-wave-live")} />
+                      ) : (
+                        <VoiceSearchIcon className="text-[26px]" />
+                      )}
                     </button>
                   )}
                   </div>
