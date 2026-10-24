@@ -1,5 +1,5 @@
 /* Poppins, Amiri, Noto Serif Tamil and the other scripts' Noto fonts are
-   self-hosted by next/font (src/app/fonts.ts), which sets --font-poppins,
+   self-hosted by next/font/local (src/app/fonts.ts, files in src/app/fonts/), which sets --font-poppins,
    --font-tamil, --font-amiri, --font-urdu … on <html>. */
 
 /* Tamil at the Latin UI's size: Noto Serif Tamil draws ~12% larger than
