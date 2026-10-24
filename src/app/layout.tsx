@@ -77,7 +77,9 @@ export default function RootLayout({
         />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen font-sans antialiased">
+      {/* Extensions (Grammarly: data-gr-ext-installed …) add attributes to
+          <body> before React hydrates; ignore that attribute-only mismatch. */}
+      <body className="min-h-screen font-sans antialiased" suppressHydrationWarning>
         <SplashScreen />
         <ThemeProvider>
           <AudioPlayerProvider>
