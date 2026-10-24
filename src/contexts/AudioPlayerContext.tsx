@@ -272,6 +272,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // When the system last paused the recitation (a phone / FaceTime call):
   // it plays on once the call ends (see the audio-session effect). 0 = not.
   const interruptedRef = useRef(0);
+  // When the audio session was last seen "interrupted" (a call — headphones
+  // coming out never do that) while the recitation was on. Unlike
+  // interruptedRef it survives a resume that iOS refused; 0 = not.
+  const callAtRef = useRef(0);
+  // Measured length of each ayah clip of the Juz in play (index → seconds),
+  // for the lock screen's whole-Juz progress bar (see juzPosition).
+  const ayahDurRef = useRef<Map<number, number>>(new Map());
 
   // After a call — or the iPad home-screen app coming back from another app —
   // iOS can leave the element "playing" without sound or time moving (pause
@@ -724,6 +731,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       standbyUrlRef.current = null;
       unlockStandby();
       ayahSeqRef.current = { urls: ayahUrls, index: startIdx, pre: preludes, preStep: -1 };
+      ayahDurRef.current = new Map();
       setQueue([displayTrack]);
       setCurrentIndex(0);
       setContinueListening(null);
@@ -918,6 +926,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const pause = useCallback(() => {
     userPausedRef.current = true;
     interruptedRef.current = 0;
+    callAtRef.current = 0;
     if (isPreludeRef.current && preludeAudioRef.current) {
       preludeAudioRef.current.pause();
       setIsPlaying(false);
@@ -1076,8 +1085,40 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // Lock screen / notification / headset controls (Media Session API): what
   // is playing, play / pause, previous / next and seeking, so a listener with
   // the phone locked or the tab in the background can still control it.
-  const mediaActionsRef = useRef({ resume, pause, next, previous, seek, time: currentTime });
-  mediaActionsRef.current = { resume, pause, next, previous, seek, time: currentTime };
+  // A Juz plays ayah by ayah, so the lock screen showed each ayah's few
+  // seconds: it gets the whole Juz instead — ayahs not measured yet count as
+  // the average of those that were.
+  const juzPosition = (time: number) => {
+    const seq = ayahSeqRef.current;
+    const known = ayahDurRef.current;
+    if (!seq || known.size === 0) return null;
+    let sum = 0;
+    for (const d of known.values()) sum += d;
+    const avg = sum / known.size;
+    const lens = seq.urls.map((_, i) => known.get(i) ?? avg);
+    let position = time;
+    for (let i = 0; i < seq.index; i++) position += lens[i];
+    return { position, duration: lens.reduce((a, b) => a + b, 0), lens };
+  };
+  // Lock-screen seeking moves through the whole Juz too.
+  const seekLockScreen = (target: number) => {
+    const jp = juzPosition(currentTime);
+    const seq = ayahSeqRef.current;
+    if (!jp || !seq) return seek(target);
+    let start = 0;
+    for (let i = 0; i < jp.lens.length; i++) {
+      if (target < start + jp.lens[i] || i === jp.lens.length - 1) {
+        const offset = Math.max(0, target - start);
+        if (i === seq.index) seek(offset);
+        else jumpToAyah(i, (d) => Math.min(offset, Math.max(0, d - 0.5)));
+        return;
+      }
+      start += jp.lens[i];
+    }
+  };
+  const lockTime = juzPosition(currentTime)?.position ?? currentTime;
+  const mediaActionsRef = useRef({ resume, pause, next, previous, seek: seekLockScreen, time: lockTime, juzPosition });
+  mediaActionsRef.current = { resume, pause, next, previous, seek: seekLockScreen, time: lockTime, juzPosition };
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
@@ -1183,23 +1224,41 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // recitation; it never started again after the call. When the session
   // leaves "interrupted" (checked again on return, in case the page was
   // asleep through the call), play on — only if it was the call that paused
-  // it (not the listener, nor headphones coming out).
+  // it (not the listener, nor headphones coming out). It didn't on the
+  // owner's iPhone: the page can sleep through the "interrupted" event, and
+  // a play() iOS refuses right after the call cleared the marker. So the
+  // marker stays until it really plays, and is retried on each state change
+  // and each return to the page.
   useEffect(() => {
     const session = (navigator as Navigator & { audioSession?: EventTarget & { state?: string } }).audioSession;
     if (!session || typeof session.addEventListener !== "function") return;
-    let prev = session.state;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tryResume = () => {
+      const at = callAtRef.current;
+      if (!at || session.state === "interrupted" || userPausedRef.current) return;
+      if (Date.now() - at > 10 * 60_000) {
+        callAtRef.current = 0;
+        return;
+      }
+      mediaActionsRef.current.resume();
+    };
     const onState = () => {
-      const state = session.state;
-      const was = prev;
-      prev = state;
-      if (was !== "interrupted" || state === "interrupted") return;
-      const at = interruptedRef.current;
-      if (at && Date.now() - at < 10 * 60_000 && !userPausedRef.current) mediaActionsRef.current.resume();
+      if (session.state === "interrupted") {
+        // Only if it was on: playing still, or just paused by the system.
+        const el = isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
+        const on = (el && !el.paused) || Date.now() - interruptedRef.current < 60_000;
+        if (currentRef.current && on && !userPausedRef.current) callAtRef.current = Date.now();
+        return;
+      }
+      tryResume();
+      // iOS can refuse play() for a moment after the call hangs up.
+      timers.push(setTimeout(tryResume, 1000), setTimeout(tryResume, 3000));
     };
     const onShow = () => document.visibilityState === "visible" && onState();
     session.addEventListener("statechange", onState);
     document.addEventListener("visibilitychange", onShow);
     return () => {
+      timers.forEach(clearTimeout);
       session.removeEventListener("statechange", onState);
       document.removeEventListener("visibilitychange", onShow);
     };
@@ -1237,16 +1296,23 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator) || !navigator.mediaSession.setPositionState) return;
     if (!(duration > 0) || !Number.isFinite(duration)) return;
+    // The first ayah has no timeupdate yet: its loaded length stands in.
+    const seq = ayahSeqRef.current;
+    if (seq && seq.preStep < 0 && !ayahDurRef.current.has(seq.index)) ayahDurRef.current.set(seq.index, duration);
+    const { time, juzPosition: juz } = mediaActionsRef.current;
+    const jp = juz(0);
+    if (seq && !jp) return; // a Juz's opening prelude clip: wait for the ayah
+    const total = jp ? Math.max(jp.duration, time) : duration;
     try {
       navigator.mediaSession.setPositionState({
-        duration,
+        duration: total,
         playbackRate: playbackRate || 1,
-        position: Math.min(Math.max(0, mediaActionsRef.current.time), duration),
+        position: Math.min(Math.max(0, time), total),
       });
     } catch {
       /* ignore */
     }
-  }, [duration, playbackRate, isPlaying, positionTick]);
+  }, [duration, playbackRate, isPlaying, positionTick, ayahSequence?.index]);
 
   const setVolume = useCallback((v: number) => {
     const clamped = Math.min(1, Math.max(0, v));
@@ -1412,7 +1478,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
     // Per-ayah Juz playback: don't persist a resume position (it would be a
     // single ayah's offset, meaningless for the Juz as a whole).
-    if (ayahSeqRef.current) return;
+    const seq = ayahSeqRef.current;
+    if (seq) {
+      if (seq.preStep < 0 && Number.isFinite(el.duration) && el.duration > 0) ayahDurRef.current.set(seq.index, el.duration);
+      return;
+    }
 
     const now = Math.floor(effectiveTime);
     if (now !== lastSaveRef.current) {
@@ -1649,6 +1719,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     onPlaying: fromActive(() => {
       applyMediaMetadata();
       userPausedRef.current = false;
+      callAtRef.current = 0;
       if (!isPreludeRef.current) {
         clearTimeout(waitingTimerRef.current);
         setIsPlaying(true);
@@ -1690,6 +1761,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         onWaiting={() => { if (isPreludeRef.current) setIsLoading(true); }}
         onPlaying={() => {
           applyMediaMetadata();
+          callAtRef.current = 0;
           if (isPreludeRef.current) setIsLoading(false);
         }}
         // Paused from outside (another app's sound, a call): show play. Not

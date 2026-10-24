@@ -1,8 +1,21 @@
 # TODO
 
-## Open items (updated 2026-10-14)
+## Open items (updated 2026-10-24)
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
+
+**Owner's phone check (2026-10-24):** lock screen artwork + controls,
+headphone / Bluetooth buttons, home-screen app, Android Back, zoom — fine.
+Not fine: (1) after a call the recitation didn't resume; (2) unmuting an
+Instagram feed video didn't pause the Surah; (3) Juz on the lock screen showed
+each ayah's few seconds, not the Juz. (1) and (3) fixed in
+`fix/call-resume-juz-lockscreen` (check again on the phone); (2) still open.
+
+- [ ] **Phase 8B — private R2 archive upload** (separate task, don't mix with
+      app fixes): the 2,364 duplicate videos (53.6 GB) from the duplicate
+      cleanup go to a private bucket `huda-quran-archive`; plan in
+      `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
+      no local deletion until the upload is verified.
 
 **Still open (2026-10-14):** the rest of the real-phone checks (below).
 Everything else is merged and live (#26 … #104), including the IndoPak
