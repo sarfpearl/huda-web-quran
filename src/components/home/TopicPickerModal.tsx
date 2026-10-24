@@ -388,18 +388,14 @@ export function TopicPickerModal({
     dictationHintTimerRef.current = window.setTimeout(() => setDictationHint(false), 6000);
   }, []);
 
-  // The player keeps the audio session on "playback" (one recitation at a
-  // time), and iOS then gave recognition no microphone after the first
-  // search: record while listening, back to "playback" after.
-  const setAudioSession = (type: "playback" | "play-and-record") => {
-    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
-    if (!session) return;
-    try {
-      session.type = type;
-    } catch {
-      /* not supported */
-    }
-  };
+  // iOS heard nothing after the first voice search: a sound played around
+  // it (the click) takes the audio session from recognition, and a new
+  // SpeechRecognition each time fares worse than one reused. So on iOS: no
+  // clicks around listening, and one instance for the page.
+  const isIos =
+    typeof navigator !== "undefined" &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+  const recInstanceRef = useRef<SpeechRecognition | null>(null);
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -408,17 +404,12 @@ export function TopicPickerModal({
     }
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.abort();
-      } catch {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
+        recognitionRef.current.stop();
+      } catch {}
       recognitionRef.current = null;
     }
     setListening(false);
     setHearing(false);
-    setAudioSession("playback");
   }, []);
 
   const startVoice = useCallback(() => {
@@ -432,7 +423,7 @@ export function TopicPickerModal({
 
     // Stop any existing session
     stopVoice();
-    playClick();
+    if (!isIos) playClick();
 
     // Pause audio recitation so iOS / mobile microphone can clearly record user speech
     if (player.isPlaying) {
@@ -440,7 +431,8 @@ export function TopicPickerModal({
     }
 
     try {
-      const rec = new Ctor();
+      const rec = (isIos && recInstanceRef.current) || new Ctor();
+      recInstanceRef.current = rec;
       recognitionRef.current = rec;
       rec.continuous = false;
       rec.interimResults = true;
@@ -489,7 +481,6 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
-        setAudioSession("playback");
       };
 
       rec.onerror = (e) => {
@@ -504,11 +495,19 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
-        setAudioSession("playback");
       };
 
-      setAudioSession("play-and-record");
-      rec.start();
+      try {
+        rec.start();
+      } catch (err) {
+        // The reused instance is still winding down: once more, shortly.
+        if ((err as DOMException)?.name !== "InvalidStateError") throw err;
+        window.setTimeout(() => {
+          try {
+            rec.start();
+          } catch {}
+        }, 300);
+      }
       setListening(true);
 
       // Auto-stop after 8 seconds of no input to avoid perpetual listening state
@@ -530,14 +529,14 @@ export function TopicPickerModal({
       searchInputRef.current?.focus();
       showDictationHint();
     }
-  }, [lang, player, stopVoice, isIosStandalone, showDictationHint]);
+  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint]);
 
   // The same click when listening ends — tapped off, timed out or finished.
   const wasListeningRef = useRef(false);
   useEffect(() => {
-    if (wasListeningRef.current && !listening) playClick();
+    if (wasListeningRef.current && !listening && !isIos) playClick();
     wasListeningRef.current = listening;
-  }, [listening]);
+  }, [listening, isIos]);
 
   // Stop listening when the panel closes.
   useEffect(() => {
