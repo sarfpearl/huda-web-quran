@@ -388,6 +388,19 @@ export function TopicPickerModal({
     dictationHintTimerRef.current = window.setTimeout(() => setDictationHint(false), 6000);
   }, []);
 
+  // The player keeps the audio session on "playback" (one recitation at a
+  // time), and iOS then gave recognition no microphone after the first
+  // search: record while listening, back to "playback" after.
+  const setAudioSession = (type: "playback" | "play-and-record") => {
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (!session) return;
+    try {
+      session.type = type;
+    } catch {
+      /* not supported */
+    }
+  };
+
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
       window.clearTimeout(voiceTimeoutRef.current);
@@ -405,6 +418,7 @@ export function TopicPickerModal({
     }
     setListening(false);
     setHearing(false);
+    setAudioSession("playback");
   }, []);
 
   const startVoice = useCallback(() => {
@@ -465,7 +479,9 @@ export function TopicPickerModal({
         } catch {}
       };
 
+      // An older session's late end / error must not reset this one.
       rec.onend = () => {
+        if (recognitionRef.current !== rec) return;
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
           voiceTimeoutRef.current = null;
@@ -473,10 +489,12 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
+        setAudioSession("playback");
       };
 
       rec.onerror = (e) => {
         console.warn("Speech recognition error:", e);
+        if (recognitionRef.current !== rec) return;
         // Refused or unavailable (the home-screen app): point to dictation.
         if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes((e as Event & { error?: string }).error ?? "")) showDictationHint();
         if (voiceTimeoutRef.current) {
@@ -486,8 +504,10 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
+        setAudioSession("playback");
       };
 
+      setAudioSession("play-and-record");
       rec.start();
       setListening(true);
 
@@ -1073,8 +1093,9 @@ export function TopicPickerModal({
                 </>
               )}
 
-              {/* 5. Footer: « About HuDa » (the browser only) */}
-              {!isFavourites && !showAbout && !showSettings && (
+              {/* 5. Footer: « About HuDa » (the browser only) — not while
+                  searching, when the keyboard leaves the results little room */}
+              {!isFavourites && !showAbout && !showSettings && !(kb.bottom > 0 || searchQuery.trim()) && (
                 <button
                   type="button"
                   onClick={() => setView("about")}
