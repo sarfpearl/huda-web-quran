@@ -741,7 +741,7 @@ export function ReadingView({
     if (!el || !frame || !host) return;
     const fit = () => {
       // Player hidden: down to the bottom edge.
-      if (!playerShown) return void (el.style.bottom = "var(--vv-bottom,0px)");
+      if (!playerShown) return void (el.style.bottom = "max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))");
       const f = frame.getBoundingClientRect();
       if (!f.height) return el.style.removeProperty("bottom");
       el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
@@ -1104,7 +1104,7 @@ export function ReadingView({
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className={`no-scrollbar pointer-events-auto absolute inset-x-0 ${focus ? "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+0.5rem)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)]"} bottom-[calc(var(--vv-bottom,0px)+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]`}
+        className={`no-scrollbar pointer-events-auto absolute inset-x-0 ${focus ? "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+0.5rem)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)]"} bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]`}
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (

@@ -1712,7 +1712,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         aria-label="Player"
         tabIndex={-1}
         aria-hidden={playerAway ? true : undefined}
-        className={`outline-none absolute bottom-[calc(var(--vv-bottom,0px)+1rem)] sm:bottom-[calc(var(--vv-bottom,0px)+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
+        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
           playerAway ? "invisible opacity-0" : ""
         }`}
       >
@@ -1904,14 +1904,18 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement | null>): boole
     let full = { width: 0, height: 0 };
     // Home-screen app (iOS black-translucent status bar): the fixed scene comes
     // up a status bar short of the screen, leaving a black strip at the bottom.
-    // Stretch it to the physical screen height.
+    // Stretch it to the physical screen height (iOS only).
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const isIOS =
+      typeof navigator !== "undefined" &&
+      (/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+        (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        if (standalone) {
+        if (standalone && isIOS) {
           // Only when the window fills the screen: an iPad window (Stage
           // Manager, Split View, Slide Over) is smaller than the screen, and
           // a scene stretched to the screen's height there overflowed it —
