@@ -172,12 +172,12 @@
     }
     /* black-translucent status bar: the layout viewport comes up a status bar
        short and iOS clips the locked page there, leaving a black strip at the
-       bottom (iPad, windowed or full screen). Grow the document by the inset. */
-    html.screen-locked,
-    html.screen-locked body {
+       bottom (iPad, windowed or full screen). Grow the document by the inset only for iOS. */
+    html.screen-locked.ios-standalone,
+    html.screen-locked.ios-standalone body {
       height: calc(100% + env(safe-area-inset-top));
     }
-    html.screen-locked body {
+    html.screen-locked.ios-standalone body {
       bottom: auto;
     }
   }
@@ -190,6 +190,9 @@
   html.iphone-app [data-player-frame] {
     border-bottom-left-radius: max(28px, calc(var(--screen-corner) - 1rem));
     border-bottom-right-radius: max(28px, calc(var(--screen-corner) - 1rem));
+  }
+  html.iphone-app [data-player-dock] {
+    bottom: calc(var(--vv-bottom, 0px) + 1rem);
   }
 
   body {

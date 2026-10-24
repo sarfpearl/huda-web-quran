@@ -16,6 +16,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     if (!isHome) return;
     const root = document.documentElement;
     root.classList.add("screen-locked");
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (isIOS() && standalone) {
+      root.classList.add("ios-standalone");
+    }
     // iPhone home-screen app: the player sits 1rem off the screen's rounded
     // bottom corners — give its bottom corners the concentric radius.
     const corner = iPhoneAppCorner();
@@ -23,7 +29,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       root.classList.add("iphone-app");
       root.style.setProperty("--screen-corner", `${corner}px`);
     }
-    if (!isSafari26Tab()) return () => root.classList.remove("screen-locked", "iphone-app");
+    if (!isSafari26Tab()) return () => root.classList.remove("screen-locked", "iphone-app", "ios-standalone");
 
     // iOS 26 Safari shows the scene behind its bars only once the page has
     // scrolled; hold it on the 64px runway (see .safari-bleed in globals.css).
@@ -37,7 +43,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("scroll", hold);
       window.removeEventListener("pageshow", hold);
-      root.classList.remove("screen-locked", "safari-bleed", "iphone-app");
+      root.classList.remove("screen-locked", "safari-bleed", "iphone-app", "ios-standalone");
       window.scrollTo(0, 0);
     };
   }, [isHome]);
@@ -136,6 +142,13 @@ function SkipLink({ href, children }: { href: string; children: React.ReactNode 
       {children}
     </a>
   );
+}
+
+/** Whether the client is running on an iOS device (iPhone, iPad, iPod, or iPadOS desktop UA). */
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
 }
 
 /** Safari 26+ in a normal iPhone / iPad tab (not the home-screen app, not Chrome / Firefox / Edge). */
