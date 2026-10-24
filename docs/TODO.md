@@ -432,6 +432,12 @@ and text are used unmodified, and the credits are shown** (About → credits).
       their font breaks its ligatures; they are building IndoPak Mushaf Tajweed
       fonts, likely more than a year away. Until then IndoPak has no Tajweed
       switch (PR #103). Don't colour the IndoPak text in CSS.
+      **Glyph-by-glyph prototype (PR #115) — closed 2026-10-24.** QuranWBW
+      reviewed the live preview (2026-10-23): the `text_indopak_nastaleeq`
+      text works perfectly, but the prototype breaks on multi-letter glyphs
+      and the colours are not exactly right (~65–70%); not production level,
+      they prefer waiting for a proper font. Branch `proto/indopak-tajweed`
+      kept for reference; don't revive it without their OK.
 
 ## Quran views · live · comments · likes (Supabase)
 

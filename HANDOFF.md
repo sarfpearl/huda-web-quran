@@ -19,7 +19,7 @@
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
 | **`main`** | `c1aa45b` — Merge PR #130: search clear button on the right; voice search as a gold floating button |
 | **Latest merged PRs** | #130 search clear button & voice FAB · #129 fonts self-hosted (`next/font/local`) · #128 handoff snapshot & pipeline status · #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
-| **Open PRs** | #115 **draft, do not merge** — IndoPak Tajweed prototype (`proto/indopak-tajweed`, dev page `/dev/indopak-tajweed`, kept open for preview) |
+| **Open PRs** | none — #115 (IndoPak Tajweed prototype) closed unmerged 2026-10-24 after QuranWBW's review; branch `proto/indopak-tajweed` kept for reference |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Video Production & R2 Storage** | Pipeline active for Surahs 18–34; Surahs 19, 23, 25, 26, 28, 30, 31, 32 video sets verified and added to `videoManifest.ts`; Cloudflare R2 Phase 3–8 cleanup & deduplication completed |
 
@@ -150,15 +150,14 @@
 - [x] **16 Aal-Imran chapter clips:** rendered, verified live on R2, and active in `videoManifest.ts` (all 187 clips live, 0 missing).
 - [x] **Surah 2 (Al-Baqarah) Final Verification (2026-10-15):** All 44 chapters covering Verses 1–286 verified 100% continuous (0 gaps), all 44 video assets confirmed live HTTP 200 on R2, 8 real-footage Ayah clips verified, real vs synthetic video registries audited.
 - [x] **Video storage consolidation (2026-10-14):** 12.58 GB freed by removing redundant raw masters, QA frames, test renders, and `.media-work` cache; single high-quality master format (UHD 4K where available, 1080p for others).
-- [ ] **IndoPak Tajweed colours (prototype, PR #115 draft):** Al-Baqarah 1–20 drawn glyph by glyph (SVG) in the Uthmani QPC V4 colours — QuranWBW approved the approach (2026-10-19, "acceptable, no additional conditions") and asked for a live preview: the owner sent them the Vercel **Share** link on 2026-10-19 (branch `proto/indopak-tajweed` set to "Anyone with the link") — **waiting on their reply**. Once they have looked: set it back to "Only people with access" (Vercel → the preview → Share). QA glyph 220/230, genuine mismatch 0; Chromium + iPhone Safari checked. Before the reader: text selection / copy, active-word highlight, tap-to-seek, wrapping, whole-Surah performance — `docs/TODO.md` → *IndoPak Tajweed colours*.
+- [x] **IndoPak Tajweed colours — prototype shelved (PR #115 closed 2026-10-24).** Al-Baqarah 1–20 drawn glyph by glyph (SVG) in the Uthmani QPC V4 colours; QuranWBW approved the approach (2026-10-19) and reviewed the live preview. Their reply (2026-10-23): the new `text_indopak_nastaleeq` text "works perfectly", but the prototype breaks on multi-letter glyphs and the Tajweed colours are not exactly right (~65–70%) — a good prototype, not production level; they prefer no half-cooked Tajweed and suggest waiting, as most users read plain black/white text. So IndoPak stays without Tajweed until QuranWBW releases their IndoPak Tajweed font. Vercel Share for `proto/indopak-tajweed` set back to "Only people with access" (2026-10-24).
 - [ ] Real-phone checks still open: lock-screen artwork / controls, headphone / Bluetooth buttons, a call interrupting, Juz with the screen locked, Android Back — `docs/TODO.md` → *Open items*.
 - [x] Old Bayan tables dropped and no Bayan storage buckets left in Supabase (2026-10-07). R2 still holds unused `assets/images/bayan/*.jpg`; keep `bayan/quran.jpg` (Quran fallback cover).
 
 ### Next conversation — start here
-1. **QuranWBW's reply on the live preview** (PR #115): paste it in. If they're happy, plan the reader work (selection / copy, active-word highlight, tap-to-seek, wrapping, whole-Surah performance) and the rest of the Surahs (`scripts/generation/build-indopak-tajweed.py` needs the full rule data — CC BY 4.0, URLs in the script). If they ask for changes, make them on `proto/indopak-tajweed`.
-2. After they've looked: Vercel Share for `proto/indopak-tajweed` back to "Only people with access".
-3. Mondays: the **IndoPak text check** Action — an issue "IndoPak text changed on Quran.com" means re-run `dump-indopak-nastaleeq.mjs` + `fetch-indopak-words.mjs`, review, PR.
-4. Still open from before: the video pipeline (§2a) and the real-phone checks (above).
+1. Mondays: the **IndoPak text check** Action — an issue "IndoPak text changed on Quran.com" means re-run `dump-indopak-nastaleeq.mjs` + `fetch-indopak-words.mjs`, review, PR.
+2. Still open from before: the video pipeline (§2a) and the real-phone checks (above).
+3. IndoPak Tajweed: only when QuranWBW releases their IndoPak Tajweed font (PR #115 shelved).
 
 ### Done (2026-10-24)
 - [x] **PR #130** `fix/search-clear-and-voice-fab`: search clear button moved right; voice search as a gold floating button.
@@ -406,5 +405,5 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 7. **Tajweed:** QPC V4 COLRv1 glyph fonts (one glyph per word).
 8. **Keep features focused and minimal:** Maintain simple design system, no unnecessary heavy layers.
 9. **Quran only:** Bayan / talks / YouTube were removed on 2026-10-06. Don't reintroduce them unless the owner asks.
-10. **IndoPak follows QuranWBW's permission:** their font self-hosted unmodified, Quran.com's `text_indopak_nastaleeq` drawn as it comes (no code-point changes), credits shown, app free with no ads. Tajweed colours in IndoPak only glyph by glyph (prototype, PR #115) — never CSS colour on the text.
+10. **IndoPak follows QuranWBW's permission:** their font self-hosted unmodified, Quran.com's `text_indopak_nastaleeq` drawn as it comes (no code-point changes), credits shown, app free with no ads. No IndoPak Tajweed until QuranWBW's own IndoPak Tajweed font (glyph-by-glyph prototype PR #115 rejected by them as not production level) — never CSS colour on the text.
 11. **One AI session per checkout** (or separate worktrees); stage files by name.
