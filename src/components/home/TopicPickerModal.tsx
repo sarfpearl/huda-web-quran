@@ -363,44 +363,120 @@ export function TopicPickerModal({
     };
   }, [isSearching, verseQuery, verseTopicKey, lang]);
 
-  // Voice input (Web Speech API, no AI). Absent in some browsers → hide the mic.
+  // Voice input (Web Speech API, no AI). Absent in some browsers or iOS PWA → hide the mic.
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const voiceTimeoutRef = useRef<number | null>(null);
+
+  const isIosStandalone =
+    typeof window !== "undefined" &&
+    ((window.navigator as unknown as { standalone?: boolean })?.standalone === true);
+
   const voiceSupported =
     typeof window !== "undefined" &&
+    !isIosStandalone &&
     !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  const startVoice = () => {
+
+  const stopVoice = useCallback(() => {
+    if (voiceTimeoutRef.current) {
+      window.clearTimeout(voiceTimeoutRef.current);
+      voiceTimeoutRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      recognitionRef.current = null;
+    }
+    setListening(false);
+  }, []);
+
+  const startVoice = useCallback(() => {
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Ctor) return;
-    const rec = new Ctor();
-    recognitionRef.current = rec;
-    rec.lang = uiLocale(lang);
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e: SpeechRecognitionEvent) => {
-      const text = e.results[0]?.[0]?.transcript ?? "";
-      if (text) {
-        setVerseTopicKey(null);
-        setSearchQuery(text);
-      }
-    };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+
+    // Stop any existing session
+    stopVoice();
+
+    // Pause audio recitation so iOS / mobile microphone can clearly record user speech
+    if (player.isPlaying) {
+      player.pause();
+    }
+
     try {
+      const rec = new Ctor();
+      recognitionRef.current = rec;
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+
+      // Locale: try the UI locale, fallback to browser language or en-US
+      const targetLocale = uiLocale(lang);
+      rec.lang = targetLocale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
+
+      rec.onstart = () => {
+        setListening(true);
+      };
+
+      rec.onresult = (e: SpeechRecognitionEvent) => {
+        let transcript = "";
+        for (let i = 0; i < e.results.length; ++i) {
+          const item = e.results[i]?.[0]?.transcript;
+          if (item) transcript += item;
+        }
+        const clean = transcript.trim();
+        if (clean) {
+          setVerseTopicKey(null);
+          setSearchQuery(clean);
+        }
+      };
+
+      rec.onspeechend = () => {
+        try {
+          rec.stop();
+        } catch {}
+      };
+
+      rec.onend = () => {
+        if (voiceTimeoutRef.current) {
+          window.clearTimeout(voiceTimeoutRef.current);
+          voiceTimeoutRef.current = null;
+        }
+        setListening(false);
+        recognitionRef.current = null;
+      };
+
+      rec.onerror = (e) => {
+        console.warn("Speech recognition error:", e);
+        if (voiceTimeoutRef.current) {
+          window.clearTimeout(voiceTimeoutRef.current);
+          voiceTimeoutRef.current = null;
+        }
+        setListening(false);
+        recognitionRef.current = null;
+      };
+
       rec.start();
       setListening(true);
-    } catch {
-      setListening(false);
+
+      // Auto-stop after 8 seconds of no input to avoid perpetual listening state
+      voiceTimeoutRef.current = window.setTimeout(() => {
+        stopVoice();
+      }, 8000);
+    } catch (err) {
+      console.warn("Failed to start speech recognition:", err);
+      stopVoice();
     }
-  };
-  const stopVoice = () => {
-    recognitionRef.current?.stop();
-    setListening(false);
-  };
+  }, [lang, player, stopVoice]);
+
   // Stop listening when the panel closes.
   useEffect(() => {
     if (!isOpen && listening) stopVoice();
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, listening, stopVoice]);
 
   const renderVerseCard = (h: VerseHit) => {
     const s = QURAN_SURAHS[h.surah - 1];
@@ -583,7 +659,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? "inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] rounded-t-[28px] border-b-0 px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -672,7 +748,7 @@ export function TopicPickerModal({
               ) : (
                 <>
                   {/* 3. Search Input Box — above the tabs */}
-                  <div className="relative mt-4">
+                  <div className="relative mt-4 mb-3">
                     <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
                     <input
                       ref={searchInputRef}
@@ -719,7 +795,7 @@ export function TopicPickerModal({
                         aria-label={t(lang, "Clear search")}
                         className={cn(
                           "absolute top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-sand-200/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer",
-                          !isFavourites && voiceSupported ? "right-9" : "right-2.5"
+                          !isFavourites && voiceSupported ? "right-9.5" : "right-2.5"
                         )}
                       >
                         <CloseIcon className="h-3.5 w-3.5" />
@@ -744,7 +820,7 @@ export function TopicPickerModal({
 
                   {/* 2a. Favourites: Surah | Juz */}
                   {isFavourites && (
-                    <div role="tablist" className={cn("my-3", TAB_TRACK)}>
+                    <div role="tablist" className={cn("mb-3", TAB_TRACK)}>
                       {(["surah", "juz"] as const).map((k) => (
                         <button
                           key={k}
@@ -767,7 +843,7 @@ export function TopicPickerModal({
                   {/* 2. Segmented Navigation Tabs (Surah | Juz) — browse only;
                       hidden while searching, when results span all three. */}
                   {!isFavourites && !isSearching && (
-                  <div className={cn("my-3", TAB_TRACK)}>
+                  <div className={cn("mb-3", TAB_TRACK)}>
                     <button
                       type="button"
                       onClick={() => setActiveTab("surah")}
@@ -794,7 +870,7 @@ export function TopicPickerModal({
 
                   {/* Topic chips (browser): a keyword preset searched across all. */}
                   {!isFavourites && (
-                    <div className="no-scrollbar -mx-1 mb-2 flex gap-2 overflow-x-auto px-1 pb-1">
+                    <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-1">
                       {VERSE_TOPICS.map((topic) => (
                         <button
                           key={topic.key}
@@ -829,7 +905,7 @@ export function TopicPickerModal({
                         document.activeElement.blur();
                       }
                     }}
-                    className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pr-1 pt-1"
+                    className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1"
                   >
                     {/* BROWSE (box empty): the selected tab's full list. */}
                     {!isFavourites && !isSearching && activeTab === "surah" && filteredSurah.map(renderSurahCard)}

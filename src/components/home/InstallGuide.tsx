@@ -404,7 +404,7 @@ export function InstallGuide() {
     // browser waits for this to close (or be skipped).
     let timer = 0;
     let cancelled = false;
-    if (!detected || snoozed()) finishStage("install");
+    if (!detected || snoozed() || (typeof window !== "undefined" && window.location.hash === "#search")) finishStage("install");
     else
       afterStage("location")
         .then(() => waitForPrompt(PROMPT_WAIT_MS))
