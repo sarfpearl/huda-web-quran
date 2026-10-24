@@ -1027,7 +1027,7 @@ export function TopicPickerModal({
                       )}
                     >
                       {listening ? (
-                        <VoiceWaveIcon className={cn("text-[26px]", hearing && "voice-wave-live")} />
+                        <VoiceWaveIcon className={cn("text-[40px]", hearing && "voice-wave-live")} />
                       ) : (
                         <VoiceSearchIcon className="text-[26px]" />
                       )}
