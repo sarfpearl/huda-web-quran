@@ -1171,9 +1171,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // that one when the recitation starts (Safari 17+; elsewhere a no-op).
   useEffect(() => {
     const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
-    // TEMP: ?voicedebug leaves the session alone, to test whether "playback"
-    // is what silences the second iOS voice search. Remove before merge.
-    if (session && !window.location.search.includes("voicedebug")) {
+    if (session) {
       try {
         session.type = "playback";
       } catch {
