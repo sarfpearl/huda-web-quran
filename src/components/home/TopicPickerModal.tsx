@@ -388,18 +388,15 @@ export function TopicPickerModal({
     dictationHintTimerRef.current = window.setTimeout(() => setDictationHint(false), 6000);
   }, []);
 
-  // iOS heard nothing after the first voice search: a sound played around
-  // it (the click) takes the audio session from recognition, and a new
-  // SpeechRecognition each time fares worse than one reused. So on iOS: no
-  // clicks around listening, and one instance for the page.
+  // iOS: no clicks around listening (a sound then can take the audio
+  // session from recognition).
   const isIos =
     typeof navigator !== "undefined" &&
     (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
-  const recInstanceRef = useRef<SpeechRecognition | null>(null);
-  // Started again within a few seconds of the last one ending, iOS opens the
-  // mic but gives it only silence (?voicedebug log: audiostart, then "No
-  // speech detected"): wait out the rest of ~4 s first, already "listening".
+  // When a voice search last ended (0 = none yet this page), and whether
+  // the current one heard speech — for the silent-mic fallback below.
   const voiceEndedAtRef = useRef(0);
+  const heardRef = useRef(false);
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -428,7 +425,7 @@ export function TopicPickerModal({
   }, [voiceDebug]);
 
   const startVoice = useCallback(() => {
-    vlog(`tap · ctor=${!!(window.SpeechRecognition || window.webkitSpeechRecognition)} standalone=${isIosStandalone} reuse=${!!recInstanceRef.current} session=${(navigator as Navigator & { audioSession?: { type: string; state?: string } }).audioSession?.type}/${(navigator as Navigator & { audioSession?: { state?: string } }).audioSession?.state}`);
+    vlog(`tap · ctor=${!!(window.SpeechRecognition || window.webkitSpeechRecognition)} standalone=${isIosStandalone} session=${(navigator as Navigator & { audioSession?: { type: string; state?: string } }).audioSession?.type}/${(navigator as Navigator & { audioSession?: { state?: string } }).audioSession?.state}`);
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Ctor) {
       // Still inside the tap, so iOS opens the keyboard (and its 🎤).
@@ -447,8 +444,7 @@ export function TopicPickerModal({
     }
 
     try {
-      const rec = (isIos && recInstanceRef.current) || new Ctor();
-      recInstanceRef.current = rec;
+      const rec = new Ctor();
       recognitionRef.current = rec;
       rec.continuous = false;
       rec.interimResults = true;
@@ -467,12 +463,15 @@ export function TopicPickerModal({
         setListening(true);
       };
 
+      heardRef.current = false;
       rec.onspeechstart = () => {
+        heardRef.current = true;
         vlog("speechstart");
         setHearing(true);
       };
 
       rec.onresult = (e: SpeechRecognitionEvent) => {
+        heardRef.current = true;
         setHearing(true);
         let transcript = "";
         for (let i = 0; i < e.results.length; ++i) {
@@ -540,19 +539,26 @@ export function TopicPickerModal({
           }, 500);
         }
       };
-      const wait = isIos ? Math.max(0, 4000 - (Date.now() - voiceEndedAtRef.current)) : 0;
-      if (wait > 0) {
-        vlog(`waiting ${wait} ms`);
-        window.setTimeout(startRec, wait);
-      } else {
-        startRec();
+      // Started inside the tap: iOS ignores a start() made later.
+      startRec();
+      // iOS: a later search can get a live mic with only silence (audiostart,
+      // then nothing). Not the first one, which works: after 4 s with no
+      // speech, stop and point to the keyboard's dictation instead.
+      if (isIos && voiceEndedAtRef.current > 0) {
+        window.setTimeout(() => {
+          if (recognitionRef.current === rec && !heardRef.current) {
+            vlog("silent mic → dictation hint");
+            stopVoice();
+            showDictationHint();
+          }
+        }, 4000);
       }
       setListening(true);
 
       // Auto-stop after 8 seconds of no input to avoid perpetual listening state
       voiceTimeoutRef.current = window.setTimeout(() => {
         stopVoice();
-      }, 8000 + wait);
+      }, 8000);
       // In the home-screen app it can also just never start.
       if (isIosStandalone) {
         window.setTimeout(() => {
@@ -560,7 +566,7 @@ export function TopicPickerModal({
             stopVoice();
             showDictationHint();
           }
-        }, 2500 + wait);
+        }, 2500);
       }
     } catch (err) {
       console.warn("Failed to start speech recognition:", err);
