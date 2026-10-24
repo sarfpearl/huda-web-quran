@@ -17,10 +17,14 @@ each ayah's few seconds, not the Juz. (1) and (3) fixed in
       `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
       no local deletion until the upload is verified.
 
-**Still open (2026-10-14):** the rest of the real-phone checks (below).
-Everything else is merged and live (#26 … #104), including the IndoPak
-font, comment spam guard, all 187 background video clips, and 12.58 GB
-video storage consolidation.
+**Still open (2026-10-24):** the rest of the real-phone checks (below) and
+the automated video pipeline (`HANDOFF.md` §2a). Everything else is merged
+and live (#26 … #136), including the IndoPak font and its
+`text_indopak_nastaleeq` text with a weekly change check (#118, #119),
+comment spam guard, the background video clips, and 12.58 GB video storage
+consolidation. **IndoPak Tajweed colours: not now** — the glyph-by-glyph
+prototype (#115) was closed after QuranWBW's review; waiting on their
+IndoPak Tajweed font (*IndoPak script* below).
 
 - [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
@@ -419,7 +423,8 @@ and text are used unmodified, and the credits are shown** (About → credits).
 
 - [x] IndoPak word text at the glyph data's word positions —
       `public/data/quran-indopak/` (`scripts/generation/fetch-indopak-words.mjs`,
-      Quran.com `text_indopak`); word sync, highlight and tap-to-seek unchanged.
+      Quran.com `text_indopak` until 2026-10-19, now `text_indopak_nastaleeq` —
+      next item); word sync, highlight and tap-to-seek unchanged.
 - [x] **Text → `text_indopak_nastaleeq` (2026-10-19, QuranWBW's request:
       `text_indopak` is the older, deprecated IndoPak).** The API has it per
       verse only, so the script places it on the words by its letters against
@@ -440,7 +445,8 @@ and text are used unmodified, and the credits are shown** (About → credits).
 - [x] Font self-hosted unmodified: `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`
       (`'IndoPak'` in `globals.css`); credits on the About page.
 
-- [ ] **IndoPak Tajweed colours — waiting on QuranWBW.** Their reply
+- [ ] **IndoPak Tajweed colours — waiting on QuranWBW's IndoPak Tajweed
+      font** (no date; "might take a few years", 2026-10-19). Their reply
       (2026-10-14): no IndoPak Tajweed data or font exists yet, and colouring
       their font breaks its ligatures; they are building IndoPak Mushaf Tajweed
       fonts, likely more than a year away. Until then IndoPak has no Tajweed
