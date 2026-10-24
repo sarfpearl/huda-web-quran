@@ -375,10 +375,26 @@ export function TopicPickerModal({
     typeof window !== "undefined" &&
     ((window.navigator as unknown as { standalone?: boolean })?.standalone === true);
 
+  // The iPhone home-screen app may have no (or a broken) Web Speech API, so
+  // the mic stays there and falls back to the keyboard's own dictation.
   const voiceSupported =
     typeof window !== "undefined" &&
-    !isIosStandalone &&
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    (isIosStandalone || !!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  const [dictationHint, setDictationHint] = useState(false);
+  const dictationHintTimerRef = useRef<number | null>(null);
+  const showDictationHint = useCallback(() => {
+    setDictationHint(true);
+    if (dictationHintTimerRef.current) window.clearTimeout(dictationHintTimerRef.current);
+    dictationHintTimerRef.current = window.setTimeout(() => setDictationHint(false), 6000);
+  }, []);
+
+  // iOS: no clicks around listening (a sound then can take the audio
+  // session from recognition).
+  const isIos =
+    typeof navigator !== "undefined" &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+  // When a voice search last ended (0 = none yet on this page).
+  const voiceEndedAtRef = useRef(0);
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -387,13 +403,10 @@ export function TopicPickerModal({
     }
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.abort();
-      } catch {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
+        recognitionRef.current.stop();
+      } catch {}
       recognitionRef.current = null;
+      voiceEndedAtRef.current = Date.now();
     }
     setListening(false);
     setHearing(false);
@@ -401,11 +414,26 @@ export function TopicPickerModal({
 
   const startVoice = useCallback(() => {
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Ctor) return;
+    if (!Ctor) {
+      // Still inside the tap, so iOS opens the keyboard (and its 🎤).
+      searchInputRef.current?.focus();
+      showDictationHint();
+      return;
+    }
+
+    // iOS Safari gives a page's second voice search a mic with only silence
+    // (WebKit bug; checked on the owner's iPhone 13, iOS 27.0.1 — new or
+    // reused recognizer, a wait, other audio-session types: no change). So
+    // after the first, open the keyboard and point to its own dictation.
+    if (isIos && voiceEndedAtRef.current > 0) {
+      searchInputRef.current?.focus();
+      showDictationHint();
+      return;
+    }
 
     // Stop any existing session
     stopVoice();
-    playClick();
+    if (!isIos) playClick();
 
     // Pause audio recitation so iOS / mobile microphone can clearly record user speech
     if (player.isPlaying) {
@@ -423,11 +451,15 @@ export function TopicPickerModal({
       const targetLocale = uiLocale(lang);
       rec.lang = targetLocale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
 
+      let started = false;
       rec.onstart = () => {
+        started = true;
         setListening(true);
       };
 
-      rec.onspeechstart = () => setHearing(true);
+      rec.onspeechstart = () => {
+        setHearing(true);
+      };
 
       rec.onresult = (e: SpeechRecognitionEvent) => {
         setHearing(true);
@@ -450,7 +482,9 @@ export function TopicPickerModal({
         } catch {}
       };
 
+      // An older session's late end / error must not reset this one.
       rec.onend = () => {
+        if (recognitionRef.current !== rec) return;
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
           voiceTimeoutRef.current = null;
@@ -458,10 +492,14 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
+        voiceEndedAtRef.current = Date.now();
       };
 
       rec.onerror = (e) => {
         console.warn("Speech recognition error:", e);
+        if (recognitionRef.current !== rec) return;
+        // Refused or unavailable (the home-screen app): point to dictation.
+        if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes((e as Event & { error?: string }).error ?? "")) showDictationHint();
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
           voiceTimeoutRef.current = null;
@@ -469,27 +507,54 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
+        voiceEndedAtRef.current = Date.now();
       };
 
-      rec.start();
+      const startRec = () => {
+        if (recognitionRef.current !== rec) return; // stopped meanwhile
+        try {
+          rec.start();
+        } catch (err) {
+          // Still winding down: once more, shortly.
+          if ((err as DOMException)?.name !== "InvalidStateError") throw err;
+          window.setTimeout(() => {
+            try {
+              rec.start();
+            } catch {}
+          }, 500);
+        }
+      };
+      // Started inside the tap: iOS ignores a start() made later.
+      startRec();
       setListening(true);
 
       // Auto-stop after 8 seconds of no input to avoid perpetual listening state
       voiceTimeoutRef.current = window.setTimeout(() => {
         stopVoice();
       }, 8000);
+      // In the home-screen app it can also just never start.
+      if (isIosStandalone) {
+        window.setTimeout(() => {
+          if (!started && recognitionRef.current === rec) {
+            stopVoice();
+            showDictationHint();
+          }
+        }, 2500);
+      }
     } catch (err) {
       console.warn("Failed to start speech recognition:", err);
       stopVoice();
+      searchInputRef.current?.focus();
+      showDictationHint();
     }
-  }, [lang, player, stopVoice]);
+  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint]);
 
   // The same click when listening ends — tapped off, timed out or finished.
   const wasListeningRef = useRef(false);
   useEffect(() => {
-    if (wasListeningRef.current && !listening) playClick();
+    if (wasListeningRef.current && !listening && !isIos) playClick();
     wasListeningRef.current = listening;
-  }, [listening]);
+  }, [listening, isIos]);
 
   // Stop listening when the panel closes.
   useEffect(() => {
@@ -1016,6 +1081,14 @@ export function TopicPickerModal({
                   </div>
 
                   {/* Voice search: a floating gold button over the list. */}
+                  {!isFavourites && voiceSupported && dictationHint && (
+                    <p
+                      role="status"
+                      className="absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
+                    >
+                      {t(lang, "Tap 🎤 on the keyboard to search by voice.")}
+                    </p>
+                  )}
                   {!isFavourites && voiceSupported && (
                     <button
                       type="button"
@@ -1037,8 +1110,9 @@ export function TopicPickerModal({
                 </>
               )}
 
-              {/* 5. Footer: « About HuDa » (the browser only) */}
-              {!isFavourites && !showAbout && !showSettings && (
+              {/* 5. Footer: « About HuDa » (the browser only) — not while
+                  searching, when the keyboard leaves the results little room */}
+              {!isFavourites && !showAbout && !showSettings && !(kb.bottom > 0 || searchQuery.trim()) && (
                 <button
                   type="button"
                   onClick={() => setView("about")}
