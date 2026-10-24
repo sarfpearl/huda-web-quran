@@ -65,6 +65,15 @@ export const MicIcon = (p: IconProps) => (
     <path d="M12 17v4" />
   </Base>
 );
+/** Mic with a spark — the voice-search button. */
+export const VoiceSearchIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M14 7.5V9a4 4 0 0 1-8 0V7a4 4 0 0 1 5.5-3.7" />
+    <path d="M3.5 10a6.5 6.5 0 0 0 13 0" />
+    <path d="M10 16.5V21" />
+    <path d="M17.5 2.5v5M15 5h5" />
+  </Base>
+);
 export const HomeIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M4 11.5 12 4l8 7.5" />

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
-import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, MicIcon, SearchIcon, SearchIcon02 } from "@/components/ui/Icon";
+import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02, VoiceSearchIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -778,11 +778,7 @@ export function TopicPickerModal({
                       }}
                       className={cn(
                         "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
-                        searchQuery && !isFavourites && voiceSupported
-                          ? "pr-16"
-                          : searchQuery || (!isFavourites && voiceSupported)
-                          ? "pr-11"
-                          : "pr-4",
+                        searchQuery ? "pr-11" : "pr-4",
                       )}
                     />
                     {searchQuery && (
@@ -793,27 +789,9 @@ export function TopicPickerModal({
                           searchInputRef.current?.focus();
                         }}
                         aria-label={t(lang, "Clear search")}
-                        className={cn(
-                          "absolute top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-sand-200/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer",
-                          !isFavourites && voiceSupported ? "right-9.5" : "right-2.5"
-                        )}
+                        className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-sand-200/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                       >
                         <CloseIcon className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                    {!isFavourites && voiceSupported && (
-                      <button
-                        type="button"
-                        onClick={listening ? stopVoice : startVoice}
-                        aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
-                        className={cn(
-                          "absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors cursor-pointer",
-                          listening
-                            ? "bg-red-500/20 text-red-300 animate-pulse"
-                            : "text-sand-200/60 hover:bg-white/10 hover:text-white",
-                        )}
-                      >
-                        <MicIcon className="text-base" />
                       </button>
                     )}
                   </div>
@@ -893,6 +871,7 @@ export function TopicPickerModal({
                   )}
 
                   {/* 4. Scrollable List Content using ContentListCard */}
+                  <div className="relative flex min-h-0 flex-1 flex-col">
                   <div
                     ref={listRef}
                     onTouchStart={() => {
@@ -905,7 +884,10 @@ export function TopicPickerModal({
                         document.activeElement.blur();
                       }
                     }}
-                    className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1"
+                    className={cn(
+                      "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1",
+                      !isFavourites && voiceSupported && "pb-20",
+                    )}
                   >
                     {/* BROWSE (box empty): the selected tab's full list. */}
                     {!isFavourites && !isSearching && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
@@ -1013,6 +995,25 @@ export function TopicPickerModal({
                         );
                       })())}
 
+                  </div>
+
+                  {/* Voice search: a floating gold button over the list. */}
+                  {!isFavourites && voiceSupported && (
+                    <button
+                      type="button"
+                      onClick={listening ? stopVoice : startVoice}
+                      aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
+                      aria-pressed={listening}
+                      className={cn(
+                        "absolute bottom-3 right-3 z-10 grid h-14 w-14 place-items-center rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 transition-transform cursor-pointer active:scale-90",
+                        listening
+                          ? "bg-red-500 text-white ring-red-300/60 animate-pulse"
+                          : "bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white ring-gold-300/60 hover:scale-105",
+                      )}
+                    >
+                      <VoiceSearchIcon className="text-[26px]" />
+                    </button>
+                  )}
                   </div>
                 </>
               )}
