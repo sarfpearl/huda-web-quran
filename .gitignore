@@ -37,6 +37,10 @@ scratch/
 /.qa-cache/
 .env*
 
+# Local uncommitted media / archive folders
+Unused Items/
+user_candidates/
+
 # Video re-encode work dir (scripts/tools/reencode-videos.mjs): R2 backups + encodes
 /.media-work
 

@@ -1,0 +1,333 @@
+{
+  "updatedAt": "2026-10-16T13:34:13.817Z",
+  "projectId": "project-04027e7d-9805-47dc-bdf",
+  "startingCreditINR": 28796.63,
+  "minimumReserveINR": 500,
+  "hardStopFloorINR": 600,
+  "costPerVideoINR": 76.791,
+  "successfulGenerations": 16,
+  "failedGenerations": 0,
+  "cumulativeSpentINR": 1246.506,
+  "estimatedRemainingCreditINR": 27550.124,
+  "isGenerationPaused": false,
+  "pauseReason": null,
+  "history": [
+    {
+      "timestamp": "2026-10-15T16:02:54.173Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "10a-ulul-albab-and-contemplation-of-creation",
+      "costINR": 76.791,
+      "remainingINR": 28719.839,
+      "metadata": {
+        "id": "10a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/64affb32-33a7-48e7-970e-b6b26d7dc780",
+        "seamSSIM": "0.663940",
+        "sizeMB": "23.02"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T16:05:31.840Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "01a-the-immutable-foundation-and-muhkamat",
+      "costINR": 76.791,
+      "remainingINR": 28643.048,
+      "metadata": {
+        "id": "01a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/d14d8142-b7c6-49a4-8a06-a14387ef01a3",
+        "seamSSIM": "0.972654",
+        "sizeMB": "17.44"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T16:07:46.616Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "02c-the-supreme-sovereign-and-cosmic-order",
+      "costINR": 76.791,
+      "remainingINR": 28566.257,
+      "metadata": {
+        "id": "02c",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/123f93ee-b916-475f-9351-e264eb258e38",
+        "seamSSIM": "0.975818",
+        "sizeMB": "4.84"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T17:43:03.584Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "03a-the-sanctuary-of-maryam-and-zakariya-prayer",
+      "costINR": 76.791,
+      "remainingINR": 28489.466,
+      "metadata": {
+        "id": "03a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/dfc2a3a5-944b-4b5d-bf16-b3585313ccbd",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/03a-the-sanctuary-of-maryam-and-zakariya-prayer-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-15T18:05:10.177Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "03a-the-sanctuary-of-maryam-and-zakariya-prayer",
+      "costINR": 76.791,
+      "remainingINR": 28412.675,
+      "metadata": {
+        "id": "03a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/27fec9c7-6ec6-482c-b356-74ed92e7b134",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/03a-the-sanctuary-of-maryam-and-zakariya-prayer-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-15T18:28:49.107Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "03a-the-sanctuary-of-maryam-and-zakariya-prayer",
+      "costINR": 76.791,
+      "remainingINR": 28335.884,
+      "metadata": {
+        "id": "03a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/1bf275db-0e68-4afb-8855-75dcbb52c349",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/03a-the-sanctuary-of-maryam-and-zakariya-prayer-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-15T18:37:09.432Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "03a-the-sanctuary-of-maryam-and-zakariya-prayer",
+      "costINR": 76.791,
+      "remainingINR": 28259.093,
+      "metadata": {
+        "id": "03a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/dd62a411-8752-457a-b4c3-26cc5c878409",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/03a-the-sanctuary-of-maryam-and-zakariya-prayer-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-15T18:47:48.417Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "03a-the-sanctuary-of-maryam-and-zakariya-prayer",
+      "costINR": 76.791,
+      "remainingINR": 28182.302,
+      "metadata": {
+        "id": "03a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/b6828b5e-208f-4058-8b09-4f567a0df812",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/03a-the-sanctuary-of-maryam-and-zakariya-prayer-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-15T20:07:22.100Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "03a_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 28179.752,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "03c2d76755fb55fd751d8628b908b961581e9429f18c304ff603758912e84245",
+        "dimensions": "1024x1024",
+        "surahNum": 3,
+        "clipId": "03a"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T20:57:27.640Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "03a_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 28177.202,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "c0f5a3a098d8b4c2a91b625d891fcd8ebf5d5f203f378ed76f0b2d97bbfea634",
+        "dimensions": "1344x768",
+        "surahNum": 3,
+        "clipId": "03a"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T07:18:37.715Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "02c-the-supreme-sovereign-and-cosmic-order",
+      "costINR": 76.791,
+      "remainingINR": 28100.411,
+      "metadata": {
+        "id": "02c",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/10aebb2c-167f-4bcc-ac23-7965a08b4263",
+        "seamSSIM": "0.975591",
+        "sizeMB": "4.52"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T07:23:30.118Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "02c-the-supreme-sovereign-and-cosmic-order",
+      "costINR": 76.791,
+      "remainingINR": 28023.62,
+      "metadata": {
+        "id": "02c",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/1066e2fd-eef7-4d44-ac1d-4e3d15c923c8",
+        "seamSSIM": "0.969051",
+        "sizeMB": "5.42"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T10:06:39.356Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "03a-the-sanctuary-of-maryam-and-zakariya-prayer",
+      "costINR": 76.791,
+      "remainingINR": 27946.829,
+      "metadata": {
+        "id": "03a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/6130a683-8024-44c0-b895-3e0e1b5203b3",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/03a-the-sanctuary-of-maryam-and-zakariya-prayer-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-16T10:17:47.815Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "04a_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 27944.279,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "22ceca59474f0afccd6d982d990115de7b8452799d5bcdbbd5ed865bde21287e",
+        "dimensions": "1344x768",
+        "surahNum": 3,
+        "clipId": "04a"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T10:28:13.233Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "04a-the-word-from-allah-and-primordial-creation",
+      "costINR": 76.791,
+      "remainingINR": 27867.488,
+      "metadata": {
+        "id": "04a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/967e0b3a-9cfd-4be1-a538-752a6c991664",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/04a-the-word-from-allah-and-primordial-creation-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-16T11:08:49.897Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "04b_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 27864.938,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "d0f002dbd3466ba77f63d82845f4bff95cd814728ed17f81a81dbf9cb322749c",
+        "dimensions": "1344x768",
+        "surahNum": 3,
+        "clipId": "04b"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T11:12:36.827Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "04b-the-sincere-disciples-and-elevation-of-isa",
+      "costINR": 76.791,
+      "remainingINR": 27788.147,
+      "metadata": {
+        "id": "04b",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/cf1de5bd-a450-4819-8222-708a5332b1fb",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/04b-the-sincere-disciples-and-elevation-of-isa-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-16T11:17:58.666Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "05a_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 27785.597,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "7d50d1afb1ec1f90268394a28d0637aa3869ce8702f7c0a685f9e9fe2c75ef42",
+        "dimensions": "1344x768",
+        "surahNum": 3,
+        "clipId": "05a"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T11:21:41.061Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "05a-the-common-word-of-pure-monotheism",
+      "costINR": 76.791,
+      "remainingINR": 27708.806,
+      "metadata": {
+        "id": "05a",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/2c80f83e-2954-4336-8a68-b56085cc757e",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/05a-the-common-word-of-pure-monotheism-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-16T11:26:11.330Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "05b_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 27706.256,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "8e01aa1399c90df06e694ece7c24fd39fdc11442bee233e9720e3c354ef1e27f",
+        "dimensions": "1344x768",
+        "surahNum": 3,
+        "clipId": "05b"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T11:29:45.594Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "05b-the-primordial-covenant-of-the-prophets",
+      "costINR": 76.791,
+      "remainingINR": 27629.465,
+      "metadata": {
+        "id": "05b",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/0567ca78-c727-4bab-b956-ce6c50164d6d",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/05b-the-primordial-covenant-of-the-prophets-raw-master.mp4",
+        "costINR": 76.791
+      }
+    },
+    {
+      "timestamp": "2026-10-16T13:09:25.418Z",
+      "event": "STILL_IMAGE_GENERATION_SUCCESS",
+      "videoName": "05b_still_preview",
+      "costINR": 2.55,
+      "remainingINR": 27626.915,
+      "metadata": {
+        "model": "gemini-2.5-flash-image",
+        "imageSha256": "2c402b5b72843cb0b0ecc5ba435df49c9d965d990858ae7b52f9be9057fd210b",
+        "dimensions": "1344x768",
+        "surahNum": 3,
+        "clipId": "05b"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T13:34:13.817Z",
+      "event": "GENERATION_SUCCESS",
+      "videoName": "05b-the-primordial-covenant-of-the-prophets",
+      "costINR": 76.791,
+      "remainingINR": 27550.124,
+      "metadata": {
+        "id": "05b",
+        "operationId": "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/ef53b929-9aa1-4779-ab2e-f623c0ce33ec",
+        "model": "veo-3.1-fast-generate-001",
+        "destination": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/pilot/raw_masters/05b-the-primordial-covenant-of-the-prophets-raw-master.mp4",
+        "costINR": 76.791
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "pipelineVersion": "1.0.0",
-  "lastUpdated": "2026-10-18T23:24:13.335Z",
+  "lastUpdated": "2026-10-20T10:58:12.840Z",
   "currentSurah": 17,
   "status": "RUNNING",
   "totalSurahs": 114,
@@ -188,6 +188,110 @@
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
       "lastUpdated": "2026-10-19T03:15:53.517Z",
       "deployedAt": "2026-10-19T03:15:53.518Z"
+    },
+    "19": {
+      "surahNumber": 19,
+      "surahName": "Maryam",
+      "totalVerses": 98,
+      "totalSets": 14,
+      "completedSets": 14,
+      "completedCount": 98,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_19.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.833Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "23": {
+      "surahNumber": 23,
+      "surahName": "Al-Mu'minun",
+      "totalVerses": 118,
+      "totalSets": 14,
+      "completedSets": 14,
+      "completedCount": 118,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_23.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "25": {
+      "surahNumber": 25,
+      "surahName": "Al-Furqan",
+      "totalVerses": 77,
+      "totalSets": 8,
+      "completedSets": 8,
+      "completedCount": 77,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_25.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "26": {
+      "surahNumber": 26,
+      "surahName": "Ash-Shu'ara",
+      "totalVerses": 227,
+      "totalSets": 14,
+      "completedSets": 14,
+      "completedCount": 227,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_26.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "28": {
+      "surahNumber": 28,
+      "surahName": "Al-Qasas",
+      "totalVerses": 88,
+      "totalSets": 11,
+      "completedSets": 11,
+      "completedCount": 88,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_28.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "30": {
+      "surahNumber": 30,
+      "surahName": "Ar-Rum",
+      "totalVerses": 60,
+      "totalSets": 8,
+      "completedSets": 8,
+      "completedCount": 60,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_30.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "31": {
+      "surahNumber": 31,
+      "surahName": "Luqman",
+      "totalVerses": 34,
+      "totalSets": 5,
+      "completedSets": 5,
+      "completedCount": 34,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_31.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
+    },
+    "32": {
+      "surahNumber": 32,
+      "surahName": "As-Sajdah",
+      "totalVerses": 30,
+      "totalSets": 4,
+      "completedSets": 4,
+      "completedCount": 30,
+      "status": "LOCAL_APPROVED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_32.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-10-20T10:58:12.840Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z"
     }
   }
 }
