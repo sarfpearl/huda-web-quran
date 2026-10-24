@@ -1923,7 +1923,10 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement | null>): boole
         const typing = !!a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
         const covered = !standalone || typing;
         const top = covered ? Math.max(0, Math.round(vv.offsetTop - r.top)) : 0;
-        const bottom = covered ? Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height))) : 0;
+        let bottom = covered ? Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height))) : 0;
+        // When not actively typing in an input field, clamp bottom inset so a closing or stale keyboard
+        // does not leave the player dock floating in the middle of the screen
+        if (!typing && bottom > 80) bottom = 0;
         const moved =
           scene.style.getPropertyValue("--vv-top") !== `${top}px` ||
           scene.style.getPropertyValue("--vv-bottom") !== `${bottom}px`;

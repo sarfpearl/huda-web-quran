@@ -213,15 +213,37 @@ export function BookmarksPanel({
                   <div className="relative mb-3">
                     <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
                     <input
-                      type="text"
+                      type="search"
+                      enterKeyHint="search"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       placeholder="Search bookmarks..."
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          (e.target as HTMLElement).blur();
+                        }
+                      }}
                       className="w-full rounded-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all"
                     />
                   </div>
 
-                  <div className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
+                  <div
+                    onTouchStart={() => {
+                      if (document.activeElement instanceof HTMLInputElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
+                    onScroll={() => {
+                      if (document.activeElement instanceof HTMLInputElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
+                    className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pr-1 pt-1"
+                  >
                     {shown.length === 0 ? (
                       <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
                         <BookmarkIcon className="text-2xl text-emerald-400/70" />

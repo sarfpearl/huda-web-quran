@@ -453,14 +453,41 @@ export function CenterVerseDisplay({
     // greeting is still up, so the stage mounts later with the same fitKey.
   }, [fitKey, showTranslation, language, translationLang, extraMeaning, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
 
+  // User manual scrolling: pause followScroll so user swipe/touch doesn't fight auto-scroll
+  const userScrollAtRef = useRef(0);
+  useEffect(() => {
+    userScrollAtRef.current = 0;
+  }, [fitKey]);
+
+  useEffect(() => {
+    const ar = arabicPaneRef.current;
+    const mn = meaningPaneRef.current;
+    const onUserTouch = (e: Event) => {
+      const pane = e.currentTarget as HTMLElement;
+      stopFollow(pane);
+      userScrollAtRef.current = performance.now();
+    };
+    ar?.addEventListener("touchstart", onUserTouch, { passive: true });
+    ar?.addEventListener("wheel", onUserTouch, { passive: true });
+    mn?.addEventListener("touchstart", onUserTouch, { passive: true });
+    mn?.addEventListener("wheel", onUserTouch, { passive: true });
+    return () => {
+      ar?.removeEventListener("touchstart", onUserTouch);
+      ar?.removeEventListener("wheel", onUserTouch);
+      mn?.removeEventListener("touchstart", onUserTouch);
+      mn?.removeEventListener("wheel", onUserTouch);
+    };
+  }, []);
+
   // Auto-scroll, teleprompter-style (followScroll): the Arabic pane drifts
   // with the recitation — the active word's line plus how far along it the
   // word is — so lines flow on instead of stepping; the meaning pane tracks
   // recitation progress through the ayah the same way.
   useEffect(() => {
     if (typeof propWordIndex !== "number" || propWordIndex < 0) return;
+    const userScrolledRecently = performance.now() - userScrollAtRef.current < 4000;
     const ar = arabicPaneRef.current;
-    if (ar && overflows(ar)) {
+    if (ar && overflows(ar) && !userScrolledRecently) {
       const el = ar.querySelector<HTMLElement>(`[data-word-idx="${propWordIndex}"]`);
       if (el) {
         const along = alongLine(el, ar.querySelectorAll<HTMLElement>("[data-word-idx]"));
@@ -471,7 +498,7 @@ export function CenterVerseDisplay({
       }
     }
     const mn = meaningPaneRef.current;
-    if (mn && overflows(mn)) {
+    if (mn && overflows(mn) && !userScrolledRecently) {
       const total = ar?.querySelectorAll("[data-word-idx]").length ?? 0;
       const p = total > 1 ? Math.min(1, propWordIndex / (total - 1)) : 0;
       // Hold the meaning at its start for the first 20% of the recitation and
