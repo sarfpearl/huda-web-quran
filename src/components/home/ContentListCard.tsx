@@ -112,18 +112,21 @@ export function ContentListCard({
             {title}
           </span>
           {secondaryLabel && (
-            <span
-              lang={isArabicLabel ? "ar" : undefined}
-              dir={isArabicLabel ? "rtl" : undefined}
-              className={cn(
-                "shrink-0 font-semibold text-emerald-300/90",
-                isArabicLabel
-                  ? "font-arabic text-xs md:text-sm"
-                  : "text-[10px] md:text-[11px]"
-              )}
-            >
-              · {secondaryLabel}
-            </span>
+            <>
+              <span className="shrink-0 text-sand-200/40 text-xs select-none">·</span>
+              <span
+                lang={isArabicLabel ? "ar" : undefined}
+                dir={isArabicLabel ? "rtl" : undefined}
+                className={cn(
+                  "shrink-0 font-semibold text-emerald-300/90",
+                  isArabicLabel
+                    ? "font-arabic text-xs md:text-sm"
+                    : "text-[10px] md:text-[11px]"
+                )}
+              >
+                {secondaryLabel}
+              </span>
+            </>
           )}
         </div>
         <p className="line-clamp-1 mt-0.5 text-[11px] text-sand-200/60 font-normal">

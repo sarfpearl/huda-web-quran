@@ -40,7 +40,8 @@ export function useKeyboardInset(active: boolean) {
     if (!active || !vv) return;
     const update = () => {
       const bottom = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
-      setInset({ bottom: bottom > 80 ? bottom : 0, height: vv.height });
+      // Lifts on phone virtual keyboards (> 150px) as well as iPad floating shortcut bars (~55px)
+      setInset({ bottom: bottom > 20 ? bottom : 0, height: vv.height });
     };
     update();
     vv.addEventListener("resize", update);

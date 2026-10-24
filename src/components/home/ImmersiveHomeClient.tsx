@@ -1116,6 +1116,18 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     return onInteract;
     // Not over a Surah / Juz the visitor came to by a link.
   }, [cameByLink]);
+
+  // Direct deep link hash to open the search / content browser modal (#search, #browse)
+  useEffect(() => {
+    const checkHash = () => {
+      if (typeof window !== "undefined" && (window.location.hash === "#search" || window.location.hash === "#browse")) {
+        setBrowserOpenRequest((n) => n + 1);
+      }
+    };
+    checkHash();
+    window.addEventListener("hashchange", checkHash);
+    return () => window.removeEventListener("hashchange", checkHash);
+  }, []);
   // The page on screen follows the reader's scrolling (ReadingView reports it);
   // before the first report, the recited ayah's page.
   const [visiblePage, setVisiblePage] = useState<number | null>(null);

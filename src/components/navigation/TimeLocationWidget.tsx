@@ -146,6 +146,10 @@ export function TimeLocationWidget({
   // install guide, then the content browser) waits for the actual answer, so
   // nothing opens while the browser's permission prompt is still on screen.
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#search") {
+      finishStage("location");
+      return;
+    }
     if (!("geolocation" in navigator)) {
       finishStage("location");
       return;
