@@ -189,9 +189,18 @@ export function CompactBayanPlayer({
 
   const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
 
-  // Collapsed = compact pill (cover + transport). Every screen size opens on the
-  // full player; it shrinks to the pill once playback starts (see below).
-  const [collapsed, setCollapsed] = useState(false);
+  // Collapsed = compact pill (cover + transport). Small mobile screens open on the
+  // compact pill or remembered choice; it also shrinks once playback starts.
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const saved = localStorage.getItem(COLLAPSED_KEY);
+      if (saved !== null) return saved === "1";
+      return window.innerWidth < 768;
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
@@ -302,6 +311,18 @@ export function CompactBayanPlayer({
     toggleCollapsed(true, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying]);
+
+  const prevBayanIdRef = useRef(bayan.id);
+  useEffect(() => {
+    if (prevBayanIdRef.current !== bayan.id) {
+      prevBayanIdRef.current = bayan.id;
+      // On mobile screens (< 768px), auto-collapse when changing tracks so the Quran text has full room
+      if (typeof window !== "undefined" && window.innerWidth < 768 && !collapsed) {
+        toggleCollapsed(true, false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bayan.id]);
 
   useEffect(() => {
     setCoverSrc(bayan.coverImageUrl ?? null);

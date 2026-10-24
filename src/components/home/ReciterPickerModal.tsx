@@ -147,9 +147,19 @@ export function ReciterPickerModal({
       {/* Search Filter */}
       <div className="relative mb-3">
         <input
-          type="text"
+          type="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              (e.target as HTMLElement).blur();
+            }
+          }}
           placeholder={t(lang, "Search Reciters...")}
           className={`w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50`}
         />
@@ -266,6 +276,7 @@ export function ReciterPickerModal({
                 aria-disabled={unavailable || undefined}
                 onClick={() => {
                   if (unavailable) return;
+                  (document.activeElement as HTMLElement | null)?.blur();
                   onSelectReciter(reciter);
                   onClose();
                 }}

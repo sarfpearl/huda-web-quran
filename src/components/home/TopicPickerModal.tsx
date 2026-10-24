@@ -136,25 +136,38 @@ export function TopicPickerModal({
   // A ring (MORPH_RING) traces the shape's edge, as the glass alone barely
   // shows; the clip comes off once open so the panel's shadow isn't cut.
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   // Phone sheet with a search box: sit on top of the on-screen keyboard.
   const kb = useKeyboardInset(isOpen && isMobile);
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  const dismissKeyboard = useCallback(() => {
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  }, []);
+
+  const closeModal = useCallback(() => {
+    dismissKeyboard();
+    setIsOpen(false);
+  }, [dismissKeyboard]);
+
   // Keyboard / screen reader: focus moves into the panel and stays there until
   // it closes (then back to the button); Escape closes it.
   const titleId = useId();
   useDialogFocus(isOpen, panelRef, triggerRef);
-  useBackToClose(isOpen, () => setIsOpen(false));
-  useOnlyOneSheet(isOpen, () => setIsOpen(false));
+  useBackToClose(isOpen, closeModal);
+  useOnlyOneSheet(isOpen, closeModal);
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (ev: KeyboardEvent) => {
       // A sheet opened over the panel closes first (it handles its own Escape).
-      if (ev.key === "Escape" && !document.querySelector("[data-action-sheet]")) setIsOpen(false);
+      if (ev.key === "Escape" && !document.querySelector("[data-action-sheet]")) closeModal();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen]);
+  }, [isOpen, closeModal]);
   // Header trigger: the panel's top-right corner is the button's top-right
   // corner on every screen (the header centres its buttons, so its padding
   // alone doesn't give it), kept there as the window resizes.
@@ -396,6 +409,7 @@ export function TopicPickerModal({
         key={h.key}
         type="button"
         onClick={() => {
+          dismissKeyboard();
           onOpenAyah?.(h.surah, h.ayah);
           setIsOpen(false);
         }}
@@ -449,6 +463,7 @@ export function TopicPickerModal({
         isActive={isTrackCurrent}
         isPlaying={isTrackCurrent && player.isPlaying}
         onClick={() => {
+          dismissKeyboard();
           setIsOpen(false);
           const activeReciter = resolveActiveReciter(player.current);
           const activeSurahTracks = surahTracks || getSurahTracksForReciter(activeReciter);
@@ -476,6 +491,7 @@ export function TopicPickerModal({
         isActive={isTrackCurrent}
         isPlaying={isTrackCurrent && player.isPlaying}
         onClick={() => {
+          dismissKeyboard();
           if (onSelectJuz) {
             onSelectJuz(j.id);
           } else {
@@ -526,7 +542,7 @@ export function TopicPickerModal({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              onClick={() => setIsOpen(false)}
+              onClick={closeModal}
               className="pointer-events-auto fixed inset-0 z-50 bg-black/40 cursor-pointer"
               aria-hidden="true"
             />
@@ -623,7 +639,7 @@ export function TopicPickerModal({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsOpen(false);
+                    closeModal();
                   }}
                   className="tap-44 pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
                   aria-label={t(lang, "Close")}
@@ -659,7 +675,13 @@ export function TopicPickerModal({
                   <div className="relative mt-4">
                     <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
                     <input
-                      type="text"
+                      ref={searchInputRef}
+                      type="search"
+                      enterKeyHint="search"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       placeholder={
                         isFavourites
                           ? t(lang, "Search favourites...")
@@ -673,11 +695,36 @@ export function TopicPickerModal({
                         setVerseTopicKey(null);
                         setSearchQuery(e.target.value);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          (e.target as HTMLElement).blur();
+                        }
+                      }}
                       className={cn(
                         "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
-                        !isFavourites && voiceSupported ? "pr-11" : "pr-4",
+                        searchQuery && !isFavourites && voiceSupported
+                          ? "pr-16"
+                          : searchQuery || (!isFavourites && voiceSupported)
+                          ? "pr-11"
+                          : "pr-4",
                       )}
                     />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          searchInputRef.current?.focus();
+                        }}
+                        aria-label={t(lang, "Clear search")}
+                        className={cn(
+                          "absolute top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-sand-200/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer",
+                          !isFavourites && voiceSupported ? "right-9" : "right-2.5"
+                        )}
+                      >
+                        <CloseIcon className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                     {!isFavourites && voiceSupported && (
                       <button
                         type="button"
@@ -770,7 +817,20 @@ export function TopicPickerModal({
                   )}
 
                   {/* 4. Scrollable List Content using ContentListCard */}
-                  <div ref={listRef} className="no-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 pt-1">
+                  <div
+                    ref={listRef}
+                    onTouchStart={() => {
+                      if (document.activeElement instanceof HTMLInputElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
+                    onScroll={() => {
+                      if (document.activeElement instanceof HTMLInputElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
+                    className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pr-1 pt-1"
+                  >
                     {/* BROWSE (box empty): the selected tab's full list. */}
                     {!isFavourites && !isSearching && activeTab === "surah" && filteredSurah.map(renderSurahCard)}
                     {!isFavourites && !isSearching && activeTab === "quran" && filteredJuz.map(renderJuzCard)}
@@ -784,6 +844,7 @@ export function TopicPickerModal({
                           <button
                             type="button"
                             onClick={() => {
+                              dismissKeyboard();
                               onOpenAyah?.(verseRef.surah, verseRef.ayah);
                               setIsOpen(false);
                             }}
@@ -941,7 +1002,7 @@ function AboutView() {
   const copyLabel = t(lang, "Copy");
   const copiedLabel = t(lang, "Copied");
   return (
-    <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
+    <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pt-4 pr-1 space-y-4 text-sand-100">
       {/* Logo left, name right — the pair centred over the intro */}
       <div className="flex items-center justify-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1108,7 +1169,7 @@ function LanguageView() {
   const lang = useUiLang();
   const setUiLang = useSetUiLang();
   return (
-    <div className="no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-4 text-sand-100">
+    <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pt-4 pr-1 space-y-4 text-sand-100">
       <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
         <p className="text-[11px] text-sand-200/70">
           {t(lang, "Ayah meanings are chosen separately, from the translation button.")}
