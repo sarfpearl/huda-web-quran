@@ -11,14 +11,14 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-24, after PR #129.*
+*Snapshot: 2026-10-24, after PR #130.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font); verse/topic/voice search in content browser |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `e544fa5` — Merge PR #129: self-host UI and script fonts with `next/font/local` |
-| **Latest merged PRs** | #129 fonts self-hosted (`next/font/local`) · #128 handoff snapshot & pipeline status · #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
+| **`main`** | `c1aa45b` — Merge PR #130: search clear button on the right; voice search as a gold floating button |
+| **Latest merged PRs** | #130 search clear button & voice FAB · #129 fonts self-hosted (`next/font/local`) · #128 handoff snapshot & pipeline status · #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
 | **Open PRs** | #115 **draft, do not merge** — IndoPak Tajweed prototype (`proto/indopak-tajweed`, dev page `/dev/indopak-tajweed`, kept open for preview) |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Video Production & R2 Storage** | Pipeline active for Surahs 18–34; Surahs 19, 23, 25, 26, 28, 30, 31, 32 video sets verified and added to `videoManifest.ts`; Cloudflare R2 Phase 3–8 cleanup & deduplication completed |
@@ -161,6 +161,7 @@
 4. Still open from before: the video pipeline (§2a) and the real-phone checks (above).
 
 ### Done (2026-10-24)
+- [x] **PR #130** `fix/search-clear-and-voice-fab`: search clear button moved right; voice search as a gold floating button.
 - [x] **PR #129** `fix/self-host-fonts`: fonts self-hosted (§2 item 17); Vercel preview build passed.
 - [x] **PR #127** `fix/android-player-navigation-bar-clearance`: Android 3-button navigation bar clearance with `max(env(safe-area-inset-bottom,0px), var(--vv-bottom,0px))` on player dock and reading view; scope standalone html/body height and minHeight stretch to iOS only.
 - [x] **PR #126** `fix/ios-search-alignment-and-voice-input`: iOS search under-alignment fixed, 20px threshold for iPad floating shortcut bar, streaming voice recognition with Web Speech API, and `#search`/`#browse` deep links.
@@ -223,6 +224,7 @@
 
 ## 6. Important Git History
 
+- `c1aa45b` — **PR #130** `fix/search-clear-and-voice-fab`: search clear button on the right; voice search as a gold floating button (ai-mic icon)
 - `e544fa5` — **PR #129** `fix/self-host-fonts`: UI and script fonts self-hosted with `next/font/local` (no Google Fonts at build time)
 - `762232a` — **PR #128** `docs/handoff-and-task-sync-2026-10-24`: handoff snapshot, video manifest, pipeline status, storage audit reports
 - `91b7fc2` — **PR #127** `fix/android-player-navigation-bar-clearance`: Android 3-button navigation bar clearance and standalone layout overflow
