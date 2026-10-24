@@ -412,7 +412,18 @@ export function TopicPickerModal({
     setHearing(false);
   }, []);
 
+  // TEMP (?voicedebug): on-screen log of the recognition events, to find on
+  // the iPhone why later voice searches hear nothing. Remove before merge.
+  const voiceDebug = typeof window !== "undefined" && window.location.search.includes("voicedebug");
+  const [voiceLog, setVoiceLog] = useState<string[]>([]);
+  const vlog = useCallback((m: string) => {
+    if (!voiceDebug) return;
+    const t0 = new Date().toISOString().slice(17, 23);
+    setVoiceLog((l) => [...l.slice(-14), `${t0} ${m}`]);
+  }, [voiceDebug]);
+
   const startVoice = useCallback(() => {
+    vlog(`tap · ctor=${!!(window.SpeechRecognition || window.webkitSpeechRecognition)} standalone=${isIosStandalone} reuse=${!!recInstanceRef.current} session=${(navigator as Navigator & { audioSession?: { type: string; state?: string } }).audioSession?.type}/${(navigator as Navigator & { audioSession?: { state?: string } }).audioSession?.state}`);
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Ctor) {
       // Still inside the tap, so iOS opens the keyboard (and its 🎤).
@@ -443,12 +454,18 @@ export function TopicPickerModal({
       rec.lang = targetLocale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
 
       let started = false;
+      const recX = rec as SpeechRecognition & Record<string, unknown>;
+      for (const ev of ["audiostart", "audioend", "soundstart", "nomatch"]) recX[`on${ev}`] = () => vlog(ev);
       rec.onstart = () => {
+        vlog("start");
         started = true;
         setListening(true);
       };
 
-      rec.onspeechstart = () => setHearing(true);
+      rec.onspeechstart = () => {
+        vlog("speechstart");
+        setHearing(true);
+      };
 
       rec.onresult = (e: SpeechRecognitionEvent) => {
         setHearing(true);
@@ -458,6 +475,7 @@ export function TopicPickerModal({
           if (item) transcript += item;
         }
         const clean = transcript.trim();
+        vlog(`result "${clean}" final=${!!e.results[e.results.length - 1]?.isFinal}`);
         if (clean) {
           setVerseTopicKey(null);
           setSearchQuery(clean);
@@ -473,6 +491,7 @@ export function TopicPickerModal({
 
       // An older session's late end / error must not reset this one.
       rec.onend = () => {
+        vlog(`end (current=${recognitionRef.current === rec})`);
         if (recognitionRef.current !== rec) return;
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
@@ -484,6 +503,7 @@ export function TopicPickerModal({
       };
 
       rec.onerror = (e) => {
+        vlog(`error ${(e as Event & { error?: string; message?: string }).error} ${(e as Event & { message?: string }).message ?? ""}`);
         console.warn("Speech recognition error:", e);
         if (recognitionRef.current !== rec) return;
         // Refused or unavailable (the home-screen app): point to dictation.
@@ -499,7 +519,9 @@ export function TopicPickerModal({
 
       try {
         rec.start();
+        vlog("start() called");
       } catch (err) {
+        vlog(`start() threw ${(err as DOMException)?.name}`);
         // The reused instance is still winding down: once more, shortly.
         if ((err as DOMException)?.name !== "InvalidStateError") throw err;
         window.setTimeout(() => {
@@ -529,7 +551,7 @@ export function TopicPickerModal({
       searchInputRef.current?.focus();
       showDictationHint();
     }
-  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint]);
+  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint, vlog]);
 
   // The same click when listening ends — tapped off, timed out or finished.
   const wasListeningRef = useRef(false);
@@ -1063,6 +1085,11 @@ export function TopicPickerModal({
                   </div>
 
                   {/* Voice search: a floating gold button over the list. */}
+                  {voiceDebug && voiceLog.length > 0 && (
+                    <pre className="absolute left-2 top-2 z-20 max-h-[60%] max-w-[85%] overflow-auto whitespace-pre-wrap rounded-lg bg-black/90 p-2 text-[10px] leading-tight text-green-300">
+                      {voiceLog.join("\n")}
+                    </pre>
+                  )}
                   {!isFavourites && voiceSupported && dictationHint && (
                     <p
                       role="status"
