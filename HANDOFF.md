@@ -11,14 +11,14 @@
 
 ## 1. Current Project Status
 
-*Snapshot: 2026-10-24, after PR #127.*
+*Snapshot: 2026-10-24, after PR #129.*
 
 | Item | Status |
 | :--- | :--- |
 | **App** | Quran-only: listen & read, 114 Surahs / 30 Juz, 51 reciters; Word Sync reciters highlight all 114 Surahs; IndoPak script live (QuranWBW font); verse/topic/voice search in content browser |
 | **Repository** | `sarfpearl/huda-web-quran` (public) |
-| **`main`** | `91b7fc2` — Merge PR #127: Android player navigation bar clearance and standalone layout overflow |
-| **Latest merged PRs** | #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
+| **`main`** | `e544fa5` — Merge PR #129: self-host UI and script fonts with `next/font/local` |
+| **Latest merged PRs** | #129 fonts self-hosted (`next/font/local`) · #128 handoff snapshot & pipeline status · #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
 | **Open PRs** | #115 **draft, do not merge** — IndoPak Tajweed prototype (`proto/indopak-tajweed`, dev page `/dev/indopak-tajweed`, kept open for preview) |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
 | **Video Production & R2 Storage** | Pipeline active for Surahs 18–34; Surahs 19, 23, 25, 26, 28, 30, 31, 32 video sets verified and added to `videoManifest.ts`; Cloudflare R2 Phase 3–8 cleanup & deduplication completed |
@@ -65,6 +65,8 @@
     - **All 187 background video clips active**: all 20 Aal-Imran chapters active in `videoManifest.ts` (manifest up from 171 to 187 clips, 0 missing).
     - **Storage consolidation**: 12.58 GB of video cache and redundant files safely cleaned up (`.media-work` cache, raw masters, QA frames, test renders). Single high-quality master format maintained (UHD 4K where available, 1080p for others). Total video storage reduced from 17.8 GB to 5.2 GB.
 
+17. **Fonts self-hosted** (#129, 2026-10-24): Vercel builds failed now and then in `next/font/google` (PR #100, #104: `Cannot read properties of null (reading '1')` when Google served a font URL without an extension). The 8 families in `src/app/fonts.ts` (Poppins, Noto Serif Tamil, Amiri, Noto Nastaliq Urdu, Noto Sans Malayalam / Devanagari / Bengali, Noto Naskh Arabic — all OFL) are now woff2 files in `src/app/fonts/` with their licences, loaded by `next/font/local` with the same CSS variables, weights, `swap`, preload (Poppins only) and Google's subset `unicode-range`. Rebuild with `scripts/generation/build-self-hosted-fonts.py` (`pip install fonttools brotli`). The build no longer reaches Google.
+
 ### Cloudflare R2 Media Migration
 - **Bucket:** `huda-quran-media`
 - **Public R2 Base URL:** `https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev`
@@ -92,33 +94,29 @@
 
 ---
 
-## 2a. 🎬 Automated Video Pipeline — IN PROGRESS, uncommitted (2026-10-18)
+## 2a. 🎬 Automated Video Pipeline — IN PROGRESS (committed; status 2026-10-24)
 
-> This is new, **not yet committed**, work set up specifically for **Antigravity** to drive next. It generates per-Surah cinematic background clips (Veo 3.1-fast + Gemini stills) in thematic 5–10 ayah sets, replacing the older ad-hoc clip scripts in §2 item 10/16.
+> Pipeline code, skill, rules, tests, ledger and `data/progress.json` are in git (the large generated media stay out of git, on R2). Set up specifically for **Antigravity** to drive. It generates per-Surah cinematic background clips (Veo 3.1-fast + Gemini stills) in thematic 5–10 ayah sets, replacing the older ad-hoc clip scripts in §2 item 10/16.
 
 - **Antigravity skill:** `.agents/skills/surah-video-production/SKILL.md` — Antigravity auto-discovers skills under `.agents/skills/<name>/SKILL.md`. Triggers on "complete video production for Surah N", "plan next clip", "advance Surah workflow", "remediate video defects".
 - **Safety rules:** `.agents/rules/video-pipeline-gates.md` — strict **16-state lifecycle** per clip (`CLIP_PLAN_PENDING_APPROVAL` → … → `COMPLETED`), decoupled human approval gates (plan / image / video-gen / video-review / PR-merge / prod-deploy must each be separate approvals), the ₹600 INR hard-stop reserve floor must never be breached, verse text only from local `public/data/quran-verses/<surah>.json` (never fabricate/alter), resume polling instead of re-submitting a paid Veo op, and **never touch `videoManifest.ts` / R2 / Vercel during planning or local staging**.
 - **Pipeline code:** `scripts/pipeline/` (new, ~10,350 lines) — `surah-orchestrator.mjs`, `surah-state-machine.mjs`, `surah-pipeline.mjs`, `generation-adapter.mjs` / `image-generation-adapter.mjs` (Veo + Gemini calls), `surah-qa-composite.mjs`, `visual-evaluator.mjs`, `seam-processor.mjs` (0.40s crossfade), `surah-staging.mjs`, `complete-pilot-postprocessing.mjs`, `surah-meaning-overrides.mjs`, `generate_surah114_storyboard_videos.mjs`.
 - **Budget guard:** `scripts/tools/video-budget-guard.mjs` + ledger `docs/VIDEO_BUDGET_LEDGER.json` — project `project-04027e7d-9805-47dc-bdf` (Veo), cost **₹76.791/video** clip + ₹2.55/still, starting credit ₹28,796.63, hard-stop floor ₹600. As of the last ledger entry (2026-10-16T13:34): 16 successful generations, 0 failed, **₹27,550.12 remaining**.
-- **Progress tracker:** `data/progress.json` — `pipelineVersion 1.0.0`, `currentSurah: 9`, `completedSurahCount: 5`.
-  | Surah | Verses | Status | Notes |
-  | :--- | :--- | :--- | :--- |
-  | 3 | 200 | `LOCAL_APPROVED` | 117/200 ayahs done, **83 pending** — not yet deployed |
-  | 4 | 176 | `DEPLOYED` | 25/25 sets, deployed 2026-10-18T10:06 |
-  | 5 | 120 | `DEPLOYED` | 17/17 sets |
-  | 6 | 165 | `DEPLOYED` | 23/23 sets |
-  | 7 | 206 | `DEPLOYED` | 29/29 sets |
-  | 8 | 75 | `DEPLOYED` | 11/11 sets |
-  | 9 | 129 | `LOCAL_READY` | 18/18 sets, **awaiting deploy** (per-Surah QA review: `review_surah_9.html`) |
-  | 10–114 | — | not started | next up after 9 |
-- **QA review files (uncommitted, repo root):** `review_surah_3.html` … `review_surah_9.html` — human-facing composite review pages per Surah, one set per thematic clip, generated by `surah-qa-composite.mjs`.
+- **Progress tracker:** `data/progress.json` — `pipelineVersion 1.0.0`, `currentSurah: 17`, `completedSurahCount: 14`.
+  | Surah | Status | Notes |
+  | :--- | :--- | :--- |
+  | 3 | `LOCAL_APPROVED` | 117/200 ayahs done, **83 pending** — not yet deployed |
+  | 4–17 | `DEPLOYED` | all ayahs; 15–17 via PR #120, #121, #123 |
+  | 19, 23, 25, 26, 28, 30, 31, 32 | `LOCAL_APPROVED` | all sets done locally, registered in `videoManifest.ts` (PR #128) — deploy step still to confirm |
+  | 18, 20–22, 24, 27, 29, 33–114 | — | not started |
+- **QA review files (repo root):** `review_surah_16.html`, `review_surah_17.html` are in git; earlier ones (`review_surah_3.html` …) stay local — human-facing composite review pages per Surah, one set per thematic clip, generated by `surah-qa-composite.mjs`.
 - **Tests:** `tests/pipeline/image-video-lifecycle.test.mjs`, `tests/pipeline/visual-evaluator.test.mjs`.
 - **For Antigravity, pick up here:**
   1. Surah 3 is mid-flight (`LOCAL_APPROVED`, 83 ayahs still pending) — finish its remaining sets before moving on, or confirm with the owner whether to deploy what's done first.
-  2. Surah 9 (`LOCAL_READY`) is fully generated and QA-reviewed locally but **not deployed** — needs the deploy step (state 13→16: commit → push → PR → review → merge → prod deploy → live verify) per the 16-state gate file.
-  3. Surah 10 onward: run the orchestrator fresh per the skill's "plan next clip" flow.
+  2. Surahs 19, 23, 25, 26, 28, 30, 31, 32 (`LOCAL_APPROVED`): confirm each is live on R2 and take it through the deploy states (13→16) per the 16-state gate file.
+  3. Surah 18 and the other not-started Surahs: run the orchestrator fresh per the skill's "plan next clip" flow.
   4. Check `docs/VIDEO_BUDGET_LEDGER.json`'s `estimatedRemainingCreditINR` before any new paid generation, and never let it cross the ₹600 floor.
-  5. None of this is committed to git yet (see §5) — decide with the owner whether to commit the pipeline code/tests now (separately from per-Surah video assets, which are large media and should stay out of the sandboxed git proxy push — it 408s on big pushes).
+  5. Keep per-Surah video assets (large media) out of git — the sandboxed git proxy push 408s on big pushes.
 
 ---
 
@@ -142,7 +140,7 @@
 
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
-- [ ] **Primary next step (Antigravity):** continue the automated video pipeline — see §2a. Finish Surah 3's remaining 83 ayahs, deploy Surah 9, then proceed Surah 10 → 114.
+- [ ] **Primary next step (Antigravity):** continue the automated video pipeline — see §2a. Finish Surah 3's remaining 83 ayahs, deploy the `LOCAL_APPROVED` Surahs (19, 23, 25, 26, 28, 30, 31, 32), then Surah 18 and the rest.
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
 - [x] **IndoPak font licence:** granted by QuranWBW (2026-10-11); font self-hosted and live (PR #100, #103, #104).
@@ -163,6 +161,7 @@
 4. Still open from before: the video pipeline (§2a) and the real-phone checks (above).
 
 ### Done (2026-10-24)
+- [x] **PR #129** `fix/self-host-fonts`: fonts self-hosted (§2 item 17); Vercel preview build passed.
 - [x] **PR #127** `fix/android-player-navigation-bar-clearance`: Android 3-button navigation bar clearance with `max(env(safe-area-inset-bottom,0px), var(--vv-bottom,0px))` on player dock and reading view; scope standalone html/body height and minHeight stretch to iOS only.
 - [x] **PR #126** `fix/ios-search-alignment-and-voice-input`: iOS search under-alignment fixed, 20px threshold for iPad floating shortcut bar, streaming voice recognition with Web Speech API, and `#search`/`#browse` deep links.
 - [x] **PR #125** `fix/mobile-player-keyboard-scroll`: Android virtual keyboard auto-dismiss on search result tap and scroll, pause teleprompter followScroll on touch/wheel, clamp `--vv-bottom` to 0 when not typing, compact pill player default on mobile (< 768px).
@@ -215,23 +214,7 @@
 
 ## 5. Git / Uncommitted Work
 
-*2026-10-18: working tree NOT clean — see §2a for what this is.*
-
-| Path | Type | What it is |
-| :--- | :--- | :--- |
-| `package-lock.json` | modified | dependency lock update |
-| `scripts/tools/upload-to-r2.mjs` | modified | R2 upload tool changes (check diff before committing) |
-| `.agents/` | untracked | Antigravity skill (`skills/surah-video-production/SKILL.md`) + safety rules (`rules/video-pipeline-gates.md`) |
-| `AGENTS.md` | untracked | repo-level AI-assistant instructions (Tamil replies, reply structure) |
-| `data/progress.json` | untracked | video pipeline progress tracker (§2a) |
-| `docs/VIDEO_BUDGET_LEDGER.json` | untracked | Veo generation spend ledger (§2a) |
-| `review_surah_3.html` … `review_surah_9.html` | untracked | per-Surah video QA review pages (§2a) |
-| `scripts/generation/generate_surah3_trial_remediation.mjs` | untracked | Surah 3 remediation script |
-| `scripts/pipeline/` | untracked | the pipeline codebase (§2a) |
-| `scripts/tools/video-budget-guard.mjs` | untracked | budget-floor guard (§2a) |
-| `tests/` | untracked | pipeline unit tests (§2a) |
-
-None of this has been committed, pushed, or reviewed — it's exactly as left before handing off to Antigravity. Review with the owner before committing: separate the pipeline **code** (small, safe to commit) from any generated **video/image assets** it produced under `scratch/` (large media — do not push).
+*2026-10-24: the pipeline work listed here on 2026-10-18 (`.agents/`, `AGENTS.md`, `data/progress.json`, `docs/VIDEO_BUDGET_LEDGER.json`, `scripts/pipeline/`, `scripts/tools/video-budget-guard.mjs`, `tests/pipeline/`) is now committed. Run `git status` on the owner's Mac before starting: anything left there (local `review_surah_*.html`, `scratch/` media) is not in git — keep large media out.*
 
 > [!WARNING]
 > **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`. **This applies directly to the Claude ↔ Antigravity handoff now** — if both touch this checkout at once, expect the same collision.
@@ -240,6 +223,8 @@ None of this has been committed, pushed, or reviewed — it's exactly as left be
 
 ## 6. Important Git History
 
+- `e544fa5` — **PR #129** `fix/self-host-fonts`: UI and script fonts self-hosted with `next/font/local` (no Google Fonts at build time)
+- `762232a` — **PR #128** `docs/handoff-and-task-sync-2026-10-24`: handoff snapshot, video manifest, pipeline status, storage audit reports
 - `91b7fc2` — **PR #127** `fix/android-player-navigation-bar-clearance`: Android 3-button navigation bar clearance and standalone layout overflow
 - `6ec25e4` — **PR #126** `fix/ios-search-alignment-and-voice-input`: iOS search under-alignment, keyboard clearance, and voice recognition
 - `6d8cf51` — **PR #125** `fix/android-mobile-player-keyboard-scroll`: Android player dock sizing, keyboard dismissal, and scroll conflicts

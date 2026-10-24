@@ -1,6 +1,6 @@
 # HuDa Web Quran 🕌🎧
 
-An immersive Holy Quran listening & reading web app, built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS** and **Supabase**. Inspired by `https://tamilfm.co/v/auto`.
+An immersive Holy Quran listening & reading web app, built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS** and **Supabase**. Inspired by `https://tamilfm.co/v/auto`.
 
 **Live:** [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — Vercel auto-deploys every push to `main`.
 
@@ -43,8 +43,8 @@ An immersive Holy Quran listening & reading web app, built with **Next.js 14 (Ap
 
 | Area | Tools |
 | :--- | :--- |
-| Framework | Next.js 14 (App Router), React 18, TypeScript |
-| Styling | Tailwind CSS, Framer Motion |
+| Framework | Next.js 15 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS, Framer Motion; fonts self-hosted with `next/font/local` (`src/app/fonts/`) |
 | Data | Static Quran data in `src/lib/data`; Supabase (Postgres + RPCs) for views, likes and comments |
 | Media | Cloudflare R2 (`src/lib/media.ts` → `mediaUrl()`) |
 | Audio sources | quranicaudio.com, mp3quran.net, everyayah.com |
@@ -83,7 +83,8 @@ Never commit `.env*` files.
 
 - `scripts/tools/upload-to-r2.mjs` — idempotent media upload to R2 (dry-run by default; `--execute` to upload, `--category=images|videos|audio`).
 - `scripts/qa/` — acoustic word-sync QA: verifies and repairs timings; mismatched reciter × Surah pairs fall back to Audio Only.
-- `scripts/generation/` — artwork and video generation scripts.
+- `scripts/generation/` — artwork and video generation scripts; `build-self-hosted-fonts.py` rebuilds the UI / script fonts in `src/app/fonts/`.
+- `scripts/pipeline/` — automated per-Surah background-video pipeline (see HANDOFF §2a).
 
 ---
 
