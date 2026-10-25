@@ -367,6 +367,17 @@
   .quran-word {
     transition: text-shadow 150ms ease-out;
   }
+  /* Word gap: the same margin after every word; the row sets --word-gap. */
+  .quran-word-gap {
+    margin-inline-end: var(--word-gap, 0.35em);
+    /* An IndoPak waqf sign follows its word over a space: never wrap there. */
+    white-space: nowrap;
+  }
+  /* The space between two .quran-word-gap words: a line-break opportunity
+     (and copied text) with no width of its own — the gap is the margin. */
+  .quran-word-sep {
+    font-size: 0;
+  }
   .quran-word-glow {
     text-shadow: 0 0 18px rgba(251, 191, 36, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9);
   }

@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { PrayerRugIcon } from "@/components/ui/Icon";
+import { fitWaqfWords, onFontsLoaded, waqfProps } from "@/lib/waqf";
 import { isRtl, t, useUiLang, word, type UiLang } from "@/lib/uiLang";
 import {
   getEffectiveWords,
@@ -178,9 +179,10 @@ const QuranWord = memo(function QuranWord({
             }
           : undefined
       }
-      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block transition-[color,text-shadow] duration-150 ${
+      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block quran-word-gap transition-[color,text-shadow] duration-150 ${
         onSelect ? "cursor-pointer" : ""
       } ${WORD_TONE[state]}`}
+      {...(glyphCode ? undefined : waqfProps(text))}
     >
       {glyphCode && glyphPage ? (
         <>
@@ -212,7 +214,7 @@ function overflows(pane: HTMLElement) {
   return ((pane.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + pad > pane.clientHeight + 2;
 }
 
-function AyahOrnament({ n, indoPak = false }: { n: number; indoPak?: boolean }) {
+function AyahOrnament({ n, indoPak = false, inRow = false }: { n: number; indoPak?: boolean; inRow?: boolean }) {
   const lang = useUiLang();
   return (
     <span
@@ -225,7 +227,8 @@ function AyahOrnament({ n, indoPak = false }: { n: number; indoPak?: boolean }) 
       // the preceding-word side (inline-start in RTL) — so the clearance scales
       // with the Arabic size (22px→84px) instead of a fixed px that shrinks away.
       className={`font-arabic text-amber-300 select-none align-middle tracking-normal [letter-spacing:0] text-[1.2em] ${
-        indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
+        // In the word row the last word's margin already sets the gap before it.
+        inRow ? "" : indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
       }`}
     >
       {toArabicNumerals(n)}
@@ -590,6 +593,10 @@ export function CenterVerseDisplay({
   useEffect(() => {
     setTappedWord((t) => (t && (t.from !== propWordIndex || t.key !== fitKey) ? null : t));
   }, [propWordIndex, fitKey]);
+  // WebKit's extra room before a word with a waqf sign (waqf.ts).
+  const wordRowRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => fitWaqfWords(wordRowRef.current));
+  useEffect(() => onFontsLoaded(() => fitWaqfWords(wordRowRef.current)), []);
 
   // During 30 Juz playback, display pure 8K artwork without mismatched verse overlay
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
@@ -739,7 +746,12 @@ export function CenterVerseDisplay({
             className={`font-arabic ${indoPak ? "quran-indopak" : ""} ${tanzilFallback ? "quran-tanzil" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-2 sm:px-4 md:px-2 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
-              <span className="flex flex-wrap justify-center items-center gap-x-[0.3em] sm:gap-x-[0.35em] gap-y-0">
+              <span
+                ref={wordRowRef}
+                // Word gap: a little over the Hafs font's space (0.22em), floored at Quran.com's
+                // 0.375rem.
+                className="flex flex-wrap justify-center items-center [--word-gap:max(0.375rem,0.35em)]"
+              >
                 {displayWords.map((w, idx) => {
                   const wordId = `${wordIdPrefix}:${idx + 1}`;
                   const state: WordState = !hasWordTiming
@@ -778,13 +790,13 @@ export function CenterVerseDisplay({
                         {glyphs?.e ? (
                           <span
                             aria-label={`${word("ayah", language)} ${ayahNum}`}
-                            className="select-none mx-1.5"
+                            className="select-none"
                             style={glyphStyle(glyphs.e[1], tajweed)}
                           >
                             {glyphs.e[0]}
                           </span>
                         ) : (
-                          <AyahOrnament n={ayahNum} indoPak={indoPak} />
+                          <AyahOrnament n={ayahNum} indoPak={indoPak} inRow />
                         )}
                       </span>
                     );
