@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { SurahCinematicBackground } from "./SurahCinematicBackground";
+import { SurahCinematicBackground, resolveSurahClip } from "./SurahCinematicBackground";
 import { JuzCinematicBackground } from "./JuzCinematicBackground";
 import { quranImageUrl } from "@/lib/data/service";
 import { mediaUrl } from "@/lib/media";
@@ -14,6 +14,9 @@ interface ImmersiveBackgroundProps {
   categorySlug: string;
   activeSurahNumber?: number | null;
   activeJuzNumber?: number | null;
+  /** The Juz's current Surah + Ayah: the Juz reuses that Surah's clips. */
+  juzSurahNumber?: number | null;
+  juzAyahNumber?: number | null;
   ayahNumber?: number | null;
   videoSrc?: string | null;
   currentTime?: number;
@@ -26,6 +29,8 @@ export function ImmersiveBackground({
   categorySlug,
   activeSurahNumber,
   activeJuzNumber = null,
+  juzSurahNumber = null,
+  juzAyahNumber = null,
   ayahNumber = null,
   videoSrc = null,
   currentTime = 0,
@@ -94,7 +99,27 @@ export function ImmersiveBackground({
     );
   }
 
-  // 3. If a Juz is active:
+  // 3. A Juz in VIDEO mode reuses the clips of the Surah it is in (thematic
+  //    set for the current Ayah, else that Surah's clip) — no separate Juz
+  //    videos. Where that Surah has no clip, the Juz scene below shows.
+  if (
+    activeJuzNumber &&
+    visualMode === "video" &&
+    juzSurahNumber &&
+    resolveSurahClip(juzSurahNumber, juzAyahNumber)
+  ) {
+    return (
+      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
+        <SurahCinematicBackground
+          surahNumber={juzSurahNumber}
+          ayahNumber={juzAyahNumber}
+          isPlaying={isPlaying}
+        />
+      </div>
+    );
+  }
+
+  // 4. If a Juz is active:
   if (activeJuzNumber) {
     const juzImageSrc = quranImageUrl("juz", activeJuzNumber);
     const hasJuzVideo = activeJuzNumber === 1;
