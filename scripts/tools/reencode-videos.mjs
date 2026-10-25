@@ -290,9 +290,13 @@ async function encodeOne(row, report) {
   const { key } = row;
   const out = path.join(ENCODED, key);
   const prev = report[key];
-  if (!FORCE && prev?.encoded && fs.existsSync(out)) return;
+  if (!FORCE && prev?.encoded && fs.existsSync(out)) {
+    process.stdout.write(`– ${key}  encoded before (${prev.pass ? "ready" : prev.why}) — --force to redo\n`);
+    return;
+  }
   if (row.r2Size === null && !NEW) {
     report[key] = { why: "not on R2 (the app gets a 404)" };
+    process.stdout.write(`– ${key}  not on R2, skipped\n`);
     return;
   }
   // Source: the local master if it is the file R2 has (or, --new, the master
