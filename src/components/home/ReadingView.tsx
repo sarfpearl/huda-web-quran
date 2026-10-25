@@ -27,7 +27,7 @@ import SurahBanner from "./SurahBanner";
 import { READER_SCALES } from "./ImmersiveHeader";
 import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
-import { waqfPad } from "@/lib/waqf";
+import { fitWaqfWords, onFontsLoaded, waqfProps } from "@/lib/waqf";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
@@ -158,6 +158,9 @@ export function ReadingView({
 }: ReadingViewProps) {
   const lang = useUiLang();
   const scrollRef = useRef<HTMLDivElement>(null);
+  // WebKit's extra room before a word with a waqf sign (waqf.ts).
+  useLayoutEffect(() => fitWaqfWords(scrollRef.current));
+  useEffect(() => onFontsLoaded(() => fitWaqfWords(scrollRef.current)), []);
   const rangesKey = ranges.map((r) => `${r.surah}:${r.from}-${r.to}`).join(",");
 
   // What's read, plus the ayahs around it that can share its first / last page
@@ -956,7 +959,7 @@ export function ReadingView({
       words = v.words.map((w, i) => (
         <Fragment key={i}>
           {i > 0 && <span className="quran-word-sep"> </span>}
-          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))} style={waqfPad(w.word)}>
+          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))} {...waqfProps(w.word)}>
             {w.word}
           </span>
         </Fragment>

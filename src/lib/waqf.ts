@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 /**
  * IndoPak waqf signs (ۙ ؕ ۚ ۠ …) come after the word over a space, which the
  * IndoPak font shapes to no width: the sign hangs past the word's box into
@@ -21,11 +23,51 @@ const MARK_EM: Record<string, number> = {
 /** A word's trailing sign cluster (space + marks only, no letters). */
 const TRAILING = / [^\u0621-\u064A]+$/u;
 
-/** Padding over a word's trailing waqf sign (its widest mark + a hair), or undefined. */
-export function waqfPad(word: string): React.CSSProperties | undefined {
+/**
+ * A word with a trailing waqf sign: padding over the sign's ink (its widest
+ * mark + a hair) and data-waqf (the length of the word before the sign, for
+ * fitWaqfWords). Undefined for any other word.
+ */
+export function waqfProps(word: string): { style: CSSProperties; "data-waqf": number } | undefined {
   const m = TRAILING.exec(word);
   if (!m) return undefined;
   let em = 0;
   for (const ch of m[0]) em = Math.max(em, MARK_EM[ch] ?? 0);
-  return em > 0 ? { paddingInlineEnd: `${(em + 0.02).toFixed(2)}em` } : undefined;
+  if (em <= 0) return undefined;
+  return { style: { paddingInlineEnd: `${(em + 0.02).toFixed(2)}em` }, "data-waqf": m.index };
+}
+
+/**
+ * WebKit gives the space before the sign its full width and lays it out on
+ * the word's start (right) side, a second gap before the word (Chromium
+ * shapes it to nothing). Measure the room between the box's start and the
+ * word's own text, and pull the box in by it. Once per word, after the font
+ * has loaded (the result is in em, so auto-fit resizing keeps it).
+ */
+export function fitWaqfWords(root: ParentNode | null) {
+  if (!root || typeof document === "undefined" || !document.fonts) return;
+  root.querySelectorAll<HTMLElement>("[data-waqf]:not([data-waqf-fit])").forEach((el) => {
+    const text = el.firstChild;
+    const n = Number(el.dataset.waqf);
+    if (!(text instanceof Text) || !(n > 0) || n > text.length) return;
+    const range = document.createRange();
+    range.setStart(text, 0);
+    range.setEnd(text, n);
+    const word = range.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const size = parseFloat(cs.fontSize);
+    // Not with the fallback font: its space is another width.
+    if (!word.width || !size || !document.fonts.check(`${size}px ${cs.fontFamily}`, text.data)) return;
+    const extra = box.right - parseFloat(cs.paddingRight) - word.right;
+    if (extra > 0.5) el.style.marginInlineStart = `${(-extra / size).toFixed(3)}em`;
+    el.dataset.waqfFit = "";
+  });
+}
+
+/** Run fitWaqfWords again once a web font finishes loading. */
+export function onFontsLoaded(cb: () => void): () => void {
+  if (typeof document === "undefined" || !document.fonts) return () => {};
+  document.fonts.addEventListener("loadingdone", cb);
+  return () => document.fonts.removeEventListener("loadingdone", cb);
 }

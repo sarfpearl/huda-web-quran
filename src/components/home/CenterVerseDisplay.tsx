@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { PrayerRugIcon } from "@/components/ui/Icon";
-import { waqfPad } from "@/lib/waqf";
+import { fitWaqfWords, onFontsLoaded, waqfProps } from "@/lib/waqf";
 import { isRtl, t, useUiLang, word, type UiLang } from "@/lib/uiLang";
 import {
   getEffectiveWords,
@@ -182,7 +182,7 @@ const QuranWord = memo(function QuranWord({
       className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block quran-word-gap transition-[color,text-shadow] duration-150 ${
         onSelect ? "cursor-pointer" : ""
       } ${WORD_TONE[state]}`}
-      style={glyphCode ? undefined : waqfPad(text)}
+      {...(glyphCode ? undefined : waqfProps(text))}
     >
       {glyphCode && glyphPage ? (
         <>
@@ -593,6 +593,10 @@ export function CenterVerseDisplay({
   useEffect(() => {
     setTappedWord((t) => (t && (t.from !== propWordIndex || t.key !== fitKey) ? null : t));
   }, [propWordIndex, fitKey]);
+  // WebKit's extra room before a word with a waqf sign (waqf.ts).
+  const wordRowRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => fitWaqfWords(wordRowRef.current));
+  useEffect(() => onFontsLoaded(() => fitWaqfWords(wordRowRef.current)), []);
 
   // During 30 Juz playback, display pure 8K artwork without mismatched verse overlay
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
@@ -743,6 +747,7 @@ export function CenterVerseDisplay({
           >
             {displayWords.length > 0 ? (
               <span
+                ref={wordRowRef}
                 // Word gap: a little over the Hafs font's space (0.22em), floored at Quran.com's
                 // 0.375rem.
                 className="flex flex-wrap justify-center items-center [--word-gap:max(0.375rem,0.35em)]"
