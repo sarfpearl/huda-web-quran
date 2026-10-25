@@ -270,12 +270,8 @@ export function SurahCinematicBackground({
         />
       )}
 
-      {/* 4. Atmospheric Contrast Overlay */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
-      {/* 5. Video scrim: the clip is a light backdrop behind the verse, so an
-          even dim keeps it subtle and hides the compression of the R2 encodes
-          (scripts/tools/reencode-videos.mjs). Video only — the stills are sharp. */}
-      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none" />
+      {/* No dim of its own: the scene's even 40% black (ImmersiveHomeClient)
+          is the only overlay on the clips (owner, 2026-10-25). */}
     </div>
   );
 }
