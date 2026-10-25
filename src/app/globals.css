@@ -369,7 +369,7 @@
   }
   /* Word gap: the same margin after every word; the row sets --word-gap. */
   .quran-word-gap {
-    margin-inline-end: var(--word-gap, 0.22em);
+    margin-inline-end: var(--word-gap, 0.3em);
   }
   /* IndoPak waqf sign in its own box (WaqfText): its width is set inline,
      and the shaped space + marks start at its right (RTL) edge. */

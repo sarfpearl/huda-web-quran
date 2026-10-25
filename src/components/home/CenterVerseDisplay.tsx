@@ -742,9 +742,9 @@ export function CenterVerseDisplay({
           >
             {displayWords.length > 0 ? (
               <span
-                // Word gap: the Hafs font's own space width, floored at Quran.com's
+                // Word gap: a little over the Hafs font's space (0.22em), floored at Quran.com's
                 // 0.375rem.
-                className="flex flex-wrap justify-center items-center [--word-gap:max(0.375rem,0.22em)]"
+                className="flex flex-wrap justify-center items-center [--word-gap:max(0.375rem,0.3em)]"
               >
                 {displayWords.map((w, idx) => {
                   const wordId = `${wordIdPrefix}:${idx + 1}`;
