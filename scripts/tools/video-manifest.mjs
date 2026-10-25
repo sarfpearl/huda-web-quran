@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Writes src/lib/data/videoManifest.ts — the background clips that really
- * exist on R2. The video registries (surahChapters, surahVerseVideos,
+ * exist on R2. The video registries (surahChapters, surahVerseVideos, surahSetVideos,
  * quranJuzVideos) name far more clips than were ever rendered: every Surah
  * without a registry entry gets a guessed /videos/surah/NNN-slug.mp4, and
  * Aal-Imran lists 20 chapter clips of which 3 exist. Each of those was a 404 —
@@ -28,6 +28,7 @@ const { mediaUrl } = require(path.join(ROOT, "src/lib/media.ts"));
 const { SURAH_CHAPTERS_REGISTRY, getSurahVisualData } = require(path.join(ROOT, "src/lib/data/surahChapters.ts"));
 const { SURAH_VERSE_VIDEOS_REGISTRY } = require(path.join(ROOT, "src/lib/data/surahVerseVideos.ts"));
 const { JUZ_VIDEOS } = require(path.join(ROOT, "src/lib/data/quranJuzVideos.ts"));
+const { SURAH_SET_VIDEOS } = require(path.join(ROOT, "src/lib/data/surahSetVideos.ts"));
 
 // Every clip path any resolver can produce (raw "/videos/…" paths).
 const candidates = new Set();
@@ -38,6 +39,7 @@ for (let s = 1; s <= 114; s++) {
   d.chapters.forEach((c) => add(c.videoPath));
 }
 for (const ayahs of Object.values(SURAH_VERSE_VIDEOS_REGISTRY)) for (const v of Object.values(ayahs)) add(v.videoPath);
+for (const sets of Object.values(SURAH_SET_VIDEOS)) sets.forEach((v) => add(v.path));
 for (const j of Object.values(JUZ_VIDEOS)) {
   add(j.videoPath);
   (j.playlist ?? []).forEach(add);

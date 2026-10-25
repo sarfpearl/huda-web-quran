@@ -625,6 +625,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // the center display shows the Arabic + meaning (word-sync reciters only —
   // the CenterVerseDisplay itself is gated to reciterWordSync).
   const ayahSeqIndex = player.ayahSequence?.index ?? -1;
+  // The Juz's current [surah, ayah] for the background, which reuses the
+  // Surah's thematic sets. Before the per-ayah sequence starts (and for a
+  // full-Juz recording, which has none) it is the Juz's first ayah.
+  const juzScenePair = useMemo(
+    () => (activeJuz ? getJuzAyahPairs(activeJuz.id)[Math.max(ayahSeqIndex, 0)] ?? null : null),
+    [activeJuz, ayahSeqIndex]
+  );
   useEffect(() => {
     if (ayahSeqIndex < 0 || !activeJuz) {
       setJuzAyahVerse(null);
@@ -1451,6 +1458,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         categorySlug={activeBayan?.category?.slug || "quran-recitation"}
         activeSurahNumber={activeSurah?.number ?? null}
         activeJuzNumber={activeJuz?.id ?? null}
+        juzSurahNumber={juzScenePair?.[0] ?? null}
+        juzAyahNumber={juzScenePair?.[1] ?? null}
         ayahNumber={currentVerse?.ayahNumber ?? null}
         videoSrc={currentVideo}
         // Always the MAIN recitation clock: the prelude clip's own 0→5s clock
