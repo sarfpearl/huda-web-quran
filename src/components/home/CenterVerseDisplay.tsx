@@ -186,9 +186,11 @@ const QuranWord = memo(function QuranWord({
           : undefined
       }
       className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block ${
-        // Quran.com's word gap: a fixed margin after each word (0.375rem; 0.8125rem
-        // after an IndoPak stop sign), not one that grows with the Arabic size.
-        stopSign ? "me-[0.8125rem]" : "me-1.5"
+        // Word gap: the Hafs font's own space width (0.22em), floored at
+        // Quran.com's 0.375rem (0.8125rem after an IndoPak stop sign). A fixed
+        // 6px vanished at the auto-fit sizes, where words with no side bearing
+        // ran together.
+        stopSign ? "me-[max(0.8125rem,0.45em)]" : "me-[max(0.375rem,0.22em)]"
       } transition-[color,text-shadow] duration-150 ${
         onSelect ? "cursor-pointer" : ""
       } ${WORD_TONE[state]}`}
@@ -237,7 +239,7 @@ function AyahOrnament({ n, indoPak = false, inRow = false }: { n: number; indoPa
       // with the Arabic size (22px→84px) instead of a fixed px that shrinks away.
       className={`font-arabic text-amber-300 select-none align-middle tracking-normal [letter-spacing:0] text-[1.2em] ${
         // In the word row the last word's margin already sets the gap before it.
-        inRow ? "me-1.5" : indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
+        inRow ? "me-[max(0.375rem,0.22em)]" : indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
       }`}
     >
       {toArabicNumerals(n)}
@@ -791,7 +793,7 @@ export function CenterVerseDisplay({
                         {glyphs?.e ? (
                           <span
                             aria-label={`${word("ayah", language)} ${ayahNum}`}
-                            className="select-none me-1.5"
+                            className="select-none me-[max(0.375rem,0.22em)]"
                             style={glyphStyle(glyphs.e[1], tajweed)}
                           >
                             {glyphs.e[0]}
