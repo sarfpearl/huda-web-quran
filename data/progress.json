@@ -1,10 +1,10 @@
 {
   "pipelineVersion": "1.0.0",
-  "lastUpdated": "2026-10-20T10:58:12.840Z",
+  "lastUpdated": "2026-10-25T03:39:20.267Z",
   "currentSurah": 17,
   "status": "RUNNING",
   "totalSurahs": 114,
-  "completedSurahCount": 14,
+  "completedSurahCount": 22,
   "surahs": {
     "3": {
       "surahNumber": 3,
@@ -196,11 +196,14 @@
       "totalSets": 14,
       "completedSets": 14,
       "completedCount": 98,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_19.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.833Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "23": {
       "surahNumber": 23,
@@ -209,11 +212,14 @@
       "totalSets": 14,
       "completedSets": 14,
       "completedCount": 118,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_23.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "25": {
       "surahNumber": 25,
@@ -222,11 +228,14 @@
       "totalSets": 8,
       "completedSets": 8,
       "completedCount": 77,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_25.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "26": {
       "surahNumber": 26,
@@ -235,11 +244,14 @@
       "totalSets": 14,
       "completedSets": 14,
       "completedCount": 227,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_26.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "28": {
       "surahNumber": 28,
@@ -248,11 +260,14 @@
       "totalSets": 11,
       "completedSets": 11,
       "completedCount": 88,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_28.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "30": {
       "surahNumber": 30,
@@ -261,11 +276,14 @@
       "totalSets": 8,
       "completedSets": 8,
       "completedCount": 60,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_30.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "31": {
       "surahNumber": 31,
@@ -274,11 +292,14 @@
       "totalSets": 5,
       "completedSets": 5,
       "completedCount": 34,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_31.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
     "32": {
       "surahNumber": 32,
@@ -287,11 +308,14 @@
       "totalSets": 4,
       "completedSets": 4,
       "completedCount": 30,
-      "status": "LOCAL_APPROVED",
+      "status": "DEPLOYED",
       "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/staging/batch_1_review/review_surah_32.html",
       "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
-      "lastUpdated": "2026-10-20T10:58:12.840Z",
-      "assembledAt": "2026-10-20T10:58:12.840Z"
+      "lastUpdated": "2026-10-25T03:39:20.267Z",
+      "assembledAt": "2026-10-20T10:58:12.840Z",
+      "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
+      "deployedAt": "2026-10-25T03:39:20.267Z",
+      "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     }
   }
 }
