@@ -22,8 +22,8 @@ const { surahClipFollowsAyah, resolveSurahClip } = require(path.join(ROOT, "src/
 const verseCount = (s) => JSON.parse(fs.readFileSync(path.join(ROOT, `public/data/quran-verses/${s}.json`), "utf8")).length;
 
 test("sets, chapters and per-Ayah clips follow the Ayah; one whole-Surah clip doesn't", () => {
-  for (const s of [2, 3, 4, 19, 32]) assert.equal(surahClipFollowsAyah(s), true, `Surah ${s}`);
-  for (const s of [1, 50, 114]) assert.equal(surahClipFollowsAyah(s), false, `Surah ${s}`);
+  for (const s of [1, 2, 3, 4, 19, 32]) assert.equal(surahClipFollowsAyah(s), true, `Surah ${s}`);
+  for (const s of [50, 114]) assert.equal(surahClipFollowsAyah(s), false, `Surah ${s}`);
 });
 
 test("a Surah whose clip differs between Ayahs is always marked", () => {

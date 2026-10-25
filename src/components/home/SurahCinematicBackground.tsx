@@ -239,6 +239,8 @@ export function SurahCinematicBackground({
           loop
           muted
           playsInline
+          disablePictureInPicture
+          disableRemotePlayback
           // Paused (the open screen): buffer just enough for the first frame
           // (~3 MB of Al-Fatihah's 20 MB clip, not ~15) — fully once playing.
           preload={isPlaying ? "auto" : "metadata"}
@@ -265,6 +267,8 @@ export function SurahCinematicBackground({
           loop
           muted
           playsInline
+          disablePictureInPicture
+          disableRemotePlayback
           preload={isPlaying ? "auto" : "metadata"}
           onCanPlay={() => handleSlotCanPlay(1)}
           onPause={() => resumeIfActive(1)}
