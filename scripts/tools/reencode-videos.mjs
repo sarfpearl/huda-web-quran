@@ -41,8 +41,8 @@
  * Options:
  *   --only=<substring>     only paths containing it (e.g. --only=002-al-baqarah)
  *   --vmaf=88              quality target (VMAF 0–100, vs the source); default 88
- *   --ladder-1080=3M,4M,6M,8M,12M,16M   bitrate caps tried in order (1080p)
- *   --ladder-720=1.5M,2M,3M,4M,6M        … for ≤720p sources
+ *   --ladder-1080=1.5M,2M,3M,4M,6M,8M,12M  bitrate caps tried in order (1080p)
+ *   --ladder-720=1M,1.5M,2M,3M,4M           … for ≤720p sources
  *   --crf=24               x264 quality inside each cap; default 24
  *   --max-height=1080      downscale anything taller (e.g. 720 for smaller files)
  *   --jobs=2               parallel encodes; default 2
@@ -89,8 +89,11 @@ const EXECUTE = flag("execute");
 const FORCE = flag("force");
 const ONLY = opt("only", "");
 const CRF = Number(opt("crf", "24"));
-const LADDER_1080 = opt("ladder-1080", "3M,4M,6M,8M,12M,16M").split(",");
-const LADDER_720 = opt("ladder-720", "1.5M,2M,3M,4M,6M").split(",");
+// The clips sit dimmed behind the verse (see the scrim in
+// SurahCinematicBackground), so calm scenes pass VMAF at 1.5–2 Mbps; the
+// VMAF gate, not the first rung, keeps busy scenes looking like the source.
+const LADDER_1080 = opt("ladder-1080", "1.5M,2M,3M,4M,6M,8M,12M").split(",");
+const LADDER_720 = opt("ladder-720", "1M,1.5M,2M,3M,4M").split(",");
 const MAX_HEIGHT = Number(opt("max-height", "1080"));
 const MIN_VMAF = Number(opt("vmaf", "88"));
 const JOBS = Math.max(1, Number(opt("jobs", "2")));
@@ -227,7 +230,7 @@ function saveReport(report) {
   const lines = [
     "# Video re-encode report",
     "",
-    `Settings: VMAF ≥ ${MIN_VMAF}, ladder ${LADDER_1080.join("/")} (1080p) · ${LADDER_720.join("/")} (≤720p), CRF ${CRF}, max height ${MAX_HEIGHT}.`,
+    `Settings: x264 veryslow, VMAF ≥ ${MIN_VMAF}, ladder ${LADDER_1080.join("/")} (1080p) · ${LADDER_720.join("/")} (≤720p), CRF ${CRF}, max height ${MAX_HEIGHT}.`,
     "",
     `**${done.length} clips: ${mb(before)} → ${mb(after)} (${before ? Math.round((1 - after / before) * 100) : 0}% smaller).**`,
     "",
@@ -266,7 +269,8 @@ async function encodeAt(src, info, maxrate, out) {
   await run("ffmpeg", [
     "-y", "-v", "error", "-i", src,
     "-map", "0:v:0", "-an", // muted background loop: the audio track is never heard
-    "-c:v", "libx264", "-preset", "slow", "-profile:v", "high", "-pix_fmt", "yuv420p",
+    "-c:v", "libx264", "-preset", "veryslow", // ~5–10% smaller than slow at the same quality; only costs encode time
+    "-tune", "film", "-profile:v", "high", "-pix_fmt", "yuv420p",
     "-crf", String(CRF), "-maxrate", maxrate, "-bufsize", `${parseFloat(maxrate) * 2}M`,
     ...(tall ? ["-vf", `scale=-2:${MAX_HEIGHT}:flags=lanczos`] : []),
     "-movflags", "+faststart", "-tag:v", "avc1",
