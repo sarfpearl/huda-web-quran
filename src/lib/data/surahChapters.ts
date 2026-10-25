@@ -40,7 +40,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
     verses: 7,
     revelation: "Meccan",
     slug: "al-fatihah",
-    masterVideoPath: "/videos/surah/001-al-fatihah.mp4",
+    masterVideoPath: "/videos/surah/001-al-fatihah/01-bismillah-and-praise.mp4",
     isMultiChapter: false,
     chapters: [
       {
@@ -50,7 +50,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "Divine Praise, Mercy, and Sovereign Lordship",
         mood: "peaceful, luminous, awe-inspiring",
         visualConcept: "Dark peaceful landscape beginning to receive soft golden dawn light, opening up to majestic mountain ranges and flowing morning mist.",
-        videoPath: "/videos/surah/001-al-fatihah.mp4",
+        videoPath: "/videos/surah/001-al-fatihah/01-bismillah-and-praise.mp4",
         timeRange: [0, 0.45],
       },
       {
@@ -60,7 +60,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "Solemn Worship and Reliance on the Master of Judgment",
         mood: "majestic, profound, deep cosmos",
         visualConcept: "Deep celestial twilight horizon, cosmic expanse transitioning to a steady clear horizon of devotion.",
-        videoPath: "/videos/surah/001-al-fatihah.mp4",
+        videoPath: "/videos/surah/001-al-fatihah/03-master-of-the-day-of-judgment.mp4",
         timeRange: [0.45, 0.7],
       },
       {
@@ -70,7 +70,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "The Straight Path of Divine Favor and Guidance",
         mood: "radiant, serene, illuminated",
         visualConcept: "A single luminous illuminated path extending through serene valleys toward a glowing radiant horizon.",
-        videoPath: "/videos/surah/001-al-fatihah.mp4",
+        videoPath: "/videos/surah/001-al-fatihah/05-the-straight-path.mp4",
         timeRange: [0.7, 1.0],
       },
     ],
