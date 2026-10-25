@@ -645,6 +645,15 @@ svg,
 video {
   -webkit-user-drag: none;
 }
+/* Every <video> is a muted background scene: Safari still drew its own
+   play/pause glyph in the middle of it at times (over the verse). */
+video::-webkit-media-controls,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
 input,
 textarea,
 [contenteditable="true"] {

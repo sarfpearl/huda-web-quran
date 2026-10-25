@@ -54,6 +54,8 @@ export function JuzCinematicBackground({
         loop
         muted
         playsInline
+        disablePictureInPicture
+        disableRemotePlayback
         preload="auto"
         onCanPlay={() => setVideoLoaded(true)}
         onError={() => setHasError(true)}
