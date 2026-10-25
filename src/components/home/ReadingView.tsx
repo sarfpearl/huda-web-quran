@@ -27,6 +27,7 @@ import SurahBanner from "./SurahBanner";
 import { READER_SCALES } from "./ImmersiveHeader";
 import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
+import { WaqfText } from "./WaqfText";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
@@ -899,7 +900,7 @@ export function ReadingView({
     return {
       "data-word-idx": i,
       "aria-current": isActive ? ("true" as const) : undefined,
-      className: `quran-word ${isActive ? "text-amber-300 quran-word-glow" : ""} ${dim ? `quran-word--dim text-white/60 ${glyph ? "quran-word--glyph" : ""}` : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
+      className: `quran-word quran-word-gap ${isActive ? "text-amber-300 quran-word-glow" : ""} ${dim ? `quran-word--dim text-white/60 ${glyph ? "quran-word--glyph" : ""}` : ""} ${seekable ? "cursor-pointer" : ""} ${sajdah ? "quran-word--sajdah" : ""}`,
       onClick: seekable
         ? (ev: React.MouseEvent) => {
             ev.stopPropagation();
@@ -944,7 +945,7 @@ export function ReadingView({
         const i = p.from + j;
         return (
           <Fragment key={i}>
-            {j > 0 && " "}
+            {j > 0 && <span className="quran-word-sep"> </span>}
             <span {...wordProps(ref, v, i, i === activeIdx, live, loadedPages.has(page) && pageFontReady(page), unread(i))}>
               {glyphWord(code, page, text, i === activeIdx)}
             </span>
@@ -954,8 +955,10 @@ export function ReadingView({
     } else if (v?.words?.length) {
       words = v.words.map((w, i) => (
         <Fragment key={i}>
-          {i > 0 && " "}
-          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))}>{w.word}</span>
+          {i > 0 && <span className="quran-word-sep"> </span>}
+          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))}>
+            <WaqfText text={w.word} />
+          </span>
         </Fragment>
       ));
     } else {
@@ -1074,7 +1077,7 @@ export function ReadingView({
           key={`t${out.length}`}
           lang="ar"
           dir="rtl"
-          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-center text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
+          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-center [--word-gap:max(0.375rem,0.22em)] text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
         >
           {parts.map((p, i) => renderPart(p, `${p.ref.surah}:${p.ref.ayah}:${p.from}:${i}`))}
         </p>
