@@ -4,7 +4,7 @@
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
-**2026-10-25:** R2 re-encoded (9.20 → 4.54 GB) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145) — `HANDOFF.md` §2b. Open from it: delete 17 unused R2 video objects (~382 MB); register each new Surah's sets with `surah-set-registry.mjs` + `video-manifest.mjs`.
+**2026-10-25:** R2 re-encoded and cleaned (9.20 → 4.16 GB, 0 unused videos) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145, #147) — `HANDOFF.md` §2b. For each new Surah's sets: encode + upload, then `surah-set-registry.mjs` + `video-manifest.mjs`.
 
 **Still open (2026-10-24):** the rest of the real-phone checks (below) and
 the automated video pipeline (`HANDOFF.md` §2a). Everything else is merged
