@@ -21,7 +21,7 @@
 | **Latest merged PRs** | #145 thematic set clips shown in Surahs & Juz · #143 lighter R2 encodes, video scrim, R2 audit script · #142 Uthmani font docs · #141 verse word gap · #130 search clear button & voice FAB · #129 fonts self-hosted (`next/font/local`) · #128 handoff snapshot & pipeline status · #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
 | **Open PRs** | none — #115 (IndoPak Tajweed prototype) closed unmerged 2026-10-24 after QuranWBW's review; branch `proto/indopak-tajweed` kept for reference |
 | **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
-| **Video Production & R2 Storage** | Thematic sets for 22 Surahs (4–17, 19, 23, 25, 26, 28, 30, 31, 32; 310 clips) shown behind the verse and reused by Juz (PR #145). R2 **4.54 GB / 10 GB** after re-encoding every app clip (PR #143, 2026-10-25) — see §2b |
+| **Video Production & R2 Storage** | Thematic sets for 22 Surahs (4–17, 19, 23, 25, 26, 28, 30, 31, 32; 310 clips) shown behind the verse and reused by Juz (PR #145). R2 **4.16 GB / 10 GB** after re-encoding every app clip and deleting the 17 unused objects (PR #143, #147, 2026-10-25) — see §2b |
 
 ---
 
@@ -123,7 +123,7 @@
 
 ## 2b. 🗜️ R2 storage & thematic sets — 2026-10-25 (PR #143, #145)
 
-**Where things stand:** bucket `huda-quran-media` **4.54 GB / 10 GB free tier** (1,206 objects; was 9.20 GB). Videos under `videos/`: 514 objects, the app uses 497 (`videoManifest.ts`).
+**Where things stand:** bucket `huda-quran-media` **4.16 GB / 10 GB free tier** (1,189 objects; was 9.20 GB). Videos under `videos/`: 497 objects = the 497 in `videoManifest.ts` — **0 unused**.
 
 - **Re-encoded every clip the app uses** (`scripts/tools/reencode-videos.mjs`, run on the owner's Mac): x264 `veryslow` + `tune film`, bitrate ladder 1080p 1.5M→12M / ≤720p 1M→4M, each clip stops at the lowest rung with **VMAF ≥ 88** vs its source; uploaded only when ≥ 20% smaller. Two runs: Surahs 19–32 + older clips (235 clips, 2,112 → 739 MB) and Surahs 4–17 sets (233 clips, 4,312 → 1,027 MB). 468 uploaded, 0 failed, same R2 keys (no app change, no version bump: same scenes). R2 originals are kept on the Mac in `.media-work/originals/` — delete only after a few days of normal playback.
 - **Video scrim:** `bg-black/20` over the clip in `SurahCinematicBackground.tsx` / `JuzCinematicBackground.tsx` (video only) keeps the backdrop subtle behind the verse and hides compression.
@@ -139,7 +139,7 @@
   node scripts/tools/video-manifest.mjs       # → videoManifest.ts
   ```
   commit both generated files. Average set ≈ 3.1 MB after encoding, so the remaining ~370 sets need ~1.2 GB — the whole Quran fits in the free tier.
-- **Audit:** `node scripts/tools/r2-unused-videos.mjs` (read-only) lists `videos/` objects the app never requests → `.media-work/r2-unused.md`. Now **0 unused** (the 17 old objects were removed). Still unused on R2: 158 images (~18 MB) — `assets/images/bayan/*` except `quran.jpg`, and the `assets/images/{surah,quran}/thumbs/*.jpg` thumbnails (the app loads the `.webp` ones). Kept on purpose: the 2560px scene JPEGs (source for `webp-images.mjs`) and Maher's full-Juz MP3s (`QURAN_TRACKS` still plays them from the picker / player fallback).
+- **Audit:** `node scripts/tools/r2-unused-videos.mjs` (read-only) lists `videos/` objects the app never requests → `.media-work/r2-unused.md`. On 2026-10-25 it found 17 (9 old `videos/surah/002-al-baqarah/` copies, mostly `-4k`; the 8-clip `videos/juz/juz-01-0N-*` playlist, whose dead `JUZ_1_PLAYLIST` constant PR #147 removed). All 17 were backed up to `~/huda-r2-backup/2026-10-25/` on the owner's Mac and deleted with one `DeleteObjectsCommand` (`Errors: []`, 381,595,067 bytes freed); `juz-01.mp4`, `002-al-baqarah/01-the-book-of-guidance.mp4` and `001-al-fatihah.mp4` still return 200. Audit now: 0 unused. Then 158 unused images (~18 MB: `assets/images/bayan/*` except `quran.jpg`, `assets/images/{surah,quran}/thumbs/*.jpg` — the app loads the `.webp` thumbnails) were backed up to `.media-work/r2-deleted-2026-10-25/` and deleted (`Errors: 0`) → **1,031 objects, 4.14 GB**. Kept on purpose: the 2560px scene JPEGs (source for `webp-images.mjs`) and Maher's full-Juz MP3s (`QURAN_TRACKS` fallback).
 - **Approval board:** the owner approves sets on a claude.ai artifact (Approve / Redo per set) — Surahs 19–32 all approved 2026-10-25.
 
 ---
@@ -165,7 +165,7 @@
 *Checklist for the next conversation: `docs/TODO.md` → "Open items".*
 
 - [ ] **Primary next step (Antigravity):** continue the automated video pipeline — see §2a. Finish Surah 3's remaining 83 ayahs, then Surah 18, 20–22, 24, 27, 29, 33–114; register each with §2b's steps.
-- [ ] Delete the 17 unused R2 video objects (~382 MB, §2b) — back them up first; not urgent.
+- [x] Deleted the 17 unused R2 video objects (381.6 MB) after a backup (2026-10-25, §2b) — R2 now 4.16 GB.
 - [ ] Optional: move the R2 audio (2.04 GB) to Backblaze B2 (free 10 GB) — only if R2 space gets tight again.
 
 - [x] Removed `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` from Vercel (2026-10-06) — only the local upload tool uses them; the app never reads them (they're not `NEXT_PUBLIC_`, so they don't reach the browser).
@@ -189,6 +189,7 @@
 - [x] **PR #145** `claude/surah-set-videos`: thematic sets for 22 Surahs (310 clips) shown behind the verse; Juz reuses them; set registry + test (§2b).
 - [x] **PR #143** `claude/video-storage-optimization-fsyjnl`: lighter encode ladder, video scrim, Surahs 19–32 approved → `DEPLOYED`, skip logging, read-only R2 audit script.
 - [x] **R2 re-encode** (owner's Mac): 468 clips re-encoded and uploaded, R2 9.20 → 4.54 GB (§2b).
+- [x] **PR #147** + R2 cleanup: dead `JUZ_1_PLAYLIST` removed; the 17 unused video objects backed up and deleted, R2 4.54 → 4.16 GB, 0 unused (§2b).
 
 ### Done (2026-10-24)
 - [x] **PR #130** `fix/search-clear-and-voice-fab`: search clear button moved right; voice search as a gold floating button.
