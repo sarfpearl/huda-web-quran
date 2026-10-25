@@ -43,3 +43,15 @@ Two font families draw the Uthmani (Madani) script:
 
 - Arabic text: `text_qpc_hafs` with Hafs v0.18. **Never edit Quran text to fix rendering.**
 - Tajweed: QPC V4 COLRv1 glyph fonts (one glyph per word).
+
+## Decisions (2026-10-25, owner review)
+
+Checked against a Quran.com-equivalent render (same Hafs v18 file, same `text_qpc_hafs`, same QPC V4 glyphs; quran.com itself was not reachable from the review session).
+
+| Item | Finding | Decision |
+|---|---|---|
+| Glyph rendering (1:2, 1:4, 1:6, 1:7, 2:7) | Pixel-identical to the Quran.com setup | Keep |
+| Shaddah + fatha / kasra | Hafs draws fatha **above** the shaddah, kasra **below the letter** (Madinah Mushaf / KFGQPC). The old bug (word spans fell back to a system font) stacked the kasra under the shaddah. Fixed by `font-family: inherit`, no text or font change | Keep — Madinah standard |
+| Word gap | HuDa `max(0.375rem, 0.35em)` vs Quran.com 0.375rem | Keep the wider gap |
+| Ayah ornament — text mode | Same Hafs digits (font draws the rosette); HuDa: amber, 1.2em. U+06DD stays out (it draws a second ornament) | Keep |
+| Ayah ornament — V4 Tajweed / Plain | Quran.com: font palette with filled disc. HuDa: white outline, disc clear (palette override, font unmodified) | Keep (amber vs white difference accepted) |
