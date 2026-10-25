@@ -6,14 +6,17 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 
 ### Next tasks — in this order (noted 2026-10-25)
 
-1. [ ] **Folder re-arrangement (owner, on the Mac) — first.** The video tools
-       expect these paths; keep them, or update the scripts in the same change:
-       `public/videos/surah_<N>/set_<NN>_ayah_<from>-<to>.mp4` (masters;
-       `reencode-videos.mjs --new`, `surah-set-registry.mjs --source=local`),
-       `public/data/quran-verses/<N>.json`, `.env.local` (R2 keys) and
-       `.media-work/` at the repo root, `assets/images/` (artwork). Afterwards
-       run `npm run typecheck`, `node --test tests/video/surah-set-videos.test.mjs`
-       and `node scripts/tools/surah-set-registry.mjs --check` to confirm nothing broke.
+1. [x] **Folder re-arrangement / unused media (2026-10-25, PR #150).** Local:
+       206 unused files (~1.41 GB) removed — Juz 1 playlist clips + 4K masters,
+       Surah 2 `-4k` copies + generation JSON, Surah 4 leftover `ayah_*` clips,
+       JPEG thumbnails, 14 Bayan covers, 431 empty folders; 5 unused SVGs in
+       `public/`. R2: 158 unused images (~18 MB, `assets/images/bayan/*` except
+       `quran.jpg`, `assets/images/{surah,quran}/thumbs/*.jpg`) deleted after a
+       backup to `.media-work/r2-deleted-2026-10-25/` → 1,031 objects, 4.14 GB.
+       Rule: R2 holds what the app serves (videos = `videoManifest.ts`); local
+       keeps only masters and unfinished pipeline work (Surah 3). Kept on
+       purpose: scene JPEGs on R2 (`webp-images.mjs` source), Maher's full-Juz
+       MP3s (`QURAN_TRACKS` fallback), `assets/video-masters/`.
 2. [ ] **Production check of the thematic sets (PR #145):** play Surah 19 —
        the clip should change from set 1 to set 2 at ayah 11 → 12; play Juz 5 —
        Surah 4's sets should show; Surah 50 keeps its single clip.
@@ -35,7 +38,7 @@ Start here in a new conversation. Details for each are further down or in `HANDO
        ```
        then commit `surahSetVideos.ts` + `videoManifest.ts`, set the Surah to
        `DEPLOYED` in `data/progress.json`, PR. Budget: ~3.1 MB a set, ~1.2 GB
-       for the rest of the Quran; R2 is at 4.16 GB of 10 GB.
+       for the rest of the Quran; R2 is at 4.14 GB of 10 GB.
 6. [ ] **Mac clean-up, after a few days of normal playback:** delete
        `~/huda-r2-backup/2026-10-25/` (395 MB, the 17 deleted objects) and
        `.media-work/originals/` (R2 copies before re-encoding).
