@@ -41,10 +41,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#1a5140" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e100f" },
-  ],
+  // The app is always dark: the browser bar too, in light mode as well
+  // (Safari, Android Chrome; Chrome on iOS/iPadOS ignores theme-color).
+  themeColor: "#0e100f",
   width: "device-width",
   initialScale: 1,
   // App-like: no pinch / double-tap zoom, and no auto-zoom when an input focuses.
