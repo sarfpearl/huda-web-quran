@@ -70,7 +70,7 @@ export const SURAH_CHAPTERS_REGISTRY: Record<number, SurahVisualData> = {
         theme: "The Straight Path of Divine Favor and Guidance",
         mood: "radiant, serene, illuminated",
         visualConcept: "A single luminous illuminated path extending through serene valleys toward a glowing radiant horizon.",
-        videoPath: "/videos/surah/001-al-fatihah/05-the-straight-path.mp4",
+        videoPath: "/videos/surah/001-al-fatihah/08-the-straight-path-trail.mp4",
         timeRange: [0.7, 1.0],
       },
     ],
