@@ -27,7 +27,7 @@ import SurahBanner from "./SurahBanner";
 import { READER_SCALES } from "./ImmersiveHeader";
 import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
-import { WaqfText } from "./WaqfText";
+import { waqfPad } from "@/lib/waqf";
 import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
@@ -956,8 +956,8 @@ export function ReadingView({
       words = v.words.map((w, i) => (
         <Fragment key={i}>
           {i > 0 && <span className="quran-word-sep"> </span>}
-          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))}>
-            <WaqfText text={w.word} />
+          <span {...wordProps(ref, v, i, i === activeIdx, live, false, unread(i))} style={waqfPad(w.word)}>
+            {w.word}
           </span>
         </Fragment>
       ));
@@ -1077,7 +1077,7 @@ export function ReadingView({
           key={`t${out.length}`}
           lang="ar"
           dir="rtl"
-          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-center [--word-gap:max(0.375rem,0.3em)] text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
+          className={`font-arabic ${indoPak ? "quran-indopak" : ""} text-center [--word-gap:max(0.375rem,0.35em)] text-[calc(1.6rem*var(--reader-scale,1))] sm:text-[calc(2.25rem*var(--reader-scale,1))] leading-[2.3] sm:leading-[2.4] text-white quran-arabic-shadow`}
         >
           {parts.map((p, i) => renderPart(p, `${p.ref.surah}:${p.ref.ayah}:${p.from}:${i}`))}
         </p>

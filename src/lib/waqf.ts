@@ -3,8 +3,9 @@
  * IndoPak font shapes to no width: the sign hangs past the word's box into
  * the gap. The gap after it looked narrower than the others, and WebKit,
  * repainting only the box when the highlight moved on, clipped the sign.
- * Each sign cluster gets its own box as wide as its ink, so the word's box
- * holds all of it and every word gap is the same.
+ * The word's box is padded out over the sign's ink, so it holds all of it
+ * and the gap after it is the same as after any word. (The sign stays in the
+ * word's text run: shaped on its own, WebKit drew it over the next word.)
  */
 
 /** How far each mark's ink reaches past the end of the word, in em (IndoPak font, measured). */
@@ -18,16 +19,13 @@ const MARK_EM: Record<string, number> = {
 };
 
 /** A word's trailing sign cluster (space + marks only, no letters). */
-const TRAILING = /^(.*?)( [^ء-ي]+)$/u;
+const TRAILING = / [^\u0621-\u064A]+$/u;
 
-/**
- * Splits a word into its text and trailing sign cluster with the cluster's
- * ink width (em; stacked marks overlap, so the widest one), or null.
- */
-export function splitWaqf(word: string): [string, string, number] | null {
+/** Padding over a word's trailing waqf sign (its widest mark + a hair), or undefined. */
+export function waqfPad(word: string): React.CSSProperties | undefined {
   const m = TRAILING.exec(word);
-  if (!m) return null;
+  if (!m) return undefined;
   let em = 0;
-  for (const ch of m[2]) em = Math.max(em, MARK_EM[ch] ?? 0);
-  return [m[1], m[2], em];
+  for (const ch of m[0]) em = Math.max(em, MARK_EM[ch] ?? 0);
+  return em > 0 ? { paddingInlineEnd: `${(em + 0.02).toFixed(2)}em` } : undefined;
 }
