@@ -13,6 +13,21 @@ consolidation. **IndoPak Tajweed colours: not now** — the glyph-by-glyph
 prototype (#115) was closed after QuranWBW's review; waiting on their
 IndoPak Tajweed font (*IndoPak script* below).
 
+- [ ] **Recitation + meaning audio** (owner request, 2026-10-25 — not started,
+      decide when to pick it up): play the Arabic ayah, then read its meaning
+      (the translation text beside it) aloud, ayah by ayah, in every meaning
+      language (`TRANSLATIONS` in `src/lib/data/translations.ts`: en ta ur ml
+      hi id bn tr fr ms). Build on `playAyahSequence` in
+      `AudioPlayerContext` — the per-ayah prelude chain can carry an
+      "after-ayah" meaning clip. Voice options: (1) human recordings where
+      they exist (EveryAyah has English — Ibrahim Walk, Saheeh — and Urdu;
+      check each matches our edition); (2) pre-generated neural TTS clips on
+      R2 for the rest (~6,236 clips × language; review a sample with a native
+      reader). Browser `speechSynthesis` is not enough: missing voices for
+      ta / ml / bn on many phones, and it stops on the lock screen.
+      Needs: player toggle "Meaning after each ayah", meaning highlight while
+      it plays, lock-screen / Juz / offline checks. Estimate: en + ur ≈ 2–3
+      days; TTS for the other 8 ≈ 4–6 days + native review + TTS cost.
 - [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
       favicon-192.png are now the logo alone on a clear background, from
