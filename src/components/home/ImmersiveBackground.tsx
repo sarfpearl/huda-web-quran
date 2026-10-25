@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { SurahCinematicBackground, resolveSurahClip, surahClipFollowsAyah } from "./SurahCinematicBackground";
+import { SurahCinematicBackground, resolveSurahClip } from "./SurahCinematicBackground";
 import { JuzCinematicBackground } from "./JuzCinematicBackground";
 import { quranImageUrl } from "@/lib/data/service";
 import { mediaUrl } from "@/lib/media";
@@ -18,8 +18,6 @@ interface ImmersiveBackgroundProps {
   juzSurahNumber?: number | null;
   juzAyahNumber?: number | null;
   ayahNumber?: number | null;
-  /** The Ayah is estimated (audio-only reciter): no Ayah-dependent clip. */
-  ayahEstimated?: boolean;
   videoSrc?: string | null;
   currentTime?: number;
   duration?: number;
@@ -34,7 +32,6 @@ export function ImmersiveBackground({
   juzSurahNumber = null,
   juzAyahNumber = null,
   ayahNumber = null,
-  ayahEstimated = false,
   videoSrc = null,
   currentTime = 0,
   duration = 0,
@@ -57,12 +54,9 @@ export function ImmersiveBackground({
   }, [categorySlug, activeSurahNumber, activeJuzNumber, visualMode]);
 
   // 1. If a Surah is active and in VIDEO mode: render cinematic video background
-  //    (not a set / chapter clip on an estimated Ayah — the image shows instead)
-  if (
-    activeSurahNumber &&
-    visualMode === "video" &&
-    !(ayahEstimated && surahClipFollowsAyah(activeSurahNumber))
-  ) {
+  //    (an audio-only reciter's estimated Ayah too — its clip may switch a few
+  //    seconds early or late, but the Surah's visuals stay; owner, 2026-10-25)
+  if (activeSurahNumber && visualMode === "video") {
     return (
       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
         <SurahCinematicBackground
@@ -77,7 +71,7 @@ export function ImmersiveBackground({
     );
   }
 
-  // 2. If a Surah is active in IMAGE mode (or its clip needs a real Ayah):
+  // 2. If a Surah is active in IMAGE mode:
   //    render crisp static HD artwork
   if (activeSurahNumber) {
     const surahImageSrc = quranImageUrl("surah", activeSurahNumber);

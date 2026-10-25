@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
-import { getAyahVideo, SURAH_VERSE_VIDEOS_REGISTRY } from "@/lib/data/surahVerseVideos";
+import { getAyahVideo } from "@/lib/data/surahVerseVideos";
 import { getSetVideo } from "@/lib/data/surahSetVideos";
 import { quranImageUrl } from "@/lib/data/quran";
 import { hasVideo } from "@/lib/data/videoManifest";
@@ -47,20 +47,6 @@ export function resolveSurahClip(
   }
   if (chosen) return clipUrl(chosen);
   return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
-}
-
-/**
- * True when the Surah's clip changes with the Ayah (thematic sets, chapter
- * clips or per-Ayah videos). Such a clip is only right with the recording's
- * real Ayah timing: an audio-only reciter's Ayah is estimated from text
- * length and drifts into the neighbouring set (~11% of the time), so the
- * Surah shows its image instead. A single clip for the whole Surah stays.
- */
-export function surahClipFollowsAyah(surahNumber: number): boolean {
-  if (getSetVideo(surahNumber, 1)) return true;
-  if (getSurahVisualData(surahNumber).isMultiChapter) return true;
-  const ayahVideos = Object.values(SURAH_VERSE_VIDEOS_REGISTRY[surahNumber] ?? {});
-  return new Set(ayahVideos.map((v) => v.videoPath)).size > 1;
 }
 
 export function SurahCinematicBackground({
@@ -284,12 +270,8 @@ export function SurahCinematicBackground({
         />
       )}
 
-      {/* 4. Atmospheric Contrast Overlay */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
-      {/* 5. Video scrim: the clip is a light backdrop behind the verse, so an
-          even dim keeps it subtle and hides the compression of the R2 encodes
-          (scripts/tools/reencode-videos.mjs). Video only — the stills are sharp. */}
-      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none" />
+      {/* No dim of its own: the scene's even 40% black (ImmersiveHomeClient)
+          is the only overlay on the clips (owner, 2026-10-25). */}
     </div>
   );
 }
