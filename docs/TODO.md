@@ -55,6 +55,15 @@ IndoPak Tajweed font (*IndoPak script* below).
       ≈ 17 h → per voice ≈ $41 (batch ≈ $21); **4 voices ≈ $166 (batch
       ≈ $83 ≈ ₹7,000)**, ×2 from 2027. The Gemini API balance must be topped
       up first (GCP free-trial credit does not apply to the Gemini API).
+      **Final (2026-10-25): two voices — Cruz (male, deep) and Lora
+      (female)**; a prebuilt voice can't be switched to the other gender.
+      2 voices × en + ta ≈ $82, **batch ≈ $41 ≈ ₹3,500** (+ ~10% for
+      re-generated clips). Top-up ≈ ₹4,500 (clears the −₹177 balance + buffer);
+      generate one Surah first and check the real cost in AI Studio → Usage
+      before the full run. Tone / pace / emotion are set once in the prompt
+      at generation (no extra charge, but each extra tone is a whole new set
+      ≈ ₹1,750 per voice); listeners get a free playback-speed control
+      (`playbackRate`, pitch kept) instead.
       Estimate (phase 1): player + toggle 1–1.5 days, TTS generation + R2
       upload 1–2 days, Tamil listening review (owner), phone checks 1–2 days
       → ≈ 4–5 days.
