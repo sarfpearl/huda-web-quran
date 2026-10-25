@@ -64,6 +64,13 @@ IndoPak Tajweed font (*IndoPak script* below).
       at generation (no extra charge, but each extra tone is a whole new set
       ≈ ₹1,750 per voice); listeners get a free playback-speed control
       (`playbackRate`, pitch kept) instead.
+      ElevenLabs (voice "Ramaa", Eleven v4) was also tried: 1 credit per
+      character → ≈ 2.07M credits per voice ≈ ₹30,000 (Scale plan), or
+      ~17 months on Creator (121k credits / month) — **dropped; Gemini it is**
+      (owner, 2026-10-25). The listener picks **Male (Cruz) / Female (Lora)**.
+      **To start:** owner tops up the Gemini API (≈ ₹4,500) and adds
+      `GEMINI_API_KEY` to the cloud environment's secrets; then a pilot Surah,
+      check cost, full batch run before 2026-12-31.
       Estimate (phase 1): player + toggle 1–1.5 days, TTS generation + R2
       upload 1–2 days, Tamil listening review (owner), phone checks 1–2 days
       → ≈ 4–5 days.
