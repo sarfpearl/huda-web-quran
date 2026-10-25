@@ -26,8 +26,28 @@ IndoPak Tajweed font (*IndoPak script* below).
       reader). Browser `speechSynthesis` is not enough: missing voices for
       ta / ml / bn on many phones, and it stops on the lock screen.
       Needs: player toggle "Meaning after each ayah", meaning highlight while
-      it plays, lock-screen / Juz / offline checks. Estimate: en + ur ≈ 2–3
-      days; TTS for the other 8 ≈ 4–6 days + native review + TTS cost.
+      it plays, lock-screen / Juz / offline checks.
+      **Owner's decisions (2026-10-25):** the voice reads the meaning text
+      shown beside the ayah *word for word* (our `textEnglish` / `textTamil`,
+      not another translator's recording) → TTS for both. **Phase 1 = English
+      + Tamil only**; the other 8 languages later.
+      **Cost estimate** (characters counted from `public/data/quran-verses`:
+      en 855,347 + ta 1,212,058 ≈ 2.07M; list prices as remembered, recheck
+      before buying, ₹ at ~85/$):
+
+      | TTS | Price / 1M chars | en + ta | other 8 (~8M chars, guess) |
+      |---|---|---|---|
+      | Google WaveNet / Neural2 (1M free each month) | $16 | ≈ $17 (₹1,450) | ≈ $128 (₹11k) |
+      | Azure Neural (0.5M free each month) | $15 | ≈ $24 (₹2,000) | ≈ $120 (₹10k) |
+      | Google Chirp 3 HD (most natural) | $30 | ≈ $62 (₹5,300) | ≈ $240 (₹20k) |
+
+      One-time cost (clips are generated once, kept on R2). Audio ≈ 16 h
+      English + 26 h Tamil ≈ 0.9 GB at 48 kbps mono → R2 storage ≈ $0.02 /
+      month. Both Google and Azure have ta-IN voices (male + female) — pick by
+      listening to a sample of the same ayahs.
+      Estimate (phase 1): player + toggle 1–1.5 days, TTS generation + R2
+      upload 1–2 days, Tamil listening review (owner), phone checks 1–2 days
+      → ≈ 4–5 days.
 - [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
       favicon-192.png are now the logo alone on a clear background, from
