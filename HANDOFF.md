@@ -139,7 +139,7 @@
   node scripts/tools/video-manifest.mjs       # → videoManifest.ts
   ```
   commit both generated files. Average set ≈ 3.1 MB after encoding, so the remaining ~370 sets need ~1.2 GB — the whole Quran fits in the free tier.
-- **Audit:** `node scripts/tools/r2-unused-videos.mjs` (read-only) lists `videos/` objects the app never requests → `.media-work/r2-unused.md`. Left on 2026-10-25: **17 objects, ~382 MB** — 9 in `videos/surah/002-al-baqarah/` (old `-4k` copies) and 8 in `videos/juz/` (the unused Juz 1 playlist). Safe to delete after a backup; not urgent.
+- **Audit:** `node scripts/tools/r2-unused-videos.mjs` (read-only) lists `videos/` objects the app never requests → `.media-work/r2-unused.md`. Now **0 unused** (the 17 old objects were removed). Still unused on R2: 158 images (~18 MB) — `assets/images/bayan/*` except `quran.jpg`, and the `assets/images/{surah,quran}/thumbs/*.jpg` thumbnails (the app loads the `.webp` ones). Kept on purpose: the 2560px scene JPEGs (source for `webp-images.mjs`) and Maher's full-Juz MP3s (`QURAN_TRACKS` still plays them from the picker / player fallback).
 - **Approval board:** the owner approves sets on a claude.ai artifact (Approve / Redo per set) — Surahs 19–32 all approved 2026-10-25.
 
 ---

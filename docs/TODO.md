@@ -4,7 +4,9 @@
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
-**2026-10-25:** R2 re-encoded (9.20 → 4.54 GB) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145) — `HANDOFF.md` §2b. Open from it: delete 17 unused R2 video objects (~382 MB); register each new Surah's sets with `surah-set-registry.mjs` + `video-manifest.mjs`.
+**2026-10-25:** R2 re-encoded (9.20 → 4.54 GB) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145) — `HANDOFF.md` §2b. Open from it: register each new Surah's sets with `surah-set-registry.mjs` + `video-manifest.mjs`.
+
+**2026-10-25 asset cleanup:** R2 `videos/` = `videoManifest.ts` exactly (497/497, the 17 unused objects are gone). Locally removed 206 unused files (~1.41 GB: the Juz 1 playlist clips + their 4K masters, Surah 2 `-4k` copies and generation JSON, Surah 4 leftover `ayah_*` clips, JPEG thumbnails, 14 Bayan covers) and 5 unused SVGs in `public/`. **Open:** delete 158 unused R2 images (~18 MB: `assets/images/bayan/*` except `quran.jpg`, `assets/images/{surah,quran}/thumbs/*.jpg`) — needs the owner's go-ahead.
 
 **Still open (2026-10-24):** the rest of the real-phone checks (below) and
 the automated video pipeline (`HANDOFF.md` §2a). Everything else is merged
