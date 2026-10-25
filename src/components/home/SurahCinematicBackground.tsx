@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
-import { getAyahVideo } from "@/lib/data/surahVerseVideos";
+import { getAyahVideo, SURAH_VERSE_VIDEOS_REGISTRY } from "@/lib/data/surahVerseVideos";
 import { getSetVideo } from "@/lib/data/surahSetVideos";
 import { quranImageUrl } from "@/lib/data/quran";
 import { hasVideo } from "@/lib/data/videoManifest";
@@ -47,6 +47,20 @@ export function resolveSurahClip(
   }
   if (chosen) return clipUrl(chosen);
   return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
+}
+
+/**
+ * True when the Surah's clip changes with the Ayah (thematic sets, chapter
+ * clips or per-Ayah videos). Such a clip is only right with the recording's
+ * real Ayah timing: an audio-only reciter's Ayah is estimated from text
+ * length and drifts into the neighbouring set (~11% of the time), so the
+ * Surah shows its image instead. A single clip for the whole Surah stays.
+ */
+export function surahClipFollowsAyah(surahNumber: number): boolean {
+  if (getSetVideo(surahNumber, 1)) return true;
+  if (getSurahVisualData(surahNumber).isMultiChapter) return true;
+  const ayahVideos = Object.values(SURAH_VERSE_VIDEOS_REGISTRY[surahNumber] ?? {});
+  return new Set(ayahVideos.map((v) => v.videoPath)).size > 1;
 }
 
 export function SurahCinematicBackground({

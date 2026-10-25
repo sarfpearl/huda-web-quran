@@ -1461,6 +1461,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         juzSurahNumber={juzScenePair?.[0] ?? null}
         juzAyahNumber={juzScenePair?.[1] ?? null}
         ayahNumber={currentVerse?.ayahNumber ?? null}
+        ayahEstimated={!!activeSurah && !reciterHasWordTimingFor(selectedReciter, activeSurah.number)}
         videoSrc={currentVideo}
         // Always the MAIN recitation clock: the prelude clip's own 0→5s clock
         // read as surah progress swept through every chapter video (flicker).
