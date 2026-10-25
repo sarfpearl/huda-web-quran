@@ -375,11 +375,17 @@ export function TopicPickerModal({
     typeof window !== "undefined" &&
     ((window.navigator as unknown as { standalone?: boolean })?.standalone === true);
 
-  // The iPhone home-screen app may have no (or a broken) Web Speech API, so
-  // the mic stays there and falls back to the keyboard's own dictation.
+  // iOS: no clicks around listening (a sound then can take the audio
+  // session from recognition).
+  const isIos =
+    typeof navigator !== "undefined" &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+
+  // On iOS the mic always falls back to the keyboard's own dictation, so it
+  // stays there even with no (or a broken) Web Speech API.
   const voiceSupported =
     typeof window !== "undefined" &&
-    (isIosStandalone || !!(window.SpeechRecognition || window.webkitSpeechRecognition));
+    (isIos || isIosStandalone || !!(window.SpeechRecognition || window.webkitSpeechRecognition));
   const [dictationHint, setDictationHint] = useState(false);
   const dictationHintTimerRef = useRef<number | null>(null);
   const showDictationHint = useCallback(() => {
@@ -388,13 +394,6 @@ export function TopicPickerModal({
     dictationHintTimerRef.current = window.setTimeout(() => setDictationHint(false), 6000);
   }, []);
 
-  // iOS: no clicks around listening (a sound then can take the audio
-  // session from recognition).
-  const isIos =
-    typeof navigator !== "undefined" &&
-    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
-  // When a voice search last ended (0 = none yet on this page).
-  const voiceEndedAtRef = useRef(0);
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -406,26 +405,19 @@ export function TopicPickerModal({
         recognitionRef.current.stop();
       } catch {}
       recognitionRef.current = null;
-      voiceEndedAtRef.current = Date.now();
     }
     setListening(false);
     setHearing(false);
   }, []);
 
   const startVoice = useCallback(() => {
+    // iOS: always open the keyboard and point to its own dictation — it
+    // catches Surah names well, and iOS Safari gives a page's second Web
+    // Speech search a mic with only silence (WebKit bug; checked on the
+    // owner's iPhone 13, iOS 27.0.1). A page can't press the keyboard 🎤 itself.
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Ctor) {
+    if (isIos || !Ctor) {
       // Still inside the tap, so iOS opens the keyboard (and its 🎤).
-      searchInputRef.current?.focus();
-      showDictationHint();
-      return;
-    }
-
-    // iOS Safari gives a page's second voice search a mic with only silence
-    // (WebKit bug; checked on the owner's iPhone 13, iOS 27.0.1 — new or
-    // reused recognizer, a wait, other audio-session types: no change). So
-    // after the first, open the keyboard and point to its own dictation.
-    if (isIos && voiceEndedAtRef.current > 0) {
       searchInputRef.current?.focus();
       showDictationHint();
       return;
@@ -492,7 +484,6 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
-        voiceEndedAtRef.current = Date.now();
       };
 
       rec.onerror = (e) => {
@@ -507,7 +498,6 @@ export function TopicPickerModal({
         setListening(false);
         setHearing(false);
         recognitionRef.current = null;
-        voiceEndedAtRef.current = Date.now();
       };
 
       const startRec = () => {
