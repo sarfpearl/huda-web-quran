@@ -49,7 +49,8 @@ const gb = (n) => (n / 1e9).toFixed(2) + " GB";
 
 // What the app can request: the manifest's "/videos/…" keys.
 const manifest = fs.readFileSync(path.join(ROOT, "src/lib/data/videoManifest.ts"), "utf8");
-const used = new Set([...manifest.matchAll(/"\/(videos\/[^"]+)"/g)].map((m) => m[1]));
+// .mp4 only: the file's own comments mention "/videos/…" too.
+const used = new Set([...manifest.matchAll(/"\/(videos\/[^"]+\.mp4)"/g)].map((m) => m[1]));
 if (!used.size) {
   console.error("✗ no keys found in videoManifest.ts — refusing to call everything unused.");
   process.exit(1);
