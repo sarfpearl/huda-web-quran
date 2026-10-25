@@ -1,8 +1,49 @@
 # TODO
 
-## Open items (updated 2026-10-24)
+## Open items (updated 2026-10-25)
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
+
+### Next tasks — in this order (noted 2026-10-25)
+
+1. [ ] **Folder re-arrangement (owner, on the Mac) — first.** The video tools
+       expect these paths; keep them, or update the scripts in the same change:
+       `public/videos/surah_<N>/set_<NN>_ayah_<from>-<to>.mp4` (masters;
+       `reencode-videos.mjs --new`, `surah-set-registry.mjs --source=local`),
+       `public/data/quran-verses/<N>.json`, `.env.local` (R2 keys) and
+       `.media-work/` at the repo root, `assets/images/` (artwork). Afterwards
+       run `npm run typecheck`, `node --test tests/video/surah-set-videos.test.mjs`
+       and `node scripts/tools/surah-set-registry.mjs --check` to confirm nothing broke.
+2. [ ] **Production check of the thematic sets (PR #145):** play Surah 19 —
+       the clip should change from set 1 to set 2 at ayah 11 → 12; play Juz 5 —
+       Surah 4's sets should show; Surah 50 keeps its single clip.
+3. [ ] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
+       exist only on the Mac (`public/videos/surah_3/`, 2.94 GB, not on R2);
+       the app shows its 20 chapter clips. Decide with the owner: thematic sets
+       like the other Surahs (then register them, step 5), or keep the chapters.
+4. [ ] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** with the pipeline
+       (`HANDOFF.md` §2a; Antigravity skill `surah-video-production`). Check
+       `docs/VIDEO_BUDGET_LEDGER.json` first (₹600 floor). Owner approves each
+       Surah's sets on an approval board (Approve / Redo per set) before upload.
+5. [ ] **After each approved Surah** (`HANDOFF.md` §2b) — without the registry
+       the app never shows the sets:
+       ```bash
+       node scripts/tools/reencode-videos.mjs --new --encode
+       node scripts/tools/reencode-videos.mjs --new --upload --execute
+       node scripts/tools/surah-set-registry.mjs   # refuses a Surah with a gap
+       node scripts/tools/video-manifest.mjs
+       ```
+       then commit `surahSetVideos.ts` + `videoManifest.ts`, set the Surah to
+       `DEPLOYED` in `data/progress.json`, PR. Budget: ~3.1 MB a set, ~1.2 GB
+       for the rest of the Quran; R2 is at 4.16 GB of 10 GB.
+6. [ ] **Mac clean-up, after a few days of normal playback:** delete
+       `~/huda-r2-backup/2026-10-25/` (395 MB, the 17 deleted objects) and
+       `.media-work/originals/` (R2 copies before re-encoding).
+7. [ ] Optional: move the R2 audio (2.04 GB) to Backblaze B2 — only if R2
+       space gets tight again.
+8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
+       scripts warns that later versions need Node ≥ 22 (now v20.20.0).
+9. [ ] Still open from before: the real-phone checks below.
 
 **2026-10-25:** R2 re-encoded and cleaned (9.20 → 4.16 GB, 0 unused videos) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145, #147) — `HANDOFF.md` §2b. For each new Surah's sets: encode + upload, then `surah-set-registry.mjs` + `video-manifest.mjs`.
 
