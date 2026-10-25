@@ -122,6 +122,10 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
   );
 }
 
+/** Quran.com's IndoPak stop signs, which get the wider word gap after them. */
+const INDO_PAK_STOP_SIGNS = /[\u06D6-\u06DC\u06E2\u0615\u06EA\u06EB\u0617\u06E5]/;
+const hasIndoPakStopSign = (text: string) => INDO_PAK_STOP_SIGNS.test(text);
+
 type WordState = "active" | "past" | "future" | "ayah";
 
 const WORD_TONE: Record<WordState, string> = {
@@ -148,6 +152,7 @@ const QuranWord = memo(function QuranWord({
   glyphPage,
   tajweed = true,
   sajdah = false,
+  stopSign = false,
   onSelect,
 }: {
   id: string;
@@ -161,6 +166,8 @@ const QuranWord = memo(function QuranWord({
   tajweed?: boolean;
   /** Sajdah word: overlined (text only — the page fonts draw their own line). */
   sajdah?: boolean;
+  /** IndoPak word carrying a waqf sign: the wider gap after it (Quran.com). */
+  stopSign?: boolean;
   onSelect?: (idx: number) => void;
 }) {
   const active = state === "active";
@@ -178,7 +185,11 @@ const QuranWord = memo(function QuranWord({
             }
           : undefined
       }
-      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block transition-[color,text-shadow] duration-150 ${
+      className={`quran-word ${active ? "quran-word--active" : ""} ${state === "future" ? "quran-word--dim" : ""} ${glyphCode ? "quran-word--glyph" : ""} ${sajdah && !glyphCode ? "quran-word--sajdah" : ""} inline-block ${
+        // Quran.com's word gap: a fixed margin after each word (0.375rem; 0.8125rem
+        // after an IndoPak stop sign), not one that grows with the Arabic size.
+        stopSign ? "me-[0.8125rem]" : "me-1.5"
+      } transition-[color,text-shadow] duration-150 ${
         onSelect ? "cursor-pointer" : ""
       } ${WORD_TONE[state]}`}
     >
@@ -212,7 +223,7 @@ function overflows(pane: HTMLElement) {
   return ((pane.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + pad > pane.clientHeight + 2;
 }
 
-function AyahOrnament({ n, indoPak = false }: { n: number; indoPak?: boolean }) {
+function AyahOrnament({ n, indoPak = false, inRow = false }: { n: number; indoPak?: boolean; inRow?: boolean }) {
   const lang = useUiLang();
   return (
     <span
@@ -225,7 +236,8 @@ function AyahOrnament({ n, indoPak = false }: { n: number; indoPak?: boolean }) 
       // the preceding-word side (inline-start in RTL) — so the clearance scales
       // with the Arabic size (22px→84px) instead of a fixed px that shrinks away.
       className={`font-arabic text-amber-300 select-none align-middle tracking-normal [letter-spacing:0] text-[1.2em] ${
-        indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
+        // In the word row the last word's margin already sets the gap before it.
+        inRow ? "me-1.5" : indoPak ? "ms-[0.55em] me-[0.3em]" : "mx-1.5"
       }`}
     >
       {toArabicNumerals(n)}
@@ -739,7 +751,7 @@ export function CenterVerseDisplay({
             className={`font-arabic ${indoPak ? "quran-indopak" : ""} ${tanzilFallback ? "quran-tanzil" : ""} font-normal text-white text-center leading-[1.9] sm:leading-[2] md:leading-[2] lg:leading-[2] quran-arabic-shadow max-w-4xl ${showTranslation ? "md:max-w-none" : ""} m-auto px-2 sm:px-4 md:px-2 py-2 sm:py-3 ${arabicSizeClass}`}
           >
             {displayWords.length > 0 ? (
-              <span className="flex flex-wrap justify-center items-center gap-x-[0.3em] sm:gap-x-[0.35em] gap-y-0">
+              <span className="flex flex-wrap justify-center items-center">
                 {displayWords.map((w, idx) => {
                   const wordId = `${wordIdPrefix}:${idx + 1}`;
                   const state: WordState = !hasWordTiming
@@ -762,6 +774,7 @@ export function CenterVerseDisplay({
                       glyphPage={w.glyph?.[1]}
                       tajweed={tajweed}
                       sajdah={!isPrelude && isSajdahWord(surahNum, ayahNum, idx)}
+                      stopSign={indoPak && hasIndoPakStopSign(w.word)}
                       onSelect={hasWordTiming ? handleWordSelect : undefined}
                     />
                   );
@@ -778,13 +791,13 @@ export function CenterVerseDisplay({
                         {glyphs?.e ? (
                           <span
                             aria-label={`${word("ayah", language)} ${ayahNum}`}
-                            className="select-none mx-1.5"
+                            className="select-none me-1.5"
                             style={glyphStyle(glyphs.e[1], tajweed)}
                           >
                             {glyphs.e[0]}
                           </span>
                         ) : (
-                          <AyahOrnament n={ayahNum} indoPak={indoPak} />
+                          <AyahOrnament n={ayahNum} indoPak={indoPak} inRow />
                         )}
                       </span>
                     );
