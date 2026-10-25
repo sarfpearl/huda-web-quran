@@ -45,6 +45,16 @@ IndoPak Tajweed font (*IndoPak script* below).
       English + 26 h Tamil ≈ 0.9 GB at 48 kbps mono → R2 storage ≈ $0.02 /
       month. Both Google and Azure have ta-IN voices (male + female) — pick by
       listening to a sample of the same ayahs.
+      **Voice picked (2026-10-25):** the owner tried the TTS above and found
+      them robotic; chose **Gemini 3.8 Flash TTS** (`gemini-3.8-flash-tts`,
+      AI Studio) voices **Tari, Bodi, Lora, Kira** — the listener picks one
+      of 2 male / 2 female (gender per voice: owner to confirm). Cost at
+      $9 / 1M audio tokens (25 tokens per second; batch half price; doubles on
+      2027-01-01 — rates from third-party summaries, recheck on Google's
+      pricing page): Tamil ≈ 34 h (measured 358 chars in 36 s), English
+      ≈ 17 h → per voice ≈ $41 (batch ≈ $21); **4 voices ≈ $166 (batch
+      ≈ $83 ≈ ₹7,000)**, ×2 from 2027. The Gemini API balance must be topped
+      up first (GCP free-trial credit does not apply to the Gemini API).
       Estimate (phase 1): player + toggle 1–1.5 days, TTS generation + R2
       upload 1–2 days, Tamil listening review (owner), phone checks 1–2 days
       → ≈ 4–5 days.
