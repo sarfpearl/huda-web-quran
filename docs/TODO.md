@@ -71,6 +71,20 @@ IndoPak Tajweed font (*IndoPak script* below).
       **To start:** owner tops up the Gemini API (≈ ₹4,500) and adds
       `GEMINI_API_KEY` to the cloud environment's secrets; then a pilot Surah,
       check cost, full batch run before 2026-12-31.
+      **Code done (2026-10-26, branch `feat/meaning-audio`, not merged):**
+      player reads each ayah's meaning after it (Surah: pauses at the ayah's
+      end and resumes; Juz: between ayah clips; the last ayah before the next
+      Surah), meaning text in gold while read; Settings › Translation and the
+      header's translation sheet: "Read the meaning aloud" + Male / Female
+      (translation off = Arabic only: languages and voice hidden);
+      `scripts/generation/build-meaning-audio.mjs` (estimate / pilot /
+      resumable / manifest), `upload-to-r2.mjs --category=audio-meaning`.
+      Hidden until `meaningAudioManifest.json` lists uploaded Surahs.
+      Owner tested the flow on iPad with placeholder clips
+      (`demo/meaning-audio` preview — never merge that branch) — OK.
+      **Still open:** Gemini clips (key + top-up; API voice names for Cruz /
+      Lora from AI Studio "Get code"), lock-screen check on a phone, then
+      merge `feat/meaning-audio`.
       Estimate (phase 1): player + toggle 1–1.5 days, TTS generation + R2
       upload 1–2 days, Tamil listening review (owner), phone checks 1–2 days
       → ≈ 4–5 days.
