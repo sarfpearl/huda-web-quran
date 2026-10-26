@@ -9,6 +9,7 @@
  *   - public/videos/**         → videos/**
  *   - public/audio/prelude/**  → audio/prelude/**
  *   - assets/audio/juz/**      → audio/juz/**   (Maher full-Juz MP3s, git-ignored)
+ *   - assets/audio/meaning/**  → audio/meaning/** (meaning-audio clips, git-ignored)
  *
  * Safety Mandates:
  *   1. DRY-RUN BY DEFAULT: Runs in preview mode unless --execute is explicitly passed.
@@ -128,6 +129,11 @@ const MAPPINGS = [
     localDir: path.join(ROOT_DIR, "assets", "audio", "juz"),
     remotePrefix: "audio/juz",
   },
+  {
+    category: "audio-meaning",
+    localDir: path.join(ROOT_DIR, "assets", "audio", "meaning"),
+    remotePrefix: "audio/meaning",
+  },
 ];
 
 const MIME_MAP = {
@@ -144,7 +150,7 @@ const MIME_MAP = {
 
 const IGNORED_NAMES = new Set([".DS_Store", "Thumbs.db"]);
 const IGNORED_PATH_SUBSTRINGS = ["qa_frames", "chapter_10_generation_results", "chapter_11_generation_results", "generation_results"];
-const IGNORED_EXTENSIONS = new Set([".bak", ".tmp", ".txt", ".json"]);
+const IGNORED_EXTENSIONS = new Set([".bak", ".tmp", ".txt", ".json", ".jsonl"]);
 
 function formatBytes(bytes) {
   if (bytes === 0) return "0 B";

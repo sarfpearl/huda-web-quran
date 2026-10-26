@@ -19,6 +19,13 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { STANDALONE_SILENT, useAudioPlayer, type EndMode } from "@/contexts/AudioPlayerContext";
+import {
+  MEANING_AUDIO_PUBLISHED,
+  hasMeaningAudio,
+  isMeaningLang,
+  meaningAudioUrl,
+  useMeaningAudioPrefs,
+} from "@/lib/data/meaningAudio";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
@@ -836,6 +843,78 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     player.isPlaying, player.isPrelude, player.preludeCurrentTime, player.currentTime, player.duration, player.ayahSequence?.preType,
   ]);
 
+  // ── Meaning audio ───────────────────────────────────────────────────────
+  // After each ayah, its meaning (the translation shown) is read aloud in the
+  // listener's voice, then the recitation goes on. English and Tamil only.
+  const [meaningPrefs, setMeaningPrefs] = useMeaningAudioPrefs();
+  const meaningOn = MEANING_AUDIO_PUBLISHED && meaningPrefs.on && isMeaningLang(translationLang);
+  const meaningFor = (surah: number, ayah: number) => {
+    const url = meaningOn ? meaningAudioUrl(meaningPrefs.voice, translationLang, surah, ayah) : null;
+    return url ? { url, key: `${surah}:${ayah}` } : null;
+  };
+  // Whole-Surah track: the ayah whose meaning was read last. The screen holds
+  // on that ayah while it plays, so the recitation going on afterwards passes
+  // its end once more — and the track may end right there too: not again.
+  const lastMeaningRef = useRef<string | null>(null);
+
+  // Whole-Surah track: the recitation moving past an ayah's end (by playing,
+  // not a seek) waits there for its meaning. Needs word timings — an Audio
+  // Only reciter's ayah ends are estimates.
+  const { playMeaning, setAyahMeaning } = player;
+  const prevSegmentRef = useRef(currentSegment);
+  useEffect(() => {
+    const prev = prevSegmentRef.current;
+    prevSegmentRef.current = currentSegment;
+    if (!prev || prev.id === currentSegment?.id) return;
+    const t = player.currentTime;
+    const playedOn =
+      prev.type === "ayah" && Boolean(prev.ayahNumber) && !isJuz && Boolean(activeSurah) && hasWordTiming &&
+      player.isPlaying && !player.isPrelude && !player.meaningClip &&
+      t >= prev.endTime - 0.05 && t <= prev.endTime + 1.5;
+    if (!playedOn) {
+      // A seek or a tap elsewhere: that ayah's meaning may be read again.
+      if (!player.meaningClip) lastMeaningRef.current = null;
+      return;
+    }
+    const m = meaningFor(activeSurah!.number, prev.ayahNumber!);
+    if (!m || m.key === lastMeaningRef.current) return;
+    lastMeaningRef.current = m.key;
+    playMeaning(m.url, m.key, prev.endTime);
+    // Runs on the ayah changing only; the rest is read as it is then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSegment?.id]);
+
+  // The player asks at the end of each per-ayah Juz clip (`index`), and when
+  // a whole-Surah track ends (null: its last ayah).
+  const meaningAtEndRef = useRef<(index: number | null) => { url: string; key: string } | null>(() => null);
+  meaningAtEndRef.current = (index) => {
+    if (index === null) {
+      if (isJuz || !activeSurah || !hasWordTiming) return null;
+      const m = meaningFor(activeSurah.number, activeSurah.verses);
+      return m && m.key !== lastMeaningRef.current ? m : null;
+    }
+    if (!isJuz || !activeJuz) return null;
+    const pair = getJuzAyahPairs(activeJuz.id)[index];
+    return pair ? meaningFor(pair[0], pair[1]) : null;
+  };
+  useEffect(() => {
+    setAyahMeaning((index) => meaningAtEndRef.current(index));
+    return () => setAyahMeaning(null);
+  }, [setAyahMeaning]);
+
+  // A Surah without word timings in this voice: say once why it stays silent.
+  const meaningGapKey =
+    meaningOn && !isJuz && activeSurah && !hasWordTiming && hasMeaningAudio(meaningPrefs.voice, translationLang, activeSurah.number)
+      ? `${selectedReciter.id}:${activeSurah.number}`
+      : null;
+  const lastMeaningGapRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!meaningGapKey || !player.isPlaying || lastMeaningGapRef.current === meaningGapKey) return;
+    lastMeaningGapRef.current = meaningGapKey;
+    showNotice(t(language, "The meaning is read aloud with Word Sync reciters. Choose one to hear it."));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meaningGapKey, player.isPlaying]);
+
   // Tap a word → jump the recitation to its start. Surah timings share the
   // player clock; a per-ayah Juz file is ayah-relative and scaled (as above).
   const handleSeekToWord = (_idx: number, word: { startTime: number }) => {
@@ -1508,6 +1587,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         onSeekToWord={handleSeekToWord}
         tajweed={tajweedShown}
         script={quranScript}
+        meaningSpeaking={Boolean(player.meaningClip)}
       />
       </div>
 
@@ -1586,6 +1666,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             visualMode,
             onToggleVisualMode: handleToggleVisualMode,
             reciterName: selectedReciter.displayName,
+            meaningAudio: MEANING_AUDIO_PUBLISHED
+              ? {
+                  on: meaningPrefs.on,
+                  voice: meaningPrefs.voice,
+                  onToggle: () => setMeaningPrefs({ on: !meaningPrefs.on }),
+                  onChooseVoice: (voice) => setMeaningPrefs({ voice }),
+                }
+              : undefined,
           }}
         >
           <TopicPickerModal

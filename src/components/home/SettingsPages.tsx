@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
+import { MEANING_VOICES, isMeaningLang, type MeaningVoice } from "@/lib/data/meaningAudio";
 import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
@@ -33,6 +34,13 @@ export interface HomeSettings {
   visualMode: "video" | "image";
   onToggleVisualMode: () => void;
   reciterName: string;
+  /** The meaning read aloud after each ayah; unset until its clips are published. */
+  meaningAudio?: {
+    on: boolean;
+    voice: MeaningVoice;
+    onToggle: () => void;
+    onChooseVoice: (v: MeaningVoice) => void;
+  };
 }
 
 const HomeSettingsContext = createContext<HomeSettings | null>(null);
@@ -173,6 +181,7 @@ export function TranslationPage() {
       <div className={GROUP}>
         <Switch on={s.showMeaning} label={t(lang, "Show translation")} onToggle={s.onToggleMeaning} />
       </div>
+      {s.meaningAudio && <MeaningAudioGroup {...s.meaningAudio} supported={isMeaningLang(s.translationLang)} />}
       <div role="radiogroup" aria-label={t(lang, "Translation language")} className="space-y-1.5">
         {TRANSLATIONS.map((c) => {
           const selected = c.id === s.translationLang;
@@ -220,6 +229,44 @@ export function TranslationPage() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** Meaning audio: on / off, and a male or female voice. */
+function MeaningAudioGroup({
+  on,
+  voice,
+  onToggle,
+  onChooseVoice,
+  supported,
+}: NonNullable<HomeSettings["meaningAudio"]> & { supported: boolean }) {
+  const lang = useUiLang();
+  return (
+    <div className={GROUP}>
+      <Switch
+        on={on && supported}
+        label={t(lang, "Read the meaning aloud")}
+        sub={t(lang, supported ? "After each ayah, in the voice you choose." : "English and Tamil only, for now.")}
+        onToggle={onToggle}
+        disabled={!supported}
+      />
+      {on && supported && (
+        <div role="radiogroup" aria-label={t(lang, "Voice")} className={cn(TAB_TRACK, "mt-3")}>
+          {MEANING_VOICES.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="radio"
+              aria-checked={voice === v.id}
+              onClick={() => voice !== v.id && onChooseVoice(v.id)}
+              className={cn(TAB, voice === v.id ? SELECTED_TAB : UNSELECTED_TAB)}
+            >
+              {t(lang, v.label)}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
