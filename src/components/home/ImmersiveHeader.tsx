@@ -22,7 +22,7 @@ import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import { ReciterPickerModal } from "./ReciterPickerModal";
-import { MeaningAudioGroup, type MeaningAudioSettings } from "./MeaningAudioGroup";
+import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
 import { isMeaningLang } from "@/lib/data/meaningAudio";
 import { OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
@@ -254,28 +254,6 @@ export function ImmersiveHeader({
               <p className={`mt-0.5 text-[11px] leading-none text-sand-300/70`}>{t(language, "Choose the meaning language")}</p>
             </div>
             <div className="flex items-center gap-2.5">
-            {/* On / Off (Off = Arabic only); picking a language turns it on */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={showMeaning}
-              aria-label={showMeaning ? t(language, "Translation on — turn off (Arabic only)") : t(language, "Translation off — turn on")}
-              onClick={() => onToggleMeaning?.()}
-              className={`tap-44 flex items-center gap-2 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium text-sand-200 transition-colors hover:bg-white/5 cursor-pointer`}
-            >
-              {showMeaning ? t(language, "On") : t(language, "Off")}
-              <span
-                className={`relative h-5 w-9 rounded-full border transition-colors ${
-                  showMeaning ? "border-amber-200/50 bg-amber-300/30" : "border-white/15 bg-white/10"
-                }`}
-              >
-                <span
-                  className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition-all ${
-                    showMeaning ? "left-[18px] bg-amber-200" : "left-[2px] bg-sand-300"
-                  }`}
-                />
-              </span>
-            </button>
             <button
               type="button"
               onClick={() => setTranslationSheetOpen(false)}
@@ -288,7 +266,14 @@ export function ImmersiveHeader({
             </button>
             </div>
           </div>
-          {meaningAudio && <MeaningAudioGroup {...meaningAudio} supported={isMeaningLang(translationLang)} className="mb-3" />}
+          {/* The same switches as Settings › Translation */}
+          <div className="mb-3 space-y-2.5">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              {/* Off = Arabic only; picking a language turns it on */}
+              <Switch on={showMeaning} label={t(language, "Show translation")} onToggle={() => onToggleMeaning?.()} />
+            </div>
+            {meaningAudio && <MeaningAudioGroup {...meaningAudio} supported={isMeaningLang(translationLang)} />}
+          </div>
           <div className="relative mb-3">
             <input
               type="text"
