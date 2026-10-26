@@ -25,6 +25,7 @@ import {
   isMeaningLang,
   meaningAudioUrl,
   useMeaningAudioPrefs,
+  type MeaningVoice,
 } from "@/lib/data/meaningAudio";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
@@ -848,6 +849,15 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // listener's voice, then the recitation goes on. English and Tamil only.
   const [meaningPrefs, setMeaningPrefs] = useMeaningAudioPrefs();
   const meaningOn = MEANING_AUDIO_PUBLISHED && meaningPrefs.on && isMeaningLang(translationLang);
+  // Its switch and voice: in Settings › Translation and the header's sheet.
+  const meaningAudioSettings = MEANING_AUDIO_PUBLISHED
+    ? {
+        on: meaningPrefs.on,
+        voice: meaningPrefs.voice,
+        onToggle: () => setMeaningPrefs({ on: !meaningPrefs.on }),
+        onChooseVoice: (voice: MeaningVoice) => setMeaningPrefs({ voice }),
+      }
+    : undefined;
   const meaningFor = (surah: number, ayah: number) => {
     const url = meaningOn ? meaningAudioUrl(meaningPrefs.voice, translationLang, surah, ayah) : null;
     return url ? { url, key: `${surah}:${ayah}` } : null;
@@ -1600,6 +1610,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         translationLang={translationLang}
         onChooseTranslation={handleChooseTranslation}
         showMeaning={showTranslation}
+        meaningAudio={meaningAudioSettings}
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
@@ -1666,14 +1677,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             visualMode,
             onToggleVisualMode: handleToggleVisualMode,
             reciterName: selectedReciter.displayName,
-            meaningAudio: MEANING_AUDIO_PUBLISHED
-              ? {
-                  on: meaningPrefs.on,
-                  voice: meaningPrefs.voice,
-                  onToggle: () => setMeaningPrefs({ on: !meaningPrefs.on }),
-                  onChooseVoice: (voice) => setMeaningPrefs({ voice }),
-                }
-              : undefined,
+            meaningAudio: meaningAudioSettings,
           }}
         >
           <TopicPickerModal

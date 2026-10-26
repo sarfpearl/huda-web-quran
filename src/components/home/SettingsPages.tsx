@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
-import { MEANING_VOICES, isMeaningLang, type MeaningVoice } from "@/lib/data/meaningAudio";
+import { isMeaningLang } from "@/lib/data/meaningAudio";
+import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
 import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
@@ -35,12 +36,7 @@ export interface HomeSettings {
   onToggleVisualMode: () => void;
   reciterName: string;
   /** The meaning read aloud after each ayah; unset until its clips are published. */
-  meaningAudio?: {
-    on: boolean;
-    voice: MeaningVoice;
-    onToggle: () => void;
-    onChooseVoice: (v: MeaningVoice) => void;
-  };
+  meaningAudio?: MeaningAudioSettings;
 }
 
 const HomeSettingsContext = createContext<HomeSettings | null>(null);
@@ -75,27 +71,6 @@ function Row({ label, value, onClick, valueLang }: { label: string; value?: stri
           </span>
         )}
         <ChevronRightIcon className="h-4 w-4 shrink-0" />
-      </span>
-    </button>
-  );
-}
-
-function Switch({ on, label, sub, onToggle, disabled }: { on: boolean; label: string; sub?: string; onToggle: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-disabled={disabled}
-      onClick={disabled ? undefined : onToggle}
-      className={cn("flex w-full items-center justify-between gap-3 py-1 text-left", disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer")}
-    >
-      <span className="flex flex-col">
-        <span className="text-sm font-semibold text-white">{label}</span>
-        {sub && <span className="text-[11px] text-sand-200/70">{sub}</span>}
-      </span>
-      <span aria-hidden="true" className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors", on ? "bg-amber-400/90" : "bg-white/20")}>
-        <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left]", on ? "left-[1.375rem]" : "left-0.5")} />
       </span>
     </button>
   );
@@ -229,44 +204,6 @@ export function TranslationPage() {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-/** Meaning audio: on / off, and a male or female voice. */
-function MeaningAudioGroup({
-  on,
-  voice,
-  onToggle,
-  onChooseVoice,
-  supported,
-}: NonNullable<HomeSettings["meaningAudio"]> & { supported: boolean }) {
-  const lang = useUiLang();
-  return (
-    <div className={GROUP}>
-      <Switch
-        on={on && supported}
-        label={t(lang, "Read the meaning aloud")}
-        sub={t(lang, supported ? "After each ayah, in the voice you choose." : "English and Tamil only, for now.")}
-        onToggle={onToggle}
-        disabled={!supported}
-      />
-      {on && supported && (
-        <div role="radiogroup" aria-label={t(lang, "Voice")} className={cn(TAB_TRACK, "mt-3")}>
-          {MEANING_VOICES.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              role="radio"
-              aria-checked={voice === v.id}
-              onClick={() => voice !== v.id && onChooseVoice(v.id)}
-              className={cn(TAB, voice === v.id ? SELECTED_TAB : UNSELECTED_TAB)}
-            >
-              {t(lang, v.label)}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
