@@ -848,7 +848,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // After each ayah, its meaning (the translation shown) is read aloud in the
   // listener's voice, then the recitation goes on. English and Tamil only.
   const [meaningPrefs, setMeaningPrefs] = useMeaningAudioPrefs();
-  const meaningOn = MEANING_AUDIO_PUBLISHED && meaningPrefs.on && isMeaningLang(translationLang);
+  // Translation off = Arabic only: no meaning voice either.
+  const meaningOn = MEANING_AUDIO_PUBLISHED && showTranslation && meaningPrefs.on && isMeaningLang(translationLang);
   // Its switch and voice: in Settings › Translation and the header's sheet.
   const meaningAudioSettings = MEANING_AUDIO_PUBLISHED
     ? {

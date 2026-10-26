@@ -266,14 +266,16 @@ export function ImmersiveHeader({
             </button>
             </div>
           </div>
-          {/* The same switches as Settings › Translation */}
+          {/* The same switches as Settings › Translation. Off = Arabic only:
+              the meaning voice and the languages show once it's on. */}
           <div className="mb-3 space-y-2.5">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              {/* Off = Arabic only; picking a language turns it on */}
               <Switch on={showMeaning} label={t(language, "Show translation")} onToggle={() => onToggleMeaning?.()} />
             </div>
-            {meaningAudio && <MeaningAudioGroup {...meaningAudio} supported={isMeaningLang(translationLang)} />}
+            {showMeaning && meaningAudio && <MeaningAudioGroup {...meaningAudio} supported={isMeaningLang(translationLang)} />}
           </div>
+          {showMeaning && (
+          <>
           <div className="relative mb-3">
             <input
               type="text"
@@ -342,6 +344,8 @@ export function ImmersiveHeader({
               );
             })}
           </div>
+          </>
+          )}
         </ActionSheet>
 
         {/* Reading mode: where there's room, text only (focus reading). Text size is
