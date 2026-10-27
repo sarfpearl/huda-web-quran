@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import type { TranslationLang } from "./translations";
 import manifest from "./meaningAudioManifest.json";
+import stops from "./meaningStops.json";
 
 /*
  * Meaning audio: after each ayah, a voice reads its meaning — the translation
@@ -46,6 +47,15 @@ const pad3 = (n: number) => String(n).padStart(3, "0");
 export function meaningAudioUrl(voice: MeaningVoice, lang: TranslationLang, surah: number, ayah: number): string | null {
   if (!hasMeaningAudio(voice, lang, surah)) return null;
   return mediaUrl(`/audio/meaning/v${MANIFEST.version}/${voice}/${lang}/${pad3(surah)}${pad3(ayah)}.mp3`);
+}
+
+/**
+ * Where a reciter's voice of each ayah of a Surah really ends — [after 1,
+ * after 2, …] in seconds on the recording, measured on it by
+ * scripts/generation/build-meaning-stops.mjs — or null (not measured).
+ */
+export function meaningStopsFor(reciterId: string, surah: number): number[] | null {
+  return (stops as Record<string, Record<string, number[]>>)[reciterId]?.[String(surah)] ?? null;
 }
 
 // ── The listener's choice ──────────────────────────────────────────────────
