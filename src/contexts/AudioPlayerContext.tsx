@@ -143,8 +143,9 @@ interface AudioPlayerApi extends AudioPlayerState {
    * Whole-Surah track: where the recitation stops for an ayah's meaning —
    * `at` (seconds on the track timeline, just after the ayah's last word) —
    * then carries on from there. Checked every frame, so no sound of the next
-   * ayah slips out first (the page's ~4 Hz clock let ~0.2 s through). Passing
-   * `at` by a seek skips it. Null = none.
+   * ayah slips out first (the page's ~4 Hz clock let ~0.2 s through). Read
+   * once per pass: a seek (a tapped word) lets it be read again; passing `at`
+   * by a seek skips it. Null = none.
    */
   setMeaningCue: (cue: MeaningCue | null) => void;
   /** The meaning clip read after ayah `index` of a per-ayah sequence — or,
@@ -181,7 +182,10 @@ const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
 /** meaningDoneRef: a whole-Surah track's last-ayah meaning has been read. */
 const TRACK_MEANING_DONE = -2;
 /** A meaning cue fires this early (s): a frame, and the output's latency. */
-const MEANING_CUE_LEAD = 0.03;
+const MEANING_CUE_LEAD = 0.05;
+/** iOS Safari moves `currentTime` on only ~4× a second: between its steps the
+ *  clock is carried on from the wall clock, by at most this much (s). */
+const MAX_CLOCK_CARRY = 0.35;
 
 /** Retries of a failed stream (same URL, same position) before giving up. */
 const MAX_STREAM_RETRIES = 3;
@@ -303,9 +307,19 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     ayahMeaningRef.current = fn;
   }, []);
   const meaningCueRef = useRef<MeaningCue | null>(null);
+  // The cue whose meaning was read on this pass (a seek clears it).
+  const meaningCueReadRef = useRef<string | null>(null);
   const setMeaningCue = useCallback((cue: MeaningCue | null) => {
     meaningCueRef.current = cue;
+    // Fetch the clip ahead, so it starts as the recitation stops.
+    const mel = meaningAudioRef.current;
+    if (cue && mel && !meaningRef.current && mel.getAttribute("src") !== cue.url) {
+      mel.preload = "auto";
+      mel.src = cue.url;
+    }
   }, []);
+  // The recitation's clock between iOS's coarse `currentTime` steps.
+  const clockStepRef = useRef<{ raw: number; wall: number } | null>(null);
   // Starts the cue's meaning once the clock `t` reaches it (set below).
   const checkMeaningCueRef = useRef<(t: number) => boolean>(() => false);
   // One-shot start position for the next loadCurrent (see playBayan opts).
@@ -561,6 +575,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       forcedSeekPendingRef.current = false;
       cancelMeaning();
       meaningCueRef.current = null;
+      meaningCueReadRef.current = null;
       meaningDoneRef.current = -1;
       setError(null);
       retryCountRef.current = 0;
@@ -1065,8 +1080,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [isPlaying, pause, resume]);
 
   const seek = useCallback((seconds: number) => {
-    // A seek during a meaning clip goes straight there (the recitation waited).
+    // A seek during a meaning clip goes straight there (the recitation waited),
+    // and that ayah's meaning is read again at its end.
     const wasInMeaning = cancelMeaning();
+    meaningCueReadRef.current = null;
+    clockStepRef.current = null;
     // If user explicitly seeks during prelude, stop prelude and jump directly into the Surah verses
     const wasInPrelude = isPreludeRef.current;
     if (wasInPrelude) {
@@ -1475,7 +1493,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const frame = () => {
       if (meaningCueRef.current && !forcedSeekPendingRef.current && !isPreludeRef.current) {
         const el = audioRef.current;
-        if (el && !el.paused) checkMeaningCueRef.current(el.currentTime - currentTrimOffsetRef.current);
+        // Paused (the meaning, a pause): the clock starts afresh after it.
+        if (!el || el.paused) clockStepRef.current = null;
+        else {
+          const now = performance.now();
+          const step = clockStepRef.current;
+          if (!step || step.raw !== el.currentTime) clockStepRef.current = { raw: el.currentTime, wall: now };
+          const { raw, wall } = clockStepRef.current!;
+          const carried = Math.min(MAX_CLOCK_CARRY, ((now - wall) / 1000) * (el.playbackRate || 1));
+          checkMeaningCueRef.current(raw + carried - currentTrimOffsetRef.current);
+        }
       }
       const b = timeBoundaryRef.current;
       if (b !== null && !forcedSeekPendingRef.current) {
@@ -1555,8 +1582,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Set first: the recitation's own pause / seek events check it.
       meaningRef.current = { key, then };
       setMeaningClip({ key });
-      mel.src = url;
-      mel.load();
+      if (mel.getAttribute("src") !== url) {
+        mel.src = url;
+        mel.load();
+      } else if (mel.currentTime > 0) {
+        mel.currentTime = 0;
+      }
       // Can't start (no tap yet on iOS, say): carry on without it.
       mel.play().catch(() => finishMeaning());
       // Only now the recitation waits: iOS lets a clip start by itself more
@@ -1580,10 +1611,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   checkMeaningCueRef.current = (t) => {
     const cue = meaningCueRef.current;
-    if (!cue || t < cue.at - MEANING_CUE_LEAD) return false;
-    meaningCueRef.current = null;
+    if (!cue || cue.key === meaningCueReadRef.current || t < cue.at - MEANING_CUE_LEAD) return false;
     // Passed by a seek (or nothing to wait on): not this time.
     if (t > cue.at + 0.5 || ayahSeqRef.current || isPreludeRef.current || meaningRef.current) return false;
+    meaningCueReadRef.current = cue.key;
     startMeaning(cue.url, cue.key, "resume", cue.at);
     return true;
   };

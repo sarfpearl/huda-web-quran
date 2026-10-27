@@ -890,9 +890,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // A breath after the last word, never past the ayah's own end.
   const cueAt = cueSegment ? Math.min(cueSegment.endTime, lastWordEnd !== null ? lastWordEnd + 0.15 : cueSegment.endTime) : 0;
   useEffect(() => {
-    // Another ayah: the one read last may be read again (a seek back to it).
-    if (cueMeaning?.key !== lastMeaningRef.current) lastMeaningRef.current = null;
-    setMeaningCue(cueMeaning && cueMeaning.key !== lastMeaningRef.current ? { at: cueAt, ...cueMeaning } : null);
+    // Read once per pass: the player keeps track (a tapped word reads it again).
+    setMeaningCue(cueMeaning ? { at: cueAt, ...cueMeaning } : null);
     return () => setMeaningCue(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setMeaningCue, cueSegment?.id, cueMeaning?.url, cueAt]);
