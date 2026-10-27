@@ -4,6 +4,40 @@
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
+### Meaning audio — where it stands (updated 2026-10-27)
+
+After each ayah the recitation stops and its meaning is read aloud (Gemini
+3.8 Flash TTS, voices **Cruz** male / **Lora** female, **Tamil + English**).
+One MP3 per ayah (`<SSS><AAA>.mp3`) serves both the Surah and the Juz player —
+never generate anything per Juz.
+
+- **Live:** Surah 1 (PR #154–#156). The player logic is the reference for
+  every Surah: stop where each reciter's ayah really ends
+  (`src/lib/data/meaningStops.json`, measured on the audio), a tapped word
+  recites from there and reads that ayah's meaning again, a tapped first word
+  never replays the previous ayah's meaning (PR #156).
+- **Generation = Batch API only (half price, PR #157):**
+  ```bash
+  node --env-file=.env scripts/generation/build-meaning-audio.mjs --estimate --batch --surah=67-114
+  node --env-file=.env scripts/generation/build-meaning-audio.mjs --surah=67-114 --batch --batch-size=50 --max-usd=3
+  node scripts/tools/upload-to-r2.mjs --category=audio-meaning --execute
+  node scripts/generation/build-meaning-audio.mjs --manifest
+  node scripts/generation/build-meaning-stops.mjs        # all 9 Word Sync reciters
+  ```
+  A stopped run resumes with the same command (pending jobs in
+  `assets/audio/meaning/v1/batches.json`).
+- **Real costs:** Surah 108 pilot (12 clips) cost $0.006. Measured speeds:
+  Tamil 12.2, English 12.7 chars/s. All 4 combos (2 voices × 2 languages):
+  Juz 30 ≈ ₹111, Juz 29 + 30 ≈ ₹235, whole Quran ≈ ₹3,600. Google's price
+  doubles on 2027-01-01.
+- **In progress (2026-10-27):** Juz 29 + 30 (Surahs 67–114, 3,980 clips),
+  budget $3, branch `feat/meaning-audio-juz29-30`. Next: re-take flagged
+  clips, upload, manifest, stops, WebKit tests, PR, owner tests the preview.
+- **Then:** the rest of the Quran (≈ ₹3,300), as the owner's balance allows.
+- **Previews:** if a Vercel preview shows a black background or the meaning
+  stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
+  you blame the code.
+
 ### Next tasks — in this order (noted 2026-10-25)
 
 1. [x] **Folder re-arrangement / unused media (2026-10-25, PR #150).** Local:

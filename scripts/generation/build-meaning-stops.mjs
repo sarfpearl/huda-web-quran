@@ -45,6 +45,7 @@ const AFTER = 1.0; // …and after it
 const DB_PER_S = 10; // farther from it counts as this much louder
 const RISE_DB = 12; // above the valley floor = voice
 const BEFORE_ONSET = 0.06; // s: stop this far ahead of the next ayah's voice
+const NO_PAUSE_DB = 10; // a valley less than this below the speech level is no pause
 
 // ── args ───────────────────────────────────────────────────────────────────
 const args = Object.fromEntries(
@@ -109,8 +110,13 @@ function envelope(samples) {
   return db;
 }
 
-/** The stop between two ayahs: in the valley, after the voice, before the next. */
-function stopBetween(db, nextStart) {
+/**
+ * The stop between two ayahs: in the valley, after the voice, before the
+ * next. Where the reciter joins the two (no valley at least NO_PAUSE_DB below
+ * `speech`), the quietest point can lie inside the next ayah's first word:
+ * then the stop goes just before that word's timed start instead.
+ */
+function stopBetween(db, nextStart, speech) {
   const lo = Math.max(0, Math.floor((nextStart - BEFORE) / FRAME));
   const hi = Math.min(db.length - 1, Math.ceil((nextStart + AFTER) / FRAME));
   const score = (f) => db[f] + DB_PER_S * Math.abs(f * FRAME - nextStart);
@@ -120,7 +126,8 @@ function stopBetween(db, nextStart) {
   while (fade > 0 && db[fade - 1] < db[v] + RISE_DB) fade--;
   let onset = v;
   while (onset < db.length - 1 && db[onset + 1] < db[v] + RISE_DB) onset++;
-  const t = Math.max(fade * FRAME, Math.min(v * FRAME, onset * FRAME - BEFORE_ONSET));
+  let t = Math.max(fade * FRAME, Math.min(v * FRAME, onset * FRAME - BEFORE_ONSET));
+  if (speech - db[v] < NO_PAUSE_DB) t = Math.min(t, nextStart - BEFORE_ONSET);
   return Number(t.toFixed(2));
 }
 
@@ -138,10 +145,12 @@ for (const reciter of reciters) {
     if (verses.length < 2) continue;
     try {
       const db = envelope(await decode(t.audioUrl));
+      // The recitation's speech level: its 90th percentile.
+      const speech = Float64Array.from(db).sort()[Math.floor(db.length * 0.9)];
       const stops = [];
       for (let k = 0; k < verses.length - 1; k++) {
         const nextStart = verses[k + 1].segments?.[0]?.startSec ?? verses[k + 1].timestampFromSec;
-        stops.push(stopBetween(db, nextStart));
+        stops.push(stopBetween(db, nextStart, speech));
       }
       (out[reciter] ??= {})[surah] = stops;
       console.log(`  ✓ ${reciter}/${surah}: ${stops.join(" ")}`);
