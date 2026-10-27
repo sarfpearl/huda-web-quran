@@ -855,8 +855,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     ? {
         on: meaningPrefs.on,
         voice: meaningPrefs.voice,
-        onToggle: () => setMeaningPrefs({ on: !meaningPrefs.on }),
-        onChooseVoice: (voice: MeaningVoice) => setMeaningPrefs({ voice }),
+        onToggle: () => {
+          if (!meaningPrefs.on) player.unlockMeaning();
+          setMeaningPrefs({ on: !meaningPrefs.on });
+        },
+        onChooseVoice: (voice: MeaningVoice) => {
+          player.unlockMeaning();
+          setMeaningPrefs({ voice });
+        },
       }
     : undefined;
   const meaningFor = (surah: number, ayah: number) => {
@@ -1431,6 +1437,11 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   useEffect(() => {
     if (!mounted || deepLinkAppliedRef.current || deepLink?.kind !== "surah") return;
     deepLinkAppliedRef.current = true;
+    // Something already loaded: the page was remounted inside this tab, not
+    // opened from the link (Back closing a sheet can land on /surah/1 while
+    // /surah/1/7 plays, and Safari swaps the page) — keep what is playing
+    // instead of starting the Surah again from that ayah.
+    if (player.current) return;
     // Cue even though the landing already shows this Surah: nothing is loaded yet.
     openSurahAt(deepLink.surah, deepLink.ayah, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps

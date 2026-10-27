@@ -141,6 +141,8 @@ interface AudioPlayerApi extends AudioPlayerState {
   /** The meaning clip read after ayah `index` of a per-ayah sequence — or,
    *  with null, after a whole-Surah track's last ayah — if any. */
   setAyahMeaning: (fn: ((index: number | null) => { url: string; key: string } | null) | null) => void;
+  /** Call inside a tap that turns meaning audio on (iOS: lets it start later). */
+  unlockMeaning: () => void;
   previous: () => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
@@ -496,14 +498,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   // iOS lets an element start without a tap only once one has started it
   // (the meaning clip starts from an ayah's end): unlock it inside the tap.
+  // Not muted: a muted start doesn't count on iOS (the meaning stayed silent
+  // on iPad) — the clip is silent anyway. A failed try may try again.
   const unlockMeaning = useCallback(() => {
     const mel = meaningAudioRef.current;
-    if (!mel || meaningUnlockedRef.current) return;
+    if (!mel || meaningUnlockedRef.current || meaningRef.current) return;
     meaningUnlockedRef.current = true;
-    const muted = mel.muted;
-    mel.muted = true;
     mel.src = SILENT_WAV;
-    mel.play().then(() => mel.pause()).catch(() => {}).finally(() => { mel.muted = muted; });
+    mel.play().then(() => mel.pause()).catch(() => { meaningUnlockedRef.current = false; });
   }, []);
 
   /**
@@ -1529,6 +1531,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Set first: the recitation's own pause / seek events check it.
       meaningRef.current = { key, then };
       setMeaningClip({ key });
+      mel.src = url;
+      mel.load();
+      // Can't start (no tap yet on iOS, say): carry on without it.
+      mel.play().catch(() => finishMeaning());
+      // Only now the recitation waits: iOS lets a clip start by itself more
+      // readily while the page's audio is still playing.
       const el = audioRef.current;
       if (then === "resume" && el) {
         el.pause();
@@ -1542,10 +1550,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           setCurrentTime(Math.max(0, resumeAt - 0.05));
         }
       }
-      mel.src = url;
-      mel.load();
-      // Can't start (no tap yet on iOS, say): carry on without it.
-      mel.play().catch(() => finishMeaning());
     },
     [finishMeaning]
   );
@@ -1714,6 +1718,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setAyahSequenceNext,
       playMeaning,
       setAyahMeaning,
+      unlockMeaning,
       previous,
       setVolume,
       toggleMute,
@@ -1761,6 +1766,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setAyahSequenceNext,
       playMeaning,
       setAyahMeaning,
+      unlockMeaning,
       previous,
       setVolume,
       toggleMute,
