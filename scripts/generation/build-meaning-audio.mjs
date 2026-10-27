@@ -8,6 +8,7 @@
 //
 //    assets/audio/meaning/v1/<voice>/<lang>/<SSS><AAA>.mp3   (git-ignored)
 //    assets/audio/meaning/v1/ledger.jsonl                    (tokens per clip)
+//    assets/audio/meaning/v1/batches.json                    (--batch jobs pending)
 //
 //  Usage (GEMINI_API_KEY in the environment — never commit it — or, in a
 //  Claude Code cloud session, a Network secret for
@@ -16,6 +17,7 @@
 //    node scripts/generation/build-meaning-audio.mjs --estimate
 //    node scripts/generation/build-meaning-audio.mjs --surah=1 --voice=cruz --lang=ta   # pilot
 //    node scripts/generation/build-meaning-audio.mjs --surah=1-114 --voice=all --lang=all
+//    node scripts/generation/build-meaning-audio.mjs --surah=78-114 --batch --max-usd=3   # half price
 //    node scripts/generation/build-meaning-audio.mjs --manifest   # after the upload
 //  then: node scripts/tools/upload-to-r2.mjs --category=audio-meaning --execute
 //  and:  node scripts/generation/build-meaning-stops.mjs   # where each reciter's ayah ends
@@ -27,6 +29,13 @@
 //    --max-usd=N          stop starting new clips once this run has spent $N
 //                         (default 2 — raise it for a big run; see --estimate)
 //    --estimate           characters, hours of audio and cost; no API calls
+//    --batch              Gemini Batch API: half the price, results within 24 h
+//                         (usually minutes). Clips go up in jobs of
+//                         --batch-size (default 100); the jobs are kept in
+//                         batches.json, so a run stopped while waiting picks
+//                         them up again (run the same command). --no-wait
+//                         submits and exits; --max-usd counts the estimate of
+//                         each job before it is sent.
 //    --manifest           write src/lib/data/meaningAudioManifest.json: the
 //                         Surahs with every ayah's clip on disk (upload first)
 //
@@ -50,6 +59,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../.
 const VERSION = 1;
 const OUT_ROOT = path.join(ROOT, "assets/audio/meaning", `v${VERSION}`);
 const LEDGER = path.join(OUT_ROOT, "ledger.jsonl");
+const BATCHES = path.join(OUT_ROOT, "batches.json");
 const MANIFEST = path.join(ROOT, "src/lib/data/meaningAudioManifest.json");
 const MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
 
@@ -58,13 +68,15 @@ const VOICES = {
   lora: process.env.MEANING_VOICE_LORA || "Lora",
 };
 const LANGS = {
-  en: { field: "textEnglish", name: "English", charsPerSecond: 14 },
-  ta: { field: "textTamil", name: "Tamil", charsPerSecond: 10 }, // measured: 358 chars in 36 s
+  // Measured on the Surah 1 and 108 clips (both voices): ~12.7 and ~12.2.
+  en: { field: "textEnglish", name: "English", charsPerSecond: 12.7 },
+  ta: { field: "textTamil", name: "Tamil", charsPerSecond: 12.2 },
 };
 
 // Gemini 3.8 Flash TTS list prices (USD per 1M tokens) as of 2026-10 —
 // recheck on Google's pricing page; they double on 2027-01-01.
 const PRICE = { input: 0.5, audio: 9 };
+const BATCH_DISCOUNT = 0.5; // the Batch API's price, of the above
 const AUDIO_TOKENS_PER_SECOND = 25;
 const USD_TO_INR = 85;
 
@@ -103,11 +115,12 @@ function verses(surah) {
 // ── --estimate ─────────────────────────────────────────────────────────────
 if (args.estimate) {
   let usd = 0;
-  console.log(`\nSurahs ${surahs[0]}–${surahs.at(-1)} · voices ${voices.join(", ")}\n`);
+  console.log(`\nSurahs ${surahs[0]}–${surahs.at(-1)} · voices ${voices.join(", ")}${args.batch ? " · Batch API (half price)" : ""}\n`);
   for (const lang of langs) {
     const chars = surahs.reduce((n, s) => n + verses(s).reduce((m, v) => m + (v[LANGS[lang].field] ?? "").length, 0), 0);
     const seconds = chars / LANGS[lang].charsPerSecond;
-    const perVoice = (seconds * AUDIO_TOKENS_PER_SECOND * PRICE.audio + chars * PRICE.input) / 1e6;
+    const perVoice =
+      ((seconds * AUDIO_TOKENS_PER_SECOND * PRICE.audio + chars * PRICE.input) / 1e6) * (args.batch ? BATCH_DISCOUNT : 1);
     usd += perVoice * voices.length;
     console.log(
       `  ${LANGS[lang].name.padEnd(8)} ${chars.toLocaleString()} chars ≈ ${(seconds / 3600).toFixed(1)} h of audio` +
@@ -189,23 +202,29 @@ function toPcm(buf, mimeType = "") {
   throw new Error("WAV has no data chunk");
 }
 
+/** One clip's request (the same for a direct call and a batch job). */
+const request = (voice, text) => ({
+  contents: [{ role: "user", parts: [{ text: prompt(text) }] }],
+  config: {
+    responseModalities: ["AUDIO"],
+    // Lower than the default: the same calm reading on every ayah.
+    temperature: 0.5,
+    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICES[voice] } } },
+  },
+});
+
+/** The samples of a GenerateContentResponse (direct or from a batch). */
+function audioOf(res) {
+  const part = res?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
+  if (!part) throw new Error(`no audio in the response (${res?.candidates?.[0]?.finishReason ?? "?"})`);
+  const { pcm, rate } = toPcm(Buffer.from(part.inlineData.data, "base64"), part.inlineData.mimeType);
+  return { pcm, rate, usage: res.usageMetadata ?? {} };
+}
+
 async function synthesize(voice, lang, text) {
   for (let attempt = 1; ; attempt++) {
     try {
-      const res = await ai.models.generateContent({
-        model: MODEL,
-        contents: [{ role: "user", parts: [{ text: prompt(text) }] }],
-        config: {
-          responseModalities: ["AUDIO"],
-          // Lower than the default: the same calm reading on every ayah.
-          temperature: 0.5,
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICES[voice] } } },
-        },
-      });
-      const part = res.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
-      if (!part) throw new Error(`no audio in the response (${res.candidates?.[0]?.finishReason ?? "?"})`);
-      const { pcm, rate } = toPcm(Buffer.from(part.inlineData.data, "base64"), part.inlineData.mimeType);
-      return { pcm, rate, usage: res.usageMetadata ?? {} };
+      return audioOf(await ai.models.generateContent({ model: MODEL, ...request(voice, text) }));
     } catch (e) {
       const status = e?.status ?? e?.code;
       const retry = attempt < 6 && (status === 429 || status >= 500 || /fetch failed|ECONNRESET|no audio/i.test(String(e?.message)));
@@ -213,6 +232,31 @@ async function synthesize(voice, lang, text) {
       await sleep(Math.min(60000, 2000 * 2 ** attempt));
     }
   }
+}
+
+const keyOf = (job) => `${job.voice}/${job.lang}/${job.s}:${job.a}`;
+
+/** Writes a clip's MP3 and its ledger line. */
+async function saveClip(job, { pcm, rate, usage }, batch = false) {
+  await mkdir(path.dirname(job.file), { recursive: true });
+  const tmp = `${job.file}.part.mp3`;
+  await encodeMp3(pcm, rate, tmp);
+  await rename(tmp, job.file);
+  const seconds = pcm.length / 2 / rate;
+  const expected = job.text.length / LANGS[job.lang].charsPerSecond;
+  const check = seconds < expected * 0.5 || seconds > expected * 2;
+  audioTokens += usage.candidatesTokenCount ?? 0;
+  inputTokens += usage.promptTokenCount ?? 0;
+  await appendFile(
+    LEDGER,
+    JSON.stringify({
+      key: keyOf(job), seconds: Number(seconds.toFixed(2)), expected: Number(expected.toFixed(1)), check,
+      inputTokens: usage.promptTokenCount, audioTokens: usage.candidatesTokenCount, ...(batch && { batch: true }),
+      at: new Date().toISOString(),
+    }) + "\n"
+  );
+  done++;
+  if (check) console.warn(`  ⚠️  ${keyOf(job)}: ${seconds.toFixed(1)} s for ~${expected.toFixed(0)} s of text — listen to it`);
 }
 
 const jobs = [];
@@ -232,7 +276,14 @@ let audioTokens = 0;
 let inputTokens = 0;
 const started = Date.now();
 let stopped = false;
-const spentUsd = () => (audioTokens * PRICE.audio + inputTokens * PRICE.input) / 1e6;
+const spentUsd = () => ((audioTokens * PRICE.audio + inputTokens * PRICE.input) / 1e6) * (args.batch ? BATCH_DISCOUNT : 1);
+
+if (args.batch) {
+  await mkdir(OUT_ROOT, { recursive: true });
+  await runBatches();
+  progress();
+  process.exit(0);
+}
 
 async function worker() {
   while (jobs.length) {
@@ -242,31 +293,12 @@ async function worker() {
       return;
     }
     const job = jobs.shift();
-    const key = `${job.voice}/${job.lang}/${job.s}:${job.a}`;
     try {
-      const { pcm, rate, usage } = await synthesize(job.voice, job.lang, job.text);
-      await mkdir(path.dirname(job.file), { recursive: true });
-      const tmp = `${job.file}.part.mp3`;
-      await encodeMp3(pcm, rate, tmp);
-      await rename(tmp, job.file);
-      const seconds = pcm.length / 2 / rate;
-      const expected = job.text.length / LANGS[job.lang].charsPerSecond;
-      const check = seconds < expected * 0.5 || seconds > expected * 2;
-      audioTokens += usage.candidatesTokenCount ?? 0;
-      inputTokens += usage.promptTokenCount ?? 0;
-      await appendFile(
-        LEDGER,
-        JSON.stringify({
-          key, seconds: Number(seconds.toFixed(2)), expected: Number(expected.toFixed(1)), check,
-          inputTokens: usage.promptTokenCount, audioTokens: usage.candidatesTokenCount, at: new Date().toISOString(),
-        }) + "\n"
-      );
-      done++;
-      if (check) console.warn(`  ⚠️  ${key}: ${seconds.toFixed(1)} s for ~${expected.toFixed(0)} s of text — listen to it`);
+      await saveClip(job, await synthesize(job.voice, job.lang, job.text));
       if (done % 25 === 0) progress();
     } catch (e) {
       failed++;
-      console.error(`  ❌ ${key}: ${e?.message ?? e}`);
+      console.error(`  ❌ ${keyOf(job)}: ${e?.message ?? e}`);
     }
   }
 }
@@ -282,3 +314,100 @@ await Promise.all(Array.from({ length: concurrency }, worker));
 progress();
 if (stopped) console.log(`\n⛔ Stopped at the $${maxUsd} budget — ${jobs.length} clips left.\n`);
 else console.log(failed ? `\n⚠️  ${failed} failed — run again to retry them.\n` : "\n✅ Done.\n");
+
+// ── --batch ────────────────────────────────────────────────────────────────
+// Half price; Google runs the requests within 24 h. Each job's clips are
+// listed in batches.json (by key) until their MP3s are written, so a run
+// stopped while it waits picks the jobs up again, and those clips aren't
+// sent twice.
+
+function readBatches() {
+  try {
+    return JSON.parse(readFileSync(BATCHES, "utf8"));
+  } catch {
+    return [];
+  }
+}
+function writeBatches(list) {
+  return writeFile(BATCHES, JSON.stringify(list, null, 1) + "\n");
+}
+
+/** What a clip should cost in a batch (its text's expected length). */
+function estimateUsd(job) {
+  const seconds = job.text.length / LANGS[job.lang].charsPerSecond;
+  return ((seconds * AUDIO_TOKENS_PER_SECOND * PRICE.audio + job.text.length * PRICE.input) / 1e6) * BATCH_DISCOUNT;
+}
+
+async function runBatches() {
+  let pending = readBatches();
+  const inFlight = new Set(pending.flatMap((b) => b.keys));
+  const todo = jobs.filter((j) => !inFlight.has(keyOf(j)));
+  const size = Math.max(1, Number(args["batch-size"] ?? 100));
+  let committed = 0;
+  let sent = todo.length;
+  for (let i = 0; i < todo.length; i += size) {
+    const chunk = todo.slice(i, i + size);
+    const cost = chunk.reduce((n, j) => n + estimateUsd(j), 0);
+    if (committed + cost > maxUsd) {
+      console.warn(`  ⛔ $${maxUsd} budget: ${todo.length - i} clips not sent (≈ $${committed.toFixed(2)} sent) — raise --max-usd to go on.`);
+      stopped = true;
+      sent = i;
+      break;
+    }
+    const job = await ai.batches.create({
+      model: MODEL,
+      src: chunk.map((j) => ({ ...request(j.voice, j.text), metadata: { key: keyOf(j) } })),
+      config: { displayName: `meaning-${keyOf(chunk[0]).replace(/[/:]/g, "-")}-${chunk.length}` },
+    });
+    committed += cost;
+    pending.push({ name: job.name, keys: chunk.map(keyOf), at: new Date().toISOString() });
+    await writeBatches(pending);
+    console.log(`  📤 ${job.name}: ${chunk.length} clips (≈ $${cost.toFixed(3)})`);
+  }
+  // What's left for a later run (the progress line counts these).
+  jobs.splice(0, jobs.length, ...todo.slice(sent));
+  if (args["no-wait"]) {
+    console.log(`\n${pending.length} job(s) pending — run the same command later to collect them.\n`);
+    return;
+  }
+
+  // Every clip this run could need, by key (texts / files for the responses).
+  const byKey = new Map();
+  for (const voice of Object.keys(VOICES))
+    for (const lang of Object.keys(LANGS))
+      for (const s of new Set(pending.flatMap((b) => b.keys.map((k) => Number(k.split("/")[2].split(":")[0])))))
+        for (const v of verses(s))
+          byKey.set(`${voice}/${lang}/${s}:${v.ayahNumber}`, {
+            voice, lang, s, a: v.ayahNumber, text: (v[LANGS[lang].field] ?? "").trim(), file: clipPath(voice, lang, s, v.ayahNumber),
+          });
+
+  const DONE = new Set(["JOB_STATE_SUCCEEDED", "JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED", "JOB_STATE_PARTIALLY_SUCCEEDED"]);
+  while (pending.length) {
+    for (const b of [...pending]) {
+      const job = await ai.batches.get({ name: b.name });
+      if (!DONE.has(job.state)) continue;
+      const responses = job.dest?.inlinedResponses ?? [];
+      for (const [i, r] of responses.entries()) {
+        const key = r.metadata?.key ?? b.keys[i];
+        const clip = byKey.get(key);
+        try {
+          if (r.error) throw new Error(r.error.message ?? JSON.stringify(r.error));
+          if (!clip) throw new Error("unknown clip");
+          await saveClip(clip, audioOf(r.response), true);
+        } catch (e) {
+          failed++;
+          console.error(`  ❌ ${key}: ${e?.message ?? e}`);
+        }
+      }
+      if (job.state !== "JOB_STATE_SUCCEEDED") console.warn(`  ⚠️  ${b.name}: ${job.state} ${job.error?.message ?? ""}`);
+      pending = pending.filter((p) => p !== b);
+      await writeBatches(pending);
+      console.log(`  📥 ${b.name}: ${responses.length} of ${b.keys.length} back · $${spentUsd().toFixed(3)} so far`);
+    }
+    if (pending.length) {
+      process.stdout.write(`  … ${pending.length} job(s) running (${((Date.now() - started) / 60000).toFixed(0)} min)\r`);
+      await sleep(30000);
+    }
+  }
+  console.log(failed ? `\n⚠️  ${failed} failed — run again to retry them.\n` : "\n✅ Done.\n");
+}
