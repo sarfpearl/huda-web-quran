@@ -942,7 +942,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       // uses (e.g. 1:6 word 1 at 27.585s, ayah from 27.66s); seeking there would
       // show the previous ayah, so land just inside the current ayah.
       const ayahStart = currentSegment?.startTime ?? currentVerse?.timestampFrom ?? 0;
-      player.seek(Math.max(word.startTime, ayahStart + 0.02));
+      // …and past where the previous ayah's voice was measured to end (its
+      // meaning stop, meaningStops.json): landing before it read that
+      // ayah's meaning again (1:2 word 1 at 6.04 s, Alafasy's stop at 6.06 s).
+      const ayahNo = currentSegment?.ayahNumber;
+      const prevStop = activeSurah && ayahNo && ayahNo > 1 ? meaningStopsFor(selectedReciter.id, activeSurah.number)?.[ayahNo - 2] : undefined;
+      player.seek(Math.max(word.startTime, ayahStart + 0.02, (prevStop ?? 0) + 0.02));
       return;
     }
     if (juzPreSegment) return;
