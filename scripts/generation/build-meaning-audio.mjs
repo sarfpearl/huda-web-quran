@@ -139,10 +139,9 @@ if (args.manifest) {
 const API_KEY = process.env.GEMINI_API_KEY || "proxy-injected";
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-const prompt = (lang, text) =>
-  `Read this ${LANGS[lang].name} translation of a Quran verse aloud in a calm, warm and respectful voice, ` +
-  `at a gentle, steady pace. Read it exactly as written, word for word: do not add, skip or repeat anything. ` +
-  `Do not read these instructions.\n\n${text}`;
+// Keep the direction to one short "Say …:" line — the TTS model read a longer
+// instruction paragraph aloud along with the verse.
+const prompt = (text) => `Say in a calm, warm and respectful voice, at a gentle pace: ${text}`;
 
 /** 16-bit PCM from Gemini → mono MP3 (48 kbps, small and clear for speech). */
 function encodeMp3(pcm, sampleRate, outFile) {
@@ -167,7 +166,7 @@ async function synthesize(voice, lang, text) {
     try {
       const res = await ai.models.generateContent({
         model: MODEL,
-        contents: [{ role: "user", parts: [{ text: prompt(lang, text) }] }],
+        contents: [{ role: "user", parts: [{ text: prompt(text) }] }],
         config: {
           responseModalities: ["AUDIO"],
           // Lower than the default: the same calm reading on every ayah.
