@@ -53,6 +53,8 @@ interface CenterVerseDisplayProps {
   tajweed?: boolean;
   /** Mushaf script: IndoPak is drawn as text (no page fonts, no Tajweed). */
   script?: QuranScript;
+  /** The meaning is being read aloud: it lights up in gold. */
+  meaningSpeaking?: boolean;
 }
 
 /** UI languages in Latin script: the greeting keeps the serif face on phones. */
@@ -255,6 +257,7 @@ export function CenterVerseDisplay({
   onSeekToWord,
   tajweed = false,
   script = "uthmani",
+  meaningSpeaking = false,
 }: CenterVerseDisplayProps) {
   const indoPak = script === "indopak";
   const [mounted, setMounted] = useState(false);
@@ -830,7 +833,7 @@ export function CenterVerseDisplay({
               lang={meaning.id}
               dir={meaning.dir}
               style={meaning.font && meaning.id !== "ta" ? { fontFamily: meaning.font } : undefined}
-              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal text-sand-50 text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-opacity duration-300 ${translationSizeClass}`}
+              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal ${meaningSpeaking ? "text-amber-200" : "text-sand-50"} text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-[opacity,color] duration-300 ${translationSizeClass}`}
             >
               {translationLang === "ta"
                 ? activeItem.textTamil || activeItem.textEnglish
