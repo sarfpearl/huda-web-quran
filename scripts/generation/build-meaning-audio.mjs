@@ -18,6 +18,7 @@
 //    node scripts/generation/build-meaning-audio.mjs --surah=1-114 --voice=all --lang=all
 //    node scripts/generation/build-meaning-audio.mjs --manifest   # after the upload
 //  then: node scripts/tools/upload-to-r2.mjs --category=audio-meaning --execute
+//  and:  node scripts/generation/build-meaning-stops.mjs   # where each reciter's ayah ends
 //
 //  Flags:
 //    --surah=N | N-M      Surahs (default 1-114)
