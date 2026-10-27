@@ -302,6 +302,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const meaningAudioRef = useRef<HTMLAudioElement | null>(null);
   const meaningRef = useRef<{ key: string; then: "resume" | "advance" } | null>(null);
   const meaningUnlockedRef = useRef(false);
+  // Safari lets each element start by itself only once a tap has started it:
+  // when the meaning's own element is refused, the recitation's element (the
+  // tap started it) reads the clip instead. `src` / `at`: the recitation's
+  // file and where it waits; `restoring`: being loaded back.
+  const trackSwapRef = useRef<{ src: string; at: number; restoring: boolean; play: boolean } | null>(null);
   const ayahMeaningRef = useRef<((index: number | null) => { url: string; key: string } | null) | null>(null);
   // The sequence index whose meaning was just read (its onEnded goes on);
   // TRACK_MEANING_DONE: a whole-Surah track's last ayah.
@@ -514,10 +519,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   // Stop a meaning clip without going on (the listener moved elsewhere).
   // True when one was playing.
+  // A clip read on the recitation's element is stopped there (the caller
+  // loads the recitation, or restoreTrack does).
   const cancelMeaning = useCallback((): boolean => {
+    const swap = trackSwapRef.current;
+    trackSwapRef.current = null;
+    if (swap) forcedSeekPendingRef.current = false;
     if (!meaningRef.current) return false;
     meaningRef.current = null;
     setMeaningClip(null);
+    if (swap && !swap.restoring) audioRef.current?.pause();
     const mel = meaningAudioRef.current;
     if (mel) {
       mel.pause();
@@ -525,6 +536,37 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       mel.load();
     }
     return true;
+  }, []);
+
+  // Loads the recitation back onto its element after a clip read there, and
+  // goes on from `at` (raw element time) once it can seek.
+  const restoreTrack = useCallback((swap: { src: string; at: number; restoring: boolean; play: boolean }, at: number, play: boolean) => {
+    const el = audioRef.current;
+    if (!el) return;
+    swap.at = at;
+    swap.play = play;
+    trackSwapRef.current = swap;
+    // The clock and the screen wait until the recitation is back.
+    forcedSeekPendingRef.current = true;
+    if (swap.restoring) return;
+    swap.restoring = true;
+    el.src = swap.src;
+    el.load();
+    el.addEventListener(
+      "loadedmetadata",
+      () => {
+        if (trackSwapRef.current !== swap) return;
+        trackSwapRef.current = null;
+        try {
+          el.currentTime = swap.at;
+        } catch {
+          /* ignore */
+        }
+        forcedSeekPendingRef.current = false;
+        if (swap.play) el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      },
+      { once: true },
+    );
   }, []);
 
   // iOS lets an element start without a tap only once one has started it
@@ -1022,7 +1064,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     userPausedRef.current = true;
     interruptedRef.current = 0;
     if (meaningRef.current) {
-      meaningAudioRef.current?.pause();
+      (trackSwapRef.current ? audioRef.current : meaningAudioRef.current)?.pause();
       setIsPlaying(false);
       return;
     }
@@ -1039,7 +1081,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     userPausedRef.current = false;
     interruptedRef.current = 0;
     unlockMeaning();
-    const mel = meaningAudioRef.current;
+    const mel = trackSwapRef.current ? audioRef.current : meaningAudioRef.current;
     if (meaningRef.current && mel) {
       mel.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       return;
@@ -1083,6 +1125,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const seek = useCallback((seconds: number) => {
     // A seek during a meaning clip goes straight there (the recitation waited),
     // and that ayah's meaning is read again at its end.
+    const swap = trackSwapRef.current;
     const wasInMeaning = cancelMeaning();
     meaningCueReadRef.current = null;
     meaningSeekFloorRef.current = Math.max(0, seconds);
@@ -1101,16 +1144,21 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!el) return;
     const offset = currentTrimOffsetRef.current;
     const target = Math.max(0, seconds) + offset;
+    setCurrentTime(Math.max(0, seconds));
+    // The meaning was read on the recitation's element: load it back there.
+    if (swap) {
+      restoreTrack(swap, target, isPlaying);
+      return;
+    }
     try {
       el.currentTime = target;
     } catch {
       /* ignore */
     }
-    setCurrentTime(Math.max(0, seconds));
     if ((wasInPrelude || wasInMeaning) && isPlaying) {
       el.play().catch(() => setIsPlaying(false));
     }
-  }, [isPlaying, cancelMeaning]);
+  }, [isPlaying, cancelMeaning, restoreTrack]);
 
   const playFromQueue = useCallback(
     (index: number) => {
@@ -1567,15 +1615,43 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const finishMeaning = useCallback(() => {
     const m = meaningRef.current;
     if (!m) return;
+    const swap = trackSwapRef.current;
     cancelMeaning();
+    const el = audioRef.current;
     if (m.then === "advance") {
+      // The clip is still on the element: a later play loads the track again.
+      if (swap) el?.removeAttribute("src");
       meaningDoneRef.current = ayahSeqRef.current?.index ?? TRACK_MEANING_DONE;
       onEndedRef.current();
       return;
     }
-    const el = audioRef.current;
+    if (swap) {
+      restoreTrack(swap, swap.at, true);
+      return;
+    }
     el?.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-  }, [cancelMeaning]);
+  }, [cancelMeaning, restoreTrack]);
+
+  // The meaning's own element was refused (Safari: no tap has started it) or
+  // failed: read the clip on the recitation's element, which may play.
+  const meaningOnTrack = useCallback(
+    (url: string, key: string) => {
+      const el = audioRef.current;
+      const src = el?.getAttribute("src");
+      if (!el || !src || meaningRef.current?.key !== key || trackSwapRef.current) {
+        finishMeaning();
+        return;
+      }
+      console.warn("[Huda Audio] Meaning clip refused on its own element, reading it on the recitation's");
+      meaningAudioRef.current?.pause();
+      trackSwapRef.current = { src, at: el.currentTime, restoring: false, play: true };
+      forcedSeekPendingRef.current = true;
+      el.src = url;
+      el.load();
+      el.play().catch(() => finishMeaning());
+    },
+    [finishMeaning]
+  );
 
   const startMeaning = useCallback(
     (url: string, key: string, then: "resume" | "advance", resumeAt?: number, showAt?: number) => {
@@ -1590,8 +1666,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       } else if (mel.currentTime > 0) {
         mel.currentTime = 0;
       }
-      // Can't start (no tap yet on iOS, say): carry on without it.
-      mel.play().catch(() => finishMeaning());
+      // Can't start (no tap has started this element): the recitation's reads it.
+      mel.play().catch(() => meaningOnTrack(url, key));
       // Only now the recitation waits: iOS lets a clip start by itself more
       // readily while the page's audio is still playing.
       const el = audioRef.current;
@@ -1608,7 +1684,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         }
       }
     },
-    [finishMeaning]
+    [meaningOnTrack]
   );
 
   checkMeaningCueRef.current = (t) => {
@@ -1866,7 +1942,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // again that the sequence had already handed over from (the standby, or
   // the main one while the prelude plays): two recitations at once. Any
   // element that starts while it isn't the one in use is stopped.
+  // The recitation's element reading a meaning clip (see meaningOnTrack).
+  const readingMeaning = (el: HTMLAudioElement) => el === audioRef.current && Boolean(trackSwapRef.current && !trackSwapRef.current.restoring && meaningRef.current);
   const strayStarted = (el: HTMLAudioElement) => {
+    if (readingMeaning(el)) return false;
     const stray = el !== audioRef.current || (isPreludeRef.current && !preludeAudioRef.current?.paused) || meaningRef.current !== null;
     // unlockStandby's muted silent clip pauses itself.
     if (stray && el.getAttribute("src") !== SILENT_WAV) el.pause();
@@ -1917,8 +1996,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       const offset = currentTrimOffsetRef.current;
       setDuration(Math.max(0, rawDur - offset));
     }),
-    onEnded: fromActive(onEnded),
-    onError: fromActive(onError),
+    onEnded: fromActive((e) => (readingMeaning(e.currentTarget) ? finishMeaning() : onEnded())),
+    onError: fromActive((e) => (readingMeaning(e.currentTarget) ? finishMeaning() : onError())),
   };
 
   return (
@@ -1975,8 +2054,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           if (!meaningRef.current && e.currentTarget.getAttribute("src") !== SILENT_WAV) e.currentTarget.pause();
         }}
         onEnded={finishMeaning}
-        // A missing clip just skips its meaning.
-        onError={() => { if (meaningRef.current) finishMeaning(); }}
+        // A clip this element can't play: the recitation's tries it (a
+        // missing one just skips its meaning).
+        onError={(e) => {
+          const m = meaningRef.current;
+          const url = e.currentTarget.getAttribute("src");
+          if (m && url && !trackSwapRef.current) meaningOnTrack(url, m.key);
+        }}
       />
 
       {/* Persistent HTML5 audio elements for direct local MP3 audio (A is the
