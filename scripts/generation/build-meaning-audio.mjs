@@ -146,7 +146,7 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 // with it (a paragraph, and even a one-line "Say in a calm voice: …").
 const prompt = (text) => text;
 
-/** 16-bit PCM from Gemini → mono MP3 (48 kbps, small and clear for speech). */
+/** 16-bit PCM (see toPcm) → mono MP3 (48 kbps, small and clear for speech). */
 function encodeMp3(pcm, sampleRate, outFile) {
   return new Promise((resolve, reject) => {
     const ff = spawn("ffmpeg", [
@@ -164,6 +164,30 @@ function encodeMp3(pcm, sampleRate, outFile) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Gemini sends either raw 16-bit PCM ("audio/L16;rate=24000") or a whole WAV
+ * file ("audio/wav") whose trailing C2PA chunk — read as samples — plays as
+ * ~0.3 s of loud noise. Return just the samples and their rate.
+ */
+function toPcm(buf, mimeType = "") {
+  if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WAVE") {
+    return { pcm: buf, rate: Number(/rate=(\d+)/.exec(mimeType)?.[1] ?? 24000) };
+  }
+  let rate = 24000;
+  for (let o = 12; o + 8 <= buf.length; ) {
+    const id = buf.toString("ascii", o, o + 4);
+    const size = buf.readUInt32LE(o + 4);
+    if (id === "fmt ") {
+      if (buf.readUInt16LE(o + 8) !== 1 || buf.readUInt16LE(o + 10) !== 1 || buf.readUInt16LE(o + 22) !== 16)
+        throw new Error("WAV is not 16-bit mono PCM");
+      rate = buf.readUInt32LE(o + 12);
+    }
+    if (id === "data") return { pcm: buf.subarray(o + 8, o + 8 + size), rate };
+    o += 8 + size + (size & 1);
+  }
+  throw new Error("WAV has no data chunk");
+}
+
 async function synthesize(voice, lang, text) {
   for (let attempt = 1; ; attempt++) {
     try {
@@ -179,8 +203,8 @@ async function synthesize(voice, lang, text) {
       });
       const part = res.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
       if (!part) throw new Error(`no audio in the response (${res.candidates?.[0]?.finishReason ?? "?"})`);
-      const rate = Number(/rate=(\d+)/.exec(part.inlineData.mimeType ?? "")?.[1] ?? 24000);
-      return { pcm: Buffer.from(part.inlineData.data, "base64"), rate, usage: res.usageMetadata ?? {} };
+      const { pcm, rate } = toPcm(Buffer.from(part.inlineData.data, "base64"), part.inlineData.mimeType);
+      return { pcm, rate, usage: res.usageMetadata ?? {} };
     } catch (e) {
       const status = e?.status ?? e?.code;
       const retry = attempt < 6 && (status === 429 || status >= 500 || /fetch failed|ECONNRESET|no audio/i.test(String(e?.message)));
