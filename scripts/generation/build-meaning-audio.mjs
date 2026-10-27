@@ -9,7 +9,10 @@
 //    assets/audio/meaning/v1/<voice>/<lang>/<SSS><AAA>.mp3   (git-ignored)
 //    assets/audio/meaning/v1/ledger.jsonl                    (tokens per clip)
 //
-//  Usage (GEMINI_API_KEY in the environment — never commit it):
+//  Usage (GEMINI_API_KEY in the environment — never commit it — or, in a
+//  Claude Code cloud session, a Network secret for
+//  generativelanguage.googleapis.com, header x-goog-api-key, no prefix: the
+//  proxy adds the key to each request and the script sends a placeholder):
 //    node scripts/generation/build-meaning-audio.mjs --estimate
 //    node scripts/generation/build-meaning-audio.mjs --surah=1 --voice=cruz --lang=ta   # pilot
 //    node scripts/generation/build-meaning-audio.mjs --surah=1-114 --voice=all --lang=all
@@ -132,8 +135,8 @@ if (args.manifest) {
 }
 
 // ── generate ───────────────────────────────────────────────────────────────
-const API_KEY = process.env.GEMINI_API_KEY;
-if (!API_KEY) fail("GEMINI_API_KEY is not set.");
+// No key here: the cloud session's proxy adds the real one (see Usage).
+const API_KEY = process.env.GEMINI_API_KEY || "proxy-injected";
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const prompt = (lang, text) =>
