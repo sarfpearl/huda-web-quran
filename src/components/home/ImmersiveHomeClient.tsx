@@ -869,37 +869,33 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     const url = meaningOn ? meaningAudioUrl(meaningPrefs.voice, translationLang, surah, ayah) : null;
     return url ? { url, key: `${surah}:${ayah}` } : null;
   };
-  // Whole-Surah track: the ayah whose meaning was read last. The screen holds
-  // on that ayah while it plays, so the recitation going on afterwards passes
-  // its end once more — and the track may end right there too: not again.
+  // Whole-Surah track: the ayah whose meaning was read last. The recitation
+  // goes on from inside that ayah afterwards, and the track may end right
+  // there too: not again.
   const lastMeaningRef = useRef<string | null>(null);
 
-  // Whole-Surah track: the recitation moving past an ayah's end (by playing,
-  // not a seek) waits there for its meaning. Needs word timings — an Audio
-  // Only reciter's ayah ends are estimates.
-  const { playMeaning, setAyahMeaning } = player;
-  const prevSegmentRef = useRef(currentSegment);
+  // Whole-Surah track: the player stops the recitation just after the ayah's
+  // last word (a cue it checks every frame, so the next ayah's first sound
+  // doesn't slip out) and reads its meaning there. Needs word timings — an
+  // Audio Only reciter's ayah ends are estimates.
+  const { setMeaningCue, setAyahMeaning } = player;
+  const meaningKeyNow = player.meaningClip?.key ?? null;
   useEffect(() => {
-    const prev = prevSegmentRef.current;
-    prevSegmentRef.current = currentSegment;
-    if (!prev || prev.id === currentSegment?.id) return;
-    const t = player.currentTime;
-    const playedOn =
-      prev.type === "ayah" && Boolean(prev.ayahNumber) && !isJuz && Boolean(activeSurah) && hasWordTiming &&
-      player.isPlaying && !player.isPrelude && !player.meaningClip &&
-      t >= prev.endTime - 0.05 && t <= prev.endTime + 1.5;
-    if (!playedOn) {
-      // A seek or a tap elsewhere: that ayah's meaning may be read again.
-      if (!player.meaningClip) lastMeaningRef.current = null;
-      return;
-    }
-    const m = meaningFor(activeSurah!.number, prev.ayahNumber!);
-    if (!m || m.key === lastMeaningRef.current) return;
-    lastMeaningRef.current = m.key;
-    playMeaning(m.url, m.key, prev.endTime);
-    // Runs on the ayah changing only; the rest is read as it is then.
+    if (meaningKeyNow) lastMeaningRef.current = meaningKeyNow;
+  }, [meaningKeyNow]);
+  const cueSegment =
+    !isJuz && activeSurah && hasWordTiming && currentSegment?.type === "ayah" && currentSegment.ayahNumber ? currentSegment : null;
+  const cueMeaning = cueSegment ? meaningFor(cueSegment.surahNumber ?? activeSurah!.number, cueSegment.ayahNumber!) : null;
+  const lastWordEnd = cueSegment?.words?.length ? Math.max(...cueSegment.words.map((w) => w.endTime)) : null;
+  // A breath after the last word, never past the ayah's own end.
+  const cueAt = cueSegment ? Math.min(cueSegment.endTime, lastWordEnd !== null ? lastWordEnd + 0.15 : cueSegment.endTime) : 0;
+  useEffect(() => {
+    // Another ayah: the one read last may be read again (a seek back to it).
+    if (cueMeaning?.key !== lastMeaningRef.current) lastMeaningRef.current = null;
+    setMeaningCue(cueMeaning && cueMeaning.key !== lastMeaningRef.current ? { at: cueAt, ...cueMeaning } : null);
+    return () => setMeaningCue(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSegment?.id]);
+  }, [setMeaningCue, cueSegment?.id, cueMeaning?.url, cueAt]);
 
   // The player asks at the end of each per-ayah Juz clip (`index`), and when
   // a whole-Surah track ends (null: its last ayah).

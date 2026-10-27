@@ -73,6 +73,13 @@ interface AudioPlayerState {
   endMode: EndMode;
 }
 
+/** An ayah's meaning, read when a whole-Surah track reaches `at`. */
+export interface MeaningCue {
+  at: number;
+  url: string;
+  key: string;
+}
+
 /** The meaning clip playing: `key` is the page's own (e.g. "2:255"). */
 export interface MeaningClipState {
   key: string;
@@ -133,11 +140,13 @@ interface AudioPlayerApi extends AudioPlayerState {
   /** Per-ayah sequence: what Next does on its last ayah (the next Juz). */
   setAyahSequenceNext: (fn: (() => void) | null) => void;
   /**
-   * Whole-Surah track: pause the recitation and read an ayah's meaning, then
-   * carry on from `resumeAt` (seconds on the track timeline — the end of the
-   * ayah just recited; the screen stays on that ayah meanwhile).
+   * Whole-Surah track: where the recitation stops for an ayah's meaning —
+   * `at` (seconds on the track timeline, just after the ayah's last word) —
+   * then carries on from there. Checked every frame, so no sound of the next
+   * ayah slips out first (the page's ~4 Hz clock let ~0.2 s through). Passing
+   * `at` by a seek skips it. Null = none.
    */
-  playMeaning: (url: string, key: string, resumeAt: number) => void;
+  setMeaningCue: (cue: MeaningCue | null) => void;
   /** The meaning clip read after ayah `index` of a per-ayah sequence — or,
    *  with null, after a whole-Surah track's last ayah — if any. */
   setAyahMeaning: (fn: ((index: number | null) => { url: string; key: string } | null) | null) => void;
@@ -171,6 +180,8 @@ const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
 
 /** meaningDoneRef: a whole-Surah track's last-ayah meaning has been read. */
 const TRACK_MEANING_DONE = -2;
+/** A meaning cue fires this early (s): a frame, and the output's latency. */
+const MEANING_CUE_LEAD = 0.03;
 
 /** Retries of a failed stream (same URL, same position) before giving up. */
 const MAX_STREAM_RETRIES = 3;
@@ -291,6 +302,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const setAyahMeaning = useCallback((fn: ((index: number | null) => { url: string; key: string } | null) | null) => {
     ayahMeaningRef.current = fn;
   }, []);
+  const meaningCueRef = useRef<MeaningCue | null>(null);
+  const setMeaningCue = useCallback((cue: MeaningCue | null) => {
+    meaningCueRef.current = cue;
+  }, []);
+  // Starts the cue's meaning once the clock `t` reaches it (set below).
+  const checkMeaningCueRef = useRef<(t: number) => boolean>(() => false);
   // One-shot start position for the next loadCurrent (see playBayan opts).
   const pendingStartAtRef = useRef<StartAt | null>(null);
   // True between loading a track with a forced start and applying it — the
@@ -543,6 +560,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       pendingStartAtRef.current = null;
       forcedSeekPendingRef.current = false;
       cancelMeaning();
+      meaningCueRef.current = null;
       meaningDoneRef.current = -1;
       setError(null);
       retryCountRef.current = 0;
@@ -1455,6 +1473,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!isPlaying) return;
     let raf = 0;
     const frame = () => {
+      if (meaningCueRef.current && !forcedSeekPendingRef.current && !isPreludeRef.current) {
+        const el = audioRef.current;
+        if (el && !el.paused) checkMeaningCueRef.current(el.currentTime - currentTrimOffsetRef.current);
+      }
       const b = timeBoundaryRef.current;
       if (b !== null && !forcedSeekPendingRef.current) {
         if (isPreludeRef.current) {
@@ -1490,6 +1512,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     const offset = currentTrimOffsetRef.current;
     const effectiveTime = Math.max(0, el.currentTime - offset);
+    // A background tab gets no animation frames: the meaning cue is caught here.
+    if (!el.paused && checkMeaningCueRef.current(effectiveTime)) return;
     setCurrentTime(effectiveTime);
     if (el.currentTime > 0) lastRawTimeRef.current = el.currentTime;
     // Playing well again for 30s since a recovery: later glitches get
@@ -1554,13 +1578,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     [finishMeaning]
   );
 
-  const playMeaning = useCallback(
-    (url: string, key: string, resumeAt: number) => {
-      if (ayahSeqRef.current || isPreludeRef.current || meaningRef.current) return;
-      startMeaning(url, key, "resume", resumeAt);
-    },
-    [startMeaning]
-  );
+  checkMeaningCueRef.current = (t) => {
+    const cue = meaningCueRef.current;
+    if (!cue || t < cue.at - MEANING_CUE_LEAD) return false;
+    meaningCueRef.current = null;
+    // Passed by a seek (or nothing to wait on): not this time.
+    if (t > cue.at + 0.5 || ayahSeqRef.current || isPreludeRef.current || meaningRef.current) return false;
+    startMeaning(cue.url, cue.key, "resume", cue.at);
+    return true;
+  };
 
   const onEnded = useCallback(() => {
     // Per-ayah Juz sequence: advance to the next ayah in the chosen voice.
@@ -1716,7 +1742,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       seek,
       next,
       setAyahSequenceNext,
-      playMeaning,
+      setMeaningCue,
       setAyahMeaning,
       unlockMeaning,
       previous,
@@ -1764,7 +1790,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       seek,
       next,
       setAyahSequenceNext,
-      playMeaning,
+      setMeaningCue,
       setAyahMeaning,
       unlockMeaning,
       previous,
