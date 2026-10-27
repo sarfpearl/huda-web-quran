@@ -23,6 +23,8 @@
 //    --surah=N | N-M      Surahs (default 1-114)
 //    --voice=cruz|lora|all, --lang=en|ta|all   (default all)
 //    --concurrency=N      requests at once (default 4)
+//    --max-usd=N          stop starting new clips once this run has spent $N
+//                         (default 2 — raise it for a big run; see --estimate)
 //    --estimate           characters, hours of audio and cost; no API calls
 //    --manifest           write src/lib/data/meaningAudioManifest.json: the
 //                         Surahs with every ayah's clip on disk (upload first)
@@ -81,6 +83,7 @@ const [fromSurah, toSurah] = String(args.surah ?? "1-114").split("-").map(Number
 const surahs = range(fromSurah, Number.isFinite(toSurah) ? toSurah : fromSurah);
 if (!surahs.length || surahs[0] < 1 || surahs.at(-1) > 114) fail(`Bad --surah "${args.surah}".`);
 const concurrency = Math.max(1, Number(args.concurrency ?? 4));
+const maxUsd = Number(args["max-usd"] ?? 2);
 
 function fail(msg) {
   console.error(`\n❌ ${msg}\n`);
@@ -139,9 +142,9 @@ if (args.manifest) {
 const API_KEY = process.env.GEMINI_API_KEY || "proxy-injected";
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-// Keep the direction to one short "Say …:" line — the TTS model read a longer
-// instruction paragraph aloud along with the verse.
-const prompt = (text) => `Say in a calm, warm and respectful voice, at a gentle pace: ${text}`;
+// The verse text alone: the TTS model read any style direction aloud along
+// with it (a paragraph, and even a one-line "Say in a calm voice: …").
+const prompt = (text) => text;
 
 /** 16-bit PCM from Gemini → mono MP3 (48 kbps, small and clear for speech). */
 function encodeMp3(pcm, sampleRate, outFile) {
@@ -203,9 +206,16 @@ let failed = 0;
 let audioTokens = 0;
 let inputTokens = 0;
 const started = Date.now();
+let stopped = false;
+const spentUsd = () => (audioTokens * PRICE.audio + inputTokens * PRICE.input) / 1e6;
 
 async function worker() {
   while (jobs.length) {
+    if (spentUsd() >= maxUsd) {
+      if (!stopped) console.warn(`  ⛔ $${maxUsd} budget reached — stopping (raise --max-usd to go on).`);
+      stopped = true;
+      return;
+    }
     const job = jobs.shift();
     const key = `${job.voice}/${job.lang}/${job.s}:${job.a}`;
     try {
@@ -237,7 +247,7 @@ async function worker() {
 }
 
 function progress() {
-  const usd = (audioTokens * PRICE.audio + inputTokens * PRICE.input) / 1e6;
+  const usd = spentUsd();
   const mins = ((Date.now() - started) / 60000).toFixed(1);
   console.log(`  ${done} done, ${failed} failed, ${jobs.length} left · ${mins} min · $${usd.toFixed(3)} so far`);
 }
@@ -245,4 +255,5 @@ function progress() {
 await mkdir(OUT_ROOT, { recursive: true });
 await Promise.all(Array.from({ length: concurrency }, worker));
 progress();
-console.log(failed ? `\n⚠️  ${failed} failed — run again to retry them.\n` : "\n✅ Done.\n");
+if (stopped) console.log(`\n⛔ Stopped at the $${maxUsd} budget — ${jobs.length} clips left.\n`);
+else console.log(failed ? `\n⚠️  ${failed} failed — run again to retry them.\n` : "\n✅ Done.\n");
