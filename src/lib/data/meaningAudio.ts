@@ -63,16 +63,19 @@ export function meaningStopsFor(reciterId: string, surah: number): number[] | nu
 export interface MeaningAudioPrefs {
   on: boolean;
   voice: MeaningVoice;
+  /** Meaning only: the meanings one after another, no recitation. */
+  only: boolean;
 }
 
 const PREFS_KEY = "huda:meaning-audio";
-const DEFAULT_PREFS: MeaningAudioPrefs = { on: false, voice: "cruz" };
+const DEFAULT_PREFS: MeaningAudioPrefs = { on: false, voice: "cruz", only: false };
 
 function readPrefs(): MeaningAudioPrefs {
   try {
     const p = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "null") as Partial<MeaningAudioPrefs> | null;
     return {
       on: p?.on === true,
+      only: p?.only === true,
       voice: MEANING_VOICES.some((v) => v.id === p?.voice) ? (p!.voice as MeaningVoice) : DEFAULT_PREFS.voice,
     };
   } catch {

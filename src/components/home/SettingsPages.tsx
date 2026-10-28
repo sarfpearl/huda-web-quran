@@ -156,8 +156,8 @@ export function TranslationPage() {
       <div className={GROUP}>
         <Switch on={s.showMeaning} label={t(lang, "Show translation")} onToggle={s.onToggleMeaning} />
       </div>
-      {/* Off = Arabic only: the meaning voice and the languages show once it's on. */}
-      {s.showMeaning && s.meaningAudio && <MeaningAudioGroup {...s.meaningAudio} supported={isMeaningLang(s.translationLang)} />}
+      {/* Off = Arabic only: the meaning voice shows, greyed out; the languages once it's on. */}
+      {s.meaningAudio && <MeaningAudioGroup {...s.meaningAudio} supported={isMeaningLang(s.translationLang)} disabled={!s.showMeaning} />}
       {s.showMeaning && (
       <div role="radiogroup" aria-label={t(lang, "Translation language")} className="space-y-1.5">
         {TRANSLATIONS.map((c) => {

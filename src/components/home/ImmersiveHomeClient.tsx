@@ -856,6 +856,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     ? {
         on: meaningPrefs.on,
         voice: meaningPrefs.voice,
+        only: meaningPrefs.only,
         onToggle: () => {
           if (!meaningPrefs.on) player.unlockMeaning();
           setMeaningPrefs({ on: !meaningPrefs.on });
@@ -863,6 +864,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         onChooseVoice: (voice: MeaningVoice) => {
           player.unlockMeaning();
           setMeaningPrefs({ voice });
+        },
+        onChooseOnly: (only: boolean) => {
+          player.unlockMeaning();
+          setMeaningPrefs({ only });
         },
       }
     : undefined;
@@ -884,14 +889,19 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     if (!cueSurah) return null;
     const stops = meaningStopsFor(selectedReciter.id, cueSurah.number);
     const cues: MeaningCue[] = [];
+    // (Not the previous Surah's segments, still there for a moment: their
+    // times would place this Surah's meanings at the wrong ayahs.)
+    const own = `ayah-${cueSurah.number}:`;
     for (const g of segments) {
-      if (g.type !== "ayah" || !g.ayahNumber || g.ayahNumber >= cueSurah.verses) continue;
+      if (g.type !== "ayah" || !g.ayahNumber || g.ayahNumber >= cueSurah.verses || !g.id.startsWith(own)) continue;
       const m = meaningFor(cueSurah.number, g.ayahNumber);
       if (!m) continue;
       const lastWordEnd = g.words?.length ? Math.max(...g.words.map((w) => w.endTime)) : g.endTime;
       const at = stops?.[g.ayahNumber - 1] ?? Math.min(g.endTime, lastWordEnd + 0.15);
       // The screen stays on this ayah meanwhile (`at` can lie past its end).
-      cues.push({ ...m, at, showAt: Math.max(g.startTime, Math.min(at, g.endTime) - 0.05) });
+      // Meaning only still recites Al-Fatihah's first ayah, its Bismillah.
+      const recite = cueSurah.number === 1 && g.ayahNumber === 1;
+      cues.push({ ...m, at, showAt: Math.max(g.startTime, Math.min(at, g.endTime) - 0.05), recite });
     }
     return cues;
     // meaningFor reads meaningOn, the voice and the language.
@@ -919,6 +929,45 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     setAyahMeaning((index) => meaningAtEndRef.current(index));
     return () => setAyahMeaning(null);
   }, [setAyahMeaning]);
+
+  // Meaning only: the player skips the recitation and reads each ayah's
+  // meaning in turn — where every ayah has one: a whole-Surah track with its
+  // cues (Word Sync), or a per-ayah Juz all of whose Surahs have clips.
+  // Known before the cues load, so the next Surah's recitation stays silent.
+  const meaningOnlyWanted = meaningOn && meaningPrefs.only;
+  const meaningOnlyActive =
+    meaningOnlyWanted &&
+    (isJuz
+      ? Boolean(activeJuz && player.ayahSequence) &&
+        getJuzAyahPairs(activeJuz!.id).every(([s]) => hasMeaningAudio(meaningPrefs.voice, translationLang, s))
+      : Boolean(
+          activeSurah &&
+            reciterHasWordTimingFor(selectedReciter, activeSurah.number) &&
+            hasMeaningAudio(meaningPrefs.voice, translationLang, activeSurah.number)
+        ));
+  const { setMeaningOnly, setBismillahMeaning } = player;
+  useEffect(() => {
+    setMeaningOnly(meaningOnlyActive);
+  }, [setMeaningOnly, meaningOnlyActive]);
+  // A Surah opens with the Bismillah recited, then its meaning (1:1's clip).
+  const bismillahUrl = meaningOnlyActive ? meaningAudioUrl(meaningPrefs.voice, translationLang, 1, 1) : null;
+  useEffect(() => {
+    setBismillahMeaning(bismillahUrl ? { url: bismillahUrl, key: "bismillah" } : null);
+  }, [setBismillahMeaning, bismillahUrl]);
+  useEffect(() => () => setMeaningOnly(false), [setMeaningOnly]);
+  // Wanted where it can't be: say once that the recitation plays instead
+  // (no Word Sync in this voice has its own notice, below).
+  const meaningOnlyGapKey =
+    meaningOnlyWanted && !meaningOnlyActive && (isJuz ? activeJuz?.id : activeSurah && reciterHasWordTimingFor(selectedReciter, activeSurah.number) && activeSurah.number)
+      ? `${isJuz ? "juz" : "surah"}-${isJuz ? activeJuz?.id : activeSurah?.number}`
+      : null;
+  const lastMeaningOnlyGapRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!meaningOnlyGapKey || !player.isPlaying || lastMeaningOnlyGapRef.current === meaningOnlyGapKey) return;
+    lastMeaningOnlyGapRef.current = meaningOnlyGapKey;
+    showNotice(t(language, "Meaning only isn't ready for this Surah yet — reciting."));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meaningOnlyGapKey, player.isPlaying]);
 
   // A Surah without word timings in this voice: say once why it stays silent.
   const meaningGapKey =

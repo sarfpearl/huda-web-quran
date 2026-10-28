@@ -6,15 +6,17 @@ import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/se
 import { MEANING_VOICES, type MeaningVoice } from "@/lib/data/meaningAudio";
 
 /*
- * "Read the meaning aloud" + Male / Female: in Settings › Translation and in
+ * "Read the meaning aloud" + Ayah + meaning / Meaning only + Male / Female: in Settings › Translation and in
  * the header's translation sheet (the same preferences).
  */
 
 export interface MeaningAudioSettings {
   on: boolean;
   voice: MeaningVoice;
+  only: boolean;
   onToggle: () => void;
   onChooseVoice: (v: MeaningVoice) => void;
+  onChooseOnly: (only: boolean) => void;
 }
 
 const GROUP = "rounded-2xl border border-white/10 bg-white/5 px-4 py-3";
@@ -44,23 +46,45 @@ export function Switch({ on, label, sub, onToggle, disabled }: { on: boolean; la
 export function MeaningAudioGroup({
   on,
   voice,
+  only,
   onToggle,
   onChooseVoice,
+  onChooseOnly,
   supported,
+  disabled = false,
   className,
-}: MeaningAudioSettings & { supported: boolean; className?: string }) {
+}: MeaningAudioSettings & { supported: boolean; disabled?: boolean; className?: string }) {
   const lang = useUiLang();
+  // `disabled` (the translation is off), or the voice off: the choices still
+  // show, greyed out.
+  const choices = cn(TAB_TRACK, "mt-3", (disabled || !on) && "pointer-events-none opacity-50");
   return (
-    <div className={cn(GROUP, className)}>
+    <div className={cn(GROUP, className)} aria-disabled={disabled || undefined}>
       <Switch
         on={on && supported}
         label={t(lang, "Read the meaning aloud")}
-        sub={t(lang, supported ? "After each ayah, in the voice you choose." : "English and Tamil only, for now.")}
+        sub={t(lang, !supported ? "English and Tamil only, for now." : on && only ? "One ayah's meaning after another, without the recitation." : "After each ayah, in the voice you choose.")}
         onToggle={onToggle}
-        disabled={!supported}
+        disabled={disabled || !supported}
       />
-      {on && supported && (
-        <div role="radiogroup" aria-label={t(lang, "Voice")} className={cn(TAB_TRACK, "mt-3")}>
+      {supported && (
+        <div role="radiogroup" aria-label={t(lang, "Read the meaning aloud")} className={choices}>
+          {[false, true].map((o) => (
+            <button
+              key={String(o)}
+              type="button"
+              role="radio"
+              aria-checked={only === o}
+              onClick={() => only !== o && onChooseOnly(o)}
+              className={cn(TAB, only === o ? SELECTED_TAB : UNSELECTED_TAB)}
+            >
+              {t(lang, o ? "Meaning only" : "Ayah + meaning")}
+            </button>
+          ))}
+        </div>
+      )}
+      {supported && (
+        <div role="radiogroup" aria-label={t(lang, "Voice")} className={choices}>
           {MEANING_VOICES.map((v) => (
             <button
               key={v.id}

@@ -245,7 +245,6 @@ export function ImmersiveHeader({
           open={translationSheetOpen}
           onClose={() => setTranslationSheetOpen(false)}
           label={t(language, "Choose the translation language")}
-          flush
         >
           {/* Laid out like the reciter picker: title bar, search, list of cards */}
           <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
@@ -267,12 +266,12 @@ export function ImmersiveHeader({
             </div>
           </div>
           {/* The same switches as Settings › Translation. Off = Arabic only:
-              the meaning voice and the languages show once it's on. */}
+              the meaning voice shows, greyed out; the languages once it's on. */}
           <div className="mb-3 space-y-2.5">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <Switch on={showMeaning} label={t(language, "Show translation")} onToggle={() => onToggleMeaning?.()} />
             </div>
-            {showMeaning && meaningAudio && <MeaningAudioGroup {...meaningAudio} supported={isMeaningLang(translationLang)} />}
+            {meaningAudio && <MeaningAudioGroup {...meaningAudio} supported={isMeaningLang(translationLang)} disabled={!showMeaning} />}
           </div>
           {showMeaning && (
           <>
@@ -289,7 +288,7 @@ export function ImmersiveHeader({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar pb-[env(safe-area-inset-bottom)]" role="radiogroup" aria-label={t(language, "Translation language")}>
+          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar" role="radiogroup" aria-label={t(language, "Translation language")}>
             {langChoices.length === 0 && (
               <p className={`py-6 text-center text-xs text-sand-300/60`}>
                 {t(language, "No language found for “{q}”", { q: langQuery.trim() })}
