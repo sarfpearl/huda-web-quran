@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
-import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
+import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, KeyboardMicIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
 import { playClick } from "@/lib/clickSound";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
@@ -414,10 +414,10 @@ export function TopicPickerModal({
     // iOS: always open the keyboard and point to its own dictation — it
     // catches Surah names well, and iOS Safari gives a page's second Web
     // Speech search a mic with only silence (WebKit bug; checked on the
-    // owner's iPhone 13, iOS 27.0.1). A page can't press the keyboard 🎤 itself.
+    // owner's iPhone 13, iOS 27.0.1). A page can't press the keyboard mic itself.
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (isIos || !Ctor) {
-      // Still inside the tap, so iOS opens the keyboard (and its 🎤).
+      // Still inside the tap, so iOS opens the keyboard (and its mic).
       searchInputRef.current?.focus();
       showDictationHint();
       return;
@@ -1076,7 +1076,10 @@ export function TopicPickerModal({
                       role="status"
                       className="absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
                     >
-                      {t(lang, "Tap 🎤 on the keyboard to search by voice.")}
+                      {/* The keyboard's own mic, drawn where {mic} stands. */}
+                      {t(lang, "Tap {mic} on the keyboard to search by voice.")
+                        .split("{mic}")
+                        .flatMap((part, i) => (i ? [<KeyboardMicIcon key={i} className="mx-0.5 inline-block align-[-0.2em] text-[1.25em]" />, part] : [part]))}
                     </p>
                   )}
                   {!isFavourites && voiceSupported && (
