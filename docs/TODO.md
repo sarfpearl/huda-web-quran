@@ -85,6 +85,16 @@ never generate anything per Juz.
 8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
        scripts warns that later versions need Node ≥ 22 (now v20.20.0).
 9. [ ] Still open from before: the real-phone checks below.
+10. [ ] **Before the final app publish (owner's call, last step):** clear the
+       Supabase test data again, as on 2026-10-07 — views, live, likes and
+       comments from testing must not show on launch day. In the SQL editor:
+       ```sql
+       truncate public.quran_listens, public.quran_presence,
+         public.quran_ip_viewers, public.quran_likes,
+         public.quran_comments, public.quran_comment_likes;
+       ```
+       Keep `public.admins`. Check live after: view counts `{}`, comments
+       `total: 0`.
 
 **2026-10-25:** R2 re-encoded and cleaned (9.20 → 4.16 GB, 0 unused videos) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145, #147) — `HANDOFF.md` §2b. For each new Surah's sets: encode + upload, then `surah-set-registry.mjs` + `video-manifest.mjs`.
 
