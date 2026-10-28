@@ -112,7 +112,6 @@ export function ActionSheet({
   labelledBy,
   label,
   keepAttr,
-  flush,
 }: {
   open: boolean;
   onClose: () => void;
@@ -122,8 +121,6 @@ export function ActionSheet({
   label?: string;
   /** Extra data-* attribute to put on the sheet (e.g. an outside-press guard). */
   keepAttr?: string;
-  /** No bottom padding: a scrolling list runs to the edge (it pads its own end). */
-  flush?: boolean;
 }) {
   const drag = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -204,8 +201,9 @@ export function ActionSheet({
             <div
               className={cn(
                 "flex min-h-0 flex-1 flex-col px-4",
-                // The sheet itself sits above the home indicator.
-                flush ? "" : kb.bottom > 0 ? "pb-3" : "pb-[max(1rem,env(safe-area-inset-bottom))]",
+                // Every sheet keeps a gap at its bottom, above the home indicator
+                // (a scrolling list included: it ends above the gap).
+                kb.bottom > 0 ? "pb-3" : "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]",
               )}
             >
               {children}

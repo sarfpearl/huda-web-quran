@@ -32,7 +32,7 @@ BOX_PALETTE_ENTRY = 14
 
 
 def is_hollow_box(glyph_set, name: str) -> bool:
-    """Two closed contours of 4 straight points each, both axis-aligned rectangles."""
+    """Two closed contours of 4 straight points each, one just inside the other."""
     pen = RecordingPen()
     glyph_set[name].draw(pen)
     contours, current = [], None
@@ -45,17 +45,26 @@ def is_hollow_box(glyph_set, name: str) -> bool:
             return False
         elif op in ("closePath", "endPath"):
             contours.append(current)
-    if len(contours) != 2:
+    if len(contours) != 2 or any(len(c) != 4 for c in contours):
         return False
-    for c in contours:
-        if len(c) != 4 or len({p[0] for p in c}) != 2 or len({p[1] for p in c}) != 2:
-            return False
-    return True
+    a, b = (quad_bounds(c) for c in contours)
+    return thin_outline(a, b) or thin_outline(b, a)
+
+
+def quad_bounds(pts) -> tuple:
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def thin_outline(outer: tuple, inner: tuple) -> bool:
+    """`inner` sits just inside `outer` on every side (a thin outline)."""
+    margins = (inner[0] - outer[0], inner[1] - outer[1], outer[2] - inner[2], outer[3] - inner[3])
+    return all(0 < m < 60 for m in margins)
 
 
 def box_contours(glyph, glyf) -> set:
-    """Indexes of the contours that form hollow boxes: an axis-aligned 4-point
-    rectangle with another one just inside it (a thin outline)."""
+    """Indexes of the contours that form hollow boxes: a 4-point outline
+    (rectangle or parallelogram) with another one just inside it."""
     if glyph.isComposite() or glyph.numberOfContours <= 0:
         return set()
     coords, ends, _ = glyph.getCoordinates(glyf)
@@ -63,16 +72,12 @@ def box_contours(glyph, glyf) -> set:
     for i, end in enumerate(ends):
         pts = coords[start : end + 1]
         start = end + 1
-        xs, ys = {p[0] for p in pts}, {p[1] for p in pts}
-        if len(pts) == 4 and len(xs) == 2 and len(ys) == 2:
-            rects.append((i, min(xs), min(ys), max(xs), max(ys)))
+        if len(pts) == 4:
+            rects.append((i, quad_bounds(pts)))
     found = set()
     for outer in rects:
         for inner in rects:
-            if outer is inner:
-                continue
-            margins = (inner[1] - outer[1], inner[2] - outer[2], outer[3] - inner[3], outer[4] - inner[4])
-            if all(0 < m < 60 for m in margins):
+            if outer is not inner and thin_outline(outer[1], inner[1]):
                 found |= {outer[0], inner[0]}
     return found
 

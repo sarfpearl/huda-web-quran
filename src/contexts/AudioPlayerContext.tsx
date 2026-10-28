@@ -68,7 +68,26 @@ interface AudioPlayerState {
   preludeDuration: number;
   // Set while a Juz is playing per-ayah in a chosen reciter's voice.
   ayahSequence: AyahSequenceState | null;
+  /** Set while an ayah's meaning is read aloud (the recitation waits). */
+  meaningClip: MeaningClipState | null;
   endMode: EndMode;
+}
+
+/** An ayah's meaning, read when a whole-Surah track reaches `at`. */
+export interface MeaningCue {
+  at: number;
+  url: string;
+  key: string;
+  /** The clock the screen shows meanwhile (inside the ayah just recited:
+   *  `at` can lie past its timed end). Default: just before `at`. */
+  showAt?: number;
+  /** Meaning only: this ayah is still recited first (Al-Fatihah's Bismillah). */
+  recite?: boolean;
+}
+
+/** The meaning clip playing: `key` is the page's own (e.g. "2:255"). */
+export interface MeaningClipState {
+  key: string;
 }
 
 /** A short clip played before an ayah in a per-ayah Juz sequence. */
@@ -125,6 +144,30 @@ interface AudioPlayerApi extends AudioPlayerState {
   next: () => void;
   /** Per-ayah sequence: what Next does on its last ayah (the next Juz). */
   setAyahSequenceNext: (fn: (() => void) | null) => void;
+  /**
+   * Whole-Surah track: where the recitation stops for each ayah's meaning —
+   * `at` (seconds on the track timeline, between that ayah's voice and the
+   * next one's) — then carries on from there. Checked every frame, so no
+   * sound of the next ayah slips out first. Each is read once per pass: a
+   * seek (a tapped word) lets it be read again; passing `at` by a seek skips
+   * it. The last ayah's meaning comes with the track's end (setAyahMeaning).
+   */
+  setMeaningCues: (cues: MeaningCue[] | null) => void;
+  /** The meaning clip read after ayah `index` of a per-ayah sequence — or,
+   *  with null, after a whole-Surah track's last ayah — if any. */
+  setAyahMeaning: (fn: ((index: number | null) => { url: string; key: string } | null) | null) => void;
+  /** Call inside a tap that turns meaning audio on (iOS: lets it start later). */
+  unlockMeaning: () => void;
+  /**
+   * Meaning only: the recitation stays silent and only the meanings are read,
+   * one ayah after another — a whole-Surah track goes from cue to cue (the
+   * last ayah's at its end), a per-ayah sequence from meaning to meaning
+   * (no preludes). The page turns it on only where every ayah has a meaning.
+   */
+  setMeaningOnly: (on: boolean) => void;
+  /** Meaning only: the Bismillah's meaning, read after a Bismillah prelude
+   *  (the Surah's, or one before a Juz ayah) and before the first ayah's. */
+  setBismillahMeaning: (m: { url: string; key: string } | null) => void;
   previous: () => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
@@ -150,6 +193,16 @@ interface AudioPlayerApi extends AudioPlayerState {
 }
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
+
+type MeaningThen = "resume" | "advance" | "prelude";
+
+/** meaningDoneRef: a whole-Surah track's last-ayah meaning has been read. */
+const TRACK_MEANING_DONE = -2;
+/** A meaning cue fires this early (s): a frame, and the output's latency. */
+const MEANING_CUE_LEAD = 0.05;
+/** iOS Safari moves `currentTime` on only ~4× a second: between its steps the
+ *  clock is carried on from the wall clock, by at most this much (s). */
+const MAX_CLOCK_CARRY = 0.35;
 
 /** Retries of a failed stream (same URL, same position) before giving up. */
 const MAX_STREAM_RETRIES = 3;
@@ -257,6 +310,53 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const setAyahSequenceNext = useCallback((fn: (() => void) | null) => {
     ayahSeqNextRef.current = fn;
   }, []);
+  // Meaning audio: its own element, played between ayahs while the recitation
+  // waits — paused at the ayah's end (a whole-Surah track, "resume") or
+  // before the next ayah's clip (a per-ayah sequence, "advance").
+  const meaningAudioRef = useRef<HTMLAudioElement | null>(null);
+  // then: the recitation goes on ("resume"), the sequence's next clip
+  // ("advance"), or the Surah after its Bismillah prelude ("prelude").
+  const meaningRef = useRef<{ key: string; then: MeaningThen } | null>(null);
+  const meaningUnlockedRef = useRef(false);
+  const ayahMeaningRef = useRef<((index: number | null) => { url: string; key: string } | null) | null>(null);
+  // The sequence index whose meaning was just read (its onEnded goes on);
+  // TRACK_MEANING_DONE: a whole-Surah track's last ayah.
+  const meaningDoneRef = useRef(-1);
+  const setAyahMeaning = useCallback((fn: ((index: number | null) => { url: string; key: string } | null) | null) => {
+    ayahMeaningRef.current = fn;
+  }, []);
+  const meaningCuesRef = useRef<MeaningCue[]>([]);
+  // Meaning only (setMeaningOnly): the recitation is muted and skipped —
+  // but its Bismillah preludes are heard, then the Bismillah's meaning;
+  // recitingRef: a `recite` cue's ayah is heard too.
+  const meaningOnlyRef = useRef(false);
+  const [meaningOnly, setMeaningOnlyState] = useState(false);
+  const recitingRef = useRef(false);
+  const bismillahMeaningRef = useRef<{ url: string; key: string } | null>(null);
+  const setBismillahMeaning = useCallback((m: { url: string; key: string } | null) => {
+    bismillahMeaningRef.current = m;
+  }, []);
+  // The Surah prelude playing (its type), and the Juz ayah whose Bismillah
+  // meaning was read.
+  const preludeKindRef = useRef<string | null>(null);
+  const juzBismillahDoneRef = useRef(-1);
+  const isMutedRef = useRef(false);
+  // The meaning read last on this pass (a seek clears it): not again.
+  const meaningCueReadRef = useRef<string | null>(null);
+  // Where the last seek landed: a cue at or before it has been passed (a word
+  // tapped at an ayah's start must not read the previous ayah's meaning).
+  const meaningSeekFloorRef = useRef(-1);
+  const setMeaningOnly = useCallback((on: boolean) => {
+    meaningOnlyRef.current = on;
+    setMeaningOnlyState(on);
+  }, []);
+  const setMeaningCues = useCallback((cues: MeaningCue[] | null) => {
+    meaningCuesRef.current = cues ?? [];
+  }, []);
+  // The recitation's clock between iOS's coarse `currentTime` steps.
+  const clockStepRef = useRef<{ raw: number; wall: number } | null>(null);
+  // Starts the cue's meaning once the clock `t` reaches it (set below).
+  const checkMeaningCueRef = useRef<(t: number) => boolean>(() => false);
   // One-shot start position for the next loadCurrent (see playBayan opts).
   const pendingStartAtRef = useRef<StartAt | null>(null);
   // True between loading a track with a forced start and applying it — the
@@ -335,6 +435,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [queue, setQueue] = useState<BayanWithRelations[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [meaningClip, setMeaningClip] = useState<MeaningClipState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -387,14 +488,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // load() resets playbackRate to defaultPlaybackRate, so both are set — else
   // the next Surah (or the prelude) played at 1× while the button said 1.25×.
   useEffect(() => {
-    for (const el of [audioARef.current, audioBRef.current, preludeAudioRef.current]) {
+    for (const el of [audioARef.current, audioBRef.current, preludeAudioRef.current, meaningAudioRef.current]) {
       if (!el) continue;
       el.volume = volume;
-      el.muted = isMuted;
+      // Meaning only: the recitation (and its prelude) silent, the meaning heard.
+      el.muted = isMuted || (meaningOnly && (el === audioARef.current || el === audioBRef.current) && !recitingRef.current);
       el.defaultPlaybackRate = playbackRate;
       el.playbackRate = playbackRate;
     }
-  }, [volume, isMuted, playbackRate]);
+    isMutedRef.current = isMuted;
+  }, [volume, isMuted, playbackRate, meaningOnly]);
 
   // Keep the screen awake while a recitation is playing (Screen Wake Lock API).
   // The browser drops the lock whenever the tab is hidden, so re-acquire on
@@ -453,6 +556,34 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     []
   );
 
+  // Stop a meaning clip without going on (the listener moved elsewhere).
+  // True when one was playing.
+  const cancelMeaning = useCallback((): boolean => {
+    if (!meaningRef.current) return false;
+    meaningRef.current = null;
+    setMeaningClip(null);
+    const mel = meaningAudioRef.current;
+    if (mel) {
+      mel.pause();
+      mel.removeAttribute("src");
+      mel.load();
+    }
+    return true;
+  }, []);
+
+  // iOS lets an element start without a tap only once one has started it
+  // (the meaning clip starts from an ayah's end): unlock it inside the tap.
+  // Not muted: a muted start doesn't count on iOS (the meaning stayed silent
+  // on iPad) — the clip is silent anyway. A failed try may try again.
+  const unlockMeaning = useCallback(() => {
+    const mel = meaningAudioRef.current;
+    if (!mel || meaningUnlockedRef.current || meaningRef.current) return;
+    meaningUnlockedRef.current = true;
+    mel.src = SILENT_WAV;
+    // (Paused only while still on the silent clip: a meaning may have taken over.)
+    mel.play().then(() => { if (mel.getAttribute("src") === SILENT_WAV) mel.pause(); }).catch(() => { meaningUnlockedRef.current = false; });
+  }, []);
+
   /**
    * Loads a track into the HTML5 audio element (with its Surah prelude when
    * one applies). Falls back to a known-good recitation if the track has no URL.
@@ -487,6 +618,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       const hasForcedStart = Boolean(startFn || (forcedStartAt && forcedStartAt > 0));
       pendingStartAtRef.current = null;
       forcedSeekPendingRef.current = false;
+      cancelMeaning();
+      meaningCuesRef.current = [];
+      meaningCueReadRef.current = null;
+      meaningSeekFloorRef.current = -1;
+      meaningDoneRef.current = -1;
       setError(null);
       retryCountRef.current = 0;
       retryTokenRef.current += 1;
@@ -514,6 +650,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         // Resuming mid-surah (forcedStartAt) skips the Bismillah prelude.
         if (preludeCfg && preludeCfg.hasPrelude && preludeCfg.url && !hasForcedStart) {
           isPreludeRef.current = true;
+          preludeKindRef.current = preludeCfg.type;
           setIsPrelude(true);
           setPreludeType(preludeCfg.type);
           setPreludeCurrentTime(0);
@@ -633,7 +770,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         if (autoplay) el.play().catch(() => setIsPlaying(false));
       }, { once: true });
     },
-    [kickIfStuck]
+    [kickIfStuck, cancelMeaning]
   );
 
   const playBayan = useCallback(
@@ -661,12 +798,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setQueue(nextQueue);
       setCurrentIndex(index);
       pendingStartAtRef.current = opts?.startAt ?? null;
+      unlockMeaning();
       loadCurrent(nextQueue[index], true);
       persistLast(nextQueue[index], readPositions()[bayan.id] ?? 0);
       setContinueListening(null);
 
     },
-    [queue, loadCurrent, persistLast]
+    [queue, loadCurrent, persistLast, unlockMeaning]
   );
 
   const cueBayan = useCallback(
@@ -730,6 +868,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
       standbyUrlRef.current = null;
       unlockStandby();
+      unlockMeaning();
+      cancelMeaning();
       ayahSeqRef.current = { urls: ayahUrls, index: startIdx, pre: preludes, preStep: -1 };
       ayahDurRef.current = new Map();
       setQueue([displayTrack]);
@@ -849,15 +989,17 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   };
   // Start one clip of the sequence: hand over to the standby element when it
   // already holds this clip, else load it on the current element.
-  const playClip = (url: string, startAt?: (dur: number) => number) => {
+  // `prelude`: an Isti'adhah / Bismillah clip, heard with meaning only too.
+  const playClip = (url: string, startAt?: (dur: number) => number, prelude = false) => {
     const cur = audioRef.current;
     const sb = standbyAudio();
+    const muted = isMutedRef.current || (meaningOnlyRef.current && !prelude);
     if (cur && sb && standbyUrlRef.current === url && sb.getAttribute("src") && !sb.error) {
       audioRef.current = sb; // before pausing, so cur's events are ignored
       standbyUrlRef.current = null;
       cur.pause();
       sb.volume = cur.volume;
-      sb.muted = cur.muted;
+      sb.muted = muted;
       sb.defaultPlaybackRate = cur.playbackRate;
       sb.playbackRate = cur.playbackRate;
       try { sb.currentTime = 0; } catch { /* ignore */ }
@@ -865,6 +1007,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setDuration(Number.isFinite(sb.duration) ? sb.duration : 0);
       sb.play().catch(() => {});
     } else if (cur) {
+      cur.muted = muted;
       cur.src = ayahSrc(url);
       cur.currentTime = 0;
       cur.load();
@@ -886,11 +1029,25 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!seq) return;
     const idx = Math.max(0, Math.min(i, seq.urls.length - 1));
     seq.index = idx;
+    cancelMeaning();
+    meaningDoneRef.current = -1;
+    if (withPre) juzBismillahDoneRef.current = -1;
+    // Meaning only: this ayah's meaning, not its recitation (its preludes
+    // first, heard).
+    const m = meaningOnlyRef.current && !(withPre && seq.pre[idx]?.length) ? ayahMeaningRef.current?.(idx) : null;
+    if (m) {
+      seq.preStep = -1;
+      setAyahSequence({ index: idx, total: seq.urls.length, preType: null });
+      audioRef.current?.pause();
+      setCurrentTime(0);
+      startMeaningRef.current(m.url, m.key, "advance");
+      return;
+    }
     const pre = withPre ? seq.pre[idx] ?? [] : [];
     seq.preStep = pre.length > 0 ? 0 : -1;
     setAyahSequence({ index: idx, total: seq.urls.length, preType: pre[0]?.type ?? null });
     prefetchAyahsAround(seq.urls, idx);
-    playClip(pre.length > 0 ? pre[0].url : seq.urls[idx], pre.length > 0 ? undefined : startAt);
+    playClip(pre.length > 0 ? pre[0].url : seq.urls[idx], pre.length > 0 ? undefined : startAt, pre.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefetchAyahsAround]);
 
@@ -905,7 +1062,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       if (nextStep < pre.length) {
         seq.preStep = nextStep;
         setAyahSequence({ index: seq.index, total: seq.urls.length, preType: pre[nextStep].type });
-        playClip(pre[nextStep].url);
+        playClip(pre[nextStep].url, undefined, true);
         return true;
       }
       loadAyahAt(seq.index, false); // preludes done → the ayah itself
@@ -927,6 +1084,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     userPausedRef.current = true;
     interruptedRef.current = 0;
     callAtRef.current = 0;
+    if (meaningRef.current) {
+      meaningAudioRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
     if (isPreludeRef.current && preludeAudioRef.current) {
       preludeAudioRef.current.pause();
       setIsPlaying(false);
@@ -939,6 +1101,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const resume = useCallback(() => {
     userPausedRef.current = false;
     interruptedRef.current = 0;
+    unlockMeaning();
+    const mel = meaningAudioRef.current;
+    if (meaningRef.current && mel) {
+      mel.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      return;
+    }
     if (isPreludeRef.current && preludeAudioRef.current) {
       setIsLoading(true); // spinner while the prelude resumes/buffers
       const pel = preludeAudioRef.current;
@@ -968,7 +1136,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     kickIfStuck(el);
-  }, [current, loadCurrent, kickIfStuck]);
+  }, [current, loadCurrent, kickIfStuck, unlockMeaning]);
 
   const togglePlay = useCallback(() => {
     if (isPlaying) pause();
@@ -976,6 +1144,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [isPlaying, pause, resume]);
 
   const seek = useCallback((seconds: number) => {
+    // A seek during a meaning clip goes straight there (the recitation waited),
+    // and that ayah's meaning is read again at its end.
+    const wasInMeaning = cancelMeaning();
+    meaningCueReadRef.current = null;
+    meaningSeekFloorRef.current = Math.max(0, seconds);
+    clockStepRef.current = null;
     // If user explicitly seeks during prelude, stop prelude and jump directly into the Surah verses
     const wasInPrelude = isPreludeRef.current;
     if (wasInPrelude) {
@@ -996,10 +1170,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       /* ignore */
     }
     setCurrentTime(Math.max(0, seconds));
-    if (wasInPrelude && isPlaying) {
+    if ((wasInPrelude || wasInMeaning) && isPlaying) {
       el.play().catch(() => setIsPlaying(false));
     }
-  }, [isPlaying]);
+  }, [isPlaying, cancelMeaning]);
 
   const playFromQueue = useCallback(
     (index: number) => {
@@ -1052,6 +1226,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const seq = ayahSeqRef.current;
     if (seq) {
       const el = audioRef.current;
+      // During its meaning: that ayah again.
+      if (meaningRef.current) { loadAyahAt(seq.index, false); return; }
       if (el && el.currentTime > 3) { el.currentTime = 0; return; }
       loadAyahAt(seq.index - 1);
       return;
@@ -1245,7 +1421,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const onState = () => {
       if (session.state === "interrupted") {
         // Only if it was on: playing still, or just paused by the system.
-        const el = isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
+        const el = meaningRef.current
+          ? meaningAudioRef.current
+          : isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
         const on = (el && !el.paused) || Date.now() - interruptedRef.current < 60_000;
         if (currentRef.current && on && !userPausedRef.current) callAtRef.current = Date.now();
         return;
@@ -1375,6 +1553,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const onPreludeEnded = useCallback(() => {
+    // Meaning only: the Bismillah's meaning first (the screen stays on it).
+    const bm = bismillahMeaningRef.current;
+    if (meaningOnlyRef.current && isPreludeRef.current && preludeKindRef.current === "bismillah" && bm && !meaningRef.current) {
+      startMeaningRef.current(bm.url, bm.key, "prelude");
+      return;
+    }
+    preludeKindRef.current = null;
     isPreludeRef.current = false;
     setIsPrelude(false);
     setPreludeType(null);
@@ -1437,6 +1622,19 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!isPlaying) return;
     let raf = 0;
     const frame = () => {
+      if (meaningCuesRef.current.length && !forcedSeekPendingRef.current && !isPreludeRef.current) {
+        const el = audioRef.current;
+        // Paused (the meaning, a pause): the clock starts afresh after it.
+        if (!el || el.paused) clockStepRef.current = null;
+        else {
+          const now = performance.now();
+          const step = clockStepRef.current;
+          if (!step || step.raw !== el.currentTime) clockStepRef.current = { raw: el.currentTime, wall: now };
+          const { raw, wall } = clockStepRef.current!;
+          const carried = Math.min(MAX_CLOCK_CARRY, ((now - wall) / 1000) * (el.playbackRate || 1));
+          checkMeaningCueRef.current(raw + carried - currentTrimOffsetRef.current);
+        }
+      }
       const b = timeBoundaryRef.current;
       if (b !== null && !forcedSeekPendingRef.current) {
         if (isPreludeRef.current) {
@@ -1464,12 +1662,21 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const el = audioRef.current;
     if (!el || !current) return;
     if (forcedSeekPendingRef.current) return;
+    // The recitation waits on its meaning clip: keep the ayah just recited.
+    if (meaningRef.current) return;
     if (isPreludeRef.current) {
       setCurrentTime(0);
       return;
     }
     const offset = currentTrimOffsetRef.current;
+    // Meaning only, the Surah's cues not loaded yet: wait at its start.
+    if (meaningOnlyRef.current && !ayahSeqRef.current && !meaningCuesRef.current.length && !el.paused && el.currentTime > offset + 0.3) {
+      el.currentTime = offset;
+      return;
+    }
     const effectiveTime = Math.max(0, el.currentTime - offset);
+    // A background tab gets no animation frames: the meaning cue is caught here.
+    if (!el.paused && checkMeaningCueRef.current(effectiveTime)) return;
     setCurrentTime(effectiveTime);
     if (el.currentTime > 0) lastRawTimeRef.current = el.currentTime;
     // Playing well again for 30s since a recovery: later glitches get
@@ -1492,10 +1699,161 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, [current, persistLast]);
 
+  // The meaning clip finished (or failed): the recitation goes on — from
+  // where it waited, or with the sequence's next ayah.
+  const onEndedRef = useRef<() => void>(() => {});
+  const startMeaningRef = useRef<(url: string, key: string, then: MeaningThen, resumeAt?: number, showAt?: number) => void>(() => {});
+  // Meaning only, on a whole-Surah track at `t`: the next ayah's meaning —
+  // or, past the last cue, on to the track's end (its last ayah's meaning).
+  // True when it moved.
+  const meaningOnlyNext = (t: number): boolean => {
+    const el = audioRef.current;
+    // Not before the track's start is placed (loadedmetadata seeks it again).
+    if (!el || el.readyState < 1 || forcedSeekPendingRef.current) return false;
+    // The ayah at `t`: the first whose screen time (inside it) isn't behind —
+    // a start at an ayah's beginning can lie before the previous one's stop
+    // (a recited one: until its stop is reached).
+    const cue = meaningCuesRef.current.find(
+      (c) => c.at > meaningSeekFloorRef.current && (c.recite ? c.at + 0.5 : c.showAt ?? c.at) > t && c.key !== meaningCueReadRef.current
+    );
+    // An ayah still recited first: heard until its stop.
+    if (cue?.recite && t < cue.at - MEANING_CUE_LEAD) {
+      if (!recitingRef.current) {
+        recitingRef.current = true;
+        el.muted = isMutedRef.current;
+      }
+      if (el.paused) el.play().catch(() => {});
+      return false;
+    }
+    if (cue) {
+      meaningCueReadRef.current = cue.key;
+      if (recitingRef.current) {
+        recitingRef.current = false;
+        el.muted = true;
+      }
+      startMeaningRef.current(cue.url, cue.key, "resume", cue.at, cue.showAt);
+      return true;
+    }
+    if (Number.isFinite(el.duration) && el.duration > 0 && el.currentTime < el.duration - 0.3) {
+      try {
+        el.currentTime = el.duration - 0.1;
+      } catch {
+        /* ignore */
+      }
+      if (el.paused) el.play().catch(() => {});
+      return true;
+    }
+    return false;
+  };
+  const finishMeaning = useCallback(() => {
+    const m = meaningRef.current;
+    if (!m) return;
+    cancelMeaning();
+    // The Bismillah's meaning read: on from the prelude to the Surah.
+    if (m.then === "prelude") {
+      preludeKindRef.current = null;
+      onPreludeEndedRef.current();
+      return;
+    }
+    if (m.then === "advance") {
+      meaningDoneRef.current = ayahSeqRef.current?.index ?? TRACK_MEANING_DONE;
+      onEndedRef.current();
+      return;
+    }
+    const el = audioRef.current;
+    // Meaning only: straight on to the next ayah's meaning.
+    if (meaningOnlyRef.current && el && meaningOnlyNext(Math.max(0, el.currentTime - currentTrimOffsetRef.current))) return;
+    el?.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    // meaningOnlyNext reads only refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cancelMeaning]);
+
+  const startMeaning = useCallback(
+    (url: string, key: string, then: MeaningThen, resumeAt?: number, showAt?: number) => {
+      const mel = meaningAudioRef.current;
+      if (!mel) return;
+      // Set first: the recitation's own pause / seek events check it.
+      meaningRef.current = { key, then };
+      setMeaningClip({ key });
+      if (mel.getAttribute("src") !== url) {
+        mel.src = url;
+        mel.load();
+      } else if (mel.currentTime > 0) {
+        mel.currentTime = 0;
+      }
+      // Can't start (no tap yet on iOS, say): carry on without it — or, with
+      // meaning only (nothing else to hear), wait for play.
+      mel.play().catch((e: unknown) => {
+        if (!meaningOnlyRef.current) return finishMeaning();
+        // Aborted by the next clip's load: that one plays.
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        audioRef.current?.pause();
+        setIsPlaying(false);
+      });
+      // Only now the recitation waits: iOS lets a clip start by itself more
+      // readily while the page's audio is still playing.
+      const el = audioRef.current;
+      if (then === "resume" && el) {
+        el.pause();
+        if (resumeAt !== undefined) {
+          try {
+            el.currentTime = resumeAt + currentTrimOffsetRef.current;
+          } catch {
+            /* ignore */
+          }
+          // Inside the ayah just recited, so the screen stays on it.
+          setCurrentTime(Math.max(0, showAt ?? resumeAt - 0.05));
+        }
+      }
+    },
+    [finishMeaning]
+  );
+  startMeaningRef.current = startMeaning;
+
+  checkMeaningCueRef.current = (t) => {
+    if (ayahSeqRef.current || isPreludeRef.current || meaningRef.current) return false;
+    // Meaning only: no recitation to wait through — the ayah's meaning now.
+    if (meaningOnlyRef.current) return meaningOnlyNext(t);
+    const cues = meaningCuesRef.current;
+    // Reached (not passed by a seek: within 0.5 s) and not read on this pass.
+    const cue = cues.find(
+      (c) => t >= c.at - MEANING_CUE_LEAD && t <= c.at + 0.5 && c.at > meaningSeekFloorRef.current && c.key !== meaningCueReadRef.current
+    );
+    if (!cue) {
+      // Fetch the coming clip ahead, so it starts as the recitation stops.
+      const next = cues.find((c) => c.at > t && c.at - t < 4);
+      const mel = meaningAudioRef.current;
+      // (Not while the silent unlock clip is still playing.)
+      if (next && mel && mel.paused && mel.getAttribute("src") !== next.url) {
+        mel.preload = "auto";
+        mel.src = next.url;
+      }
+      return false;
+    }
+    meaningCueReadRef.current = cue.key;
+    startMeaning(cue.url, cue.key, "resume", cue.at, cue.showAt);
+    return true;
+  };
+
   const onEnded = useCallback(() => {
     // Per-ayah Juz sequence: advance to the next ayah in the chosen voice.
     const seq = ayahSeqRef.current;
     if (seq) {
+      // Meaning only: a Bismillah clip ended — its meaning before the ayah's.
+      const bm = bismillahMeaningRef.current;
+      if (meaningOnlyRef.current && bm && seq.preStep >= 0 && seq.pre[seq.index]?.[seq.preStep]?.type === "bismillah" && juzBismillahDoneRef.current !== seq.index) {
+        juzBismillahDoneRef.current = seq.index;
+        startMeaning(bm.url, bm.key, "advance");
+        return;
+      }
+      // The ayah itself ended (not a prelude): its meaning first, when wanted.
+      if (seq.preStep < 0 && meaningDoneRef.current !== seq.index) {
+        const m = ayahMeaningRef.current?.(seq.index);
+        if (m) {
+          startMeaning(m.url, m.key, "advance");
+          return;
+        }
+      }
       if (advanceAyahSequence()) return;
       // The Juz is over: again from its first ayah, or the page starts the
       // next / a random Juz.
@@ -1509,6 +1867,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsPlaying(false);
       return;
     }
+    // A whole-Surah track: its last ayah's meaning before going on.
+    if (meaningDoneRef.current !== TRACK_MEANING_DONE) {
+      const m = ayahMeaningRef.current?.(null);
+      if (m && m.key !== meaningCueReadRef.current) {
+        meaningCueReadRef.current = m.key;
+        startMeaning(m.url, m.key, "advance");
+        return;
+      }
+    }
+    meaningDoneRef.current = -1;
     if (current) writePosition(current.id, 0);
     if (current && isSurahTrackId(current.id)) {
       if (endMode === "repeat") {
@@ -1536,7 +1904,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (endMode === "repeat") playFromQueue(currentIndex);
     else if (currentIndex < queue.length - 1) next();
     else setIsPlaying(false);
-  }, [current, currentIndex, queue.length, next, advanceAyahSequence, endMode, loadAyahAt, playFromQueue, playBayan]);
+  }, [current, currentIndex, queue.length, next, advanceAyahSequence, endMode, loadAyahAt, playFromQueue, playBayan, startMeaning]);
+  onEndedRef.current = onEnded;
 
   const onError = useCallback(() => {
     // A single missing/failed ayah file must not kill a Juz sequence — skip it.
@@ -1616,6 +1985,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       preludeCurrentTime,
       preludeDuration,
       ayahSequence,
+      meaningClip,
       endMode,
       playBayan,
       cueBayan,
@@ -1627,6 +1997,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       seek,
       next,
       setAyahSequenceNext,
+      setMeaningCues,
+      setAyahMeaning,
+      unlockMeaning,
+      setMeaningOnly,
+      setBismillahMeaning,
       previous,
       setVolume,
       toggleMute,
@@ -1660,6 +2035,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       preludeCurrentTime,
       preludeDuration,
       ayahSequence,
+      meaningClip,
       endMode,
       playBayan,
       cueBayan,
@@ -1671,6 +2047,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       seek,
       next,
       setAyahSequenceNext,
+      setMeaningCues,
+      setAyahMeaning,
+      unlockMeaning,
+      setMeaningOnly,
+      setBismillahMeaning,
       previous,
       setVolume,
       toggleMute,
@@ -1698,7 +2079,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // the main one while the prelude plays): two recitations at once. Any
   // element that starts while it isn't the one in use is stopped.
   const strayStarted = (el: HTMLAudioElement) => {
-    const stray = el !== audioRef.current || (isPreludeRef.current && !preludeAudioRef.current?.paused);
+    const stray = el !== audioRef.current || (isPreludeRef.current && !preludeAudioRef.current?.paused) || meaningRef.current !== null;
     // unlockStandby's muted silent clip pauses itself.
     if (stray && el.getAttribute("src") !== SILENT_WAV) el.pause();
     return stray;
@@ -1709,6 +2090,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       if (!isPreludeRef.current) setIsPlaying(true);
     },
     onPause: fromActive((e) => {
+      // Paused for its meaning clip: still playing.
+      if (meaningRef.current) return;
       // An ayah clip reaching its end pauses too, right before the next one
       // starts: keep the pause icon instead of flashing play for a frame.
       if (ayahSeqRef.current && e.currentTarget.ended) return;
@@ -1780,6 +2163,35 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         onCanPlay={() => { if (isPreludeRef.current) setIsLoading(false); }}
         onEnded={onPreludeEnded}
         onError={onPreludeError}
+      />
+
+      {/* Meaning audio: an ayah's meaning, read between ayahs. */}
+      <audio
+        ref={meaningAudioRef}
+        preload="auto"
+        onPlaying={() => {
+          if (!meaningRef.current) return;
+          applyMediaMetadata();
+          callAtRef.current = 0;
+          setIsPlaying(true);
+          setIsLoading(false);
+        }}
+        onWaiting={() => { if (meaningRef.current) setIsLoading(true); }}
+        // Paused from outside (a call, another app's sound): show play.
+        onPause={(e) => {
+          const el = e.currentTarget;
+          if (meaningRef.current && !el.ended && el.getAttribute("src")) {
+            if (!userPausedRef.current) interruptedRef.current = Date.now();
+            setIsPlaying(false);
+          }
+        }}
+        // Started by the system when no meaning is due: not again.
+        onPlay={(e) => {
+          if (!meaningRef.current && e.currentTarget.getAttribute("src") !== SILENT_WAV) e.currentTarget.pause();
+        }}
+        onEnded={finishMeaning}
+        // A missing clip just skips its meaning.
+        onError={() => { if (meaningRef.current) finishMeaning(); }}
       />
 
       {/* Persistent HTML5 audio elements for direct local MP3 audio (A is the

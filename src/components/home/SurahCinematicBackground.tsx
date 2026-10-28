@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { resolveSurahVideoPath, getSurahVisualData } from "@/lib/data/surahChapters";
 import { getAyahVideo } from "@/lib/data/surahVerseVideos";
+import { getSetVideo } from "@/lib/data/surahSetVideos";
 import { quranImageUrl } from "@/lib/data/quran";
 import { hasVideo } from "@/lib/data/videoManifest";
 import { clipUrl } from "@/lib/data/videoVersions";
@@ -18,6 +19,36 @@ interface SurahCinematicBackgroundProps {
   isPlaying?: boolean;
 }
 
+/**
+ * The background clip URL for this point of a Surah, or null when it has none
+ * on R2 (the Surah's image shows). In order:
+ *   - the exact Ayah's own video
+ *   - the thematic set covering the Ayah (set 1 before any Ayah is known)
+ *   - the thematic chapter covering the Ayah
+ *   - the chapter for the playback position, or the Surah's master clip
+ * Also used by the Juz background, which passes the Juz's current Surah + Ayah
+ * (and no duration, so a multi-chapter Surah falls back to its master clip).
+ */
+export function resolveSurahClip(
+  surahNumber: number,
+  ayahNumber: number | null,
+  currentTime = 0,
+  duration = 0
+): string | null {
+  let chosen: string | null = null;
+  const setVid = getSetVideo(surahNumber, ayahNumber);
+  if (ayahNumber) chosen = getAyahVideo(surahNumber, ayahNumber)?.videoPath ?? null;
+  if (!chosen && hasVideo(setVid)) chosen = setVid;
+  if (!chosen && ayahNumber) {
+    const chapterForVerse = getSurahVisualData(surahNumber).chapters.find(
+      (c) => ayahNumber >= c.fromVerse && ayahNumber <= c.toVerse
+    );
+    if (hasVideo(chapterForVerse?.videoPath)) chosen = chapterForVerse!.videoPath;
+  }
+  if (chosen) return clipUrl(chosen);
+  return resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
+}
+
 export function SurahCinematicBackground({
   surahNumber,
   ayahNumber = null,
@@ -26,30 +57,11 @@ export function SurahCinematicBackground({
   duration = 0,
   isPlaying = false,
 }: SurahCinematicBackgroundProps) {
-  // 1. Resolve active video source:
-  //    - propVideoSrc if explicitly given
-  //    - Exact Ayah video if available
-  //    - Thematic chapter matching active Ayah
-  //    - Continuous playback chapter or master video fallback
-  const resolvedVideo = useMemo(() => {
-    let chosen: string | null = null;
-    if (propVideoSrc) chosen = propVideoSrc;
-    else if (ayahNumber) {
-      const ayahVid = getAyahVideo(surahNumber, ayahNumber)?.videoPath;
-      if (ayahVid) chosen = ayahVid;
-      else {
-        const surahData = getSurahVisualData(surahNumber);
-        const chapterForVerse = surahData.chapters.find(
-          (c) => ayahNumber >= c.fromVerse && ayahNumber <= c.toVerse
-        );
-        if (hasVideo(chapterForVerse?.videoPath)) chosen = chapterForVerse!.videoPath;
-      }
-    }
-    if (!chosen) {
-      chosen = resolveSurahVideoPath(surahNumber, currentTime, duration) || null;
-    }
-    return chosen ? clipUrl(chosen) : null;
-  }, [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]);
+  // 1. Resolve active video source (see resolveSurahClip)
+  const resolvedVideo = useMemo(
+    () => (propVideoSrc ? clipUrl(propVideoSrc) : resolveSurahClip(surahNumber, ayahNumber, currentTime, duration)),
+    [propVideoSrc, ayahNumber, surahNumber, currentTime, duration]
+  );
 
   // Only commit a clip once it has stayed wanted briefly — rapid ayah stepping
   // or a transient ayah value must not start a crossfade per step.
@@ -213,6 +225,8 @@ export function SurahCinematicBackground({
           loop
           muted
           playsInline
+          disablePictureInPicture
+          disableRemotePlayback
           // Paused (the open screen): buffer just enough for the first frame
           // (~3 MB of Al-Fatihah's 20 MB clip, not ~15) — fully once playing.
           preload={isPlaying ? "auto" : "metadata"}
@@ -239,6 +253,8 @@ export function SurahCinematicBackground({
           loop
           muted
           playsInline
+          disablePictureInPicture
+          disableRemotePlayback
           preload={isPlaying ? "auto" : "metadata"}
           onCanPlay={() => handleSlotCanPlay(1)}
           onPause={() => resumeIfActive(1)}
@@ -254,8 +270,8 @@ export function SurahCinematicBackground({
         />
       )}
 
-      {/* 4. Atmospheric Contrast Overlay */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
+      {/* No dim of its own: the scene's even 40% black (ImmersiveHomeClient)
+          is the only overlay on the clips (owner, 2026-10-25). */}
     </div>
   );
 }

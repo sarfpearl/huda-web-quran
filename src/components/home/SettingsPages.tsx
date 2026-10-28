@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
 import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
+import { isMeaningLang } from "@/lib/data/meaningAudio";
+import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
 import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
@@ -33,6 +35,8 @@ export interface HomeSettings {
   visualMode: "video" | "image";
   onToggleVisualMode: () => void;
   reciterName: string;
+  /** The meaning read aloud after each ayah; unset until its clips are published. */
+  meaningAudio?: MeaningAudioSettings;
 }
 
 const HomeSettingsContext = createContext<HomeSettings | null>(null);
@@ -67,27 +71,6 @@ function Row({ label, value, onClick, valueLang }: { label: string; value?: stri
           </span>
         )}
         <ChevronRightIcon className="h-4 w-4 shrink-0" />
-      </span>
-    </button>
-  );
-}
-
-function Switch({ on, label, sub, onToggle, disabled }: { on: boolean; label: string; sub?: string; onToggle: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-disabled={disabled}
-      onClick={disabled ? undefined : onToggle}
-      className={cn("flex w-full items-center justify-between gap-3 py-1 text-left", disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer")}
-    >
-      <span className="flex flex-col">
-        <span className="text-sm font-semibold text-white">{label}</span>
-        {sub && <span className="text-[11px] text-sand-200/70">{sub}</span>}
-      </span>
-      <span aria-hidden="true" className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors", on ? "bg-amber-400/90" : "bg-white/20")}>
-        <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left]", on ? "left-[1.375rem]" : "left-0.5")} />
       </span>
     </button>
   );
@@ -173,6 +156,9 @@ export function TranslationPage() {
       <div className={GROUP}>
         <Switch on={s.showMeaning} label={t(lang, "Show translation")} onToggle={s.onToggleMeaning} />
       </div>
+      {/* Off = Arabic only: the meaning voice shows, greyed out; the languages once it's on. */}
+      {s.meaningAudio && <MeaningAudioGroup {...s.meaningAudio} supported={isMeaningLang(s.translationLang)} disabled={!s.showMeaning} />}
+      {s.showMeaning && (
       <div role="radiogroup" aria-label={t(lang, "Translation language")} className="space-y-1.5">
         {TRANSLATIONS.map((c) => {
           const selected = c.id === s.translationLang;
@@ -220,6 +206,7 @@ export function TranslationPage() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

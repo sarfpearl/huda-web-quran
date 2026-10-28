@@ -54,6 +54,8 @@ export function JuzCinematicBackground({
         loop
         muted
         playsInline
+        disablePictureInPicture
+        disableRemotePlayback
         preload="auto"
         onCanPlay={() => setVideoLoaded(true)}
         onError={() => setHasError(true)}
@@ -63,6 +65,8 @@ export function JuzCinematicBackground({
       />
       {/* Atmospheric Contrast Overlay */}
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
+      {/* Video scrim — same as SurahCinematicBackground: keeps the compressed clip subtle. */}
+      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none" />
     </div>
   );
 }

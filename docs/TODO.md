@@ -1,6 +1,6 @@
 # TODO
 
-## Open items (updated 2026-10-24)
+## Open items (updated 2026-10-25)
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
@@ -9,13 +9,99 @@ headphone / Bluetooth buttons, home-screen app, Android Back, zoom — fine.
 Not fine: (1) after a call the recitation didn't resume; (2) unmuting an
 Instagram feed video didn't pause the Surah; (3) Juz on the lock screen showed
 each ayah's few seconds, not the Juz. (1) and (3) fixed in
-`fix/call-resume-juz-lockscreen` (check again on the phone); (2) still open.
+`fix/call-resume-juz-lockscreen` (PR #138, not merged yet — check on the
+phone with the PR's Vercel preview, not the live site). 2026-10-28: owner
+says (1) still doesn't resume; (2) still open.
 
 - [ ] **Phase 8B — private R2 archive upload** (separate task, don't mix with
       app fixes): the 2,364 duplicate videos (53.6 GB) from the duplicate
       cleanup go to a private bucket `huda-quran-archive`; plan in
       `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
       no local deletion until the upload is verified.
+
+### Meaning audio — where it stands (updated 2026-10-27)
+
+After each ayah the recitation stops and its meaning is read aloud (Gemini
+3.8 Flash TTS, voices **Cruz** male / **Lora** female, **Tamil + English**).
+One MP3 per ayah (`<SSS><AAA>.mp3`) serves both the Surah and the Juz player —
+never generate anything per Juz.
+
+- **Live:** Surah 1 (PR #154–#156). The player logic is the reference for
+  every Surah: stop where each reciter's ayah really ends
+  (`src/lib/data/meaningStops.json`, measured on the audio), a tapped word
+  recites from there and reads that ayah's meaning again, a tapped first word
+  never replays the previous ayah's meaning (PR #156).
+- **Generation = Batch API only (half price, PR #157):**
+  ```bash
+  node --env-file=.env scripts/generation/build-meaning-audio.mjs --estimate --batch --surah=67-114
+  node --env-file=.env scripts/generation/build-meaning-audio.mjs --surah=67-114 --batch --batch-size=50 --max-usd=3
+  node scripts/tools/upload-to-r2.mjs --category=audio-meaning --execute
+  node scripts/generation/build-meaning-audio.mjs --manifest
+  node scripts/generation/build-meaning-stops.mjs        # all 9 Word Sync reciters
+  ```
+  A stopped run resumes with the same command (pending jobs in
+  `assets/audio/meaning/v1/batches.json`).
+- **Real costs:** Surah 108 pilot (12 clips) cost $0.006. Measured speeds:
+  Tamil 12.2, English 12.7 chars/s. All 4 combos (2 voices × 2 languages):
+  Juz 30 ≈ ₹111, Juz 29 + 30 ≈ ₹235, whole Quran ≈ ₹3,600. Google's price
+  doubles on 2027-01-01.
+- **Live (2026-10-28, PR #158 merged):** Juz 29 + 30 (Surahs
+  67–114). 3,980 clips cost $2.38 ≈ ₹202 and are on R2. Stops are measured
+  for all 9 reciters. WebKit tests pass on all 48 Surahs and on the Juz 30
+  player. Owner tested the preview and approved.
+- Long ayahs (e.g. 73:20, 1,158 Tamil chars) can come back from a batch
+  without audio: re-run that Surah without `--batch`. Re-make any clip
+  with a long internal gap, or whose length is far from its text's.
+- **Then:** the rest of the Quran (≈ ₹3,300), as the owner's balance allows.
+- **Previews:** if a Vercel preview shows a black background or the meaning
+  stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
+  you blame the code.
+
+### Next tasks — in this order (noted 2026-10-25)
+
+1. [x] **Folder re-arrangement / unused media (2026-10-25, PR #150).** Local:
+       206 unused files (~1.41 GB) removed — Juz 1 playlist clips + 4K masters,
+       Surah 2 `-4k` copies + generation JSON, Surah 4 leftover `ayah_*` clips,
+       JPEG thumbnails, 14 Bayan covers, 431 empty folders; 5 unused SVGs in
+       `public/`. R2: 158 unused images (~18 MB, `assets/images/bayan/*` except
+       `quran.jpg`, `assets/images/{surah,quran}/thumbs/*.jpg`) deleted after a
+       backup to `.media-work/r2-deleted-2026-10-25/` → 1,031 objects, 4.14 GB.
+       Rule: R2 holds what the app serves (videos = `videoManifest.ts`); local
+       keeps only masters and unfinished pipeline work (Surah 3). Kept on
+       purpose: scene JPEGs on R2 (`webp-images.mjs` source), Maher's full-Juz
+       MP3s (`QURAN_TRACKS` fallback), `assets/video-masters/`.
+2. [ ] **Production check of the thematic sets (PR #145):** play Surah 19 —
+       the clip should change from set 1 to set 2 at ayah 11 → 12; play Juz 5 —
+       Surah 4's sets should show; Surah 50 keeps its single clip.
+3. [ ] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
+       exist only on the Mac (`public/videos/surah_3/`, 2.94 GB, not on R2);
+       the app shows its 20 chapter clips. Decide with the owner: thematic sets
+       like the other Surahs (then register them, step 5), or keep the chapters.
+4. [ ] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** with the pipeline
+       (`HANDOFF.md` §2a; Antigravity skill `surah-video-production`). Check
+       `docs/VIDEO_BUDGET_LEDGER.json` first (₹600 floor). Owner approves each
+       Surah's sets on an approval board (Approve / Redo per set) before upload.
+5. [ ] **After each approved Surah** (`HANDOFF.md` §2b) — without the registry
+       the app never shows the sets:
+       ```bash
+       node scripts/tools/reencode-videos.mjs --new --encode
+       node scripts/tools/reencode-videos.mjs --new --upload --execute
+       node scripts/tools/surah-set-registry.mjs   # refuses a Surah with a gap
+       node scripts/tools/video-manifest.mjs
+       ```
+       then commit `surahSetVideos.ts` + `videoManifest.ts`, set the Surah to
+       `DEPLOYED` in `data/progress.json`, PR. Budget: ~3.1 MB a set, ~1.2 GB
+       for the rest of the Quran; R2 is at 4.14 GB of 10 GB.
+6. [ ] **Mac clean-up, after a few days of normal playback:** delete
+       `~/huda-r2-backup/2026-10-25/` (395 MB, the 17 deleted objects) and
+       `.media-work/originals/` (R2 copies before re-encoding).
+7. [ ] Optional: move the R2 audio (2.04 GB) to Backblaze B2 — only if R2
+       space gets tight again.
+8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
+       scripts warns that later versions need Node ≥ 22 (now v20.20.0).
+9. [ ] Still open from before: the real-phone checks below.
+
+**2026-10-25:** R2 re-encoded and cleaned (9.20 → 4.16 GB, 0 unused videos) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145, #147) — `HANDOFF.md` §2b. For each new Surah's sets: encode + upload, then `surah-set-registry.mjs` + `video-manifest.mjs`.
 
 **Still open (2026-10-24):** the rest of the real-phone checks (below) and
 the automated video pipeline (`HANDOFF.md` §2a). Everything else is merged

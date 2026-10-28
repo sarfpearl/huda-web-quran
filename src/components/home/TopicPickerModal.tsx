@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
-import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
+import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, KeyboardMicIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
 import { playClick } from "@/lib/clickSound";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
@@ -375,10 +375,25 @@ export function TopicPickerModal({
     typeof window !== "undefined" &&
     ((window.navigator as unknown as { standalone?: boolean })?.standalone === true);
 
+  // iOS: no clicks around listening (a sound then can take the audio
+  // session from recognition).
+  const isIos =
+    typeof navigator !== "undefined" &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+
+  // On iOS the mic always falls back to the keyboard's own dictation, so it
+  // stays there even with no (or a broken) Web Speech API.
   const voiceSupported =
     typeof window !== "undefined" &&
-    !isIosStandalone &&
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    (isIos || isIosStandalone || !!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  const [dictationHint, setDictationHint] = useState(false);
+  const dictationHintTimerRef = useRef<number | null>(null);
+  const showDictationHint = useCallback(() => {
+    setDictationHint(true);
+    if (dictationHintTimerRef.current) window.clearTimeout(dictationHintTimerRef.current);
+    dictationHintTimerRef.current = window.setTimeout(() => setDictationHint(false), 6000);
+  }, []);
+
 
   const stopVoice = useCallback(() => {
     if (voiceTimeoutRef.current) {
@@ -387,12 +402,8 @@ export function TopicPickerModal({
     }
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.abort();
-      } catch {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
+        recognitionRef.current.stop();
+      } catch {}
       recognitionRef.current = null;
     }
     setListening(false);
@@ -400,12 +411,21 @@ export function TopicPickerModal({
   }, []);
 
   const startVoice = useCallback(() => {
+    // iOS: always open the keyboard and point to its own dictation — it
+    // catches Surah names well, and iOS Safari gives a page's second Web
+    // Speech search a mic with only silence (WebKit bug; checked on the
+    // owner's iPhone 13, iOS 27.0.1). A page can't press the keyboard mic itself.
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Ctor) return;
+    if (isIos || !Ctor) {
+      // Still inside the tap, so iOS opens the keyboard (and its mic).
+      searchInputRef.current?.focus();
+      showDictationHint();
+      return;
+    }
 
     // Stop any existing session
     stopVoice();
-    playClick();
+    if (!isIos) playClick();
 
     // Pause audio recitation so iOS / mobile microphone can clearly record user speech
     if (player.isPlaying) {
@@ -423,11 +443,15 @@ export function TopicPickerModal({
       const targetLocale = uiLocale(lang);
       rec.lang = targetLocale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
 
+      let started = false;
       rec.onstart = () => {
+        started = true;
         setListening(true);
       };
 
-      rec.onspeechstart = () => setHearing(true);
+      rec.onspeechstart = () => {
+        setHearing(true);
+      };
 
       rec.onresult = (e: SpeechRecognitionEvent) => {
         setHearing(true);
@@ -450,7 +474,9 @@ export function TopicPickerModal({
         } catch {}
       };
 
+      // An older session's late end / error must not reset this one.
       rec.onend = () => {
+        if (recognitionRef.current !== rec) return;
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
           voiceTimeoutRef.current = null;
@@ -462,6 +488,9 @@ export function TopicPickerModal({
 
       rec.onerror = (e) => {
         console.warn("Speech recognition error:", e);
+        if (recognitionRef.current !== rec) return;
+        // Refused or unavailable (the home-screen app): point to dictation.
+        if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes((e as Event & { error?: string }).error ?? "")) showDictationHint();
         if (voiceTimeoutRef.current) {
           window.clearTimeout(voiceTimeoutRef.current);
           voiceTimeoutRef.current = null;
@@ -471,25 +500,51 @@ export function TopicPickerModal({
         recognitionRef.current = null;
       };
 
-      rec.start();
+      const startRec = () => {
+        if (recognitionRef.current !== rec) return; // stopped meanwhile
+        try {
+          rec.start();
+        } catch (err) {
+          // Still winding down: once more, shortly.
+          if ((err as DOMException)?.name !== "InvalidStateError") throw err;
+          window.setTimeout(() => {
+            try {
+              rec.start();
+            } catch {}
+          }, 500);
+        }
+      };
+      // Started inside the tap: iOS ignores a start() made later.
+      startRec();
       setListening(true);
 
       // Auto-stop after 8 seconds of no input to avoid perpetual listening state
       voiceTimeoutRef.current = window.setTimeout(() => {
         stopVoice();
       }, 8000);
+      // In the home-screen app it can also just never start.
+      if (isIosStandalone) {
+        window.setTimeout(() => {
+          if (!started && recognitionRef.current === rec) {
+            stopVoice();
+            showDictationHint();
+          }
+        }, 2500);
+      }
     } catch (err) {
       console.warn("Failed to start speech recognition:", err);
       stopVoice();
+      searchInputRef.current?.focus();
+      showDictationHint();
     }
-  }, [lang, player, stopVoice]);
+  }, [lang, player, stopVoice, isIos, isIosStandalone, showDictationHint]);
 
   // The same click when listening ends — tapped off, timed out or finished.
   const wasListeningRef = useRef(false);
   useEffect(() => {
-    if (wasListeningRef.current && !listening) playClick();
+    if (wasListeningRef.current && !listening && !isIos) playClick();
     wasListeningRef.current = listening;
-  }, [listening]);
+  }, [listening, isIos]);
 
   // Stop listening when the panel closes.
   useEffect(() => {
@@ -1016,6 +1071,17 @@ export function TopicPickerModal({
                   </div>
 
                   {/* Voice search: a floating gold button over the list. */}
+                  {!isFavourites && voiceSupported && dictationHint && (
+                    <p
+                      role="status"
+                      className="absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
+                    >
+                      {/* The keyboard's own mic, drawn where {mic} stands. */}
+                      {t(lang, "Tap {mic} on the keyboard to search by voice.")
+                        .split("{mic}")
+                        .flatMap((part, i) => (i ? [<KeyboardMicIcon key={i} className="mx-0.5 inline-block align-[-0.2em] text-[1.25em]" />, part] : [part]))}
+                    </p>
+                  )}
                   {!isFavourites && voiceSupported && (
                     <button
                       type="button"
@@ -1037,8 +1103,9 @@ export function TopicPickerModal({
                 </>
               )}
 
-              {/* 5. Footer: « About HuDa » (the browser only) */}
-              {!isFavourites && !showAbout && !showSettings && (
+              {/* 5. Footer: « About HuDa » (the browser only) — not while
+                  searching, when the keyboard leaves the results little room */}
+              {!isFavourites && !showAbout && !showSettings && !(kb.bottom > 0 || searchQuery.trim()) && (
                 <button
                   type="button"
                   onClick={() => setView("about")}
