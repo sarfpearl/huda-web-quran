@@ -55,8 +55,20 @@ export const PIPELINE_CONFIG = {
   defaultBatchSize: 5,
   progressPath: path.join(ROOT_DIR, "data/progress.json"),
   videosDir: path.join(ROOT_DIR, "public/videos"),
+  // Finished per-ayah clips the app doesn't use, moved out of public/ (e.g.
+  // Surah 3's 117, 2026-10-28). They still count as done: never paid for again.
+  archiveVideosDir: path.join(ROOT_DIR, "Unused Items/archive/Inbox"),
   quranVersesDir: path.join(ROOT_DIR, "public/data/quran-verses"),
 };
+
+// The clip of an ayah already made, in public/videos or the archive; null = none.
+export function existingAyahClip(surahNum, ayahNum) {
+  for (const dir of [PIPELINE_CONFIG.videosDir, PIPELINE_CONFIG.archiveVideosDir]) {
+    const file = path.join(dir, `surah_${surahNum}`, `ayah_${ayahNum}.mp4`);
+    if (fs.existsSync(file)) return file;
+  }
+  return null;
+}
 
 export const FFMPEG_BIN = fs.existsSync("/opt/homebrew/bin/ffmpeg")
   ? "/opt/homebrew/bin/ffmpeg"
@@ -489,10 +501,11 @@ export async function generateSingleVerseVideo(surahNum, ayahNum, prompt, option
   const surahDir = path.join(PIPELINE_CONFIG.videosDir, `surah_${surahNum}`);
   ensureDir(surahDir);
   const targetFile = path.join(surahDir, `ayah_${ayahNum}.mp4`);
+  const existing = existingAyahClip(surahNum, ayahNum);
 
-  if (fs.existsSync(targetFile) && !options.force) {
+  if (existing && !options.force) {
     console.log(`⏩ [Surah ${surahNum} : Ayah ${ayahNum}] already exists. Skipping.`);
-    return { success: true, skipped: true, path: targetFile };
+    return { success: true, skipped: true, path: existing };
   }
 
   if (options.dryRun) {
@@ -556,10 +569,7 @@ export async function generateBatchVideos(surahNum, batchVerses, options = {}) {
   const surahDir = path.join(PIPELINE_CONFIG.videosDir, `surah_${surahNum}`);
   ensureDir(surahDir);
 
-  const needed = batchVerses.filter((v) => {
-    const target = path.join(surahDir, `ayah_${v.ayahNumber}.mp4`);
-    return !fs.existsSync(target) || options.force;
-  });
+  const needed = batchVerses.filter((v) => !existingAyahClip(surahNum, v.ayahNumber) || options.force);
 
   if (needed.length === 0) {
     console.log(`⏩ All verses in batch already exist. Skipping.`);
@@ -656,7 +666,7 @@ export async function generateBatchVideos(surahNum, batchVerses, options = {}) {
 export function buildReviewPage(surahNum, verses, videoMap) {
   const surahName = verses[0]?.surahName || `Surah ${surahNum}`;
   const totalVerses = verses.length;
-  const readyCount = verses.filter((v) => fs.existsSync(path.join(PIPELINE_CONFIG.videosDir, `surah_${surahNum}/ayah_${v.ayahNumber}.mp4`))).length;
+  const readyCount = verses.filter((v) => existingAyahClip(surahNum, v.ayahNumber)).length;
 
   const html = `<!DOCTYPE html>
 <html lang="en" class="dark">
@@ -707,8 +717,9 @@ export function buildReviewPage(surahNum, verses, videoMap) {
     <!-- Verses Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       ${verses.map((v) => {
-        const videoRel = `public/videos/surah_${surahNum}/ayah_${v.ayahNumber}.mp4`;
-        const videoExists = fs.existsSync(path.join(ROOT_DIR, videoRel));
+        const clip = existingAyahClip(surahNum, v.ayahNumber);
+        const videoRel = clip ? path.relative(ROOT_DIR, clip) : "";
+        const videoExists = Boolean(clip);
         const overrideSet = SURAH_MEANING_OVERRIDES[surahNum]?.find(
           (s) => v.ayahNumber >= s.startAyah && v.ayahNumber <= s.endAyah
         );
@@ -1038,7 +1049,7 @@ export async function processSurahBySets(surahNum, options = {}) {
         totalSets: sets.length,
         completedSets,
         pendingSets: sets.length - completedSets,
-        completedCount: verses.filter((v) => fs.existsSync(path.join(surahDir, `ayah_${v.ayahNumber}.mp4`))).length,
+        completedCount: verses.filter((v) => existingAyahClip(surahNum, v.ayahNumber)).length,
         status: completedSets === sets.length ? "LOCAL_READY" : "GENERATING",
         mode: "THEMATIC_SETS_5_TO_10_AYAHS",
         lastUpdated: new Date().toISOString(),
@@ -1054,7 +1065,7 @@ export async function processSurahBySets(surahNum, options = {}) {
     totalVerses,
     totalSets: sets.length,
     completedSets: sets.filter((s) => fs.existsSync(path.join(surahDir, s.videoFileName))).length,
-    completedCount: verses.filter((v) => fs.existsSync(path.join(surahDir, `ayah_${v.ayahNumber}.mp4`))).length,
+    completedCount: verses.filter((v) => existingAyahClip(surahNum, v.ayahNumber)).length,
     status: "LOCAL_READY",
     previewHtml: reviewFile,
     mode: "THEMATIC_SETS_5_TO_10_AYAHS",
@@ -1097,8 +1108,7 @@ export async function processSurah(surahNum, options = {}) {
   const completedVerses = [];
 
   for (const v of verses) {
-    const targetFile = path.join(surahDir, `ayah_${v.ayahNumber}.mp4`);
-    if (fs.existsSync(targetFile)) {
+    if (existingAyahClip(surahNum, v.ayahNumber)) {
       completedVerses.push(v.ayahNumber);
     } else {
       pendingVerses.push(v);
@@ -1114,7 +1124,7 @@ export async function processSurah(surahNum, options = {}) {
     pass++;
     if (options.dryRun && pass > 1) break;
     const currentPending = verses.filter(
-      (v) => !fs.existsSync(path.join(surahDir, `ayah_${v.ayahNumber}.mp4`))
+      (v) => !existingAyahClip(surahNum, v.ayahNumber)
     );
     if (currentPending.length === 0) break;
 
@@ -1125,7 +1135,7 @@ export async function processSurah(surahNum, options = {}) {
 
       await generateBatchVideos(surahNum, batch, options);
       const newlyCompleted = verses.filter((v) =>
-        fs.existsSync(path.join(surahDir, `ayah_${v.ayahNumber}.mp4`))
+        existingAyahClip(surahNum, v.ayahNumber)
       ).length;
 
       progress.surahs[surahNum] = {
