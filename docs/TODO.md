@@ -30,9 +30,13 @@ never generate anything per Juz.
   Tamil 12.2, English 12.7 chars/s. All 4 combos (2 voices × 2 languages):
   Juz 30 ≈ ₹111, Juz 29 + 30 ≈ ₹235, whole Quran ≈ ₹3,600. Google's price
   doubles on 2027-01-01.
-- **In progress (2026-10-27):** Juz 29 + 30 (Surahs 67–114, 3,980 clips),
-  budget $3, branch `feat/meaning-audio-juz29-30`. Next: re-take flagged
-  clips, upload, manifest, stops, WebKit tests, PR, owner tests the preview.
+- **Done, waiting for the owner's test (2026-10-28):** Juz 29 + 30 (Surahs
+  67–114). 3,980 clips cost $2.38 ≈ ₹202 and are on R2. Stops are measured
+  for all 9 reciters. WebKit tests pass on all 48 Surahs and on the Juz 30
+  player. PR #158 (`feat/meaning-audio-juz29-30`): merge after the owner's OK.
+- Long ayahs (e.g. 73:20, 1,158 Tamil chars) can come back from a batch
+  without audio: re-run that Surah without `--batch`. Re-make any clip
+  with a long internal gap, or whose length is far from its text's.
 - **Then:** the rest of the Quran (≈ ₹3,300), as the owner's balance allows.
 - **Previews:** if a Vercel preview shows a black background or the meaning
   stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
