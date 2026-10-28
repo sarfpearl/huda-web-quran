@@ -30,10 +30,10 @@ never generate anything per Juz.
   Tamil 12.2, English 12.7 chars/s. All 4 combos (2 voices × 2 languages):
   Juz 30 ≈ ₹111, Juz 29 + 30 ≈ ₹235, whole Quran ≈ ₹3,600. Google's price
   doubles on 2027-01-01.
-- **Done, waiting for the owner's test (2026-10-28):** Juz 29 + 30 (Surahs
+- **Live (2026-10-28, PR #158 merged):** Juz 29 + 30 (Surahs
   67–114). 3,980 clips cost $2.38 ≈ ₹202 and are on R2. Stops are measured
   for all 9 reciters. WebKit tests pass on all 48 Surahs and on the Juz 30
-  player. PR #158 (`feat/meaning-audio-juz29-30`): merge after the owner's OK.
+  player. Owner tested the preview and approved.
 - Long ayahs (e.g. 73:20, 1,158 Tamil chars) can come back from a batch
   without audio: re-run that Surah without `--batch`. Re-make any clip
   with a long internal gap, or whose length is far from its text's.
