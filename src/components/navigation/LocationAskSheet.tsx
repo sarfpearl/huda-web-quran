@@ -23,8 +23,8 @@ export function LocationAskSheet({
   const lang = useUiLang();
   const title = t(lang, "Use your location for prayer times?");
   return (
-    <ActionSheet open={open} onClose={onLater} label={title} flush>
-      <div className="px-5 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <ActionSheet open={open} onClose={onLater} label={title}>
+      <div className="px-5 pt-1">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-emerald-300" aria-hidden="true">
             <PinIcon />

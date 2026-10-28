@@ -253,7 +253,7 @@ export function ReciterPickerModal({
       </div>
 
       {/* Reciter List */}
-      <div className={`${isMobile ? "min-h-0 flex-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]" :"max-h-[55vh] pb-2"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
+      <div className={`${isMobile ? "min-h-0 flex-1" :"max-h-[55vh] pb-2"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
         {filteredReciters.length === 0 ? (
           <div className={`py-8 text-center text-xs text-sand-300/60`}>
             {searchQuery.trim()
@@ -352,7 +352,7 @@ export function ReciterPickerModal({
 
   if (isMobile) {
     return (
-      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")} flush>
+      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")}>
         <div ref={panelRef} className="flex min-h-0 flex-1 flex-col select-none">
           {body}
         </div>

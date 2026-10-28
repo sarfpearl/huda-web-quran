@@ -51,20 +51,24 @@ export function MeaningAudioGroup({
   onChooseVoice,
   onChooseOnly,
   supported,
+  disabled = false,
   className,
-}: MeaningAudioSettings & { supported: boolean; className?: string }) {
+}: MeaningAudioSettings & { supported: boolean; disabled?: boolean; className?: string }) {
   const lang = useUiLang();
+  // `disabled` (the translation is off), or the voice off: the choices still
+  // show, greyed out.
+  const choices = cn(TAB_TRACK, "mt-3", (disabled || !on) && "pointer-events-none opacity-50");
   return (
-    <div className={cn(GROUP, className)}>
+    <div className={cn(GROUP, className)} aria-disabled={disabled || undefined}>
       <Switch
         on={on && supported}
         label={t(lang, "Read the meaning aloud")}
         sub={t(lang, !supported ? "English and Tamil only, for now." : on && only ? "One ayah's meaning after another, without the recitation." : "After each ayah, in the voice you choose.")}
         onToggle={onToggle}
-        disabled={!supported}
+        disabled={disabled || !supported}
       />
-      {on && supported && (
-        <div role="radiogroup" aria-label={t(lang, "Read the meaning aloud")} className={cn(TAB_TRACK, "mt-3")}>
+      {supported && (
+        <div role="radiogroup" aria-label={t(lang, "Read the meaning aloud")} className={choices}>
           {[false, true].map((o) => (
             <button
               key={String(o)}
@@ -79,8 +83,8 @@ export function MeaningAudioGroup({
           ))}
         </div>
       )}
-      {on && supported && (
-        <div role="radiogroup" aria-label={t(lang, "Voice")} className={cn(TAB_TRACK, "mt-3")}>
+      {supported && (
+        <div role="radiogroup" aria-label={t(lang, "Voice")} className={choices}>
           {MEANING_VOICES.map((v) => (
             <button
               key={v.id}
