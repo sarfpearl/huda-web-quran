@@ -378,6 +378,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // coming out never do that) while the recitation was on. Unlike
   // interruptedRef it survives a resume that iOS refused; 0 = not.
   const callAtRef = useRef(0);
+  // iOS 18 has navigator.audioSession without its `state`: a call shows only
+  // as a lock-screen "pause" action and a statechange event within a few ms
+  // of each other (owner's log, 2026-10-29). When each was last seen.
+  const sysPauseAtRef = useRef(0);
+  const stateChangeAtRef = useRef(0);
   // Measured length of each ayah clip of the Juz in play (index → seconds),
   // for the lock screen's whole-Juz progress bar (see juzPosition).
   const ayahDurRef = useRef<Map<number, number>>(new Map());
@@ -1082,11 +1087,29 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (ayahSeqRef.current) loadAyahAt(index, !startAt, startAt);
   }, [loadAyahAt]);
 
-  const pause = useCallback(() => {
-    alog("pause() by the listener");
+  // A call paused the recitation: play on once it is over (see the
+  // audio-session effect), not left paused as if the listener had stopped it.
+  const markCall = useCallback((why: string) => {
+    if (!currentRef.current) return;
+    callAtRef.current = Date.now();
+    userPausedRef.current = false;
+    alog(`call detected (${why}) → resumes after the call`);
+  }, []);
+
+  // from "system": the lock screen's / the system's pause action, which is
+  // also how iOS pauses the recitation for a call.
+  const pause = useCallback((from?: "system") => {
+    alog(`pause() ${from === "system" ? "system" : "button"}`);
+    const wasCall = callAtRef.current;
     userPausedRef.current = true;
     interruptedRef.current = 0;
     callAtRef.current = 0;
+    if (from === "system") {
+      sysPauseAtRef.current = Date.now();
+      if (Date.now() - stateChangeAtRef.current < 300) markCall("pause after statechange");
+      // Still in the same call (a second pause action): keep the marker.
+      else if (wasCall) markCall("pause during a call");
+    }
     if (meaningRef.current) {
       meaningAudioRef.current?.pause();
       setIsPlaying(false);
@@ -1099,7 +1122,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     audioRef.current?.pause();
     setIsPlaying(false);
-  }, []);
+  }, [markCall]);
 
   const resume = useCallback(() => {
     userPausedRef.current = false;
@@ -1316,7 +1339,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const act = () => mediaActionsRef.current;
     const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
       ["play", () => act().resume()],
-      ["pause", () => act().pause()],
+      ["pause", () => act().pause("system")],
       ["previoustrack", () => act().previous()],
       ["nexttrack", () => act().next()],
       ["seekbackward", (d) => act().seek(Math.max(0, act().time - (d.seekOffset ?? 10)))],
@@ -1444,20 +1467,63 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     };
     const onState = (why = "statechange") => {
       alog(`${why}: session=${session.state} visible=${document.visibilityState} ${elInfo("main", audioRef.current)} meaning=${!!meaningRef.current} prelude=${isPreludeRef.current} userPaused=${userPausedRef.current} sysPause=${interruptedRef.current ? `${Math.round((Date.now() - interruptedRef.current) / 1000)}s ago` : 0}`);
+      if (why === "statechange") stateChangeAtRef.current = Date.now();
       if (session.state === "interrupted") {
         // Only if it was on: playing still, or just paused by the system.
         const el = meaningRef.current
           ? meaningAudioRef.current
           : isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
         const on = (el && !el.paused) || Date.now() - interruptedRef.current < 60_000;
-        if (currentRef.current && on && !userPausedRef.current) callAtRef.current = Date.now();
-        alog(`interrupted: was on=${!!on} → callAt ${callAtRef.current ? "set" : "not set"}`);
+        if (on && !userPausedRef.current) markCall("interrupted");
+        return;
+      }
+      // No `state` (iOS 18): a pause action just before this event is a call.
+      if (why === "statechange" && session.state === undefined && !callAtRef.current
+        && Date.now() - sysPauseAtRef.current < 300) {
+        markCall("statechange after pause");
         return;
       }
       tryResume("now");
       // iOS can refuse play() for a moment after the call hangs up.
       timers.push(setTimeout(() => tryResume("+1s"), 1000), setTimeout(() => tryResume("+3s"), 3000));
     };
+    // After a call iOS doesn't always say it's over (an answered call ended
+    // with no event at all in the owner's log), and a resume can "play" with
+    // the clock stuck: every 2 s, until the recitation really moves again,
+    // play it — iOS refuses that while the call goes on — or restart a
+    // frozen one.
+    let lastT = -1;
+    let frozen = 0;
+    const poll = setInterval(() => {
+      if (!callAtRef.current) {
+        lastT = -1;
+        frozen = 0;
+        return;
+      }
+      const el = meaningRef.current
+        ? meaningAudioRef.current
+        : isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
+      if (!el || el.paused) {
+        lastT = -1;
+        frozen = 0;
+        tryResume("poll");
+        return;
+      }
+      if (lastT >= 0 && el.currentTime - lastT > 0.5) {
+        alog(`playing again after the call ${elInfo("now", el)}`);
+        callAtRef.current = 0;
+        lastT = -1;
+        frozen = 0;
+        return;
+      }
+      if (lastT >= 0 && ++frozen >= 2) {
+        alog(`stuck after the call ${elInfo("now", el)} → play again`);
+        frozen = 0;
+        el.pause();
+        el.play().catch((e) => alog(`play() refused (kick): ${e?.name}`));
+      }
+      lastT = el.currentTime;
+    }, 2000);
     const onStateChange = () => onState();
     const onShow = () => {
       if (document.visibilityState === "visible") onState("visible");
@@ -1467,10 +1533,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     document.addEventListener("visibilitychange", onShow);
     return () => {
       timers.forEach(clearTimeout);
+      clearInterval(poll);
       session.removeEventListener("statechange", onStateChange);
       document.removeEventListener("visibilitychange", onShow);
     };
-  }, []);
+  }, [markCall]);
   // Back from another app (the iPad home-screen app especially), iOS can
   // keep the recitation "playing" with the clock frozen and no sound: check
   // the element in use once the page shows again.
@@ -2134,7 +2201,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       alog(`playing ${elInfo("main", e.currentTarget)}`);
       applyMediaMetadata();
       userPausedRef.current = false;
-      callAtRef.current = 0;
       if (!isPreludeRef.current) {
         clearTimeout(waitingTimerRef.current);
         setIsPlaying(true);
@@ -2178,7 +2244,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         onPlaying={(e) => {
           alog(`playing ${elInfo("prelude", e.currentTarget)}`);
           applyMediaMetadata();
-          callAtRef.current = 0;
           if (isPreludeRef.current) setIsLoading(false);
         }}
         // Paused from outside (another app's sound, a call): show play. Not
@@ -2208,7 +2273,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           alog(`playing ${elInfo("meaning", e.currentTarget)}`);
           if (!meaningRef.current) return;
           applyMediaMetadata();
-          callAtRef.current = 0;
           setIsPlaying(true);
           setIsLoading(false);
         }}
