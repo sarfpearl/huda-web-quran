@@ -59,7 +59,9 @@ never generate anything per Juz.
        the clip should change from set 1 to set 2 at ayah 11 → 12; play Juz 5 —
        Surah 4's sets should show; Surah 50 keeps its single clip.
 3. [ ] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
-       exist only on the Mac (`public/videos/surah_3/`, 2.94 GB, not on R2);
+       exist only on the Mac (moved 2026-10-29 to
+       `Unused Items/archive/Inbox/surah_3/`, 2.94 GB, not on R2 — the pipeline
+       still counts them as done);
        the app shows its 20 chapter clips. Decide with the owner: thematic sets
        like the other Surahs (then register them, step 5), or keep the chapters.
 4. [ ] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** with the pipeline
