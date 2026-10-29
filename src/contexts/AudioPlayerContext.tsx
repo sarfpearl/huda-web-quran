@@ -22,6 +22,8 @@ import {
   PRELUDE_AUDIO,
 } from "@/lib/data/service";
 import { cbrMasterUrl, reciterHasSurah } from "@/lib/data/quranReciters";
+import { alog, elInfo } from "@/lib/audioDebug";
+import AudioDebugPanel from "@/components/player/AudioDebugPanel";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────
@@ -1081,6 +1083,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [loadAyahAt]);
 
   const pause = useCallback(() => {
+    alog("pause() by the listener");
     userPausedRef.current = true;
     interruptedRef.current = 0;
     callAtRef.current = 0;
@@ -1104,24 +1107,33 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     unlockMeaning();
     const mel = meaningAudioRef.current;
     if (meaningRef.current && mel) {
-      mel.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      alog(`resume() ${elInfo("meaning", mel)}`);
+      mel.play().then(() => setIsPlaying(true)).catch((e) => {
+        alog(`play() refused (meaning): ${e?.name} ${e?.message ?? ""}`);
+        setIsPlaying(false);
+      });
       return;
     }
     if (isPreludeRef.current && preludeAudioRef.current) {
       setIsLoading(true); // spinner while the prelude resumes/buffers
       const pel = preludeAudioRef.current;
+      alog(`resume() ${elInfo("prelude", pel)}`);
       pel
         .play()
         .then(() => {
           setIsPlaying(true);
           kickIfStuck(pel);
         })
-        .catch(() => setIsLoading(false));
+        .catch((e) => {
+          alog(`play() refused (prelude): ${e?.name} ${e?.message ?? ""}`);
+          setIsLoading(false);
+        });
       return;
     }
-    if (!current) return;
+    if (!current) return alog("resume(): nothing loaded");
     const el = audioRef.current;
-    if (!el) return;
+    if (!el) return alog("resume(): no audio element");
+    alog(`resume() ${elInfo("main", el)}${el.error ? ` error=${el.error.code}` : ""}`);
     if (!el.src && current.audioUrl) {
       loadCurrent(current, true);
       return;
@@ -1134,7 +1146,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       loadCurrent(current, true);
       return;
     }
-    el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    el.play().then(() => setIsPlaying(true)).catch((e) => {
+      alog(`play() refused (main): ${e?.name} ${e?.message ?? ""}`);
+      setIsPlaying(false);
+    });
     kickIfStuck(el);
   }, [current, loadCurrent, kickIfStuck, unlockMeaning]);
 
@@ -1406,19 +1421,29 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // marker stays until it really plays, and is retried on each state change
   // and each return to the page.
   useEffect(() => {
-    const session = (navigator as Navigator & { audioSession?: EventTarget & { state?: string } }).audioSession;
-    if (!session || typeof session.addEventListener !== "function") return;
+    const session = (navigator as Navigator & { audioSession?: EventTarget & { state?: string; type?: string } }).audioSession;
+    if (!session || typeof session.addEventListener !== "function") {
+      alog("navigator.audioSession: not supported — no resume after a call");
+      return;
+    }
+    alog(`audioSession ready: state=${session.state} type=${session.type}`);
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const tryResume = () => {
+    const tryResume = (why: string) => {
       const at = callAtRef.current;
-      if (!at || session.state === "interrupted" || userPausedRef.current) return;
+      if (!at || session.state === "interrupted" || userPausedRef.current) {
+        alog(`tryResume(${why}) skip: callAt=${at ? `${Math.round((Date.now() - at) / 1000)}s ago` : 0} state=${session.state} userPaused=${userPausedRef.current}`);
+        return;
+      }
       if (Date.now() - at > 10 * 60_000) {
+        alog(`tryResume(${why}) skip: call over 10 min ago`);
         callAtRef.current = 0;
         return;
       }
+      alog(`tryResume(${why}) → resume()`);
       mediaActionsRef.current.resume();
     };
-    const onState = () => {
+    const onState = (why = "statechange") => {
+      alog(`${why}: session=${session.state} visible=${document.visibilityState} ${elInfo("main", audioRef.current)} meaning=${!!meaningRef.current} prelude=${isPreludeRef.current} userPaused=${userPausedRef.current} sysPause=${interruptedRef.current ? `${Math.round((Date.now() - interruptedRef.current) / 1000)}s ago` : 0}`);
       if (session.state === "interrupted") {
         // Only if it was on: playing still, or just paused by the system.
         const el = meaningRef.current
@@ -1426,18 +1451,23 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           : isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
         const on = (el && !el.paused) || Date.now() - interruptedRef.current < 60_000;
         if (currentRef.current && on && !userPausedRef.current) callAtRef.current = Date.now();
+        alog(`interrupted: was on=${!!on} → callAt ${callAtRef.current ? "set" : "not set"}`);
         return;
       }
-      tryResume();
+      tryResume("now");
       // iOS can refuse play() for a moment after the call hangs up.
-      timers.push(setTimeout(tryResume, 1000), setTimeout(tryResume, 3000));
+      timers.push(setTimeout(() => tryResume("+1s"), 1000), setTimeout(() => tryResume("+3s"), 3000));
     };
-    const onShow = () => document.visibilityState === "visible" && onState();
-    session.addEventListener("statechange", onState);
+    const onStateChange = () => onState();
+    const onShow = () => {
+      if (document.visibilityState === "visible") onState("visible");
+      else alog(`hidden: session=${session.state} ${elInfo("main", audioRef.current)}`);
+    };
+    session.addEventListener("statechange", onStateChange);
     document.addEventListener("visibilitychange", onShow);
     return () => {
       timers.forEach(clearTimeout);
-      session.removeEventListener("statechange", onState);
+      session.removeEventListener("statechange", onStateChange);
       document.removeEventListener("visibilitychange", onShow);
     };
   }, []);
@@ -2095,11 +2125,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // An ayah clip reaching its end pauses too, right before the next one
       // starts: keep the pause icon instead of flashing play for a frame.
       if (ayahSeqRef.current && e.currentTarget.ended) return;
+      alog(`pause event ${elInfo("main", e.currentTarget)} userPaused=${userPausedRef.current} prelude=${isPreludeRef.current}`);
       // Not the listener: the system (a call) — see the audio-session effect.
       if (!userPausedRef.current && !e.currentTarget.ended && !isPreludeRef.current) interruptedRef.current = Date.now();
       if (!isPreludeRef.current) setIsPlaying(false);
     }),
-    onPlaying: fromActive(() => {
+    onPlaying: fromActive((e) => {
+      alog(`playing ${elInfo("main", e.currentTarget)}`);
       applyMediaMetadata();
       userPausedRef.current = false;
       callAtRef.current = 0;
@@ -2136,13 +2168,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   return (
     <AudioPlayerContext.Provider value={value}>
+      <AudioDebugPanel />
       {/* Dedicated HTML5 audio element for custom prelude (Isti'adhah & Bismillah) */}
       <audio
         ref={preludeAudioRef}
         preload="auto"
         onTimeUpdate={onPreludeTimeUpdate}
         onWaiting={() => { if (isPreludeRef.current) setIsLoading(true); }}
-        onPlaying={() => {
+        onPlaying={(e) => {
+          alog(`playing ${elInfo("prelude", e.currentTarget)}`);
           applyMediaMetadata();
           callAtRef.current = 0;
           if (isPreludeRef.current) setIsLoading(false);
@@ -2151,6 +2185,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         // when a switch already started it again, or it was emptied.
         onPause={(e) => {
           const el = e.currentTarget;
+          alog(`pause event ${elInfo("prelude", el)} userPaused=${userPausedRef.current}`);
           if (isPreludeRef.current && el.paused && !el.ended && el.getAttribute("src")) {
             if (!userPausedRef.current) interruptedRef.current = Date.now();
             setIsPlaying(false);
@@ -2169,7 +2204,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       <audio
         ref={meaningAudioRef}
         preload="auto"
-        onPlaying={() => {
+        onPlaying={(e) => {
+          alog(`playing ${elInfo("meaning", e.currentTarget)}`);
           if (!meaningRef.current) return;
           applyMediaMetadata();
           callAtRef.current = 0;
@@ -2180,6 +2216,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         // Paused from outside (a call, another app's sound): show play.
         onPause={(e) => {
           const el = e.currentTarget;
+          alog(`pause event ${elInfo("meaning", el)} userPaused=${userPausedRef.current}`);
           if (meaningRef.current && !el.ended && el.getAttribute("src")) {
             if (!userPausedRef.current) interruptedRef.current = Date.now();
             setIsPlaying(false);
