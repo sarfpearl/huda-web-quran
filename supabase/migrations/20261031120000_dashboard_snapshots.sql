@@ -31,8 +31,6 @@
 --  Rotate: repeat steps 1-4.  Switch off: delete from public.dashboard_secret;
 -- ============================================================================
 
-create extension if not exists "pgcrypto";
-
 -- ── Secret (hash only) ─────────────────────────────────────────────────────
 create table if not exists public.dashboard_secret (
   singleton boolean primary key default true check (singleton),
@@ -79,7 +77,7 @@ declare
 begin
   select s.secret_sha256 into v_stored from public.dashboard_secret s;
   v_a := decode(coalesce(v_stored, repeat('0', 64)), 'hex');
-  v_b := extensions.digest(convert_to(coalesce(p_secret, ''), 'UTF8'), 'sha256');
+  v_b := sha256(convert_to(coalesce(p_secret, ''), 'UTF8'));
   for i in 0..31 loop
     v_diff := v_diff | (get_byte(v_a, i) # get_byte(v_b, i));
   end loop;
