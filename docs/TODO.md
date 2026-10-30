@@ -4,6 +4,27 @@
 
 Start here in a new conversation. Details for each are further down or in `HANDOFF.md` §4.
 
+**Owner's phone check (2026-10-24):** lock screen artwork + controls,
+headphone / Bluetooth buttons, home-screen app, Android Back, zoom — fine.
+Not fine: (1) after a call the recitation didn't resume; (2) unmuting an
+Instagram feed video didn't pause the Surah; (3) Juz on the lock screen showed
+each ayah's few seconds, not the Juz. (1) and (3) fixed in
+`fix/call-resume-juz-lockscreen` (PR #138, not merged yet — check on the
+phone with the PR's Vercel preview, not the live site). 2026-10-28: owner
+says (1) still doesn't resume; (2) still open. 2026-10-29, `?debug=audio`
+log from the owner's iPhone (iOS 18.7): `navigator.audioSession` has no
+`state`, and a call reaches the page as the lock-screen "pause" action plus
+a statechange a few ms later — so it looked like the listener's own pause.
+Now that pair marks a call, and every 2 s the player tries to play on until
+the recitation moves again (iOS refuses while the call goes on). Check: an
+outgoing and an incoming call resume; a lock-screen pause stays paused.
+
+- [ ] **Phase 8B — private R2 archive upload** (separate task, don't mix with
+      app fixes): the 2,364 duplicate videos (53.6 GB) from the duplicate
+      cleanup go to a private bucket `huda-quran-archive`; plan in
+      `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
+      no local deletion until the upload is verified.
+
 ### Meaning audio — where it stands (updated 2026-10-27)
 
 After each ayah the recitation stops and its meaning is read aloud (Gemini
