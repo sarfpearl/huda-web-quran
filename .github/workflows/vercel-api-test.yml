@@ -1,0 +1,42 @@
+name: Vercel API test
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+    steps:
+      - name: Query Web Analytics API (last 7 days)
+        run: |
+          set -u
+          SINCE=$(date -u -d '7 days ago' +%Y-%m-%d)
+          UNTIL=$(date -u +%Y-%m-%d)
+          BASE="https://api.vercel.com/v1/query/web-analytics"
+
+          call() {
+            local endpoint="$1"; shift
+            echo "::group::GET visits/${endpoint} (${SINCE} .. ${UNTIL})"
+            code=$(curl --silent --show-error --get "${BASE}/visits/${endpoint}" \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              --data-urlencode "teamId=${VERCEL_TEAM_ID}" \
+              --data-urlencode "projectId=${VERCEL_PROJECT_ID}" \
+              --data-urlencode "since=${SINCE}" \
+              --data-urlencode "until=${UNTIL}" \
+              "$@" \
+              -o response.json -w '%{http_code}')
+            echo "HTTP status: ${code}"
+            echo "Response body:"
+            cat response.json
+            echo
+            echo "::endgroup::"
+          }
+
+          call count
+          call aggregate --data-urlencode "by=day"
