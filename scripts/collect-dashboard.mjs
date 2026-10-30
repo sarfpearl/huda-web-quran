@@ -13,7 +13,7 @@
  * (fetch-depth 0) and `npm ci` already run. Node built-ins only.
  */
 import { spawnSync } from "node:child_process";
-import { readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const OUT = process.argv[2] || "dashboard.json";
@@ -99,7 +99,7 @@ const pulls = () =>
 const remoteBranches = () => {
   const raw = git(
     "for-each-ref",
-    "--format=%(refname:short)|%(committerdate:iso-strict)",
+    "--format=%(refname)|%(committerdate:iso-strict)",
     "refs/remotes/origin",
   );
   return raw
@@ -107,7 +107,7 @@ const remoteBranches = () => {
     .filter(Boolean)
     .map((l) => {
       const [ref, date] = l.split("|");
-      return { name: ref.replace(/^origin\//, ""), date };
+      return { name: ref.replace(/^refs\/remotes\/origin\//, ""), date };
     })
     .filter((b) => b.name !== "HEAD" && b.name !== "main");
 };
@@ -158,6 +158,15 @@ const result = (r, { envSensitive = false, failLines = null } = {}) => {
   return { status: "fail", seconds: r.seconds, logTail: tail(log) };
 };
 
+// "not ok 3 - name" lines from node --test (TAP), de-duplicated, max 10.
+const failingTestNames = (out) => {
+  const names = [];
+  for (const m of out.matchAll(/^\s*not ok \d+ - (.+?)(?:\s+#.*)?$/gm)) {
+    if (!names.includes(m[1])) names.push(m[1]);
+  }
+  return { failingTests: names.slice(0, 10), failingTestsTotal: names.length };
+};
+
 const testFiles = () => {
   const found = [];
   const walk = (dir) => {
@@ -179,9 +188,11 @@ const checks = () => {
   let test;
   try {
     const files = testFiles();
-    test = files.length
-      ? { ...result(run("node", ["--test", ...files]), { failLines: /^\s*(not ok|error:)/ }), files: files.length }
-      : { status: "skipped", reason: "skipped (tests இல்லை)" };
+    if (files.length) {
+      const r = run("node", ["--test", ...files]);
+      test = { ...result(r, { failLines: /^\s*(not ok|error:)/ }), files: files.length };
+      if (test.status === "fail") Object.assign(test, failingTestNames(r.out));
+    } else test = { status: "skipped", reason: "skipped (tests இல்லை)" };
   } catch {
     test = { status: "skipped", reason: "skipped (tests இல்லை)" };
   }
@@ -209,6 +220,123 @@ const audit = () =>
     };
   });
 
+
+// ── docs/TODO.md ─────────────────────────────────────────────────────────────
+// Format (checked 2026-10-30): `- [ ] **title** …` or `N. [ ] **title** …`;
+// marker " " = to-do, "~" = in progress, "x" = done (skipped). There is no
+// "Known issues" section today: items under a heading matching /known issues/i,
+// or marked `[!]`, would be picked up if one is added.
+const TODO_PATH = "docs/TODO.md";
+const ITEM = /^(?:\d+\.\s+|[-*]\s+)\[([ ~x!])\]\s+(.*)$/;
+
+const parseTodo = () => {
+  if (!existsSync(TODO_PATH)) throw new Error(`${TODO_PATH} not found`);
+  const lines = readFileSync(TODO_PATH, "utf8").split("\n");
+  const found = [];
+  let heading = "";
+  let cur = null;
+  const flush = () => {
+    if (!cur) return;
+    const text = cur.text.replace(/\s+/g, " ").trim();
+    const bold = text.match(/\*\*(.+?)\*\*/);
+    const rawTitle = (bold ? bold[1] : text).trim();
+    const num = rawTitle.match(/^(\d+)\.\s+/) || cur.lead.match(/^(\d+)\./);
+    const title = rawTitle.replace(/^\d+\.\s+/, "").replace(/[\s.:—-]+$/, "").slice(0, 160);
+    found.push({
+      number: num ? Number(num[1]) : null,
+      title,
+      marker: cur.marker,
+      group: cur.group,
+      line: cur.line,
+    });
+    cur = null;
+  };
+  lines.forEach((raw, i) => {
+    const h = raw.match(/^#{2,4}\s+(.*)$/);
+    if (h) {
+      flush();
+      heading = h[1].replace(/\*\*/g, "").trim();
+      return;
+    }
+    const m = raw.match(ITEM);
+    if (m && !/^\s/.test(raw)) {
+      flush();
+      cur = { marker: m[1], text: m[2], lead: raw, group: heading, line: i + 1 };
+    } else if (cur && /^\s+\S/.test(raw)) cur.text += ` ${raw.trim()}`;
+    else if (cur && raw.trim() === "") flush();
+  });
+  flush();
+  return found;
+};
+
+const todoSections = () => {
+  let all;
+  try {
+    all = parseTodo();
+  } catch (e) {
+    const bad = { status: "unavailable", reason: redact(e.message).slice(0, 300) };
+    return { todo: bad, inProgress: bad, knownIssues: bad };
+  }
+  const pack = (section, pick, note) => {
+    const items = all
+      .filter(pick)
+      .map(({ number, title, group, line }) => ({ number, title, section, group, line }));
+    return { status: "ok", count: items.length, items, ...(note && !items.length ? { note } : {}) };
+  };
+  const isKnown = (i) => i.marker === "!" || (/known issues/i.test(i.group) && i.marker !== "x");
+  return {
+    todo: pack("To-do", (i) => i.marker === " " && !isKnown(i)),
+    inProgress: pack("In progress", (i) => i.marker === "~" && !isKnown(i)),
+    knownIssues: pack("Known issues", isKnown, `${TODO_PATH}-ல் Known issues பிரிவு இல்லை`),
+  };
+};
+
+// ── Not live: every remote branch + open PR not merged into main ─────────────
+const notLive = () =>
+  section(async () => {
+    const refs = new Map(remoteBranches().map((b) => [b.name, b.date]));
+    const merged = new Set(
+      git("branch", "-r", "--merged", MAIN)
+        .split("\n")
+        .map((s) => s.trim().replace(/^origin\//, "")),
+    );
+    const openPrs = await ghList("pulls?state=open");
+    const prByBranch = new Map(openPrs.map((p) => [p.head?.ref, p]));
+
+    // Squash/rebase-merged PRs leave their branch "unmerged" for ever; their
+    // PR says merged, so they are live and left out (counted in squashMerged).
+    let squashed = new Set();
+    let squashCheck = "ok";
+    try {
+      const closed = await ghList("pulls?state=closed");
+      squashed = new Set(closed.filter((p) => p.merged_at).map((p) => p.head?.ref));
+    } catch {
+      squashCheck = "unavailable";
+    }
+
+    const names = new Set([...refs.keys(), ...prByBranch.keys()].filter((n) => n && n !== "main"));
+    const items = [];
+    let squashMerged = 0;
+    for (const name of names) {
+      const pr = prByBranch.get(name);
+      if (!pr && merged.has(name)) continue;
+      if (!pr && squashed.has(name)) {
+        squashMerged++;
+        continue;
+      }
+      const has = refs.has(name);
+      items.push({
+        name,
+        kind: pr ? "pr" : "branch",
+        ...(pr ? { pr: { number: pr.number, title: pr.title, url: pr.html_url, draft: !!pr.draft } } : {}),
+        lastCommitAt: has ? refs.get(name) : pr?.updated_at ?? null,
+        commitsAhead: has ? Number(git("rev-list", "--count", `${MAIN}..origin/${name}`)) : null,
+      });
+    }
+    items.sort((a, b) => String(b.lastCommitAt).localeCompare(String(a.lastCommitAt)));
+    return { count: items.length, squashMerged, squashCheck, items };
+  });
+
 // ── assemble ─────────────────────────────────────────────────────────────────
 const now = new Date();
 const ist = new Date(now.getTime() + 330 * 60_000).toISOString().replace("Z", "+05:30");
@@ -216,6 +344,8 @@ const ist = new Date(now.getTime() + 330 * 60_000).toISOString().replace("Z", "+
 const [issuesR, pullsR, wipR, staleR] = await Promise.all([issues(), pulls(), wipBranches(), staleBranches()]);
 const checksR = await section(async () => checks());
 const auditR = await audit();
+const todoR = todoSections();
+const notLiveR = await notLive();
 
 const out = {
   generatedAt: now.toISOString(),
@@ -224,6 +354,14 @@ const out = {
   github: { issues: issuesR, pulls: pullsR, wipBranches: wipR, staleBranches: staleR },
   checks: checksR,
   audit: auditR,
+  todo: todoR.todo,
+  inProgress: todoR.inProgress,
+  knownIssues: todoR.knownIssues,
+  notLive: notLiveR,
+  localOnly: {
+    stashes: true,
+    note: "Stashes cloud-ல் தெரியாது; local machine-ல் மட்டும் (git stash list)",
+  },
 };
 
 writeFileSync(OUT, `${JSON.stringify(out, null, 2)}\n`);
@@ -235,3 +373,4 @@ if (checksR.status === "ok") {
   for (const k of ["build", "lint", "test"]) console.log(line(k, checksR[k]));
 } else console.log(line("checks", checksR));
 console.log(line("audit", auditR));
+for (const k of ["todo", "inProgress", "knownIssues", "notLive"]) console.log(line(k, out[k]) + (out[k].count != null ? ` (${out[k].count})` : ""));
