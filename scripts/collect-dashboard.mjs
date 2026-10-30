@@ -28,11 +28,18 @@ const redact = (s) => {
   return out;
 };
 
+// "fetch failed" alone says nothing: add undici's err.cause (code + message).
+const describe = (e) => {
+  const c = e?.cause;
+  const cause = c ? ` (cause: ${[c.code, c.message].filter(Boolean).join(" ")})` : "";
+  return redact(`${e?.message || e}${cause}`).slice(0, 300);
+};
+
 const section = async (fn) => {
   try {
     return { status: "ok", ...(await fn()) };
   } catch (e) {
-    return { status: "unavailable", reason: redact(e?.message || e).slice(0, 300) };
+    return { status: "unavailable", reason: describe(e) };
   }
 };
 
@@ -59,22 +66,45 @@ const git = (...args) => {
 };
 
 // ── GitHub REST (issues / PRs) ───────────────────────────────────────────────
-async function ghList(path) {
-  if (!TOKEN || !REPO) throw new Error("GITHUB_TOKEN / GITHUB_REPOSITORY missing");
-  const items = [];
-  for (let page = 1; page <= 5; page++) {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/${path}${path.includes("?") ? "&" : "?"}per_page=100&page=${page}`,
-      {
+// One request, one retry on a network error / 5xx / 429 (a socket kept alive
+// from an earlier call can be dead by the time a later section reuses it).
+async function ghGet(url, label) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, {
         headers: {
           authorization: `Bearer ${TOKEN}`,
           accept: "application/vnd.github+json",
           "x-github-api-version": "2022-11-28",
         },
-      },
+      });
+      if (res.ok) return await res.json();
+      if (attempt === 1 && (res.status >= 500 || res.status === 429)) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      throw new Error(`GitHub API ${res.status} for ${label}`);
+    } catch (e) {
+      if (attempt === 1 && !String(e?.message).startsWith("GitHub API")) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      if (String(e?.message).startsWith("GitHub API")) throw e;
+      e.message = `${label}: ${e.message}`;
+      throw e;
+    }
+  }
+}
+
+async function ghList(path) {
+  if (!TOKEN || !REPO) throw new Error("GITHUB_TOKEN / GITHUB_REPOSITORY missing");
+  const items = [];
+  for (let page = 1; page <= 5; page++) {
+    const label = path.split("?")[0];
+    const batch = await ghGet(
+      `https://api.github.com/repos/${REPO}/${path}${path.includes("?") ? "&" : "?"}per_page=100&page=${page}`,
+      label,
     );
-    if (!res.ok) throw new Error(`GitHub API ${res.status} for ${path.split("?")[0]}`);
-    const batch = await res.json();
     items.push(...batch);
     if (batch.length < 100) break;
   }
@@ -341,7 +371,11 @@ const notLive = () =>
 const now = new Date();
 const ist = new Date(now.getTime() + 330 * 60_000).toISOString().replace("Z", "+05:30");
 
-const [issuesR, pullsR, wipR, staleR] = await Promise.all([issues(), pulls(), wipBranches(), staleBranches()]);
+// GitHub API calls run one after another, never in parallel.
+const issuesR = await issues();
+const pullsR = await pulls();
+const wipR = await wipBranches();
+const staleR = await staleBranches();
 const checksR = await section(async () => checks());
 const auditR = await audit();
 const todoR = todoSections();
