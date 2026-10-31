@@ -4,18 +4,27 @@
  *  HuDa Web Quran — move Surah 3's unused videos out of public/videos
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * Keeps in public/videos only the Surah 3 clips the app really requests (the
- * ones in src/lib/data/videoManifest.ts) and moves every other Surah 3 video
- * to `Unused Items/archive/Inbox/`, keeping its folder path (so
+ * Keeps the Surah 3 clips the app really requests (the ones in
+ * src/lib/data/videoManifest.ts) and moves every other Surah 3 video to
+ * `Unused Items/archive/Inbox/`, keeping its folder path (so
  * public/videos/surah_3/ayah_5.mp4 → Unused Items/archive/Inbox/surah_3/
  * ayah_5.mp4, where the pipeline still finds it — existingAyahClip()).
+ *
+ * Moved: Surah 3 files in public/videos that are not in the manifest, and
+ * these whole folders (finished or trial renders, not what the app plays):
+ *   scratch/surah3_trial_generation         → Inbox/scratch/…
+ *   scratch/surah3_0.40s_remediation        → Inbox/scratch/…
+ *   scratch/staging/003                     → Inbox/scratch/staging/003
+ *   .media-work/originals/…/003-aal-e-imran → Inbox/media-work/originals/…
+ * Kept: .media-work/encoded/…/003-aal-e-imran, the local copy of what is on
+ * R2 and live.
  *
  *   node scripts/tools/archive-surah3-unused.mjs             # list only (default)
  *   node scripts/tools/archive-surah3-unused.mjs --execute   # move them
  *
- * "Surah 3" = a folder named surah_3, 003 or 003-… anywhere under
- * public/videos. Never touched: the manifest's clips, public/videos/Inbox,
- * other Surahs, scratch/. Nothing is overwritten (a name already in the
+ * "Surah 3" in public/videos = a folder named surah_3, 003 or 003-…. Never
+ * touched: the manifest's clips, public/videos/Inbox, other Surahs,
+ * .media-work/encoded, assets/. Nothing is overwritten (a name already in the
  * archive is reported and skipped) and nothing is deleted: files are moved.
  * Ledger of a run: .media-work/surah3-archive-ledger.json.
  * ─────────────────────────────────────────────────────────────────────────────
@@ -32,6 +41,13 @@ const MANIFEST = path.join(ROOT, "src/lib/data/videoManifest.ts");
 const LEDGER = path.join(ROOT, ".media-work/surah3-archive-ledger.json");
 const execute = process.argv.includes("--execute");
 
+// Whole folders outside public/videos: [from, under the archive].
+const EXTRA = [
+  ["scratch/surah3_trial_generation", "scratch/surah3_trial_generation"],
+  ["scratch/surah3_0.40s_remediation", "scratch/surah3_0.40s_remediation"],
+  ["scratch/staging/003", "scratch/staging/003"],
+  [".media-work/originals/videos/surah/003-aal-e-imran", "media-work/originals/videos/surah/003-aal-e-imran"],
+];
 const isSurah3 = (rel) =>
   rel.split(path.sep).some((s) => s === "surah_3" || s === "003" || s.startsWith("003-"));
 const mb = (n) => `${(n / 1024 / 1024).toFixed(1)} MB`;
@@ -62,12 +78,22 @@ function* walk(dir) {
 }
 
 const keep = [];
-const move = [];
+const move = []; // { from, rel (path under the archive), label (folder shown), size }
 const missing = liveSurah3.filter((rel) => !fs.existsSync(path.join(VIDEOS, rel)));
 for (const full of walk(VIDEOS)) {
   const rel = path.relative(VIDEOS, full);
   if (!isSurah3(rel)) continue;
-  (live.has(rel) ? keep : move).push({ rel, size: fs.statSync(full).size });
+  const size = fs.statSync(full).size;
+  if (live.has(rel)) keep.push({ rel, size });
+  else move.push({ from: full, rel, label: path.dirname(rel), size });
+}
+for (const [src, dest] of EXTRA) {
+  const root = path.join(ROOT, src);
+  if (!fs.existsSync(root)) continue;
+  for (const full of walk(root)) {
+    const rel = path.join(dest, path.relative(root, full));
+    move.push({ from: full, rel, label: src, size: fs.statSync(full).size });
+  }
 }
 
 const total = move.reduce((a, f) => a + f.size, 0);
@@ -77,7 +103,7 @@ console.log(`  to move to ${path.relative(ROOT, ARCHIVE)}: ${move.length} files,
 
 const byFolder = new Map();
 for (const f of move) {
-  const d = path.dirname(f.rel);
+  const d = f.label;
   const g = byFolder.get(d) ?? { n: 0, size: 0 };
   g.n++;
   g.size += f.size;
@@ -93,7 +119,7 @@ if (!execute) {
 const done = [];
 const skipped = [];
 for (const f of move) {
-  const from = path.join(VIDEOS, f.rel);
+  const from = f.from;
   const to = path.join(ARCHIVE, f.rel);
   if (fs.existsSync(to)) {
     skipped.push({ rel: f.rel, why: "already in the archive" });
@@ -112,13 +138,15 @@ for (const f of move) {
   done.push(f.rel);
 }
 
-// Folders the move left empty.
+// Folders the move left empty (deepest first).
 let removedDirs = 0;
-for (const d of [...byFolder.keys()].sort((a, b) => b.length - a.length)) {
-  const full = path.join(VIDEOS, d);
-  if (fs.existsSync(full) && fs.readdirSync(full).length === 0) {
-    fs.rmdirSync(full);
+const dirs = new Set(move.map((f) => path.dirname(f.from)));
+for (const d of [...dirs].sort((x, y) => y.length - x.length)) {
+  let cur = d;
+  while (cur.startsWith(ROOT + path.sep) && cur !== VIDEOS && fs.existsSync(cur) && fs.readdirSync(cur).length === 0) {
+    fs.rmdirSync(cur);
     removedDirs++;
+    cur = path.dirname(cur);
   }
 }
 
