@@ -73,8 +73,13 @@ never generate anything per Juz.
       not wanted).
 - [x] **Call resume (PR #138) — verified by the owner on the phone,
       2026-10-31: works correctly. Closed.**
-- [ ] **Surah 3: the remaining 83 ayahs** — see Next tasks #3 (thematic sets or
-      keep the 20 chapter clips).
+- [x] **Surah 3 thematic sets (2026-10-31)** — built from the existing
+      per-ayah clips, no Veo spend: 29 sets of 7 ayahs, each the clip nearest
+      the set's middle ayah (6 sets with no clip of their own — 57–63, 71–77,
+      85–91, 127–133, 141–147, 197–200 — borrow a neighbouring ayah's clip).
+      Encoded ~3 Mbps (≈2.5–3.2 MB each), uploaded to R2, registered, status
+      `DEPLOYED`. If the owner later wants fresh clips for those 6 sets, redo
+      them only.
 - [ ] Merge the docs PR with items 10 (clear Supabase test data before launch)
       and 11 (folder re-organisation).
 
