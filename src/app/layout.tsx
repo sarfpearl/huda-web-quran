@@ -8,6 +8,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { SurahListenCounter } from "@/components/player/SurahListenCounter";
 import { SplashScreen } from "@/components/layout/SplashScreen";
 import { ServiceWorker } from "@/components/layout/ServiceWorker";
+import { Analytics } from '@vercel/analytics/next';
 
 
 export const metadata: Metadata = {
@@ -87,6 +88,7 @@ export default function RootLayout({
             <ServiceWorker />
           </AudioPlayerProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
