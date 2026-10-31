@@ -63,6 +63,34 @@ never generate anything per Juz.
   stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
   you blame the code.
 
+### Unfinished after the 2026-10-28 → 10-31 session (start a new chat from here)
+
+- [ ] **Merge PR #170** (`chore/surah3-clips-archive`): the pipeline finds
+      clips moved to `Unused Items/archive/Inbox`. **Until it is merged, don't
+      run the pipeline for Surah 3** — it would pay Veo again for the 117
+      archived ayah clips.
+- [ ] **Delete old remote branches** (the session's git proxy can't delete
+      branches; owner: GitHub → Branches → 🗑️): `feat/imran-clips`,
+      `feat/surah-003-real-footage-pipeline`, `docs/handoff-cleanup` (all old;
+      the Aal-Imran clips are live). **Never merge the surah-003 branch** — it
+      removes the Surah 3 clips the app shows now. After #170 merges, also
+      `chore/surah3-clips-archive`.
+- [ ] **Instagram unmute doesn't pause the Surah** — still open (not fixed in
+      PR #138; needs more info from the phone).
+- [ ] **Call resume (PR #138, merged 2026-10-30) — not fully proven.** A real
+      iPhone log (`?debug=audio`, iOS 18.7) resumed after one call; another
+      pause (14:20:45: the element paused with no `pause()` action, a
+      `statechange` 18 ms later) did not resume on its own, and the owner didn't
+      say what that was. Still to check on the phone: an answered incoming call
+      (talk 15–20 s) resumes, **and a lock-screen ⏸ stays paused for 10 s**
+      (a wrongly resumed one would be a new bug), nothing plays *during* the
+      call. Log: add `?debug=audio` to any URL (`src/lib/audioDebug.ts`),
+      Copy, send.
+- [ ] **Surah 3: the remaining 83 ayahs** — see Next tasks #3 (thematic sets or
+      keep the 20 chapter clips).
+- [ ] Merge the docs PR with items 10 (clear Supabase test data before launch)
+      and 11 (folder re-organisation).
+
 ### Next tasks — in this order (noted 2026-10-25)
 
 1. [x] **Folder re-arrangement / unused media (2026-10-25, PR #150).** Local:
@@ -116,6 +144,39 @@ never generate anything per Juz.
        ```
        Keep `public.admins`. Check live after: view counts `{}`, comments
        `total: 0`.
+11. [ ] **Folder re-organisation (owner: "folder reorganisation" → start here;
+       noted 2026-10-31, NOT started — do it in a new chat).** Problem: on the
+       owner's Mac the code and the media sit mixed in one folder, so it is not
+       clear what is where. Where things really live:
+       - **GitHub** = code only (`src`, `scripts`, `docs`, `supabase`, `tests`,
+         `.github`, `.agents`, config; `data/progress.json`).
+       - **R2** (Cloudflare) = the videos, images and audio the app plays
+         (`NEXT_PUBLIC_MEDIA_BASE_URL`, `src/lib/media.ts`); **Vercel** = the
+         site (auto-deploys `main`); **Supabase** = views / likes / comments.
+       - **Mac only, not in git** (`.gitignore`): `public/videos/`, `scratch/`,
+         `.media-work/`, `assets/`, `Unused Items/`, `user_candidates/`,
+         `public/assets/images/`, `public/audio/prelude/`. Nothing there reaches
+         GitHub or the live site.
+       Plan (agree with the owner before moving anything):
+       1. Read-only map first: size of every top-level folder + what uses it
+          (a `du` command on the Mac, then grep the scripts for each path).
+       2. Proposed layout — the repo folder = code only; next to it a media
+          folder, e.g. `huda-media/{1-live-copy, 2-working, 3-masters,
+          4-unused}`: live-copy = local copy of what is on R2
+          (`.media-work/encoded`), working = pipeline / scratch, masters = raw
+          and 4K masters (`assets/video-masters`, Surah 3 raw masters),
+          unused = what is now in `Unused Items/`.
+       3. Moving media breaks paths: check and update `PIPELINE_CONFIG`
+          (`scripts/pipeline/automated-quran-video-pipeline.mjs`),
+          `scripts/tools/reencode-videos.mjs` (`.media-work/originals` is the
+          re-encode backup — moved for Surah 3 on 2026-10-31, so a re-run would
+          re-download R2's already re-encoded copy), `upload-to-r2.mjs`,
+          `r2-unused-videos.mjs`, `archive-surah3-unused.mjs`.
+       4. Do the same check as for Surah 3 for every other Surah (4–32): which
+          local videos does the app use (`videoManifest.ts`), which not → the
+          unused ones go to the unused folder. Move, never delete; one Surah /
+          one folder at a time, a list first (like `archive-surah3-unused.mjs`).
+       5. Then a short `docs/FOLDER_MAP.md`: "GitHub / R2 / Mac-only / unused".
 
 **2026-10-25:** R2 re-encoded and cleaned (9.20 → 4.16 GB, 0 unused videos) and the thematic sets of 22 Surahs are now shown in Surahs and Juz (PR #143, #145, #147) — `HANDOFF.md` §2b. For each new Surah's sets: encode + upload, then `surah-set-registry.mjs` + `video-manifest.mjs`.
 
