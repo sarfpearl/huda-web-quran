@@ -8,16 +8,12 @@ Start here in a new conversation. Details for each are further down or in `HANDO
 headphone / Bluetooth buttons, home-screen app, Android Back, zoom — fine.
 Not fine: (1) after a call the recitation didn't resume; (2) unmuting an
 Instagram feed video didn't pause the Surah; (3) Juz on the lock screen showed
-each ayah's few seconds, not the Juz. (1) and (3) fixed in
-`fix/call-resume-juz-lockscreen` (PR #138, not merged yet — check on the
-phone with the PR's Vercel preview, not the live site). 2026-10-28: owner
-says (1) still doesn't resume; (2) still open. 2026-10-29, `?debug=audio`
-log from the owner's iPhone (iOS 18.7): `navigator.audioSession` has no
-`state`, and a call reaches the page as the lock-screen "pause" action plus
-a statechange a few ms later — so it looked like the listener's own pause.
-Now that pair marks a call, and every 2 s the player tries to play on until
-the recitation moves again (iOS refuses while the call goes on). Check: an
-outgoing and an incoming call resume; a lock-screen pause stays paused.
+each ayah's few seconds, not the Juz. (1) and (3) fixed in PR #138 —
+owner checked calls on the phone, merged and live 2026-10-31. iOS 18.7
+reports a call as the lock-screen "pause" action plus a statechange a few ms
+later; that pair marks a call and the player retries every 2 s until the
+recitation moves again. (`?debug=audio` shows the on-phone log.)
+**Still open: (2)** unmuting an Instagram feed video doesn't pause the Surah.
 
 - [ ] **Phase 8B — private R2 archive upload** (separate task, don't mix with
       app fixes): the 2,364 duplicate videos (53.6 GB) from the duplicate
