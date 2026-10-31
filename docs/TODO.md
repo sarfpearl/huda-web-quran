@@ -80,10 +80,9 @@ never generate anything per Juz.
       Encoded ~3 Mbps (≈2.5–3.2 MB each), uploaded to R2, registered, status
       `DEPLOYED`. If the owner later wants fresh clips for those 6 sets, redo
       them only.
-- [ ] **Owner check — Surah 3 sets live (PR #173, merged 2026-10-31):** after
-      Vercel deploys, play Surah 3 on https://huda-web-quran.vercel.app; the
-      clip should change every 7 ayahs (7 → 8, 14 → 15). Not yet seen in a
-      browser. Sets 9, 11, 13, 19, 21, 29 use a borrowed neighbour clip.
+- [x] **Surah 3 sets verified live (2026-10-31):** ayah 30 → `set_05_ayah_29-35`.
+      Ayahs 1–25 keep their curated chapter clips (ayah-level registry in
+      `surahVerseVideos.ts` wins over sets, as in Surah 2); sets cover 26–200.
 
 ### Next tasks — in this order (noted 2026-10-25)
 
