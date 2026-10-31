@@ -65,27 +65,14 @@ never generate anything per Juz.
 
 ### Unfinished after the 2026-10-28 → 10-31 session (start a new chat from here)
 
-- [ ] **Merge PR #170** (`chore/surah3-clips-archive`): the pipeline finds
-      clips moved to `Unused Items/archive/Inbox`. **Until it is merged, don't
-      run the pipeline for Surah 3** — it would pay Veo again for the 117
-      archived ayah clips.
-- [ ] **Delete old remote branches** (the session's git proxy can't delete
-      branches; owner: GitHub → Branches → 🗑️): `feat/imran-clips`,
-      `feat/surah-003-real-footage-pipeline`, `docs/handoff-cleanup` (all old;
-      the Aal-Imran clips are live). **Never merge the surah-003 branch** — it
-      removes the Surah 3 clips the app shows now. After #170 merges, also
+- [x] **PR #170 merged** (pipeline finds clips in `Unused Items/archive/Inbox`).
+- [x] **Old remote branches deleted 2026-10-31:** `feat/imran-clips`,
+      `feat/surah-003-real-footage-pipeline`, `docs/handoff-cleanup`,
       `chore/surah3-clips-archive`.
-- [ ] **Instagram unmute doesn't pause the Surah** — still open (not fixed in
-      PR #138; needs more info from the phone).
-- [ ] **Call resume (PR #138, merged 2026-10-30) — not fully proven.** A real
-      iPhone log (`?debug=audio`, iOS 18.7) resumed after one call; another
-      pause (14:20:45: the element paused with no `pause()` action, a
-      `statechange` 18 ms later) did not resume on its own, and the owner didn't
-      say what that was. Still to check on the phone: an answered incoming call
-      (talk 15–20 s) resumes, **and a lock-screen ⏸ stays paused for 10 s**
-      (a wrongly resumed one would be a new bug), nothing plays *during* the
-      call. Log: add `?debug=audio` to any URL (`src/lib/audioDebug.ts`),
-      Copy, send.
+- [x] **Instagram unmute not pausing the Surah — dropped** (owner, 2026-10-31:
+      not wanted).
+- [x] **Call resume (PR #138) — verified by the owner on the phone,
+      2026-10-31: works correctly. Closed.**
 - [ ] **Surah 3: the remaining 83 ayahs** — see Next tasks #3 (thematic sets or
       keep the 20 chapter clips).
 - [ ] Merge the docs PR with items 10 (clear Supabase test data before launch)
