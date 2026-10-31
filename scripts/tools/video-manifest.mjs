@@ -47,10 +47,14 @@ for (const j of Object.values(JUZ_VIDEOS)) {
 
 const present = [];
 const missing = [];
+// Probe in small batches: hundreds of parallel HEADs make R2 connects time out.
+const queue = [...candidates];
 await Promise.all(
-  [...candidates].map(async (p) => {
-    const res = await nativeFetch(mediaUrl(p), { method: "HEAD" });
-    (res.ok ? present : missing).push(p);
+  Array.from({ length: 16 }, async () => {
+    for (let p; (p = queue.shift()); ) {
+      const res = await nativeFetch(mediaUrl(p), { method: "HEAD" });
+      (res.ok ? present : missing).push(p);
+    }
   }),
 );
 present.sort();
