@@ -82,7 +82,11 @@ never generate anything per Juz.
 3. [ ] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
        exist only on the Mac (moved 2026-10-29 to
        `Unused Items/archive/Inbox/surah_3/`, 2.94 GB, not on R2 — the pipeline
-       still counts them as done);
+       still counts them as done). 2026-10-31: the rest of Surah 3's non-live
+       videos (`scratch/surah3_*`, `scratch/staging/003`, the pre-encode
+       `.media-work/originals/…/003-aal-e-imran`; 186 files, 1.1 GB) moved
+       there too with `scripts/tools/archive-surah3-unused.mjs`; only
+       `.media-work/encoded/…/003-aal-e-imran` (what is live) stays;
        the app shows its 20 chapter clips. Decide with the owner: thematic sets
        like the other Surahs (then register them, step 5), or keep the chapters.
 4. [ ] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** with the pipeline
