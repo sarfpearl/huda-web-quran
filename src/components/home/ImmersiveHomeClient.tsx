@@ -845,12 +845,18 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     player.isPlaying, player.isPrelude, player.preludeCurrentTime, player.currentTime, player.duration, player.ayahSequence?.preType,
   ]);
 
+  // Reading mode (header 📖) — declared here so the meaning audio can key off
+  // it; its derived flags live further down with the rest of the reading UI.
+  const [readingMode, setReadingMode] = useState(false);
+
   // ── Meaning audio ───────────────────────────────────────────────────────
   // After each ayah, its meaning (the translation shown) is read aloud in the
   // listener's voice, then the recitation goes on. English and Tamil only.
   const [meaningPrefs, setMeaningPrefs] = useMeaningAudioPrefs();
-  // Translation off = Arabic only: no meaning voice either.
-  const meaningOn = MEANING_AUDIO_PUBLISHED && showTranslation && meaningPrefs.on && isMeaningLang(translationLang);
+  // Translation off = Arabic only: no meaning voice either. Reading mode shows
+  // only the Arabic Mushaf text (the Translate button is hidden there), so the
+  // meaning is never read aloud while reading.
+  const meaningOn = MEANING_AUDIO_PUBLISHED && showTranslation && meaningPrefs.on && isMeaningLang(translationLang) && !readingMode;
   // Its switch and voice: in Settings › Translation and the header's sheet.
   const meaningAudioSettings = MEANING_AUDIO_PUBLISHED
     ? {
@@ -1080,8 +1086,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
   // Reading mode (header 📖): the playing Surah's / Juz's full text as Mushaf
   // pages on the scene instead of the single ayah, the player shrunk to its
-  // compact pill.
-  const [readingMode, setReadingMode] = useState(false);
+  // compact pill. (The `readingMode` state is declared up by the meaning audio.)
   const readingJuz = readingMode && isJuz ? activeJuz ?? null : null;
   const readingSurah = readingMode && !isJuz ? activeSurah?.number ?? null : null;
   const readingActive = readingSurah !== null || readingJuz !== null;
