@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { BookmarkIcon, CloseIcon, SearchIcon, TrashIcon } from "@/components/ui/Icon";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
+import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 import { cn } from "@/lib/utils";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import { fetchSurahVerses, toArabicNumerals } from "@/lib/data/quranVerses";
@@ -44,6 +45,8 @@ export function BookmarksPanel({
     setQuery("");
     setIsOpen(true);
   };
+  // Close itself after a spell of no interaction.
+  useAutoCloseIdle(isOpen, () => setIsOpen(false));
 
   // Each bookmarked ayah's Arabic text, loaded while the panel is open.
   const [texts, setTexts] = useState<Record<string, string>>({});

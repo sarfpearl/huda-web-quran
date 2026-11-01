@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
+import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
 /** Same glass as the player card, so sheets read as part of it. */
 export const PLAYER_GLASS =
@@ -112,6 +113,7 @@ export function ActionSheet({
   labelledBy,
   label,
   keepAttr,
+  noAutoClose = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -121,12 +123,16 @@ export function ActionSheet({
   label?: string;
   /** Extra data-* attribute to put on the sheet (e.g. an outside-press guard). */
   keepAttr?: string;
+  /** Keep the sheet open regardless of idle (a permission ask that must be
+      answered, not dismissed by a timeout). */
+  noAutoClose?: boolean;
 }) {
   const drag = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
   useDialogFocus(open, sheetRef);
   useBackToClose(open, onClose);
   useOnlyOneSheet(open, onClose);
+  useAutoCloseIdle(open && !noAutoClose, onClose);
   const kb = useKeyboardInset(open);
   useSheetTouchLock(open, sheetRef);
   const [mounted, setMounted] = useState(false);

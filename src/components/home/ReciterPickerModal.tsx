@@ -13,6 +13,7 @@ import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB 
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
+import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 import { t, useUiLang, word } from "@/lib/uiLang";
 
 interface ReciterPickerModalProps {
@@ -50,6 +51,9 @@ export function ReciterPickerModal({
   useDialogFocus(isOpen && !isMobile, panelRef);
   useBackToClose(isOpen && !isMobile, onClose);
   useOnlyOneSheet(isOpen && !isMobile, onClose);
+  // Desktop popover: close itself after a spell of no interaction (phones get
+  // this from the ActionSheet).
+  useAutoCloseIdle(isOpen && !isMobile, onClose);
   const selectedItemRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
 

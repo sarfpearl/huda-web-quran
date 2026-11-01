@@ -215,8 +215,15 @@ export function TimeLocationWidget({
         if (cancelled) return;
         status = s;
         status?.addEventListener("change", onChange);
-        const answered = status?.state === "granted" || status?.state === "denied";
-        if (answered) {
+        // Only a confirmed prior grant fetches straight away. "denied",
+        // "prompt", or no Permissions API at all (the macOS Home-Screen web app
+        // doesn't report geolocation permission reliably — it often reads
+        // "denied" or nothing when it is really unset) all go through the sheet,
+        // so getCurrentPosition is called from the Allow tap. That user gesture
+        // is what Safari and the standalone web app need before they will
+        // prompt at all — without it the standalone app never asked and the
+        // pill was left showing only the clock.
+        if (status?.state === "granted") {
           ask(true);
           return;
         }

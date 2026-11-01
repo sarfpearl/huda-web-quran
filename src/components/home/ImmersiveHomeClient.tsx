@@ -65,6 +65,7 @@ import {
   wordSyncUnavailableReason,
   resolveActiveReciter,
   RECITER_STORAGE_KEY,
+  quranThumbUrl,
   type QuranReciter,
 } from "@/lib/data/service";
 import {
@@ -1581,8 +1582,29 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             ? `${surahNameIn(shareLink.surah, language)} ${shareLink.surah}:${shareLink.ayah}`
             : `${surahNameIn(shareLink.surah, language)} · ${word("surah", language)} ${shareLink.surah}`;
     if (typeof navigator.share === "function") {
+      const data: ShareData = { title: `${title} · ${siteConfig.name}`, text: title, url };
+      // Carry the Surah's (or Juz's) artwork so the share card shows the scene,
+      // not the site's bare globe icon. Fetched here, so a target that can't
+      // take files (canShare false) still shares the link on its own.
       try {
-        await navigator.share({ title: `${title} · ${siteConfig.name}`, text: title, url });
+        const art = shareLink.kind === "juz"
+          ? quranThumbUrl("juz", shareLink.juz)
+          : quranThumbUrl("surah", shareLink.surah);
+        const res = await fetch(art);
+        if (res.ok) {
+          const blob = await res.blob();
+          const file = new File(
+            [blob],
+            shareLink.kind === "juz" ? `juz-${shareLink.juz}.webp` : `surah-${shareLink.surah}.webp`,
+            { type: blob.type || "image/webp" },
+          );
+          if (navigator.canShare?.({ files: [file] })) data.files = [file];
+        }
+      } catch {
+        /* no artwork: share the link alone */
+      }
+      try {
+        await navigator.share(data);
       } catch {
         /* closed the share sheet */
       }
@@ -1631,10 +1653,17 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         visualMode={visualMode}
       />
 
-      {/* An even 40% black over every background (owner's choice, 2026-10-07:
-          no dark patch behind the ayah any more). */}
+      {/* Legibility scrim over every background: darker through the vertical
+          band where the verse sits (so the calligraphy reads even where the
+          clip is bright and WebKit has dropped the glyph shadow), easing to a
+          lighter wash at the top and bottom edges so the scene still shows
+          through (owner, 2026-11-01: darker behind the text, lighter scene). */}
       <div
-        className="absolute inset-0 z-[1] pointer-events-none bg-black/40"
+        className="absolute inset-0 z-[1] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 62% at 50% 46%, rgba(0,0,0,0.60), rgba(0,0,0,0.46) 55%, rgba(0,0,0,0.30) 100%)",
+        }}
         aria-hidden="true"
       />
 

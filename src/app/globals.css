@@ -402,6 +402,14 @@
   html[data-wk-glyph-lite] [style*="qpc-v4"] {
     text-shadow: none !important;
   }
+  /* WebKit lost the per-glyph text-shadow above, so the gold/white calligraphy
+     washed out over a bright clip. A single drop-shadow filter on the whole
+     word row gives one legibility shadow (one raster pass, not a blurred copy
+     per COLR colour layer) — cheap enough to avoid the GPU crash, applied only
+     on WebKit where the text-shadow was dropped. */
+  html[data-wk-glyph-lite] .quran-glyph-dropshadow {
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92));
+  }
   .quran-translation-shadow {
     /* Tight shadow only — a wide blur merged into a dark box behind dense lines. */
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.5);
@@ -645,14 +653,23 @@ svg,
 video {
   -webkit-user-drag: none;
 }
-/* Every <video> is a muted background scene: Safari still drew its own
-   play/pause glyph in the middle of it at times (over the verse). */
+/* Every <video> is a muted background scene: Safari (and the macOS "web app"
+   WebKit shell) still drew its own play glyph in the middle of a paused clip —
+   over the verse. Hide the whole controls shadow tree, enclosure included: on
+   the standalone web app the start-playback button lives in the overlay
+   enclosure and survived hiding the button alone. */
 video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
 video::-webkit-media-controls-panel,
+video::-webkit-media-controls-panel-container,
+video::-webkit-media-controls-overlay-enclosure,
 video::-webkit-media-controls-overlay-play-button,
 video::-webkit-media-controls-start-playback-button {
   display: none !important;
   -webkit-appearance: none;
+  appearance: none;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 input,
 textarea,
