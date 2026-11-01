@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS } from "@/lib/data/mushafPages";
+import { surahsOnPage } from "@/lib/data/mushafPageSurahs";
 import { cn } from "@/lib/utils";
 import { SELECTED, UNSELECTED_EDGE } from "@/components/ui/selection";
 import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
@@ -48,10 +49,16 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
     (p) =>
       p.page >= range[0] &&
       p.page <= range[1] &&
+      // Match any Surah on the page, not only the one it opens on — so a search
+      // for a short Surah that shares a page (An-Nas, Al-Falaq…) still finds it.
       (!q ||
         String(p.page).startsWith(q) ||
-        surahName(p.surah).toLowerCase().includes(q) ||
-        surahNameIn(p.surah, "ta").includes(query.trim()))
+        surahsOnPage(p.page).some(
+          (n) =>
+            surahName(n).toLowerCase().includes(q) ||
+            surahNameIn(n, "ta").includes(query.trim()) ||
+            surahNameIn(n, lang).toLowerCase().includes(q),
+        ))
   );
 
   const pick = (page: number) => {
@@ -91,6 +98,14 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
       <div ref={listRef} className="no-scrollbar -mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 space-y-1">
         {pages.map(({ page, surah, ayah }) => {
           const current = page === currentPage;
+          // Every Surah on the page: a page with two or three short Surahs
+          // names them all (fit by width, the rest clipped with an ellipsis),
+          // so a glance tells how many sit together. The full list is the hover
+          // title. A single Surah keeps its opening ayah for context.
+          const nums = surahsOnPage(page);
+          const names = nums.map((n) => surahNameIn(n, lang));
+          const label = nums.length > 1 ? names.join("  ·  ") : `${names[0] ?? surahNameIn(surah, lang)} · ${surah}:${ayah}`;
+          const full = nums.length > 1 ? names.join(" · ") : label;
           return (
             <button
               key={page}
@@ -98,16 +113,30 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
               data-page={page}
               onClick={() => pick(page)}
               aria-current={current ? "page" : undefined}
+              aria-label={`${word("page", lang)} ${page} — ${full}`}
               className={cn(
                 "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
                 current ? SELECTED : cn(UNSELECTED_EDGE, "text-sand-100 hover:bg-white/10")
               )}
             >
-              <span className="font-bold tabular-nums">
+              <span className="flex shrink-0 items-center gap-1.5 font-bold tabular-nums">
                 {word("page", lang)} {page}
+                {nums.length > 1 && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                      current ? "bg-white/20 text-white" : "bg-white/10 text-sand-200/70"
+                    )}
+                  >
+                    {nums.length}
+                  </span>
+                )}
               </span>
-              <span className={cn("truncate text-xs", current ? "text-white/90" : "text-sand-200/60")}>
-                {surahNameIn(surah, lang)} · {surah}:{ayah}
+              <span
+                title={full}
+                className={cn("min-w-0 truncate text-xs", current ? "text-white/90" : "text-sand-200/60")}
+              >
+                {label}
               </span>
             </button>
           );

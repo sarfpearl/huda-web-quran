@@ -402,6 +402,14 @@
   html[data-wk-glyph-lite] [style*="qpc-v4"] {
     text-shadow: none !important;
   }
+  /* WebKit lost the per-glyph text-shadow above, so the gold/white calligraphy
+     washed out over a bright clip. A single drop-shadow filter on the whole
+     word row gives one legibility shadow (one raster pass, not a blurred copy
+     per COLR colour layer) — cheap enough to avoid the GPU crash, applied only
+     on WebKit where the text-shadow was dropped. */
+  html[data-wk-glyph-lite] .quran-glyph-dropshadow {
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92));
+  }
   .quran-translation-shadow {
     /* Tight shadow only — a wide blur merged into a dark box behind dense lines. */
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.5);
@@ -572,30 +580,35 @@ html:has([data-not-found]) #huda-splash {
   text-transform: uppercase;
   color: rgba(233, 226, 211, 0.7);
 }
-.huda-splash-bar {
-  position: relative;
-  margin-top: 32px;
-  width: 120px;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+.huda-splash-mark {
+  margin-top: 30px;
+  filter: drop-shadow(0 0 8px rgba(252, 211, 77, 0.45));
+  animation: huda-splash-glow 2.6s ease-in-out infinite;
 }
-.huda-splash-bar span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 40%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, transparent, #fcd34d, transparent);
-  animation: huda-splash-slide 1.2s ease-in-out infinite;
+.huda-splash-mark-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: huda-splash-spin 5.5s linear infinite;
+}
+.huda-splash-mark-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: huda-splash-core 2.6s ease-in-out infinite;
 }
 @keyframes huda-splash-breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
 }
-@keyframes huda-splash-slide {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(250%); }
+@keyframes huda-splash-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes huda-splash-glow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(252, 211, 77, 0.35)); }
+  50% { filter: drop-shadow(0 0 13px rgba(252, 211, 77, 0.65)); }
+}
+@keyframes huda-splash-core {
+  0%, 100% { transform: scale(0.85); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
 }
 /* About HuDa: a light sweep across the maker's gold logo (masked to its
    letters by an inline mask-image), every few seconds */
@@ -622,15 +635,17 @@ html:has([data-not-found]) #huda-splash {
   .huda-splash-logo { width: 240px; }
   .huda-splash-name { margin-top: 24px; font-size: 3rem; }
   .huda-splash-tagline { font-size: 0.85rem; }
-  .huda-splash-bar { margin-top: 40px; width: 180px; }
+  .huda-splash-mark { margin-top: 38px; width: 68px; height: 68px; }
 }
 @media (min-width: 1280px) {
   .huda-splash-logo { width: 280px; }
   .huda-splash-name { font-size: 3.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .huda-splash-logo, .huda-splash-bar span { animation: none; }
-  .huda-splash-bar span { width: 100%; opacity: 0.6; }
+  .huda-splash-logo,
+  .huda-splash-mark,
+  .huda-splash-mark-spin,
+  .huda-splash-mark-core { animation: none; }
 }
 
 /* App-like touch: no text selection (Copy / Look Up) and no long-press image
@@ -645,14 +660,23 @@ svg,
 video {
   -webkit-user-drag: none;
 }
-/* Every <video> is a muted background scene: Safari still drew its own
-   play/pause glyph in the middle of it at times (over the verse). */
+/* Every <video> is a muted background scene: Safari (and the macOS "web app"
+   WebKit shell) still drew its own play glyph in the middle of a paused clip —
+   over the verse. Hide the whole controls shadow tree, enclosure included: on
+   the standalone web app the start-playback button lives in the overlay
+   enclosure and survived hiding the button alone. */
 video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
 video::-webkit-media-controls-panel,
+video::-webkit-media-controls-panel-container,
+video::-webkit-media-controls-overlay-enclosure,
 video::-webkit-media-controls-overlay-play-button,
 video::-webkit-media-controls-start-playback-button {
   display: none !important;
   -webkit-appearance: none;
+  appearance: none;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 input,
 textarea,

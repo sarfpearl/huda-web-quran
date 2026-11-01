@@ -1831,7 +1831,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       startMeaningRef.current(cue.url, cue.key, "resume", cue.at, cue.showAt);
       return true;
     }
-    if (Number.isFinite(el.duration) && el.duration > 0 && el.currentTime < el.duration - 0.3) {
+    // Past the last cue: run the track out so its last ayah's meaning (then the
+    // next Surah) follows. Only when this Surah's cues are actually loaded — on
+    // a fresh next-Surah load the cue list is briefly empty while React rebuilds
+    // it; forcing the end there would fire onEnded against the previous Surah's
+    // still-closed-over meaning and re-read it. Wait instead (onTimeUpdate pins
+    // the element at its start until the cues arrive).
+    if (meaningCuesRef.current.length && Number.isFinite(el.duration) && el.duration > 0 && el.currentTime < el.duration - 0.3) {
       try {
         el.currentTime = el.duration - 0.1;
       } catch {
@@ -1967,7 +1973,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // A whole-Surah track: its last ayah's meaning before going on.
     if (meaningDoneRef.current !== TRACK_MEANING_DONE) {
       const m = ayahMeaningRef.current?.(null);
-      if (m && m.key !== meaningCueReadRef.current) {
+      // The accessor is a React closure that updates a tick after the track
+      // flips; during a next-Surah load it can still hand back the PREVIOUS
+      // Surah's meaning. Its key is `${surah}:${ayah}` — only read it when it
+      // belongs to the Surah now playing, so the old Surah is never re-read
+      // over the new one.
+      const trackSurah =
+        current && isSurahTrackId(current.id) ? current.id.replace(SURAH_TRACK_ID_PREFIX, "") : null;
+      const belongsHere = !trackSurah || (m ? m.key.startsWith(`${trackSurah}:`) : false);
+      if (m && belongsHere && m.key !== meaningCueReadRef.current) {
         meaningCueReadRef.current = m.key;
         startMeaning(m.url, m.key, "advance");
         return;

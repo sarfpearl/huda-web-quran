@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
+import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 import { PLAYER_GLASS, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
@@ -160,6 +161,7 @@ export function TopicPickerModal({
   useDialogFocus(isOpen, panelRef, triggerRef);
   useBackToClose(isOpen, closeModal);
   useOnlyOneSheet(isOpen, closeModal);
+  useAutoCloseIdle(isOpen, closeModal);
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (ev: KeyboardEvent) => {

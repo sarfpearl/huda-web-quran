@@ -752,8 +752,11 @@ export function CenterVerseDisplay({
               <span
                 ref={wordRowRef}
                 // Word gap: a little over the Hafs font's space (0.22em), floored at Quran.com's
-                // 0.375rem.
-                className="flex flex-wrap justify-center items-center [--word-gap:max(0.375rem,0.35em)]"
+                // 0.375rem. quran-glyph-dropshadow: a single drop-shadow for the
+                // glyph row on WebKit, where per-glyph text-shadows are dropped.
+                className={`flex flex-wrap justify-center items-center [--word-gap:max(0.375rem,0.35em)] ${
+                  !indoPak && !tanzilFallback ? "quran-glyph-dropshadow" : ""
+                }`}
               >
                 {displayWords.map((w, idx) => {
                   const wordId = `${wordIdPrefix}:${idx + 1}`;
