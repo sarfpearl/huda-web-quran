@@ -89,6 +89,22 @@ export function getSurahPreludeConfig(
 }
 
 /**
+ * A short Arabic clip announcing the Surah — "سُورَةُ <name>" — played as the
+ * first prelude stage (before the Isti'adhah / Bismillah), so the listener
+ * hears which Surah is beginning. One clip per Surah, generated once by
+ * scripts/generation/build-surah-name-audio.mjs and served from R2:
+ *   /audio/prelude/names/<SSS>.mp3
+ * Word Sync reciters only — Audio Only reciters play their raw stream with no
+ * prelude at all, so they get no announcement either. Returns null when it
+ * should not play.
+ */
+export function getSurahNameClip(surahNumber: number, reciter?: QuranReciter | null): string | null {
+  if (surahNumber < 1 || surahNumber > 114) return null;
+  if (reciter && !reciterHasWordTiming(reciter)) return null;
+  return mediaUrl(`/audio/prelude/names/${String(surahNumber).padStart(3, "0")}.mp3`);
+}
+
+/**
  * Returns the timestamp (in seconds) where Ayah 1 starts in the reciter's raw audio file.
  * NOTE: Voice trimming is removed for ALL Surahs (1 to 114). Returns 0 unconditionally
  * so every reciter stream plays naturally from 0.00s without any voice cutting or trimming.

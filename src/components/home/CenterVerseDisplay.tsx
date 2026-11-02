@@ -524,6 +524,7 @@ export function CenterVerseDisplay({
     const it = activeItemForFit;
     if (!it) return null;
     const type = "type" in it ? it.type : undefined;
+    if (type === "name") return null;
     if (type === "istiadhah") return { surah: 0, ayah: 0 };
     if (type === "bismillah") return { surah: 1, ayah: 1 };
     const surah = it.surahNumber ?? currentVerse?.surahNumber;
@@ -618,7 +619,8 @@ export function CenterVerseDisplay({
   // would be misleading. Just the immersive background + audio play.
   if (!reciterWordSync) return null;
 
-  const isPrelude = "type" in activeItem && (activeItem.type === "istiadhah" || activeItem.type === "bismillah");
+  const isPrelude = "type" in activeItem && (activeItem.type === "istiadhah" || activeItem.type === "bismillah" || activeItem.type === "name");
+  const isNamePrelude = "type" in activeItem && activeItem.type === "name";
   const ayahNum =
     "ayahNumber" in activeItem && typeof activeItem.ayahNumber === "number" && activeItem.ayahNumber > 0
       ? activeItem.ayahNumber
@@ -678,7 +680,7 @@ export function CenterVerseDisplay({
   // Neither the glyphs nor the QPC text yet (glyph data still loading, or
   // offline for a Surah not opened before): the Tanzil-encoded text, which
   // the Hafs font draws with dotted circles for U+06DF — use Amiri for it.
-  const tanzilFallback = !indoPak && displayWords === wordsToRender;
+  const tanzilFallback = !indoPak && !isNamePrelude && displayWords === wordsToRender;
   wordsRef.current = wordsToRender;
   audioIdxRef.current = activeWordIndex;
   // Only ONE word is current: the tapped one until the audio moves off the word

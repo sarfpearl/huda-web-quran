@@ -13,7 +13,8 @@
 //    node --env-file=.env scripts/generation/build-surah-name-audio.mjs --estimate
 //    node --env-file=.env scripts/generation/build-surah-name-audio.mjs --surah=1,36,114   # pilot
 //    node --env-file=.env scripts/generation/build-surah-name-audio.mjs --all
-//  then: node scripts/tools/upload-to-r2.mjs --category=audio-prelude --execute
+//  then: node scripts/tools/upload-to-r2.mjs --category=audio --execute
+//        (category "audio" = public/audio/prelude/** → R2 audio/prelude/**)
 //
 //  It RESUMES: clips already on disk are skipped (pass --force to overwrite).
 //  Env: GEMINI_TTS_MODEL (default gemini-3.8-flash-tts); SURAH_NAME_VOICE
@@ -127,21 +128,25 @@ function encodeMp3(pcm, sampleRate, outFile) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const clipRequest = (text) => ({
+  contents: [{ role: "user", parts: [{ text }] }],
+  config: {
+    responseModalities: ["AUDIO"],
+    temperature: 0.4,
+    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
+  },
+});
+
+function pcmFromResponse(res) {
+  const part = res?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
+  if (!part) throw new Error(`no audio (${res?.candidates?.[0]?.finishReason ?? "?"})`);
+  return toPcm(Buffer.from(part.inlineData.data, "base64"), part.inlineData.mimeType);
+}
+
 async function synthesize(text) {
   for (let attempt = 1; ; attempt++) {
     try {
-      const res = await ai.models.generateContent({
-        model: MODEL,
-        contents: [{ role: "user", parts: [{ text }] }],
-        config: {
-          responseModalities: ["AUDIO"],
-          temperature: 0.4,
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
-        },
-      });
-      const part = res?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
-      if (!part) throw new Error(`no audio (${res?.candidates?.[0]?.finishReason ?? "?"})`);
-      return toPcm(Buffer.from(part.inlineData.data, "base64"), part.inlineData.mimeType);
+      return pcmFromResponse(await ai.models.generateContent({ model: MODEL, ...clipRequest(text) }));
     } catch (e) {
       const status = e?.status ?? e?.code;
       const retry = attempt < 6 && (status === 429 || status >= 500 || /fetch failed|ECONNRESET|no audio/i.test(String(e?.message)));
@@ -151,19 +156,62 @@ async function synthesize(text) {
   }
 }
 
+async function saveFromPcm(s, { pcm, rate }) {
+  await encodeMp3(pcm, rate, clipPath(s));
+  return pcm.length / 2 / rate;
+}
+
 mkdirSync(OUT_DIR, { recursive: true });
-let made = 0, skipped = 0;
-for (const s of surahs) {
-  const out = clipPath(s);
-  if (!args.force && existsSync(out)) {
-    skipped++;
-    continue;
+const todo = surahs.filter((s) => args.force || !existsSync(clipPath(s)));
+const skipped = surahs.length - todo.length;
+
+// ── Batch API (separate daily quota; needed because the direct model is capped
+//    at 100 requests/day while the Quran has 114 Surahs) ─────────────────────
+if (args.batch) {
+  if (!todo.length) {
+    console.log(`Nothing to do (${skipped} already on disk).`);
+    process.exit(0);
   }
+  const job = await ai.batches.create({
+    model: MODEL,
+    src: todo.map((s) => ({ ...clipRequest(announcementText(s)), metadata: { key: String(s) } })),
+    config: { displayName: `surah-names-${todo[0]}-${todo.at(-1)}-${todo.length}` },
+  });
+  console.log(`📤 ${job.name}: ${todo.length} clips submitted (${skipped} skipped)`);
+  const DONE = new Set(["JOB_STATE_SUCCEEDED", "JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED", "JOB_STATE_PARTIALLY_SUCCEEDED"]);
+  const started = Date.now();
+  for (;;) {
+    const j = await ai.batches.get({ name: job.name });
+    if (DONE.has(j.state)) {
+      const responses = j.dest?.inlinedResponses ?? [];
+      let made = 0, failed = 0;
+      for (const [i, r] of responses.entries()) {
+        const s = Number(r.metadata?.key ?? todo[i]);
+        try {
+          if (r.error) throw new Error(r.error.message ?? JSON.stringify(r.error));
+          const seconds = await saveFromPcm(s, pcmFromResponse(r.response));
+          console.log(`  ✓ ${pad3(s)} ${seconds.toFixed(2)}s`);
+          made++;
+        } catch (e) {
+          console.error(`  ❌ ${pad3(s)}: ${e?.message ?? e}`);
+          failed++;
+        }
+      }
+      console.log(`\n${j.state}: ${made} made, ${failed} failed → ${OUT_DIR}`);
+      if (failed) console.log("Run again to retry the failed ones.");
+      process.exit(failed ? 1 : 0);
+    }
+    process.stdout.write(`  … ${j.state} (${((Date.now() - started) / 60000).toFixed(0)} min)   \r`);
+    await sleep(20000);
+  }
+}
+
+// ── Direct (one request per clip) ───────────────────────────────────────────
+let made = 0;
+for (const s of todo) {
   const text = announcementText(s);
   process.stdout.write(`${pad3(s)} "${text}" … `);
-  const { pcm, rate } = await synthesize(text);
-  await encodeMp3(pcm, rate, out);
-  const seconds = pcm.length / 2 / rate;
+  const seconds = await saveFromPcm(s, await synthesize(text));
   console.log(`✓ ${seconds.toFixed(2)}s`);
   made++;
 }

@@ -42,6 +42,7 @@ export {
 export {
   PRELUDE_AUDIO,
   getSurahPreludeConfig,
+  getSurahNameClip,
   getReciterAyah1TrimOffset,
   type SurahPreludeConfig,
 } from "./surahTrimming";

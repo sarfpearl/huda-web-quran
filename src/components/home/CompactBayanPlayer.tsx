@@ -383,7 +383,7 @@ export function CompactBayanPlayer({
   const surahAyahTotal = activeSurah?.verses || totalVerses || 1;
   const inPrelude = isAyahSeq && ayahSeq
     ? Boolean(ayahSeq.preType)
-    : currentSegment?.type === "istiadhah" || currentSegment?.type === "bismillah";
+    : currentSegment?.type === "istiadhah" || currentSegment?.type === "bismillah" || currentSegment?.type === "name";
   const atFirstAyah = inPrelude || (isAyahSeq && ayahSeq ? ayahSeq.index <= 0 : surahAyah <= 1);
   const atLastAyah = !inPrelude && (isAyahSeq && ayahSeq ? ayahSeq.index >= ayahSeq.total - 1 : surahAyah >= surahAyahTotal);
   const ayahFraction = totalDuration > 0 ? Math.min(currentTime / totalDuration, 1) : 0;
@@ -479,6 +479,8 @@ export function CompactBayanPlayer({
           ) : (
             <>{t(language, "Ayat")} {ayahSeq.index + 1}/{ayahSeq.total}</>
           )
+        ) : currentSegment?.type === "name" ? (
+          word("surah", language)
         ) : currentSegment?.type === "istiadhah" ? (
           t(language, "Isti'adhah")
         ) : currentSegment?.type === "bismillah" ? (
