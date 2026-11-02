@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meaning Word-Sync Spike</title>
+<!--
+  Lightweight spike preview. Loads docs/meaning-word-sync-spike/sample-timings.json
+  and streams each clip straight from Cloudflare R2 (no audio embedded here, so the
+  file stays tiny). Open it over http (e.g. `npx serve docs/meaning-word-sync-spike`)
+  or just double-click; R2 is a public bucket so it works from file:// too.
+  Tap play and judge by ear whether the gold word tracks the voice.
+-->
+<style>
+  :root{--bg:#0b1020;--card:#141a2e;--txt:#e5e7eb;--muted:#94a3b8;--gold:#fcd34d}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,'Noto Sans Tamil',sans-serif;line-height:1.7}
+  .wrap{max-width:820px;margin:0 auto;padding:16px}
+  h1{font-size:1.2rem;margin:.2rem 0}
+  .sub{color:var(--muted);font-size:.85rem;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid #243049;border-radius:14px;padding:14px 16px;margin:12px 0}
+  .hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .badge{font-size:.72rem;color:var(--muted);border:1px solid #334155;border-radius:999px;padding:1px 8px}
+  .badge.rep{color:#fca5a5;border-color:#7f1d1d}
+  .lang{font-size:.72rem;font-weight:700;color:#0b1020;background:var(--gold);border-radius:6px;padding:1px 7px}
+  .play{cursor:pointer;background:#1e293b;color:var(--txt);border:1px solid #334155;border-radius:10px;padding:6px 14px;font-size:.9rem}
+  .play:hover{background:#273449}
+  .play.on{background:var(--gold);color:#0b1020;border-color:var(--gold)}
+  .text{font-size:1.5rem;margin-top:6px}
+  .text.ta{font-size:1.55rem}
+  .w{transition:color .08s}
+  .w.active{color:var(--gold);text-shadow:0 0 10px rgba(252,211,77,.65),0 0 22px rgba(252,211,77,.35)}
+  footer{color:var(--muted);font-size:.78rem;margin:22px 0 40px;border-top:1px solid #243049;padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Meaning audio — word-by-word highlight (spike)</h1>
+  <div class="sub">
+    aeneas forced alignment (espeak-ng) + tail repair · tap ▶ and watch the gold word track the voice · judge by ear.<br />
+    &quot;tail repaired&quot; = the forced aligner collapsed the final words, so they were redistributed across the trailing audio.
+  </div>
+  <div id="list">Loading…</div>
+  <footer>
+    Spike preview — not the final UI. Engine: aeneas (espeak-ng <code>ta</code>/<code>en</code>), cew off.
+    Known limit: long multi-pause ayat (e.g. 1:7) still drift near the end after repair.
+  </footer>
+</div>
+<audio id="player"></audio>
+<script>
+  // Public R2 bucket (same as NEXT_PUBLIC_MEDIA_BASE_URL in .env.example).
+  const R2 = "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev";
+  const player = document.getElementById("player");
+  let raf = null, curBtn = null, words = [], spans = [];
+
+  function stop() {
+    if (raf) cancelAnimationFrame(raf); raf = null;
+    if (curBtn) { curBtn.classList.remove("on"); curBtn.textContent = "▶ Play"; }
+    spans.forEach((s) => s.classList.remove("active"));
+    try { player.pause(); } catch (e) {}
+  }
+  function tick() {
+    const t = player.currentTime; let idx = -1;
+    for (let i = 0; i < words.length; i++) {
+      if (t >= words[i][1]) idx = i;
+      if (t >= words[i][1] && t < words[i][2]) { idx = i; break; }
+    }
+    spans.forEach((s, i) => s.classList.toggle("active", i === idx));
+    raf = requestAnimationFrame(tick);
+  }
+
+  fetch("sample-timings.json")
+    .then((r) => r.json())
+    .then((items) => {
+      items.sort((a, b) => a.surah - b.surah || a.ayah - b.ayah || (a.lang === "en" ? 0 : 1) - (b.lang === "en" ? 0 : 1));
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+      for (const it of items) {
+        const card = document.createElement("div"); card.className = "card";
+        const spansHtml = it.words.map((w, i) => `<span class="w" data-i="${i}">${escapeHtml(w[0])}</span> `).join("");
+        card.innerHTML =
+          `<div class="hd">` +
+          `<span class="lang">${it.lang.toUpperCase()}</span>` +
+          `<span class="badge">${it.surah}:${it.ayah}</span>` +
+          `<span class="badge">${it.dur}s · ${it.words.length} words</span>` +
+          (it.repaired ? `<span class="badge rep">tail repaired</span>` : ``) +
+          `<button class="play">▶ Play</button>` +
+          `</div><div class="text ${it.lang === "ta" ? "ta" : ""}">${spansHtml}</div>`;
+        const btn = card.querySelector(".play");
+        btn.addEventListener("click", () => {
+          const wasPlaying = curBtn === btn && !player.paused;
+          stop();
+          if (wasPlaying) return;
+          curBtn = btn; words = it.words; spans = [...card.querySelectorAll(".w")];
+          btn.classList.add("on"); btn.textContent = "⏸ Stop";
+          player.src = R2 + it.path; player.currentTime = 0; player.play();
+          raf = requestAnimationFrame(tick);
+        });
+        list.appendChild(card);
+      }
+    })
+    .catch((e) => { document.getElementById("list").textContent = "Failed to load sample-timings.json: " + e; });
+
+  player.addEventListener("ended", stop);
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" }[c])); }
+</script>
+</body>
+</html>
