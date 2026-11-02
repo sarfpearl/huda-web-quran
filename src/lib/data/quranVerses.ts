@@ -8,6 +8,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
+import { SURAH_NAMES } from "./surahNames";
 import { getAyahVideo } from "./surahVerseVideos";
 import { fetchSurahGlyphs } from "./quranGlyphs";
 import { type QuranReciter, getReciterTimingCapability, reciterHasWordTiming, reciterHasWordTimingFor, reciterEmbedsOwnBismillah, getReciterById } from "./quranReciters";
@@ -49,7 +50,7 @@ export interface EmbeddedPrelude {
   endTime: number;
 }
 
-export type RecitationSegmentType = "istiadhah" | "bismillah" | "ayah";
+export type RecitationSegmentType = "istiadhah" | "bismillah" | "ayah" | "name";
 
 export interface AyahWordSync {
   id: string;
@@ -2012,7 +2013,7 @@ export interface UseQuranVerseSyncProps {
   onSeekToVerse?: (verseIndex: number, totalVerses: number) => void;
   reciter?: QuranReciter | null;
   isPrelude?: boolean;
-  preludeType?: "fatihah" | "bismillah" | "none" | null;
+  preludeType?: "name" | "fatihah" | "bismillah" | "none" | null;
   preludeCurrentTime?: number;
   preludeDuration?: number;
 }
@@ -2092,10 +2093,27 @@ export function useQuranVerseSync({
   // Prelude segment timeline when prelude is active
   const preludeSegments = useMemo<RecitationSegment[]>(() => {
     if (!isPrelude) return [];
+    if (preludeType === "name") {
+      const nameInfo = surahNumber && surahNumber >= 1 && surahNumber <= 114 ? SURAH_NAMES[surahNumber - 1] : null;
+      return [
+        {
+          id: `prelude-name-${surahNumber ?? 1}`,
+          type: "name",
+          startTime: 0,
+          endTime: preludeDuration > 0 ? preludeDuration : 3.0,
+          textArabic: nameInfo?.[0] ?? "سُورَةُ",
+          textEnglish: nameInfo?.[1] ?? "",
+          textTamil: nameInfo?.[2] ?? "",
+          surahNumber: surahNumber || 1,
+          ayahNumber: 0,
+          words: [],
+        },
+      ];
+    }
     if (preludeType === "fatihah") return FATIHAH_PRELUDE_SEGMENTS;
     if (preludeType === "bismillah") return BISMILLAH_PRELUDE_SEGMENTS;
     return [];
-  }, [isPrelude, preludeType]);
+  }, [isPrelude, preludeType, surahNumber, preludeDuration]);
 
   const activePreludeSegment = useMemo(() => {
     if (!isPrelude || preludeSegments.length === 0) return null;
@@ -2151,6 +2169,19 @@ export function useQuranVerseSync({
   // Backward-compatible AyahVerse shape mapped from current segment
   const currentVerse = useMemo<AyahVerse>(() => {
     if (!currentSegment) return verses[0] || getCategoryVerse(categorySlug);
+    if (currentSegment.type === "name") {
+      return {
+        surahNumber: surahNumber || 1,
+        ayahNumber: 0,
+        verseKey: `prelude-name-${surahNumber || 1}`,
+        textArabic: currentSegment.textArabic,
+        textEnglish: currentSegment.textEnglish,
+        textTamil: currentSegment.textTamil,
+        timestampFrom: currentSegment.startTime,
+        timestampTo: currentSegment.endTime,
+        words: currentSegment.words,
+      };
+    }
     if (currentSegment.type === "istiadhah") {
       return {
         surahNumber: surahNumber || 1,
@@ -2205,16 +2236,26 @@ export function useQuranVerseSync({
   // Ayah navigation: seeks audio directly to the target segment startTime
   const handlePrevVerse = () => {
     if (segments.length <= 1) return;
-    const nextIdx = activeSegmentIndex > 0 ? activeSegmentIndex - 1 : segments.length - 1;
-    const targetSeg = segments[nextIdx];
+    const prevIdx = Math.max(0, activeSegmentIndex - 1);
+    const targetSeg = segments[prevIdx];
     if (onSeekToVerse && targetSeg && typeof targetSeg.startTime === "number") {
       onSeekToVerse(targetSeg.startTime, duration || 1);
     }
   };
 
   const handleNextVerse = () => {
+    if (segments.length === 0) return;
+    if (isPrelude) {
+      // In prelude: advance to the first ayah of the surah
+      const targetSeg = segments[0];
+      if (onSeekToVerse && targetSeg && typeof targetSeg.startTime === "number") {
+        onSeekToVerse(targetSeg.startTime, duration || 1);
+      }
+      return;
+    }
     if (segments.length <= 1) return;
-    const nextIdx = activeSegmentIndex < segments.length - 1 ? activeSegmentIndex + 1 : 0;
+    const nextIdx = Math.min(activeSegmentIndex + 1, segments.length - 1);
+    if (nextIdx === activeSegmentIndex) return; // already at last ayah
     const targetSeg = segments[nextIdx];
     if (onSeekToVerse && targetSeg && typeof targetSeg.startTime === "number") {
       onSeekToVerse(targetSeg.startTime, duration || 1);

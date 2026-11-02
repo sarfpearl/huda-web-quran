@@ -66,7 +66,7 @@ interface AudioPlayerState {
   continueListening: ContinueListening | null;
   // Custom prelude (Isti'adhah & Bismillah)
   isPrelude: boolean;
-  preludeType: "fatihah" | "bismillah" | "none" | null;
+  preludeType: "name" | "fatihah" | "bismillah" | "none" | null;
   preludeCurrentTime: number;
   preludeDuration: number;
   // Set while a Juz is playing per-ayah in a chosen reciter's voice.
@@ -365,6 +365,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const checkMeaningCueRef = useRef<(t: number) => boolean>(() => false);
   // One-shot start position for the next loadCurrent (see playBayan opts).
   const pendingStartAtRef = useRef<StartAt | null>(null);
+  const pendingSeekRef = useRef<number | null>(null);
   // True between loading a track with a forced start and applying it — the
   // element reports t=0 meanwhile, which would flash ayah 1 on screen.
   const forcedSeekPendingRef = useRef(false);
@@ -460,7 +461,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   // Custom Prelude State (Isti'adhah & Bismillah)
   const [isPrelude, setIsPrelude] = useState(false);
-  const [preludeType, setPreludeType] = useState<"fatihah" | "bismillah" | "none" | null>(null);
+  const [preludeType, setPreludeType] = useState<"name" | "fatihah" | "bismillah" | "none" | null>(null);
   const [preludeCurrentTime, setPreludeCurrentTime] = useState(0);
   const [preludeDuration, setPreludeDuration] = useState(0);
   // Per-ayah Juz sequence position (for the progress bar & current-ayah verse).
@@ -674,10 +675,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           preludeKindRef.current = stages[0].kind;
           preludeQueueRef.current = stages.slice(1);
           setIsPrelude(true);
-          // The screen during the whole prelude shows the Bismillah / Isti'adhah
-          // text (none for Surah 9 / a reciter's own Bismillah, which get only
-          // the name stage).
-          setPreludeType(bismillah ? bismillah.type : "none");
+          // Set initial prelude stage ("name" if announced, otherwise "fatihah" or "bismillah")
+          setPreludeType(stages[0].kind as "name" | "fatihah" | "bismillah" | "none");
           setPreludeCurrentTime(0);
           // The name clip's length isn't known until it loads (onPreludeLoaded);
           // the Bismillah / Isti'adhah clip's is fixed.
@@ -1225,9 +1224,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const offset = currentTrimOffsetRef.current;
     const target = Math.max(0, seconds) + offset;
     try {
-      el.currentTime = target;
+      if (el.readyState >= 1) {
+        el.currentTime = target;
+        pendingSeekRef.current = null;
+      } else {
+        pendingSeekRef.current = target;
+      }
     } catch {
-      /* ignore */
+      pendingSeekRef.current = target;
     }
     setCurrentTime(Math.max(0, seconds));
     if ((wasInPrelude || wasInMeaning) && isPlaying) {
@@ -1683,6 +1687,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const nextStage = preludeQueueRef.current.shift();
     if (nextStage && preludeAudioRef.current) {
       preludeKindRef.current = nextStage.kind;
+      setPreludeType(nextStage.kind as "name" | "fatihah" | "bismillah" | "none");
       setPreludeCurrentTime(0);
       setPreludeDuration(nextStage.kind === "bismillah" ? PRELUDE_AUDIO.bismillah.duration : nextStage.kind === "fatihah" ? PRELUDE_AUDIO.fatihah.duration : 0);
       const pel = preludeAudioRef.current;
@@ -2258,11 +2263,39 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       alog(`playing ${elInfo("main", e.currentTarget)}`);
       applyMediaMetadata();
       userPausedRef.current = false;
+      if (pendingSeekRef.current !== null && e.currentTarget.readyState >= 1) {
+        try {
+          e.currentTarget.currentTime = pendingSeekRef.current;
+          pendingSeekRef.current = null;
+        } catch {
+          /* ignore */
+        }
+      }
       if (!isPreludeRef.current) {
         clearTimeout(waitingTimerRef.current);
         setIsPlaying(true);
         setIsLoading(false);
         setError(null);
+      }
+    }),
+    onLoadedMetadata: fromActive((e) => {
+      if (pendingSeekRef.current !== null && e.currentTarget.readyState >= 1) {
+        try {
+          e.currentTarget.currentTime = pendingSeekRef.current;
+          pendingSeekRef.current = null;
+        } catch {
+          /* ignore */
+        }
+      }
+    }),
+    onCanPlay: fromActive((e) => {
+      if (pendingSeekRef.current !== null && e.currentTarget.readyState >= 1) {
+        try {
+          e.currentTarget.currentTime = pendingSeekRef.current;
+          pendingSeekRef.current = null;
+        } catch {
+          /* ignore */
+        }
       }
     }),
     onWaiting: fromActive(() => {

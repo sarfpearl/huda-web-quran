@@ -331,7 +331,16 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
   const handleSeekToVerse = (targetTimeOrIndex: number) => {
     if (typeof targetTimeOrIndex === "number") {
-      player.seek(targetTimeOrIndex);
+      if (!player.current && activeBayan) {
+        setHasPlayed(true);
+        const activeSurahTracks = surahTracksForCurrentReciter;
+        const contextList = isSurahTrackId(activeBayan.id)
+          ? activeSurahTracks
+          : [activeBayan];
+        player.playBayan(activeBayan, contextList, { startAt: targetTimeOrIndex });
+      } else {
+        player.seek(targetTimeOrIndex);
+      }
     }
   };
 
@@ -2016,14 +2025,25 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 onPrevVerse={
                   isJuz
                     ? player.ayahSequence
-                      ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) - 1)
+                      ? () => {
+                          const cur = player.ayahSequence?.index ?? 0;
+                          if (cur > 0) player.jumpToAyah(cur - 1);
+                        }
                       : undefined
                     : verses.length > 1 ? handlePrevVerse : undefined
                 }
                 onNextVerse={
                   isJuz
                     ? player.ayahSequence
-                      ? () => player.jumpToAyah((player.ayahSequence?.index ?? 0) + 1)
+                      ? () => {
+                          const cur = player.ayahSequence?.index ?? 0;
+                          const total = player.ayahSequence?.total ?? 1;
+                          if (cur + 1 < total) {
+                            player.jumpToAyah(cur + 1);
+                          } else if (activeJuz) {
+                            handleSelectJuz(activeJuz.id >= 30 ? 1 : activeJuz.id + 1, 0);
+                          }
+                        }
                       : undefined
                     : verses.length > 1 ? handleNextVerse : undefined
                 }
