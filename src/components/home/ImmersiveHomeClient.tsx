@@ -146,8 +146,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // Greet the visitor on open; the ayah takes over once playback first starts.
   const [hasPlayed, setHasPlayed] = useState(false);
   useEffect(() => {
-    if (player.isPlaying) setHasPlayed(true);
-  }, [player.isPlaying]);
+    if (player.isPlaying || player.isLoading || Boolean(player.current)) setHasPlayed(true);
+  }, [player.isPlaying, player.isLoading, player.current]);
   const [selectedReciter, setSelectedReciter] = useState<QuranReciter>(getDefaultReciter);
 
   // Memoize surah tracks for the selected reciter

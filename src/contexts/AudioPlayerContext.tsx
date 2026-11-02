@@ -1234,8 +1234,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       pendingSeekRef.current = target;
     }
     setCurrentTime(Math.max(0, seconds));
-    if ((wasInPrelude || wasInMeaning) && isPlaying) {
-      el.play().catch(() => setIsPlaying(false));
+    if (wasInPrelude || wasInMeaning || isPlaying || !userPausedRef.current) {
+      userPausedRef.current = false;
+      setIsLoading(true);
+      el.play().then(() => {
+        setIsPlaying(true);
+        setIsLoading(false);
+      }).catch(() => {
+        setIsPlaying(false);
+        setIsLoading(false);
+      });
     }
   }, [isPlaying, cancelMeaning]);
 
