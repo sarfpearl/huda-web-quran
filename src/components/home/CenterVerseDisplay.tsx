@@ -680,7 +680,7 @@ export function CenterVerseDisplay({
   // Neither the glyphs nor the QPC text yet (glyph data still loading, or
   // offline for a Surah not opened before): the Tanzil-encoded text, which
   // the Hafs font draws with dotted circles for U+06DF — use Amiri for it.
-  const tanzilFallback = !indoPak && displayWords === wordsToRender;
+  const tanzilFallback = !indoPak && !isNamePrelude && displayWords === wordsToRender;
   wordsRef.current = wordsToRender;
   audioIdxRef.current = activeWordIndex;
   // Only ONE word is current: the tapped one until the audio moves off the word
@@ -762,9 +762,7 @@ export function CenterVerseDisplay({
               >
                 {displayWords.map((w, idx) => {
                   const wordId = `${wordIdPrefix}:${idx + 1}`;
-                  const state: WordState = isNamePrelude
-                    ? "active"
-                    : !hasWordTiming
+                  const state: WordState = !hasWordTiming
                     ? "ayah"
                     : idx === shownWordIndex
                     ? "active"

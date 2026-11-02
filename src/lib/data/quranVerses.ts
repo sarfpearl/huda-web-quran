@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QURAN_ARTWORK_CONCEPTS } from "./quran-artwork";
 import { SURAH_NAMES } from "./surahNames";
+import { SURAH_PRELUDE_TIMINGS } from "./surahPreludeTimings";
 import { getAyahVideo } from "./surahVerseVideos";
 import { fetchSurahGlyphs } from "./quranGlyphs";
 import { type QuranReciter, getReciterTimingCapability, reciterHasWordTiming, reciterHasWordTimingFor, reciterEmbedsOwnBismillah, getReciterById } from "./quranReciters";
@@ -2095,18 +2096,33 @@ export function useQuranVerseSync({
     if (!isPrelude) return [];
     if (preludeType === "name") {
       const nameInfo = surahNumber && surahNumber >= 1 && surahNumber <= 114 ? SURAH_NAMES[surahNumber - 1] : null;
+      const textArabic = nameInfo?.[0] ?? "سُورَةُ";
+      const wordsArr = textArabic.trim().split(/\s+/).filter(Boolean);
+      const timings = surahNumber && surahNumber >= 1 && surahNumber <= 114 ? SURAH_PRELUDE_TIMINGS[surahNumber - 1] : null;
+      const timedWords: QuranWordTiming[] = wordsArr.map((word, idx) => {
+        const t = timings?.[idx];
+        const startTime = t ? t[0] : idx * 0.65;
+        const rawEnd = t ? t[1] : (idx + 1) * 0.65;
+        const endTime = idx === wordsArr.length - 1 && preludeDuration > 0 ? Math.max(preludeDuration, rawEnd) : rawEnd;
+        return {
+          word,
+          startTime,
+          endTime,
+        };
+      });
+      const segEnd = preludeDuration > 0 ? preludeDuration : (timings ? timings[timings.length - 1][1] : 2.0);
       return [
         {
           id: `prelude-name-${surahNumber ?? 1}`,
           type: "name",
           startTime: 0,
-          endTime: preludeDuration > 0 ? preludeDuration : 3.0,
-          textArabic: nameInfo?.[0] ?? "سُورَةُ",
+          endTime: segEnd,
+          textArabic,
           textEnglish: nameInfo?.[1] ?? "",
           textTamil: nameInfo?.[2] ?? "",
           surahNumber: surahNumber || 1,
           ayahNumber: 0,
-          words: [],
+          words: timedWords,
         },
       ];
     }
