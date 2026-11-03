@@ -383,7 +383,7 @@ export function CompactBayanPlayer({
   const surahAyahTotal = activeSurah?.verses || totalVerses || 1;
   const inPrelude = isAyahSeq && ayahSeq
     ? Boolean(ayahSeq.preType)
-    : currentSegment?.type === "istiadhah" || currentSegment?.type === "bismillah";
+    : currentSegment?.type === "istiadhah" || currentSegment?.type === "bismillah" || currentSegment?.type === "name";
   const atFirstAyah = inPrelude || (isAyahSeq && ayahSeq ? ayahSeq.index <= 0 : surahAyah <= 1);
   const atLastAyah = !inPrelude && (isAyahSeq && ayahSeq ? ayahSeq.index >= ayahSeq.total - 1 : surahAyah >= surahAyahTotal);
   const ayahFraction = totalDuration > 0 ? Math.min(currentTime / totalDuration, 1) : 0;
@@ -472,13 +472,17 @@ export function CompactBayanPlayer({
       )}
       <span className="min-w-0 truncate px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
         {isAyahSeq && ayahSeq ? (
-          ayahSeq.preType === "istiadhah" ? (
+          ayahSeq.preType === "name" ? (
+            word("surah", language)
+          ) : ayahSeq.preType === "istiadhah" ? (
             t(language, "Isti'adhah")
           ) : ayahSeq.preType === "bismillah" ? (
             t(language, "Bismillah")
           ) : (
             <>{t(language, "Ayat")} {ayahSeq.index + 1}/{ayahSeq.total}</>
           )
+        ) : currentSegment?.type === "name" ? (
+          word("surah", language)
         ) : currentSegment?.type === "istiadhah" ? (
           t(language, "Isti'adhah")
         ) : currentSegment?.type === "bismillah" ? (
