@@ -1,4 +1,5 @@
-import { PRELUDE_AUDIO } from "./surahTrimming";
+import { PRELUDE_AUDIO, getSurahNameClip } from "./surahTrimming";
+import { getReciterById } from "./quranReciters";
 import { mediaUrl } from "@/lib/media";
 import type { BayanWithRelations } from "@/types/bayan";
 import type { Category } from "@/types/category";
@@ -430,23 +431,39 @@ export function buildJuzAyahUrls(juzId: number, reciterId: string): string[] | n
 /**
  * Prelude clips for a per-ayah Juz, keyed by ayah index in the sequence. Only
  * where a SURAH begins (ayah 1) — nothing extra at the start of a Juz:
+ *  - Surah name announcement ("سُورَةُ …") for Word Sync reciters.
  *  - Al-Fatihah (1): Isti'adhah, then its own 1:1 — which IS the Bismillah.
- *  - At-Tawbah (9): nothing (no Bismillah by tradition).
+ *  - At-Tawbah (9): name announcement only (no Bismillah by tradition).
  *  - Every other Surah: Bismillah, in the reciter's own voice (their 1:1).
  */
 export function buildJuzPreludes(
   juzId: number,
   reciterId: string
-): Record<number, { url: string; type: "istiadhah" | "bismillah" }[]> {
+): Record<number, { url: string; type: "istiadhah" | "bismillah" | "name"; surahNumber?: number }[]> {
   const folder = getEveryAyahFolder(reciterId);
   const pairs = getJuzAyahPairs(juzId);
   if (!folder || pairs.length === 0) return {};
   const bismillah = { url: `https://everyayah.com/data/${folder}/001001.mp3`, type: "bismillah" as const };
   const istiadhah = { url: PRELUDE_AUDIO.fatihah.url, type: "istiadhah" as const };
-  const out: Record<number, { url: string; type: "istiadhah" | "bismillah" }[]> = {};
+  const out: Record<number, { url: string; type: "istiadhah" | "bismillah" | "name"; surahNumber?: number }[]> = {};
   pairs.forEach(([surah, ayah], i) => {
-    if (ayah !== 1 || surah === 9) return;
-    out[i] = surah === 1 ? [istiadhah] : [bismillah];
+    // Announce Surah name if a new Surah starts (ayah === 1) OR at the start of the Juz (i === 0)
+    if (i !== 0 && ayah !== 1) return;
+    const stages: { url: string; type: "istiadhah" | "bismillah" | "name"; surahNumber?: number }[] = [];
+    const nameUrl = getSurahNameClip(surah);
+    if (nameUrl) {
+      stages.push({ url: nameUrl, type: "name", surahNumber: surah });
+    }
+    if (ayah === 1) {
+      if (surah === 1) {
+        stages.push({ ...istiadhah, surahNumber: 1 });
+      } else if (surah !== 9) {
+        stages.push({ ...bismillah, surahNumber: surah });
+      }
+    }
+    if (stages.length > 0) {
+      out[i] = stages;
+    }
   });
   return out;
 }

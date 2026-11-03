@@ -231,8 +231,16 @@ const skel = (t) => t.normalize("NFC").replace(/\p{Mn}/gu, "").replace(/[ـ۞ۥ�
     for (const [s, a] of pairs) { const k = `${s}:${a}`; if (all.has(k)) fail("juz-duplicate", "HIGH", { surah: s, ayah: a, detail: `juz ${j}` }); all.add(k); }
     const pre = Q.buildJuzPreludes(j, "alafasy");
     pairs.forEach(([s, a], i) => {
-      const exp = a === 1 && s !== 9 ? (s === 1 ? "istiadhah" : "bismillah") : null;
-      if ((pre[i]?.[0]?.type ?? null) !== exp) fail("juz-prelude", "HIGH", { surah: s, ayah: a, expected: exp, actual: pre[i]?.[0]?.type ?? null, detail: `juz ${j}` });
+      if (a === 1) {
+        if (pre[i]?.[0]?.type !== "name") fail("juz-prelude-name", "HIGH", { surah: s, ayah: a, expected: "name", actual: pre[i]?.[0]?.type ?? null, detail: `juz ${j}` });
+        const expSecond = s === 9 ? null : (s === 1 ? "istiadhah" : "bismillah");
+        if ((pre[i]?.[1]?.type ?? null) !== expSecond) fail("juz-prelude-second", "HIGH", { surah: s, ayah: a, expected: expSecond, actual: pre[i]?.[1]?.type ?? null, detail: `juz ${j}` });
+      } else if (i === 0) {
+        if (pre[i]?.[0]?.type !== "name") fail("juz-prelude-name", "HIGH", { surah: s, ayah: a, expected: "name", actual: pre[i]?.[0]?.type ?? null, detail: `juz ${j}` });
+        if (pre[i]?.length !== 1) fail("juz-prelude-mid-surah-only-name", "HIGH", { surah: s, ayah: a, detail: `juz ${j}` });
+      } else if (pre[i]) {
+        fail("juz-prelude-unexpected", "HIGH", { surah: s, ayah: a, detail: `juz ${j}` });
+      }
     });
     juz.ayahs += pairs.length;
   }
