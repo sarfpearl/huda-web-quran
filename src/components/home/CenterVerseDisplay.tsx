@@ -27,6 +27,8 @@ import {
   type QuranScript,
 } from "@/lib/data/quranGlyphs";
 import { translationInfo, useExtraMeaning, type MeaningTarget, type TranslationLang } from "@/lib/data/translations";
+import { isMeaningLang, type MeaningVoice } from "@/lib/data/meaningAudio";
+import { getActiveMeaningWordIndex, useMeaningTimings } from "@/lib/data/meaningTimings";
 
 interface CenterVerseDisplayProps {
   currentVerse: AyahVerse | null;
@@ -55,6 +57,10 @@ interface CenterVerseDisplayProps {
   script?: QuranScript;
   /** The meaning is being read aloud: it lights up in gold. */
   meaningSpeaking?: boolean;
+  /** Active meaning voice (Cruz / Lora). */
+  meaningVoice?: MeaningVoice;
+  /** Audio clock for the meaning clip (seconds). */
+  meaningCurrentTime?: number;
 }
 
 /** UI languages in Latin script: the greeting keeps the serif face on phones. */
@@ -258,6 +264,8 @@ export function CenterVerseDisplay({
   tajweed = false,
   script = "uthmani",
   meaningSpeaking = false,
+  meaningVoice = "cruz",
+  meaningCurrentTime = 0,
 }: CenterVerseDisplayProps) {
   const indoPak = script === "indopak";
   const [mounted, setMounted] = useState(false);
@@ -337,6 +345,15 @@ export function CenterVerseDisplay({
           ? { kind: "ayah", surah: activeItemForFit.surahNumber, ayah: activeItemForFit.ayahNumber }
           : null;
   const extraMeaning = useExtraMeaning(translationLang, meaningTarget);
+  const targetSurahNum = activeItemForFit && "surahNumber" in activeItemForFit ? activeItemForFit.surahNumber : currentVerse?.surahNumber;
+  const targetAyahNum = activeItemForFit && "ayahNumber" in activeItemForFit ? activeItemForFit.ayahNumber : currentVerse?.ayahNumber;
+  const { words: meaningWords } = useMeaningTimings(
+    meaningVoice,
+    translationLang,
+    targetSurahNum,
+    targetAyahNum,
+    showTranslation && isMeaningLang(translationLang)
+  );
   const fitKey = currentSegment
     ? `${currentSegment.id}-${currentSegment.type}`
     : `${currentVerse?.surahNumber}-${currentVerse?.verseKey}`;
@@ -692,6 +709,10 @@ export function CenterVerseDisplay({
   const wordIdPrefix =
     !isPrelude && surahNum && ayahNum > 0 ? `${surahNum}:${ayahNum}` : "id" in activeItem ? activeItem.id : fitKey;
 
+  const activeMeaningWordIdx = meaningSpeaking
+    ? getActiveMeaningWordIndex(meaningWords, meaningCurrentTime)
+    : -1;
+
   return (
     <div
       className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-1 sm:px-1.5 md:px-2 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
@@ -836,13 +857,34 @@ export function CenterVerseDisplay({
               lang={meaning.id}
               dir={meaning.dir}
               style={meaning.font && meaning.id !== "ta" ? { fontFamily: meaning.font } : undefined}
-              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal ${meaningSpeaking ? "text-amber-200" : "text-sand-50"} text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-[opacity,color] duration-300 ${translationSizeClass}`}
+              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal ${meaningSpeaking && !meaningWords ? "text-amber-200" : "text-sand-50"} text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-[opacity,color] duration-300 ${translationSizeClass}`}
             >
-              {translationLang === "ta"
-                ? activeItem.textTamil || activeItem.textEnglish
-                : translationLang === "en" || meaningMissing
-                  ? activeItem.textEnglish
-                  : extraMeaning ?? ""}
+              {meaningWords && meaningWords.length > 0 ? (
+                meaningWords.map(([w], idx) => {
+                  const isActive = meaningSpeaking && idx === activeMeaningWordIdx;
+                  return (
+                    <span
+                      key={idx}
+                      className={`inline transition-[color,text-shadow] duration-100 ${
+                        isActive
+                          ? "text-amber-300 quran-word-glow font-medium"
+                          : meaningSpeaking
+                            ? "text-sand-100/75"
+                            : "text-sand-50"
+                      }`}
+                    >
+                      {w}
+                      {idx < meaningWords.length - 1 ? " " : ""}
+                    </span>
+                  );
+                })
+              ) : (
+                translationLang === "ta"
+                  ? activeItem.textTamil || activeItem.textEnglish
+                  : translationLang === "en" || meaningMissing
+                    ? activeItem.textEnglish
+                    : extraMeaning ?? ""
+              )}
             </p>
             </div>
           )}

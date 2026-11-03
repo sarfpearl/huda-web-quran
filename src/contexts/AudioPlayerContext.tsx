@@ -72,6 +72,7 @@ interface AudioPlayerState {
   ayahSequence: AyahSequenceState | null;
   /** Set while an ayah's meaning is read aloud (the recitation waits). */
   meaningClip: MeaningClipState | null;
+  meaningCurrentTime: number;
   endMode: EndMode;
 }
 
@@ -443,6 +444,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [meaningClip, setMeaningClip] = useState<MeaningClipState | null>(null);
+  const [meaningCurrentTime, setMeaningCurrentTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -569,6 +571,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!meaningRef.current) return false;
     meaningRef.current = null;
     setMeaningClip(null);
+    setMeaningCurrentTime(0);
     const mel = meaningAudioRef.current;
     if (mel) {
       mel.pause();
@@ -1734,7 +1737,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       }
       const b = timeBoundaryRef.current;
       if (b !== null && !forcedSeekPendingRef.current) {
-        if (isPreludeRef.current) {
+        if (meaningRef.current) {
+          const mel = meaningAudioRef.current;
+          if (mel && !mel.paused && mel.currentTime >= b) {
+            timeBoundaryRef.current = null;
+            setMeaningCurrentTime(mel.currentTime);
+          }
+        } else if (isPreludeRef.current) {
           const pel = preludeAudioRef.current;
           if (pel && !pel.paused && pel.currentTime >= b) {
             timeBoundaryRef.current = null;
@@ -1878,6 +1887,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Set first: the recitation's own pause / seek events check it.
       meaningRef.current = { key, then };
       setMeaningClip({ key });
+      setMeaningCurrentTime(0);
       if (mel.getAttribute("src") !== url) {
         mel.src = url;
         mel.load();
@@ -2097,6 +2107,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       preludeDuration,
       ayahSequence,
       meaningClip,
+      meaningCurrentTime,
       endMode,
       playBayan,
       cueBayan,
@@ -2147,6 +2158,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       preludeDuration,
       ayahSequence,
       meaningClip,
+      meaningCurrentTime,
       endMode,
       playBayan,
       cueBayan,
@@ -2283,6 +2295,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       <audio
         ref={meaningAudioRef}
         preload="auto"
+        onTimeUpdate={(e) => {
+          if (meaningRef.current) {
+            setMeaningCurrentTime(e.currentTarget.currentTime);
+          }
+        }}
+        onSeeked={(e) => {
+          if (meaningRef.current) {
+            setMeaningCurrentTime(e.currentTarget.currentTime);
+          }
+        }}
         onPlaying={(e) => {
           alog(`playing ${elInfo("meaning", e.currentTarget)}`);
           if (!meaningRef.current) return;

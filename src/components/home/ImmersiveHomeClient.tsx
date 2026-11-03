@@ -28,6 +28,7 @@ import {
   useMeaningAudioPrefs,
   type MeaningVoice,
 } from "@/lib/data/meaningAudio";
+import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
@@ -822,12 +823,37 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     preludeDuration: player.preludeDuration,
   });
 
+  // Reading mode (header 📖) — declared here so the meaning audio can key off
+  // it; its derived flags live further down with the rest of the reading UI.
+  const [readingMode, setReadingMode] = useState(false);
+
+  // ── Meaning audio ───────────────────────────────────────────────────────
+  // After each ayah, its meaning (the translation shown) is read aloud in the
+  // listener's voice, then the recitation goes on. English and Tamil only.
+  const [meaningPrefs, setMeaningPrefs] = useMeaningAudioPrefs();
+  const meaningKey = player.meaningClip?.key;
+  const [meaningSurah, meaningAyah] = useMemo(() => {
+    if (!meaningKey) return [undefined, undefined];
+    const [s, a] = meaningKey.split(":").map(Number);
+    return [s, a];
+  }, [meaningKey]);
+  const { words: activeMeaningWords } = useMeaningTimings(
+    meaningPrefs.voice,
+    translationLang,
+    meaningSurah,
+    meaningAyah,
+    Boolean(player.meaningClip)
+  );
+
   // Light each word on the frame its voice starts, not at the next ~4 Hz
   // timeupdate: tell the player the next moment the highlight can change.
   const { setTimeBoundary } = player;
   const juzClipWindow = isJuz ? ayahClipWindow(juzAyahVerse) : null;
   useEffect(() => {
     if (!player.isPlaying) return setTimeBoundary(null);
+    if (player.meaningClip) {
+      return setTimeBoundary(getNextMeaningBoundary(activeMeaningWords, player.meaningCurrentTime));
+    }
     if (!isJuz) {
       const clock = player.isPrelude ? player.preludeCurrentTime : player.currentTime;
       return setTimeBoundary(
@@ -844,16 +870,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   }, [
     setTimeBoundary, isJuz, segments, currentSegment, juzAyahVerse, juzClipWindow, juzWordSync.hasWordTiming,
     player.isPlaying, player.isPrelude, player.preludeCurrentTime, player.currentTime, player.duration, player.ayahSequence?.preType,
+    player.meaningClip, player.meaningCurrentTime, activeMeaningWords,
   ]);
-
-  // Reading mode (header 📖) — declared here so the meaning audio can key off
-  // it; its derived flags live further down with the rest of the reading UI.
-  const [readingMode, setReadingMode] = useState(false);
-
-  // ── Meaning audio ───────────────────────────────────────────────────────
-  // After each ayah, its meaning (the translation shown) is read aloud in the
-  // listener's voice, then the recitation goes on. English and Tamil only.
-  const [meaningPrefs, setMeaningPrefs] = useMeaningAudioPrefs();
   // Translation off = Arabic only: no meaning voice either. Reading mode shows
   // only the Arabic Mushaf text (the Translate button is hidden there), so the
   // meaning is never read aloud while reading.
@@ -1699,6 +1717,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         tajweed={tajweedShown}
         script={quranScript}
         meaningSpeaking={Boolean(player.meaningClip)}
+        meaningVoice={meaningPrefs.voice}
+        meaningCurrentTime={player.meaningCurrentTime}
       />
       </div>
 
