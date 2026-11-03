@@ -472,7 +472,9 @@ export function CompactBayanPlayer({
       )}
       <span className="min-w-0 truncate px-1 text-sand-300/80 font-normal tabular-nums whitespace-nowrap">
         {isAyahSeq && ayahSeq ? (
-          ayahSeq.preType === "istiadhah" ? (
+          ayahSeq.preType === "name" ? (
+            word("surah", language)
+          ) : ayahSeq.preType === "istiadhah" ? (
             t(language, "Isti'adhah")
           ) : ayahSeq.preType === "bismillah" ? (
             t(language, "Bismillah")

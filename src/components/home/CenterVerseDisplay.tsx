@@ -614,13 +614,14 @@ export function CenterVerseDisplay({
   const meaningMissing = extraMeaning === null;
   const meaning = translationInfo(meaningMissing ? "en" : translationLang);
 
+  const isPrelude = "type" in activeItem && (activeItem.type === "istiadhah" || activeItem.type === "bismillah" || activeItem.type === "name");
+  const isNamePrelude = "type" in activeItem && activeItem.type === "name";
+
   // Verse Sync reciters: hide the verse text + meaning — the recitation audio
   // does not align word-for-word with the on-screen letters, so showing them
   // would be misleading. Just the immersive background + audio play.
-  if (!reciterWordSync) return null;
-
-  const isPrelude = "type" in activeItem && (activeItem.type === "istiadhah" || activeItem.type === "bismillah" || activeItem.type === "name");
-  const isNamePrelude = "type" in activeItem && activeItem.type === "name";
+  // Preludes (Surah name / Bismillah / Isti'adhah) are self-contained and always display.
+  if (!reciterWordSync && !isPrelude) return null;
   const ayahNum =
     "ayahNumber" in activeItem && typeof activeItem.ayahNumber === "number" && activeItem.ayahNumber > 0
       ? activeItem.ayahNumber

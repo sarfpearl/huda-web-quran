@@ -96,15 +96,17 @@ export interface MeaningClipState {
 /** A short clip played before an ayah in a per-ayah Juz sequence. */
 export interface AyahPrelude {
   url: string;
-  type: "istiadhah" | "bismillah";
+  type: "istiadhah" | "bismillah" | "name";
+  surahNumber?: number;
 }
 
 /** Per-ayah Juz sequence state. `preType` is set while a prelude clip
- *  (Isti'adhah / Bismillah) plays before ayah `index`. */
+ *  (Surah name announcement / Isti'adhah / Bismillah) plays before ayah `index`. */
 export interface AyahSequenceState {
   index: number;
   total: number;
   preType: AyahPrelude["type"] | null;
+  surahNumber?: number;
 }
 
 /** Start position: seconds, or computed from the loaded track's real duration
@@ -1072,7 +1074,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     const pre = withPre ? seq.pre[idx] ?? [] : [];
     seq.preStep = pre.length > 0 ? 0 : -1;
-    setAyahSequence({ index: idx, total: seq.urls.length, preType: pre[0]?.type ?? null });
+    setAyahSequence({
+      index: idx,
+      total: seq.urls.length,
+      preType: pre[0]?.type ?? null,
+      surahNumber: pre[0]?.surahNumber,
+    });
     prefetchAyahsAround(seq.urls, idx);
     playClip(pre.length > 0 ? pre[0].url : seq.urls[idx], pre.length > 0 ? undefined : startAt, pre.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1088,7 +1095,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       const nextStep = seq.preStep + 1;
       if (nextStep < pre.length) {
         seq.preStep = nextStep;
-        setAyahSequence({ index: seq.index, total: seq.urls.length, preType: pre[nextStep].type });
+        setAyahSequence({
+          index: seq.index,
+          total: seq.urls.length,
+          preType: pre[nextStep].type,
+          surahNumber: pre[nextStep].surahNumber,
+        });
         playClip(pre[nextStep].url, undefined, true);
         return true;
       }
