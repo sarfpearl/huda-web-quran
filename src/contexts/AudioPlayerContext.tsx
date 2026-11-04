@@ -1037,7 +1037,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       try { sb.currentTime = 0; } catch { /* ignore */ }
       startClipAt(sb, startAt);
       setDuration(Number.isFinite(sb.duration) ? sb.duration : 0);
-      sb.play().catch(() => {});
+      // kickIfStuck: iOS can leave a swapped-in element "playing" with no sound
+      // and the time frozen (a Bismillah / ayah that silently never advances).
+      // The whole-Surah path already recovers this; the per-ayah Juz engine did
+      // not, so a stuck prelude/ayah stalled the sequence. Reload it in place.
+      sb.play().then(() => kickIfStuck(sb)).catch(() => {});
     } else if (cur) {
       cur.muted = muted;
       cur.src = ayahSrc(url);
@@ -1045,7 +1049,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       cur.load();
       startClipAt(cur, startAt);
       setDuration(0);
-      cur.play().catch(() => {});
+      cur.play().then(() => kickIfStuck(cur)).catch(() => {});
     }
     // The previous clip's time must not be read against the new ayah's words
     // (it flashed the new ayah's last word and jerked the scroll).
