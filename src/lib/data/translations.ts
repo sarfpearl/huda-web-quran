@@ -191,6 +191,9 @@ export function useExtraMeaning(lang: TranslationLang, target: MeaningTarget): s
     loadSurah(lang, surah).then((ayahs) => {
       if (live) setFound({ key, text: ayahs?.[ayah - 1] ?? null });
     });
+    // Warm the neighbouring Surahs so moving on doesn't wait on the network.
+    if (surah < 114) void loadSurah(lang, surah + 1);
+    if (surah > 1) void loadSurah(lang, surah - 1);
     return () => {
       live = false;
     };
