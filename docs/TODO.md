@@ -152,7 +152,19 @@ never generate anything per Juz.
        space gets tight again.
 8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
        scripts warns that later versions need Node ≥ 22 (now v20.20.0).
-9. [ ] Still open from before: the real-phone checks below.
+9. [ ] **Real-phone checks still open (2026-11-04)** — everything else from
+       the Launch QA phone list was checked by the owner (2026-10-24, calls
+       2026-10-31). On the phone (iPhone Safari + home-screen app):
+       1. **Juz with the screen locked:** Surah / Juz list → Juz 30 → play →
+          lock. It goes on to the next Surah; the lock-screen progress covers
+          the whole Juz (PR #138).
+       2. **Meaning audio with the screen locked:** Juz 30, meaning audio on →
+          play → lock. After each ayah its Tamil / English meaning plays, then
+          the recitation goes on (iOS may block starting audio in background).
+       3. **Surah name announcement with the screen locked:** in Juz 30, the
+          spoken "Surah …" plays when the next Surah starts (PR #180, #181).
+       4. **Offline:** open a Surah once, airplane mode on, open the site again
+          → it opens, ayahs and reading mode work.
 10. [ ] **Before the final app publish (owner's call, last step):** clear the
        Supabase test data again, as on 2026-10-07 — views, live, likes and
        comments from testing must not show on launch day. In the SQL editor:
@@ -208,7 +220,7 @@ consolidation. **IndoPak Tajweed colours: not now** — the glyph-by-glyph
 prototype (#115) was closed after QuranWBW's review; waiting on their
 IndoPak Tajweed font (*IndoPak script* below).
 
-- [~] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
+- [x] **Owner's phone feedback, round 2** (2026-10-07, `fix/phone-feedback-2`):
       (1) tab icon showed the white app tile → favicon.ico / favicon.png /
       favicon-192.png are now the logo alone on a clear background, from
       `assets/brand/Logo_icon.png` (the 404 page already used the logo; the
@@ -234,6 +246,8 @@ IndoPak Tajweed font (*IndoPak script* below).
       `/_next/image?w=512` instead of the cross-origin R2 WebP (guess: iOS
       standalone drops the cross-origin image and blanks the card). Unverified
       on a phone — owner to re-check after deploy.
+      **Closed 2026-11-04:** owner's 2026-10-24 check — lock-screen artwork +
+      controls and zoom fine; Instagram interrupting dropped (2026-10-31).
 - [x] **QA PR stack merged** (2026-10-07) — #26 … #45 into `main` (merge
       commits, in order); Vercel production deploy of `dd935e4` succeeded.
 - [x] **Checked live after deploy** (2026-10-07): `node scripts/qa/seo-share.cjs
@@ -243,7 +257,7 @@ IndoPak Tajweed font (*IndoPak script* below).
       controls the page.
 - [x] **WhatsApp preview** (owner, 2026-10-07) — a Surah link shows the card
       with the image, title and description.
-- [~] **Real phones (Launch QA item 4)** — owner's first pass (2026-10-07):
+- [x] **Real phones (Launch QA item 4)** — owner's first pass (2026-10-07):
       **Fixed** (`fix/offline-feedback`): (a) offline, the next Surah just
       spun with no message — now a notice "No internet connection… continues
       once you're back online" (and "Back online"), plus the same line in the
@@ -258,6 +272,8 @@ IndoPak Tajweed font (*IndoPak script* below).
       background playback and controls, headphone / Bluetooth buttons, a call
       interrupting, a Juz with the screen locked (pick the Juz first: Surah /
       Juz list → Juz → Juz 30 → play, then lock), home-screen app, Android Back.
+      **Closed 2026-11-04:** checked by the owner 2026-10-24 (calls 2026-10-31,
+      PR #138); the Juz lock-screen check and offline moved to Next tasks #9.
 - [x] **Small code follow-ups** (2026-10-07, `fix/back-closes-dialogs`) —
       Back (Android button, browser back, iOS swipe) now closes the open
       sheet / content browser / reciter picker / install guide instead of
@@ -361,7 +377,7 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       boundary (`setTimeBoundary` / `nextTimelineBoundary`): median 13ms, p95
       18ms, one re-render per word. `word-boundaries.cjs` checks no word
       change falls between two boundaries (45 reciter × Surah runs, 0).
-- [~] **4. Audio reliability** (2026-10-06) — checked in the browser (local
+- [x] **4. Audio reliability** (2026-10-06) — checked in the browser (local
       dev): play, pause, seek (progress bar → right ayah/word, keeps playing),
       volume, mute, speed, previous / next ayah, next Surah (with Bismillah
       prelude), reciter change, loading spinner on a stall. **Fixed:**
@@ -378,6 +394,8 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       no Simulator.app): background + lock-screen playback and controls on
       iPhone Safari and Android Chrome, headphones / Bluetooth buttons, a call
       interrupting playback, Juz playing on with the screen locked.
+      **Closed 2026-11-04:** phone checks done (2026-10-24 / 10-31); the Juz
+      lock-screen check is in Next tasks #9.
 - [x] **5. Surah navigation** (2026-10-06) — checked in the browser: Surah
       search (item 1), previous / next ayah and Surah (114 → 1 and 1 → 114
       wrap), bookmark (player 🔖 → "Bookmark · Ya-Sin 36:3" pill after a
@@ -400,7 +418,7 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       is the Madinah page view only (no separate "continuous" mode). Noted,
       not changed: the « Bookmark » pill sits over the pane's faded top edge
       while reading (by design — it stays until its ayah is on screen).
-- [~] **7. Navigation** (2026-10-06) — checked: 404 page, Back to Home,
+- [x] **7. Navigation** (2026-10-06) — checked: 404 page, Back to Home,
       browser back / forward, refresh. **Added (owner's choice): deep links**
       (`src/lib/deepLink.ts`): `/surah/36`, `/surah/36/3` (an ayah) cue that
       Surah at that ayah (play is the visitor's tap — browsers block
@@ -410,7 +428,7 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       title follow the Surah / ayah or Juz (`replaceState`), so refresh or
       sharing comes back to it; "/" still opens on Al-Fatihah and stays "/"
       until something plays; a link visit skips the auto-opening content
-      browser. **404 polish (2026-10-07, `fix/404-polish`):**
+      browser. **Closed 2026-11-04:** nothing left open. **404 polish (2026-10-07, `fix/404-polish`):**
       title "Page not found · HuDa" (also under /surah/… and /juz/… — their
       generateMetadata returned {} and the client swapped the title back to
       the site's; now `notFoundMetadata` in `src/lib/site.ts`), no opening
@@ -567,6 +585,13 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       2026-10-07 (see Open items); (d) a Surah
       link preloads its recitation (~3 MB) before play — kept, so play is
       instant for someone who followed a link.
+      **Re-checked 2026-11-04 (live site, Lighthouse 12):** mobile home **72**
+      (was 85), /surah/36 89; desktop 98 / 97. FCP 1.2 / 1.0 s, TBT 10–20 ms,
+      weight 2.1 / 5.4 MB. LCP 4.4 s on home = the splash logo (as before).
+      **Regression:** CLS 0.168 home / 0.128 /surah/36 (was 0.01) — 0.12 of it
+      is the player frame (`#player [data-player-frame]`) moving after
+      hydration, 0.04 the verse stage block. **To fix:** reserve the player
+      frame's final height before it measures (see fix (5) above).
 - [~] **14. Accessibility** (2026-10-07) — axe-core 4.10 (browser) on the
       home screen, a Surah link, the 404 page and with each panel open
       (content browser, reciter, translation, Tajweed, favourites, views,
@@ -595,6 +620,13 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       fails on purpose (axe `meta-viewport`, critical). Not changed: the Tajweed
       popover is non-modal (focus stays on its button); the background video
       still plays with Reduce Motion on (image mode is one tap away).
+      **Re-checked 2026-11-04 (Lighthouse 12, score 91):** besides
+      `meta-viewport`, two new failures — (1) `color-contrast`: white text on
+      `bg-emerald-500` (2.53:1) on an `h-11` sheet button (12px text);
+      (2) `label-content-name-mismatch`: the "Listening now" button
+      (`aria-label="Listening now: 1"`) and a `role="button"` title row whose
+      visible text isn't in their accessible names. **To fix** with the CLS
+      fix above.
 
 ## IndoPak script
 
