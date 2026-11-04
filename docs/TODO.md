@@ -75,8 +75,10 @@ never generate anything per Juz.
       the set's middle ayah (6 sets with no clip of their own — 57–63, 71–77,
       85–91, 127–133, 141–147, 197–200 — borrow a neighbouring ayah's clip).
       Encoded ~3 Mbps (≈2.5–3.2 MB each), uploaded to R2, registered, status
-      `DEPLOYED`. If the owner later wants fresh clips for those 6 sets, redo
-      them only.
+      `DEPLOYED`.
+      - **2026-11-04 update:** The 6 borrowed sets replaced with fresh independent
+        thematic clips matched from `Unused Items/` (scores 95–98, Rule 5 verified),
+        re-encoded, uploaded to R2, and bumped to `v=2` in `videoVersions.ts`. Done.
 - [x] **Surah 3 sets verified live (2026-10-31):** ayah 30 → `set_05_ayah_29-35`.
       Ayahs 1–25 keep their curated chapter clips (ayah-level registry in
       `surahVerseVideos.ts` wins over sets, as in Surah 2); sets cover 26–200.
