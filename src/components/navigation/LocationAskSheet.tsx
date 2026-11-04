@@ -57,7 +57,7 @@ export function LocationAskSheet({
           <button
             type="button"
             onClick={onAllow}
-            className="h-11 flex-[1.4] rounded-full bg-emerald-500 font-semibold text-white transition-all hover:bg-emerald-400 active:scale-[0.98]"
+            className="h-11 flex-[1.4] rounded-full bg-emerald-500 font-semibold text-slate-950 transition-all hover:bg-emerald-400 active:scale-[0.98]"
           >
             {t(lang, "Allow location")}
           </button>

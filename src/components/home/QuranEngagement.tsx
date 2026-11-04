@@ -1082,12 +1082,14 @@ export function PlayerStatsFrame({
             type="button"
             data-engagement-keep
             onClick={toggleViews}
-            aria-label={`${t(lang, "Listening now")}: ${stats?.content.live ?? 0}`}
+            // The name starts with what the button shows (WCAG 2.5.3 label in name).
+            aria-label={`${fit < 1 ? `${t(lang, "Live")} ` : ""}${stats ? compactCount(stats.content.live) : "–"}, ${t(lang, "Listening now")}`}
             data-tooltip={t(lang, "Listening now")}
             className={stat}
           >
             <LiveDot on={Boolean(stats && stats.content.live > 0)} />
-            {fit < 1 && <span>{t(lang, "Live")}</span>}
+            {/* The space keeps "Live 0" two words in the text the name must contain. */}
+            {fit < 1 && <span>{t(lang, "Live")}</span>}{fit < 1 && " "}
             <span>{stats ? compactCount(stats.content.live) : "–"}</span>
           </button>
           )}
@@ -1096,7 +1098,7 @@ export function PlayerStatsFrame({
             data-engagement-keep
             onClick={toggleViews}
             aria-expanded={viewsOpen}
-            aria-label={`${t(lang, "Overall view count")}: ${stats?.content.users ?? 0}`}
+            aria-label={`${stats ? compactCount(stats.content.users) : "–"}, ${t(lang, "Overall view count")}`}
             data-tooltip={t(lang, "View count")}
             className={cn(stat, viewsOpen && "text-emerald-300")}
           >
@@ -1112,7 +1114,7 @@ export function PlayerStatsFrame({
               setViewsOpen(false);
             }}
             aria-pressed={composerOpen}
-            aria-label={`${t(lang, "Comments")}: ${e.commentsTotal}`}
+            aria-label={`${e.commentsTotal > 99 ? "99+" : e.commentsTotal}, ${t(lang, "Comments")}`}
             data-tooltip={t(lang, "Comments")}
             className={cn(stat, composerOpen && "text-emerald-300")}
           >
@@ -1124,6 +1126,7 @@ export function PlayerStatsFrame({
       {/* The card overlaps the frame's border so sides/bottom read as one line;
           with the bottom strip open it eases inward by CARD_INSET. */}
       <div
+        data-card-wrap
         className={cn(show && "-mx-px", show && !withFooter && "-mb-px", "transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none")}
         style={{ paddingLeft: inset, paddingRight: inset }}
       >
@@ -1139,6 +1142,7 @@ export function PlayerStatsFrame({
           withFooter ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
         )}
         aria-hidden={!withFooter}
+        data-footer-wrap
         ref={footerWrapRef}
       >
         <div className="min-h-0 overflow-hidden">

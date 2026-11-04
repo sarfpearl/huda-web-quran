@@ -191,6 +191,40 @@
     border-bottom-left-radius: max(28px, calc(var(--screen-corner) - 1rem));
     border-bottom-right-radius: max(28px, calc(var(--screen-corner) - 1rem));
   }
+  /* Before hydration on a phone (or a remembered compact choice, see
+     src/lib/playerCollapsedInit.ts): lay the player out as it will be once
+     hydrated — the compact pill in flow, the bottom strip open, the card inset
+     — so switching from the server's full player shifts nothing. */
+  html[data-player-collapsed] [data-player-shell] .player-full {
+    position: absolute;
+  }
+  html[data-player-collapsed] [data-player-shell] .player-compact {
+    position: relative;
+    left: auto;
+    margin-inline: auto;
+    transform: none;
+  }
+  html[data-player-collapsed] [data-player-frame] [data-footer-wrap] {
+    grid-template-rows: 1fr;
+  }
+  html[data-player-collapsed] [data-player-frame] [data-card-wrap] {
+    padding-inline: 10px;
+  }
+  /* …and the verse stage's fallback room for the pill instead of the full
+     player (measured: 168px on phones, 160px below 370px, 184px from sm). */
+  html[data-player-collapsed] [data-verse-stage] {
+    padding-bottom: 168px;
+  }
+  @media (max-width: 369px) {
+    html[data-player-collapsed] [data-verse-stage] {
+      padding-bottom: 160px;
+    }
+  }
+  @media (min-width: 640px) {
+    html[data-player-collapsed] [data-verse-stage] {
+      padding-bottom: 184px;
+    }
+  }
   html.iphone-app [data-player-dock] {
     bottom: calc(var(--vv-bottom, 0px) + 1rem);
   }

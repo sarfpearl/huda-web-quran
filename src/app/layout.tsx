@@ -3,6 +3,7 @@ import "./globals.css";
 import { fontVariables } from "./fonts";
 import { shareMetadata, siteConfig } from "@/lib/site";
 import { ThemeProvider, themeInitScript } from "@/components/theme/ThemeProvider";
+import { playerCollapsedInitScript } from "@/lib/playerCollapsedInit";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SurahListenCounter } from "@/components/player/SurahListenCounter";
@@ -76,6 +77,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: playerCollapsedInitScript }} />
       </head>
       {/* Extensions (Grammarly: data-gr-ext-installed …) add attributes to
           <body> before React hydrates; ignore that attribute-only mismatch. */}
