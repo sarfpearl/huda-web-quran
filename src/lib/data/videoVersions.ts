@@ -21,6 +21,13 @@ const VIDEO_VERSIONS: Readonly<Record<string, number>> = {
   "/videos/surah/003-aal-e-imran/01a-the-immutable-foundation-and-muhkamat.mp4": 2,
   "/videos/surah/003-aal-e-imran/02c-the-supreme-sovereign-and-cosmic-order.mp4": 2,
   "/videos/surah/003-aal-e-imran/10a-ulul-albab-and-contemplation-of-creation.mp4": 2,
+  // 2026-11-04: Surah 3 borrowed sets replaced with fresh independent clips
+  "/videos/surah_3/set_09_ayah_57-63.mp4": 2,
+  "/videos/surah_3/set_11_ayah_71-77.mp4": 2,
+  "/videos/surah_3/set_13_ayah_85-91.mp4": 2,
+  "/videos/surah_3/set_19_ayah_127-133.mp4": 2,
+  "/videos/surah_3/set_21_ayah_141-147.mp4": 2,
+  "/videos/surah_3/set_29_ayah_197-200.mp4": 2,
 };
 
 /** R2 URL of a background clip (a "/videos/…" path or its URL), with its version if replaced. */
