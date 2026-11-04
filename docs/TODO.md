@@ -55,6 +55,7 @@ never generate anything per Juz.
   without audio: re-run that Surah without `--batch`. Re-make any clip
   with a long internal gap, or whose length is far from its text's.
 - **Then:** the rest of the Quran (≈ ₹3,300), as the owner's balance allows.
+  **Owner, 2026-11-04: do this last**, after the videos and other work.
 - **Previews:** if a Vercel preview shows a black background or the meaning
   stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
   you blame the code.
@@ -83,7 +84,9 @@ never generate anything per Juz.
 ### Added 2026-11-04
 
 - [~] **Background videos for the remaining 84 Surahs (18, 20–22, 24, 27, 29,
-      33–114) from clips we already have** — running in Antigravity with
+      33–114) from clips we already have** — **Batch 1 live 2026-11-04**
+      (Surahs 18, 20–22, 24, 27, 29, 33, 34; owner approved; merged as
+      `41ff6c0`). Batches 2–5 (35–114) next. Running in Antigravity with
       `docs/antigravity-surah-video-matching-prompt.md`: thematic sets per
       Surah, matched from `Unused Items/` (Inbox catalogue, `duplicates/`,
       Surah 3 Inbox), frames checked, Rule 5. No Veo / paid API. Sets with no
@@ -152,7 +155,7 @@ never generate anything per Juz.
        space gets tight again.
 8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
        scripts warns that later versions need Node ≥ 22 (now v20.20.0).
-9. [ ] **Real-phone checks still open (2026-11-04)** — everything else from
+9. [x] **Real-phone checks (2026-11-04) — all 4 fine (owner, on the phone, 2026-11-04).** — everything else from
        the Launch QA phone list was checked by the owner (2026-10-24, calls
        2026-10-31). On the phone (iPhone Safari + home-screen app):
        1. **Juz with the screen locked:** Surah / Juz list → Juz 30 → play →
