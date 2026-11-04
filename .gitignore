@@ -48,3 +48,7 @@ user_candidates/
 /public/data/search-index.json
 /public/data/search-index-*.json
 *.zip
+
+# Python bytecode caches (scripts/qa, docs spikes)
+__pycache__/
+*.pyc
