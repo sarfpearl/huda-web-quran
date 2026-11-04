@@ -80,6 +80,30 @@ never generate anything per Juz.
       Ayahs 1–25 keep their curated chapter clips (ayah-level registry in
       `surahVerseVideos.ts` wins over sets, as in Surah 2); sets cover 26–200.
 
+### Added 2026-11-04
+
+- [~] **Background videos for the remaining 84 Surahs (18, 20–22, 24, 27, 29,
+      33–114) from clips we already have** — running in Antigravity with
+      `docs/antigravity-surah-video-matching-prompt.md`: thematic sets per
+      Surah, matched from `Unused Items/` (Inbox catalogue, `duplicates/`,
+      Surah 3 Inbox), frames checked, Rule 5. No Veo / paid API. Sets with no
+      match (score < 75) come back as content briefs for the owner to pick a
+      video. Owner approves each batch on a review board before encode /
+      upload / registry; one PR per batch (5 batches).
+- [ ] **Player UI redesign (compact dock):** smaller player buttons in compact
+      dock mode; a small window view under the player controls; an
+      expand / collapse toggle that shows and hides the detailed player
+      controls.
+- [ ] **Vertex AI 403 `PERMISSION_DENIED: CONSUMER_SUSPENDED`** on
+      `veo-3.1-fast-generate-001` — Google Cloud billing / account suspended;
+      blocks any new Veo clip. Not needed for the matching task above. The
+      Surah 18 set 15 (ayahs 89–98) Gate 2 clip already exists
+      (`Unused Items/archive/Inbox/surah_18_set_15_ayah_89-98-saddayn-mountains.mp4`).
+- [ ] **Surah 114 Video 3 (ayahs 5–6)** — the animated `03a`–`03c` clips
+      (earth from space, ocean sunset, green valley) were rejected; replace
+      with real footage via the matching task (seamless loop, no crossfade
+      ghosting), then owner review.
+
 ### Next tasks — in this order (noted 2026-10-25)
 
 1. [x] **Folder re-arrangement / unused media (2026-10-25, PR #150).** Local:
