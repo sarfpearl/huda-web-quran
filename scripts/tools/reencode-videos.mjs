@@ -176,6 +176,10 @@ function registryVideos() {
   const { SURAH_CHAPTERS_REGISTRY, getSurahVisualData } = require(path.join(ROOT, "src/lib/data/surahChapters.ts"));
   const { SURAH_VERSE_VIDEOS_REGISTRY } = require(path.join(ROOT, "src/lib/data/surahVerseVideos.ts"));
   const { JUZ_VIDEOS } = require(path.join(ROOT, "src/lib/data/quranJuzVideos.ts"));
+  let SURAH_SET_VIDEOS = {};
+  try {
+    ({ SURAH_SET_VIDEOS } = require(path.join(ROOT, "src/lib/data/surahSetVideos.ts")));
+  } catch {}
   const found = new Set();
   const add = (p) => p && p.startsWith("/videos/") && found.add(p);
   for (let s = 1; s <= 114; s++) {
@@ -184,6 +188,7 @@ function registryVideos() {
     d.chapters.forEach((c) => add(c.videoPath));
   }
   for (const ayahs of Object.values(SURAH_VERSE_VIDEOS_REGISTRY)) for (const v of Object.values(ayahs)) add(v.videoPath);
+  for (const sets of Object.values(SURAH_SET_VIDEOS || {})) sets.forEach((v) => add(v.path));
   for (const j of Object.values(JUZ_VIDEOS)) {
     add(j.videoPath);
     (j.playlist ?? []).forEach(add);
@@ -249,15 +254,26 @@ function saveReport(report) {
 async function inventory() {
   const keys = NEW ? registryVideos() : referencedVideos();
   const rows = [];
+  const candidates = [];
   for (const key of keys) {
     const local = path.join(ROOT, "public", key);
     const localSize = fs.existsSync(local) ? fs.statSync(local).size : null;
     if (NEW && localSize === null) continue;
-    const r2Size = await remoteSize(key);
-    // --new: only what R2 lacks, or holds just a placeholder of.
-    if (NEW && r2Size !== null && !(r2Size < 1e6 && localSize > 2e6)) continue;
-    rows.push({ key, local: localSize !== null ? local : null, localSize, r2Size });
+    candidates.push({ key, local: localSize !== null ? local : null, localSize });
   }
+
+  await pool(candidates, 16, async (cand) => {
+    try {
+      const r2Size = await remoteSize(cand.key);
+      // --new: only what R2 lacks, or holds just a placeholder of.
+      if (NEW && r2Size !== null && !(r2Size < 1e6 && cand.localSize > 2e6)) return;
+      rows.push({ ...cand, r2Size });
+    } catch {
+      rows.push({ ...cand, r2Size: null });
+    }
+  });
+
+  rows.sort((a, b) => a.key.localeCompare(b.key));
   return rows;
 }
 
@@ -386,7 +402,7 @@ async function upload(report) {
     endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
   });
-  for (const [key, r] of ready) {
+  await pool(ready, 6, async ([key, r]) => {
     const file = path.join(ENCODED, key);
     await s3.send(
       new PutObjectCommand({
@@ -403,7 +419,7 @@ async function upload(report) {
     r.uploaded = live === r.outSize;
     console.log(`  ${r.uploaded ? "✓" : "✗ size mismatch on R2"} ${key}`);
     saveReport(report);
-  }
+  });
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
