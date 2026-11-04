@@ -1,10 +1,10 @@
 {
   "pipelineVersion": "1.0.0",
-  "lastUpdated": "2026-10-25T03:39:20.267Z",
+  "lastUpdated": "2026-11-04T10:34:02.199Z",
   "currentSurah": 17,
   "status": "RUNNING",
   "totalSurahs": 114,
-  "completedSurahCount": 22,
+  "completedSurahCount": 32,
   "surahs": {
     "3": {
       "surahNumber": 3,
@@ -189,6 +189,20 @@
       "lastUpdated": "2026-10-19T03:15:53.517Z",
       "deployedAt": "2026-10-19T03:15:53.518Z"
     },
+    "18": {
+      "surahNumber": 18,
+      "surahName": "Al-Kahf",
+      "totalVerses": 110,
+      "totalSets": 16,
+      "completedSets": 16,
+      "completedCount": 110,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
+    },
     "19": {
       "surahNumber": 19,
       "surahName": "Maryam",
@@ -205,6 +219,48 @@
       "deployedAt": "2026-10-25T03:39:20.267Z",
       "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
+    "20": {
+      "surahNumber": 20,
+      "surahName": "Ta-Ha",
+      "totalVerses": 135,
+      "totalSets": 18,
+      "completedSets": 18,
+      "completedCount": 135,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
+    },
+    "21": {
+      "surahNumber": 21,
+      "surahName": "Al-Anbiya",
+      "totalVerses": 112,
+      "totalSets": 16,
+      "completedSets": 16,
+      "completedCount": 112,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
+    },
+    "22": {
+      "surahNumber": 22,
+      "surahName": "Al-Hajj",
+      "totalVerses": 78,
+      "totalSets": 11,
+      "completedSets": 11,
+      "completedCount": 78,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
+    },
     "23": {
       "surahNumber": 23,
       "surahName": "Al-Mu'minun",
@@ -220,6 +276,20 @@
       "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
       "deployedAt": "2026-10-25T03:39:20.267Z",
       "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
+    },
+    "24": {
+      "surahNumber": 24,
+      "surahName": "An-Nur",
+      "totalVerses": 64,
+      "totalSets": 12,
+      "completedSets": 12,
+      "completedCount": 64,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
     },
     "25": {
       "surahNumber": 25,
@@ -253,6 +323,20 @@
       "deployedAt": "2026-10-25T03:39:20.267Z",
       "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
     },
+    "27": {
+      "surahNumber": 27,
+      "surahName": "An-Naml",
+      "totalVerses": 93,
+      "totalSets": 12,
+      "completedSets": 12,
+      "completedCount": 93,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
+    },
     "28": {
       "surahNumber": 28,
       "surahName": "Al-Qasas",
@@ -268,6 +352,20 @@
       "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
       "deployedAt": "2026-10-25T03:39:20.267Z",
       "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
+    },
+    "29": {
+      "surahNumber": 29,
+      "surahName": "Al-Ankabut",
+      "totalVerses": 69,
+      "totalSets": 8,
+      "completedSets": 8,
+      "completedCount": 69,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
     },
     "30": {
       "surahNumber": 30,
@@ -316,6 +414,34 @@
       "ownerApprovedAt": "2026-10-25T03:39:20.267Z",
       "deployedAt": "2026-10-25T03:39:20.267Z",
       "deployNote": "Owner approved all sets on the approval board; clips on R2 (2026-10-24 capacity audit: 310 canonical objects) and in videoManifest.ts since PR #128."
+    },
+    "33": {
+      "surahNumber": 33,
+      "surahName": "Al-Ahzab",
+      "totalVerses": 73,
+      "totalSets": 9,
+      "completedSets": 9,
+      "completedCount": 73,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
+    },
+    "34": {
+      "surahNumber": 34,
+      "surahName": "Saba",
+      "totalVerses": 54,
+      "totalSets": 7,
+      "completedSets": 7,
+      "completedCount": 54,
+      "status": "DEPLOYED",
+      "previewHtml": "/Users/pearl-9744/Claude/Projects/huda-web-quran/scratch/matching/batch_1_review.html",
+      "mode": "THEMATIC_SETS_5_TO_10_AYAHS",
+      "lastUpdated": "2026-11-04T10:34:02.199Z",
+      "deployedAt": "2026-11-04T10:34:02.199Z",
+      "deployNote": "Batch 1 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.8% size savings) and deployed to Cloudflare R2."
     }
   }
 }
