@@ -95,6 +95,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
     <div
       ref={stageRef}
       className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-8 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
+      data-verse-stage
       style={style}
     >
       <div
@@ -280,7 +281,9 @@ export function CenterVerseDisplay({
   // player 343 / 371px) so the server-rendered ayah doesn't jump on hydration.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
-  useEffect(() => {
+  // Layout phase: measured before the first paint after hydration, while the
+  // player still has its pre-hydration (compact) size — see playerCollapsedInit.
+  useLayoutEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
     const header = document.querySelector<HTMLElement>("[data-scene-header]");
     // The Continue / Bookmark pills below the header (0 tall when none show).
@@ -719,6 +722,7 @@ export function CenterVerseDisplay({
   return (
     <div
       className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-1 sm:px-1.5 md:px-2 pt-[77px] sm:pt-24 pb-[343px] sm:pb-[371px]"
+      data-verse-stage
       style={stageInsets}
     >
       <div

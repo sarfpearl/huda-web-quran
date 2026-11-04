@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { PLAYER_COLLAPSED_KEY } from "@/lib/playerCollapsedInit";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
@@ -198,13 +199,21 @@ export function CompactBayanPlayer({
   const [collapsed, setCollapsed] = useState(false);
   useLayoutEffect(() => {
     try {
-      const saved = localStorage.getItem(COLLAPSED_KEY);
+      const saved = localStorage.getItem(PLAYER_COLLAPSED_KEY);
       setCollapsed(saved !== null ? saved === "1" : window.innerWidth < 768);
     } catch {}
   }, []);
-  useEffect(() => {
+  // Told in the layout phase, so the frame's bottom strip opens in the same
+  // first paint as the pill (a passive effect painted the frame shut first).
+  useLayoutEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
+  // The head script's pre-hydration layout (globals.css) is not needed once
+  // that first paint is out: the player and the verse stage have their own
+  // sizes by then (src/lib/playerCollapsedInit.ts).
+  useEffect(() => {
+    document.documentElement.removeAttribute("data-player-collapsed");
+  }, []);
   // Both views stay mounted at their natural size and crossfade; only the empty
   // glass shell resizes (CSS transition to the measured size of the active view),
   // so nothing reflows mid-animation.
@@ -269,7 +278,7 @@ export function CompactBayanPlayer({
     setCollapsed(next);
     if (!remember) return;
     try {
-      localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+      localStorage.setItem(PLAYER_COLLAPSED_KEY, next ? "1" : "0");
     } catch {}
   };
 
@@ -656,7 +665,7 @@ export function CompactBayanPlayer({
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 max-[369px]:gap-1.5 p-2 px-3 max-[369px]:px-2`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 max-[369px]:gap-1.5 p-2 px-3 max-[369px]:px-2`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
@@ -848,11 +857,12 @@ export function CompactBayanPlayer({
           <div
             ref={fullTitle.rowRef}
             className={`relative flex items-baseline gap-2 mt-1 min-w-0 ${onTitleClick ? "cursor-pointer rounded-lg transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
-            {...(onTitleClick ? titleButtonProps(onTitleClick, t(language, "Show in list"), t(language, "Show in the Surah / Juz list")) : {})}
+            {...(onTitleClick ? titleButtonProps(onTitleClick, t(language, "Show in list")) : {})}
           >
             <h3 ref={fullTitle.nameRef as React.RefObject<HTMLHeadingElement>} className={`truncate font-bold text-white tracking-tight ${language === "ta" && surah ? "font-sans text-sm sm:text-base md:text-base" : "font-sans text-base sm:text-base md:text-lg"}`}>
               {displayTitle}
             </h3>
+            {onTitleClick && <span className="sr-only">{t(language, "Show in the Surah / Juz list")}</span>}
             {surah?.arabicName && (
               <span
                 ref={fullTitle.arabicRef}
@@ -1069,9 +1079,10 @@ export function CompactBayanPlayer({
       <div
         ref={stripTitle.rowRef}
         className={`relative flex min-w-0 flex-1 items-baseline gap-1.5 ${onTitleClick ? "cursor-pointer rounded-md transition-opacity hover:opacity-80 active:opacity-60" : ""}`}
-        {...(onTitleClick ? titleButtonProps(onTitleClick, t(language, "Show in list"), t(language, "Show in the Surah / Juz list")) : {})}
+        {...(onTitleClick ? titleButtonProps(onTitleClick, t(language, "Show in list")) : {})}
       >
         <span ref={stripTitle.nameRef} className="truncate font-semibold">{displayTitle}</span>
+        {onTitleClick && <span className="sr-only">{t(language, "Show in the Surah / Juz list")}</span>}
         {surah?.arabicName && (
           <span
             ref={stripTitle.arabicRef}
@@ -1233,11 +1244,12 @@ function VolumeControl({
 
 
 /** The Surah / Juz name as a button (keeps its inline layout: a div with button semantics). */
-function titleButtonProps(onClick: () => void, tooltip: string, label: string) {
+// No aria-label: the name is the title the row shows (WCAG 2.5.3 label in
+// name), plus a visually hidden "Show in the Surah / Juz list" beside it.
+function titleButtonProps(onClick: () => void, tooltip: string) {
   return {
     role: "button",
     tabIndex: 0,
-    "aria-label": label,
     "data-tooltip": tooltip,
     onClick: () => {
       haptic();
@@ -1365,7 +1377,6 @@ function CoverFlight({
 /** UI languages written in Latin script. */
 const LATIN_UI = new Set<UiLang>(["en", "id", "tr", "fr", "ms"]);
 
-const COLLAPSED_KEY = "huda:player-collapsed";
 const SMALL_SCREEN = "(max-width: 767px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
