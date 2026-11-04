@@ -35,9 +35,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // If root requested, redirect to batch 1 review board
+  // If root requested, redirect to latest batch review board
   if (parsedUrl.pathname === "/" || parsedUrl.pathname === "") {
-    res.writeHead(302, { Location: "/scratch/matching/batch_1_review.html" });
+    res.writeHead(302, { Location: "/scratch/matching/batch_2_review.html" });
     res.end();
     return;
   }
