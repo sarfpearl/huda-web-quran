@@ -241,19 +241,21 @@ export function loadPageFont(page: number, temporary = false): Promise<boolean> 
         // numeral → white; 10 centre dot, 11 leaves, 12 disc fill → clear.
         // Entries 10–12 are used only by the ornament. (`transparent` is
         // rejected by override-colors in Chromium; rgba(0,0,0,0) works.)
-        const ornament = "10 rgba(0, 0, 0, 0), 11 rgba(0, 0, 0, 0), 12 rgba(0, 0, 0, 0), 13 #ffffff";
-        // Recited word: the letters' own colours turn gold — entry 0 and 14
-        // (both white in the Tajweed palette). In the plain palette every
-        // letter entry is white, so 0–9 and 14–15 all go gold (15 carries the
+        // 14 is only ever an oval ring drawn around a mark (e.g. the ḍamma on
+        // غ in 3:20) — the user doesn't want it, so it's cleared too.
+        const ornament = "10 rgba(0, 0, 0, 0), 11 rgba(0, 0, 0, 0), 12 rgba(0, 0, 0, 0), 13 #ffffff, 14 rgba(0, 0, 0, 0)";
+        // Recited word: the letters' own colour turns gold — entry 0 (white in
+        // the Tajweed palette). In the plain palette every letter entry is
+        // white, so 0–9 and 15 all go gold (15 carries the
         // hamzat al-wasl ٱ, grey in Tajweed mode as a silent-letter rule).
         const gold = (entries: number[]) => entries.map((i) => `${i} ${ACTIVE_GOLD}`).join(", ");
-        const plainGold = gold([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15]);
+        const plainGold = gold([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15]);
         const rule = (name: string, base: number, colors: string) =>
           `@font-palette-values ${name} { font-family: '${fontFamily(page)}'; base-palette: ${base}; override-colors: ${colors}; }\n`;
         paletteSheet.append(
           rule(paletteName(page, true), 1, ornament) +
             rule(paletteName(page, false), 4, ornament) +
-            rule(paletteName(page, true, true), 1, `${ornament}, ${gold([0, 14])}`) +
+            rule(paletteName(page, true, true), 1, `${ornament}, ${gold([0])}`) +
             rule(paletteName(page, false, true), 4, `${ornament}, ${plainGold}`)
         );
         return true;
