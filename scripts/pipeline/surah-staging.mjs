@@ -27,6 +27,7 @@ import {
   createSeamlessLoop,
   DEFAULT_OVERLAP_SEC,
 } from "./seam-processor.mjs";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,7 +39,7 @@ const ROOT = path.resolve(__dirname, "../..");
 export async function runLocalStaging(surahNum, options = {}) {
   const { visualData, ayahVideosMap, targetClips, dryRun = false } = options;
 
-  const stagingRoot = path.join(ROOT, "scratch/staging", String(surahNum).padStart(3, "0"));
+  const stagingRoot = path.join(mediaPath("scratch/staging"), String(surahNum).padStart(3, "0"));
   const processedDir = path.join(stagingRoot, "processed");
   const sheetsDir = path.join(stagingRoot, "contact_sheets");
   const framesDir = path.join(stagingRoot, "frames");
@@ -62,7 +63,7 @@ export async function runLocalStaging(surahNum, options = {}) {
       manifestCandidates.push(ch.videoPath);
 
       const localRel = ch.videoPath.startsWith("/") ? ch.videoPath.slice(1) : ch.videoPath;
-      const localAbs = path.join(ROOT, "public", localRel);
+      const localAbs = mediaPath(path.join("public", localRel));
       const existsLocal = fs.existsSync(localAbs);
 
       stagedAssets.push({
@@ -88,7 +89,7 @@ export async function runLocalStaging(surahNum, options = {}) {
       manifestCandidates.push(ayahData.videoPath);
 
       const localRel = ayahData.videoPath.startsWith("/") ? ayahData.videoPath.slice(1) : ayahData.videoPath;
-      const localAbs = path.join(ROOT, "public", localRel);
+      const localAbs = mediaPath(path.join("public", localRel));
       const existsLocal = fs.existsSync(localAbs);
 
       stagedAssets.push({

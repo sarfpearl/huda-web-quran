@@ -40,7 +40,9 @@ Scripts name a media folder by its old repo path; `mediaPath()` in
 `scripts/lib/paths.mjs` resolves it to the folder's place under `huda-media`
 (or the repo, if that folder hasn't moved). Switched over: `reencode-videos`,
 `upload-to-r2`, `surah-set-registry`, `compress-videos`, `fix-letterboxing`,
-`webp-images`, `automated-quran-video-pipeline`. The finished one-off batch
+`webp-images`, `cbr-audio`, `r2-unused-videos`, `automated-quran-video-pipeline`
+and the `surah-pipeline` modules (staging, state machine, orchestrator, QA
+composite, generation adapters). The finished one-off batch
 scripts (`scripts/pipeline/build-batch-*`, `stage-batch-*`,
 `build-surahs-from-library`, `archive-surah3-unused`) and the Veo generation
 scripts still name the old paths — run them with `mediaPath()` first if ever

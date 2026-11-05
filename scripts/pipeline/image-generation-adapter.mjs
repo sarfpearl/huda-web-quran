@@ -40,6 +40,7 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "../..");
 
 import { evaluateImageWithVisualAI, VISUAL_AI_CONFIG } from "./visual-evaluator.mjs";
+import { mediaPath } from "../lib/paths.mjs";
 
 export const IMAGE_CONFIG = {
   defaultWidth: 1920,
@@ -49,7 +50,7 @@ export const IMAGE_CONFIG = {
   costPerImageINR: 0.0, // Free preview generation in mock
   estimatedLiveCostINR: 2.75, // Estimated Imagen 3 still preview cost
   visualReviewCostINR: VISUAL_AI_CONFIG.estimatedCostPerCallINR, // ~₹0.01 INR
-  previewDir: path.join(ROOT, "scratch/previews"),
+  previewDir: mediaPath("scratch/previews"),
 };
 
 /**

@@ -40,6 +40,7 @@ import {
   validateImageApproval,
   computeHash,
 } from "./surah-state-machine.mjs";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -447,7 +448,7 @@ export function buildGenerationPlan(surahNum, options = {}) {
       }
 
       const localRel = ch.videoPath.startsWith("/") ? ch.videoPath.slice(1) : ch.videoPath;
-      const localAbs = path.join(ROOT, "public", localRel);
+      const localAbs = mediaPath(path.join("public", localRel));
       const existsLocal = fs.existsSync(localAbs);
 
       const filename = path.basename(ch.videoPath, ".mp4");
@@ -504,7 +505,7 @@ export function buildGenerationPlan(surahNum, options = {}) {
       }
 
       const localRel = ayahData.videoPath.startsWith("/") ? ayahData.videoPath.slice(1) : ayahData.videoPath;
-      const localAbs = path.join(ROOT, "public", localRel);
+      const localAbs = mediaPath(path.join("public", localRel));
       const existsLocal = fs.existsSync(localAbs);
 
       const clipPlan = {
@@ -624,7 +625,7 @@ export async function executeControlledPilot(options = {}) {
     surahNum = 3,
     clipId = "03a",
     mode = "mock",
-    destinationDir = path.join(ROOT, "scratch/pilot"),
+    destinationDir = mediaPath("scratch/pilot"),
     approval = null,
     simulateFailure = false,
     force = false,

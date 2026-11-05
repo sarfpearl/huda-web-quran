@@ -34,6 +34,7 @@ import {
 } from "./surah-state-machine.mjs";
 import { SCENE_PROMPT_LIBRARY } from "./generation-adapter.mjs";
 import { generateClipSummary } from "./surah-orchestrator.mjs";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +45,7 @@ const clipId = "03a";
 const opName = "projects/project-04027e7d-9805-47dc-bdf/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/6130a683-8024-44c0-b895-3e0e1b5203b3";
 
 const clipInfo = SCENE_PROMPT_LIBRARY[surahNum][clipId];
-const destinationDir = path.join(ROOT, "scratch/pilot");
+const destinationDir = mediaPath("scratch/pilot");
 const rawMastersDir = path.join(destinationDir, "raw_masters");
 const processedDir = path.join(destinationDir, "processed");
 const sheetsDir = path.join(destinationDir, "contact_sheets");

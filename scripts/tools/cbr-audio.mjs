@@ -38,10 +38,11 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { mediaPath } from "../lib/paths.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const require = createRequire(import.meta.url);
-const WORK = path.join(ROOT, ".media-work", "audio-cbr");
+const WORK = mediaPath(".media-work/audio-cbr");
 const SRC_DIR = path.join(WORK, "vbr");
 const OUT_DIR = path.join(WORK, "cbr");
 const REPORT_JSON = path.join(WORK, "report.json");
