@@ -34,7 +34,10 @@
  *   node scripts/tools/reencode-videos.mjs --new --upload [--execute]
  *     Keys = every clip path the video registries can resolve (as
  *     video-manifest.mjs) that has a local master and is either missing on R2
- *     or only a placeholder there (R2 copy < 1 MB while the master is > 2 MB).
+ *     or only a placeholder there: R2's copy is < 1 MB while the master is
+ *     > 2 MB AND it is not the same clip (duration/aspect differ, or SSIM vs
+ *     the master < 0.9). A small clip that is a re-encode of the master
+ *     (e.g. 1 Mbps, SSIM ≈ 1.0) is left alone. Needs ffmpeg for that check.
  *     The master is the source; it passes on VMAF alone. Then re-run
  *     video-manifest.mjs so the app starts asking for them.
  *
@@ -202,6 +205,29 @@ async function remoteSize(key) {
   return res.ok ? Number(res.headers.get("content-length")) : null;
 }
 
+/**
+ * --new: is R2's small copy a re-encode of the local master (keep it), or a
+ * placeholder (replace it)? Size alone can't tell — a calm 8 s scene at
+ * 1 Mbps is under 1 MB. Same duration and aspect, and frames that match the
+ * master (SSIM at 320×180, ~1.0 for a re-encode, ~0.2 for another scene),
+ * means it is the same clip. R2's copy lands in .media-work/originals, the
+ * backup of what an upload would replace.
+ */
+async function sameClip(key, local) {
+  const r2 = path.join(ORIGINALS, key);
+  if (!fs.existsSync(r2)) await download(key, r2);
+  const [a, b] = await Promise.all([probe(r2), probe(local)]);
+  if (Math.abs(a.duration - b.duration) > 0.5) return { same: false, why: `duration ${a.duration.toFixed(1)}s vs ${b.duration.toFixed(1)}s` };
+  if (Math.abs(a.width / a.height - b.width / b.height) > 0.02) return { same: false, why: `${a.width}×${a.height} vs ${b.width}×${b.height}` };
+  const { err } = await run("ffmpeg", [
+    "-v", "info", "-i", r2, "-i", local, "-lavfi",
+    "[0:v]scale=320:180,setpts=PTS-STARTPTS[a];[1:v]scale=320:180,setpts=PTS-STARTPTS[b];[a][b]ssim",
+    "-f", "null", "-",
+  ]);
+  const ssim = Number((err.match(/All:([\d.]+)/) || [])[1]);
+  return { same: ssim >= 0.9, why: `SSIM ${ssim.toFixed(3)}` };
+}
+
 async function download(key, dest) {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   const res = await nativeFetch(PUBLIC_R2 + key);
@@ -264,12 +290,26 @@ async function inventory() {
   }
 
   await pool(candidates, 16, async (cand) => {
+    let r2Size = null;
     try {
-      const r2Size = await remoteSize(cand.key);
+      r2Size = await remoteSize(cand.key);
       // --new: only what R2 lacks, or holds just a placeholder of.
-      if (NEW && r2Size !== null && !(r2Size < 1e6 && cand.localSize > 2e6)) return;
+      if (NEW && r2Size !== null) {
+        if (!(r2Size < 1e6 && cand.localSize > 2e6)) return;
+        const check = await sameClip(cand.key, cand.local);
+        if (check.same) {
+          console.log(`– ${cand.key}  R2 ${mb(r2Size)} is a re-encode of the master (${check.why}), skipped`);
+          return;
+        }
+        cand.placeholderWhy = check.why;
+      }
       rows.push({ ...cand, r2Size });
-    } catch {
+    } catch (e) {
+      // R2 has it but the placeholder check failed: don't let that become an overwrite.
+      if (r2Size !== null) {
+        console.warn(`⚠ ${cand.key}  placeholder check failed (${e.message.split("\n")[0]}), skipped`);
+        return;
+      }
       rows.push({ ...cand, r2Size: null });
     }
   });
@@ -436,13 +476,14 @@ async function upload(report) {
 
 // ── main ─────────────────────────────────────────────────────────────────────
 need("ffprobe");
+if (NEW) need("ffmpeg"); // the placeholder check compares frames
 const rows = await inventory();
 const missing = rows.filter((r) => r.r2Size === null);
 
 if (MODE === "inventory") {
   let total = 0;
   if (NEW) {
-    for (const r of rows) console.log(`${mb(r.localSize).padStart(9)}  ${r.r2Size === null ? "new        " : `R2 ${mb(r.r2Size)} placeholder`}  ${r.key}`);
+    for (const r of rows) console.log(`${mb(r.localSize).padStart(9)}  ${r.r2Size === null ? "new        " : `R2 ${mb(r.r2Size)} placeholder`}  ${r.key}${r.placeholderWhy ? `  (${r.placeholderWhy})` : ""}`);
     console.log(`\n${rows.length} new clips (local masters), ${mb(rows.reduce((a, r) => a + r.localSize, 0))}. Next: --new --encode.`);
     process.exit(0);
   }
