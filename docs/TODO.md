@@ -85,20 +85,26 @@ never generate anything per Juz.
 
 ### Added 2026-11-04
 
-- [~] **Background videos for the remaining 84 Surahs (18, 20–22, 24, 27, 29,
+- [x] **Background videos for the remaining 84 Surahs (18, 20–22, 24, 27, 29,
       33–114) from clips we already have** — **Batch 1 live 2026-11-04**
       (Surahs 18, 20–22, 24, 27, 29, 33, 34; owner approved; merged as
-      `41ff6c0`). Batches 2–5 (35–114) next. Running in Antigravity with
+      `41ff6c0`). Batches 2–5 (35–114) live too (`93cec2e`, `882bee7`).
+      **Checked 2026-11-05:** 112 Surahs (3–114), 711 set clips — every
+      Surah covered from ayah 1 to its last with no gap, every clip in
+      `videoManifest.ts` and on R2 (HEAD 200). Running in Antigravity with
       `docs/antigravity-surah-video-matching-prompt.md`: thematic sets per
       Surah, matched from `Unused Items/` (Inbox catalogue, `duplicates/`,
       Surah 3 Inbox), frames checked, Rule 5. No Veo / paid API. Sets with no
       match (score < 75) come back as content briefs for the owner to pick a
       video. Owner approves each batch on a review board before encode /
       upload / registry; one PR per batch (5 batches).
-- [ ] **Player UI redesign (compact dock):** smaller player buttons in compact
+- [x] **Player UI redesign (compact dock):** smaller player buttons in compact
       dock mode; a small window view under the player controls; an
       expand / collapse toggle that shows and hides the detailed player
-      controls.
+      controls. **Done 2026-11-05 (owner's call):** on phones the dock is as
+      wide as the full card with the full card's button sizes (PR #192); every
+      screen opens on the full player, playback shrinks it, a manual expand
+      stays full (PR #194). The extra small window view was not wanted.
 - [ ] **Vertex AI 403 `PERMISSION_DENIED: CONSUMER_SUSPENDED`** on
       `veo-3.1-fast-generate-001` — Google Cloud billing / account suspended;
       blocks any new Veo clip. Not needed for the matching task above. The
@@ -122,9 +128,11 @@ never generate anything per Juz.
        keeps only masters and unfinished pipeline work (Surah 3). Kept on
        purpose: scene JPEGs on R2 (`webp-images.mjs` source), Maher's full-Juz
        MP3s (`QURAN_TRACKS` fallback), `assets/video-masters/`.
-2. [ ] **Production check of the thematic sets (PR #145):** play Surah 19 —
+2. [x] **Production check of the thematic sets (PR #145):** play Surah 19 —
        the clip should change from set 1 to set 2 at ayah 11 → 12; play Juz 5 —
-       Surah 4's sets should show; Surah 50 keeps its single clip.
+       Surah 4's sets should show. **Checked live 2026-11-05:** 19:12 switches
+       `set_01_ayah_1-11` → `set_02_ayah_12-15`; Juz 5 opens on
+       `surah_4/set_04_ayah_22-28` (Surah 50 has sets now too).
 3. [ ] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
        exist only on the Mac (moved 2026-10-29 to
        `Unused Items/archive/Inbox/surah_3/`, 2.94 GB, not on R2 — the pipeline
@@ -135,7 +143,7 @@ never generate anything per Juz.
        `.media-work/encoded/…/003-aal-e-imran` (what is live) stays;
        the app shows its 20 chapter clips. Decide with the owner: thematic sets
        like the other Surahs (then register them, step 5), or keep the chapters.
-4. [ ] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** with the pipeline
+4. [x] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** (all live, see Added 2026-11-04) with the pipeline
        (`HANDOFF.md` §2a; Antigravity skill `surah-video-production`). Check
        `docs/VIDEO_BUDGET_LEDGER.json` first (₹600 floor). Owner approves each
        Surah's sets on an approval board (Approve / Redo per set) before upload.
