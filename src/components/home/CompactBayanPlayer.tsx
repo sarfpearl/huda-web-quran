@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { PLAYER_COLLAPSED_KEY } from "@/lib/playerCollapsedInit";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
@@ -190,30 +189,17 @@ export function CompactBayanPlayer({
 
   const [coverSrc, setCoverSrc] = useState<string | null>(bayan.coverImageUrl ?? null);
 
-  // Collapsed = compact pill (cover + transport). Small mobile screens open on the
-  // compact pill or remembered choice; it also shrinks once playback starts.
-  // Starts full on the server and at hydration (a lazy initial state read from
-  // localStorage mismatched the server HTML, and React kept the stale classes:
-  // the full card showed through the compact pill); the remembered / small-screen
-  // choice is applied before the first paint.
+  // Collapsed = compact pill (cover + transport). Every screen opens on the full
+  // player; it shrinks once playback starts (see below). Not remembered.
   const [collapsed, setCollapsed] = useState(false);
-  useLayoutEffect(() => {
-    try {
-      const saved = localStorage.getItem(PLAYER_COLLAPSED_KEY);
-      setCollapsed(saved !== null ? saved === "1" : window.innerWidth < 768);
-    } catch {}
-  }, []);
+  // The listener opened the full player themself: it stays full — playback,
+  // a new track or the translation no longer shrink it, until they minimize.
+  const userExpandedRef = useRef(false);
   // Told in the layout phase, so the frame's bottom strip opens in the same
   // first paint as the pill (a passive effect painted the frame shut first).
   useLayoutEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
-  // The head script's pre-hydration layout (globals.css) is not needed once
-  // that first paint is out: the player and the verse stage have their own
-  // sizes by then (src/lib/playerCollapsedInit.ts).
-  useEffect(() => {
-    document.documentElement.removeAttribute("data-player-collapsed");
-  }, []);
   // Both views stay mounted at their natural size and crossfade; only the empty
   // glass shell resizes (CSS transition to the measured size of the active view),
   // so nothing reflows mid-animation.
@@ -252,7 +238,10 @@ export function CompactBayanPlayer({
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
     // A manual switch overrides any pending auto-restore (see below).
-    if (remember) autoCollapsedRef.current = false;
+    if (remember) {
+      autoCollapsedRef.current = false;
+      userExpandedRef.current = !next;
+    }
     haptic();
     const src = next ? fullCoverRef.current : compactCoverRef.current;
     const dst = next ? compactCoverRef.current : fullCoverRef.current;
@@ -276,15 +265,11 @@ export function CompactBayanPlayer({
     }
     setAnimate(true);
     setCollapsed(next);
-    if (!remember) return;
-    try {
-      localStorage.setItem(PLAYER_COLLAPSED_KEY, next ? "1" : "0");
-    } catch {}
   };
 
   // Small screens: turning the translation on shrinks the full player to the
   // compact pill so the meaning has room; turning it off brings it back (only
-  // if it was the auto-collapse). Not remembered — the saved choice stays.
+  // if it was the auto-collapse). Not when the listener opened it themself.
   const autoCollapsedRef = useRef(false);
   const prevTranslationRef = useRef(showTranslation);
   useEffect(() => {
@@ -292,7 +277,7 @@ export function CompactBayanPlayer({
     prevTranslationRef.current = showTranslation;
     if (was === showTranslation) return;
     const small = window.matchMedia(SMALL_SCREEN).matches;
-    if (showTranslation && small && !collapsed) {
+    if (showTranslation && small && !collapsed && !userExpandedRef.current) {
       toggleCollapsed(true, false);
       autoCollapsedRef.current = true;
     } else if (!showTranslation && autoCollapsedRef.current) {
@@ -311,13 +296,13 @@ export function CompactBayanPlayer({
   }, [forceCompact]);
 
   // Every screen size: the full player shows until playback starts, then it
-  // shrinks to the compact pill so the ayah has the screen. Not remembered,
-  // and a manual expand stays until the next play.
+  // shrinks to the compact pill so the ayah has the screen — unless the
+  // listener expanded it themself.
   const wasPlayingRef = useRef(isPlaying);
   useEffect(() => {
     const was = wasPlayingRef.current;
     wasPlayingRef.current = isPlaying;
-    if (!isPlaying || was || collapsed) return;
+    if (!isPlaying || was || collapsed || userExpandedRef.current) return;
     toggleCollapsed(true, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying]);
@@ -327,7 +312,7 @@ export function CompactBayanPlayer({
     if (prevBayanIdRef.current !== bayan.id) {
       prevBayanIdRef.current = bayan.id;
       // On mobile screens (< 768px), auto-collapse when changing tracks so the Quran text has full room
-      if (typeof window !== "undefined" && window.innerWidth < 768 && !collapsed) {
+      if (typeof window !== "undefined" && window.innerWidth < 768 && !collapsed && !userExpandedRef.current) {
         toggleCollapsed(true, false);
       }
     }
