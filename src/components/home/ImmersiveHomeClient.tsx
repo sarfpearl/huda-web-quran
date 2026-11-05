@@ -266,6 +266,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       return player.current;
     }
     if (overrideBayan) return overrideBayan;
+    // A Juz link: the player holds that Juz (in the selected reciter's voice),
+    // so its Play starts the Juz — not Al-Fatihah, nor « Continue »'s Surah.
+    if (deepLink?.kind === "juz" && !hasPlayed) {
+      const juz = getQuranJuzByTrackId(`quran-juz-${deepLink.juz}`);
+      const urls = juz ? buildJuzAyahUrls(juz.id, selectedReciter.id) : null;
+      if (juz && urls && urls.length > 0) return quranJuzToTrackForReciter(juz, selectedReciter, urls[0]);
+    }
     // Default initial landing: Surah 1 (Al-Fatihah) for active reciter — or a
     // Surah link's Surah, so /surah/36 doesn't first render (and download)
     // Al-Fatihah's scene and clip.
@@ -275,7 +282,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       SURAH_TRACKS[0] ??
       null
     );
-  }, [overrideBayan, player, surahTracksForCurrentReciter, deepLink]);
+  }, [overrideBayan, player, surahTracksForCurrentReciter, deepLink, hasPlayed, selectedReciter]);
 
   // Resolve active Surah metadata if activeBayan is a Surah track
   const activeSurah = useMemo(() => {
@@ -2103,6 +2110,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             {activeBayan && (
               <CompactBayanPlayer
                 bayan={activeBayan}
+                onPlayIdle={juzLink ? () => handleSelectJuz(juzLink) : undefined}
                 surahTracks={surahTracksForCurrentReciter}
                 activeSurah={activeSurah}
                 currentVerse={isJuz ? null : currentVerse}

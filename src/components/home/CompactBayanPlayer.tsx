@@ -54,6 +54,8 @@ import { useOnline } from "@/lib/useOnline";
 
 interface CompactBayanPlayerProps {
   bayan: BayanWithRelations;
+  /** Play while `bayan` isn't loaded yet (a Juz link plays its Juz ayah by ayah). */
+  onPlayIdle?: () => void;
   surahTracks?: BayanWithRelations[];
   activeSurah?: QuranSurah | null;
   currentVerse?: AyahVerse | null;
@@ -138,6 +140,7 @@ function useArabicFits(deps: unknown[]) {
 
 export function CompactBayanPlayer({
   bayan,
+  onPlayIdle,
   surahTracks,
   activeSurah,
   currentVerse,
@@ -508,6 +511,8 @@ export function CompactBayanPlayer({
   const handlePlayToggle = () => {
     if (isCurrentTrack) {
       player.togglePlay();
+    } else if (onPlayIdle) {
+      onPlayIdle();
     } else {
       const activeSurahTracks = surahTracks || getSurahTracksForReciter(resolveActiveReciter(bayan));
       const contextList = isSurahTrackId(bayan.id)
