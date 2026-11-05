@@ -338,6 +338,53 @@ export const SURAH_VERSE_VIDEOS_REGISTRY: Record<number, Record<number, SurahVer
       status: "APPROVED",
     },
   },
+  // Surah 3: Aal-e-Imran — sets 2 and 4 (owner, 2026-11-06): the set clips had
+  // black bars (set 2) and a space scene (set 4), so these ayahs keep the
+  // chapter clips 02a / 02b. The other ayahs use the thematic sets.
+  3: {
+    ...Object.fromEntries(
+      [8, 9, 10, 11, 12, 13, 14].map((ayah) => [
+        ayah,
+        {
+          surahNumber: 3,
+          ayahNumber: ayah,
+          videoPath: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
+          theme: "The Wealth of This World and the Better Return",
+          category: "Wadi Valley / Alluvial Terraces & Pre-Dawn Stream",
+          visualSubject: "Shallow clear stream through dry-stone terraces in a Western Arabian wadi under calm pre-dawn light.",
+          source: "HuDa Master Production (Veo 3.1 1080p)",
+          originalUrl: "/videos/surah/003-aal-e-imran/02a-the-wealth-of-this-world-and-the-better-return.mp4",
+          license: "HuDa Master Production",
+          resolution: "1920x1080 (Full HD Web Derivative)",
+          recitationDuration: 20.0,
+          videoDuration: 8.0,
+          loopMethod: "Seamless Soft Loop (Static Master)",
+          status: "APPROVED" as const,
+        },
+      ])
+    ),
+    ...Object.fromEntries(
+      [22, 23, 24, 25, 26, 27, 28].map((ayah) => [
+        ayah,
+        {
+          surahNumber: 3,
+          ayahNumber: ayah,
+          videoPath: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
+          theme: "The Supreme Testimony of Tawhid and Justice",
+          category: "Limestone Plateau / Open Sky",
+          visualSubject: "Wide limestone plateau standing level under an open sky.",
+          source: "HuDa Master Production (Veo 3.1 1080p)",
+          originalUrl: "/videos/surah/003-aal-e-imran/02b-the-supreme-testimony-of-tawhid-and-justice.mp4",
+          license: "HuDa Master Production",
+          resolution: "1920x1080 (Full HD Web Derivative)",
+          recitationDuration: 20.0,
+          videoDuration: 8.0,
+          loopMethod: "Seamless Soft Loop (Static Master)",
+          status: "APPROVED" as const,
+        },
+      ])
+    ),
+  },
 };
 
 /**
