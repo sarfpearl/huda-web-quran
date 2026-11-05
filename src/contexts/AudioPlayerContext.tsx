@@ -712,6 +712,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             el.preload = "auto";
             el.src = localAudioUrl;
             el.load();
+            // iOS refuses the handoff play() when the prelude ends unless this
+            // element was started from the tap too: start it muted now (it is
+            // paused at once as a stray while the prelude plays).
+            if (autoplay) {
+              const muted = el.muted;
+              el.muted = true;
+              el.play().then(() => el.pause()).catch(() => {}).finally(() => { el.muted = muted; });
+            }
           }
           return;
         }
