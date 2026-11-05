@@ -343,30 +343,44 @@ async function runBatches() {
   const inFlight = new Set(pending.flatMap((b) => b.keys));
   const todo = jobs.filter((j) => !inFlight.has(keyOf(j)));
   const size = Math.max(1, Number(args["batch-size"] ?? 100));
-  let committed = 0;
-  let sent = todo.length;
-  for (let i = 0; i < todo.length; i += size) {
-    const chunk = todo.slice(i, i + size);
-    const cost = chunk.reduce((n, j) => n + estimateUsd(j), 0);
-    if (committed + cost > maxUsd) {
-      console.warn(`  ⛔ $${maxUsd} budget: ${todo.length - i} clips not sent (≈ $${committed.toFixed(2)} sent) — raise --max-usd to go on.`);
-      stopped = true;
-      sent = i;
-      break;
+  // Jobs still running from an earlier run count against this run's budget.
+  const jobByKey = new Map(jobs.map((j) => [keyOf(j), j]));
+  let committed = pending.flatMap((b) => b.keys).reduce((n, k) => n + (jobByKey.has(k) ? estimateUsd(jobByKey.get(k)) : 0), 0);
+  let next = 0;
+  // Sends chunks until the budget is reached or Google's concurrent-batch
+  // quota (429) says to wait for running jobs; later calls go on from there.
+  async function sendMore() {
+    while (next < todo.length && !stopped) {
+      const chunk = todo.slice(next, next + size);
+      const cost = chunk.reduce((n, j) => n + estimateUsd(j), 0);
+      if (committed + cost > maxUsd) {
+        console.warn(`  ⛔ $${maxUsd} budget: ${todo.length - next} clips not sent (≈ $${committed.toFixed(2)} sent) — raise --max-usd to go on.`);
+        stopped = true;
+        break;
+      }
+      let job;
+      try {
+        job = await ai.batches.create({
+          model: MODEL,
+          src: chunk.map((j) => ({ ...request(j.voice, j.text), metadata: { key: keyOf(j) } })),
+          config: { displayName: `meaning-${keyOf(chunk[0]).replace(/[/:]/g, "-")}-${chunk.length}` },
+        });
+      } catch (e) {
+        // Google frees the quota a little after jobs finish, so a 429 can come
+        // with nothing running too: wait and try again either way.
+        if (e?.status === 429) return;
+        throw e;
+      }
+      committed += cost;
+      next += chunk.length;
+      pending.push({ name: job.name, keys: chunk.map(keyOf), at: new Date().toISOString() });
+      await writeBatches(pending);
+      console.log(`  📤 ${job.name}: ${chunk.length} clips (≈ $${cost.toFixed(3)})`);
     }
-    const job = await ai.batches.create({
-      model: MODEL,
-      src: chunk.map((j) => ({ ...request(j.voice, j.text), metadata: { key: keyOf(j) } })),
-      config: { displayName: `meaning-${keyOf(chunk[0]).replace(/[/:]/g, "-")}-${chunk.length}` },
-    });
-    committed += cost;
-    pending.push({ name: job.name, keys: chunk.map(keyOf), at: new Date().toISOString() });
-    await writeBatches(pending);
-    console.log(`  📤 ${job.name}: ${chunk.length} clips (≈ $${cost.toFixed(3)})`);
   }
-  // What's left for a later run (the progress line counts these).
-  jobs.splice(0, jobs.length, ...todo.slice(sent));
+  await sendMore();
   if (args["no-wait"]) {
+    jobs.splice(0, jobs.length, ...todo.slice(next));
     console.log(`\n${pending.length} job(s) pending — run the same command later to collect them.\n`);
     return;
   }
@@ -375,16 +389,23 @@ async function runBatches() {
   const byKey = new Map();
   for (const voice of Object.keys(VOICES))
     for (const lang of Object.keys(LANGS))
-      for (const s of new Set(pending.flatMap((b) => b.keys.map((k) => Number(k.split("/")[2].split(":")[0])))))
+      for (const s of new Set([...pending.flatMap((b) => b.keys), ...todo.map(keyOf)].map((k) => Number(k.split("/")[2].split(":")[0]))))
         for (const v of verses(s))
           byKey.set(`${voice}/${lang}/${s}:${v.ayahNumber}`, {
             voice, lang, s, a: v.ayahNumber, text: (v[LANGS[lang].field] ?? "").trim(), file: clipPath(voice, lang, s, v.ayahNumber),
           });
 
   const DONE = new Set(["JOB_STATE_SUCCEEDED", "JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED", "JOB_STATE_PARTIALLY_SUCCEEDED"]);
-  while (pending.length) {
+  while (pending.length || (next < todo.length && !stopped)) {
     for (const b of [...pending]) {
-      const job = await ai.batches.get({ name: b.name });
+      let job;
+      try {
+        job = await ai.batches.get({ name: b.name });
+      } catch (e) {
+        // A network blip or 5xx: the job is still in batches.json, look again next round.
+        console.warn(`  ⚠️  ${b.name}: ${e?.message ?? e} — will look again`);
+        continue;
+      }
       if (!DONE.has(job.state)) continue;
       const responses = job.dest?.inlinedResponses ?? [];
       for (const [i, r] of responses.entries()) {
@@ -404,10 +425,13 @@ async function runBatches() {
       await writeBatches(pending);
       console.log(`  📥 ${b.name}: ${responses.length} of ${b.keys.length} back · $${spentUsd().toFixed(3)} so far`);
     }
-    if (pending.length) {
+    await sendMore();
+    if (pending.length || (next < todo.length && !stopped)) {
       process.stdout.write(`  … ${pending.length} job(s) running (${((Date.now() - started) / 60000).toFixed(0)} min)\r`);
       await sleep(30000);
     }
   }
+  // What's left for a later run (the progress line counts these).
+  jobs.splice(0, jobs.length, ...todo.slice(next));
   console.log(failed ? `\n⚠️  ${failed} failed — run again to retry them.\n` : "\n✅ Done.\n");
 }

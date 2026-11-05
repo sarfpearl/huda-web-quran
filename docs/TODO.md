@@ -54,8 +54,18 @@ never generate anything per Juz.
 - Long ayahs (e.g. 73:20, 1,158 Tamil chars) can come back from a batch
   without audio: re-run that Surah without `--batch`. Re-make any clip
   with a long internal gap, or whose length is far from its text's.
-- **Then:** the rest of the Quran (≈ ₹3,300), as the owner's balance allows.
-  **Owner, 2026-11-04: do this last**, after the videos and other work.
+- **2026-11-05/06: Surahs 21–66** (owner added ₹1,500). 10,868 of 11,032
+  clips made ($12.6 ≈ ₹1,070) and on R2; stops measured for all 9 reciters.
+  The manifest lists a Surah only when all its clips exist, so 18 Surahs miss
+  one or more voice/language until the last **164 clips** are made. Those
+  come back from every batch without audio (`OTHER`): make them without
+  `--batch` (same command, no `--batch`). That mode allows ~100 requests a
+  day, so it takes two days. Then re-run `--manifest` and the stops script.
+- **Quota gotchas:** Tier 1 allows 100k *active* batch tokens at once (the
+  script now waits on 429 and sends more as jobs finish). The AI Studio
+  spend cap counts the price **before** the Batch discount (₹1,057 shown for
+  ≈ ₹470 real spend), so set the cap about twice the real budget.
+- **Then:** Surahs 2–20 (≈ ₹1,750) as the owner's balance allows.
 - **Previews:** if a Vercel preview shows a black background or the meaning
   stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
   you blame the code.
