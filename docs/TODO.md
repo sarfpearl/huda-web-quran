@@ -110,10 +110,13 @@ never generate anything per Juz.
       blocks any new Veo clip. Not needed for the matching task above. The
       Surah 18 set 15 (ayahs 89–98) Gate 2 clip already exists
       (`Unused Items/archive/Inbox/surah_18_set_15_ayah_89-98-saddayn-mountains.mp4`).
-- [ ] **Surah 114 Video 3 (ayahs 5–6)** — the animated `03a`–`03c` clips
+- [x] **Surah 114 Video 3 (ayahs 5–6)** — the animated `03a`–`03c` clips
       (earth from space, ocean sunset, green valley) were rejected; replace
       with real footage via the matching task (seamless loop, no crossfade
       ghosting), then owner review.
+      **Closed 2026-11-05 (owner):** Batch 5 gave Surah 114 one real-footage
+      set for ayahs 1–6 (`surah_114/set_01_ayah_1-6`, mountains above a sea of
+      clouds); the animated clips are not used anywhere.
 
 ### Next tasks — in this order (noted 2026-10-25)
 
