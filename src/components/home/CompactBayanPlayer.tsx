@@ -702,7 +702,7 @@ export function CompactBayanPlayer({
           onPointerMove={onRingPointerMove}
           onPointerUp={endScrub}
           onPointerCancel={endScrub}
-          className="group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+          className="group relative h-[52px] w-[52px] max-[369px]:h-12 max-[369px]:w-12 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
         >
           <div
             aria-hidden="true"
@@ -718,7 +718,7 @@ export function CompactBayanPlayer({
             // clip-path as well as overflow-hidden: a filtered / transformed child
             // gets its own layer, which border-radius clipping alone misses
             // (its square corners showed around the circle).
-            className={`${flight ? "invisible" : ""} absolute inset-[5px] sm:inset-[6px] overflow-hidden rounded-full [clip-path:circle(50%)] bg-gradient-to-br from-emerald-950 to-slate-900 cursor-pointer active:scale-95 transition-transform`}
+            className={`${flight ? "invisible" : ""} absolute inset-[4px] overflow-hidden rounded-full [clip-path:circle(50%)] bg-gradient-to-br from-emerald-950 to-slate-900 cursor-pointer active:scale-95 transition-transform`}
             title={bayan.title}
           >
             {coverSrc ? (
@@ -738,9 +738,9 @@ export function CompactBayanPlayer({
               {isLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
               ) : isPlaying ? (
-                <PauseIcon className="text-2xl" />
+                <PauseIcon className="text-xl" />
               ) : (
-                <PlayIcon className="text-2xl ml-0.5" />
+                <PlayIcon className="text-xl ml-0.5" />
               )}
             </span>
           </div>
@@ -792,7 +792,7 @@ export function CompactBayanPlayer({
           aria-label={t(language, "Expand player")}
           title={t(language, "Expand player")}
         >
-          <ChevronDownIcon className="text-xl rotate-180" />
+          <ChevronDownIcon className="text-lg rotate-180" />
         </button>
       </div>
   );
@@ -1389,7 +1389,7 @@ const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-i
 const NARROW_BTN = "max-[369px]:h-10 max-[369px]:w-10";
 
 const compactBtn =
-  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-10 w-10 max-[369px]:h-9 max-[369px]:w-9 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 // 32px wide (44px hit area via tap-44): with the cover shown, the pill

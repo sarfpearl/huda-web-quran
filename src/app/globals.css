@@ -211,18 +211,18 @@
     padding-inline: 10px;
   }
   /* …and the verse stage's fallback room for the pill instead of the full
-     player (measured: 168px on phones, 160px below 370px, 184px from sm). */
+     player (measured: 155px on phones, 151px below 370px, 171px from sm). */
   html[data-player-collapsed] [data-verse-stage] {
-    padding-bottom: 168px;
+    padding-bottom: 155px;
   }
   @media (max-width: 369px) {
     html[data-player-collapsed] [data-verse-stage] {
-      padding-bottom: 160px;
+      padding-bottom: 151px;
     }
   }
   @media (min-width: 640px) {
     html[data-player-collapsed] [data-verse-stage] {
-      padding-bottom: 184px;
+      padding-bottom: 171px;
     }
   }
   html.iphone-app [data-player-dock] {
