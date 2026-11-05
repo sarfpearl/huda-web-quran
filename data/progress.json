@@ -1,10 +1,10 @@
 {
   "pipelineVersion": "1.0.0",
-  "lastUpdated": "2026-11-04T13:20:25.632Z",
+  "lastUpdated": "2026-11-05T05:41:56.929Z",
   "currentSurah": 17,
-  "status": "RUNNING",
+  "status": "COMPLETED",
   "totalSurahs": 114,
-  "completedSurahCount": 48,
+  "completedSurahCount": 112,
   "surahs": {
     "3": {
       "surahNumber": 3,
@@ -666,6 +666,518 @@
       "lastUpdated": "2026-11-04T13:20:25.632Z",
       "deployedAt": "2026-11-04T13:20:25.632Z",
       "deployNote": "Batch 2 matching completed from Unused Items, re-encoded with x264 veryslow/tune film (VMAF >= 88, 78.6% size savings) and deployed to Cloudflare R2."
+    },
+    "51": {
+      "surahNumber": 51,
+      "totalVerses": 60,
+      "completedCount": 60,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "52": {
+      "surahNumber": 52,
+      "totalVerses": 49,
+      "completedCount": 49,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "53": {
+      "surahNumber": 53,
+      "totalVerses": 62,
+      "completedCount": 62,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "54": {
+      "surahNumber": 54,
+      "totalVerses": 55,
+      "completedCount": 55,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "55": {
+      "surahNumber": 55,
+      "totalVerses": 78,
+      "completedCount": 78,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "56": {
+      "surahNumber": 56,
+      "totalVerses": 96,
+      "completedCount": 96,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "57": {
+      "surahNumber": 57,
+      "totalVerses": 29,
+      "completedCount": 29,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "58": {
+      "surahNumber": 58,
+      "totalVerses": 22,
+      "completedCount": 22,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "59": {
+      "surahNumber": 59,
+      "totalVerses": 24,
+      "completedCount": 24,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "60": {
+      "surahNumber": 60,
+      "totalVerses": 13,
+      "completedCount": 13,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "61": {
+      "surahNumber": 61,
+      "totalVerses": 14,
+      "completedCount": 14,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "62": {
+      "surahNumber": 62,
+      "totalVerses": 11,
+      "completedCount": 11,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "63": {
+      "surahNumber": 63,
+      "totalVerses": 11,
+      "completedCount": 11,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "64": {
+      "surahNumber": 64,
+      "totalVerses": 18,
+      "completedCount": 18,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "65": {
+      "surahNumber": 65,
+      "totalVerses": 12,
+      "completedCount": 12,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "66": {
+      "surahNumber": 66,
+      "totalVerses": 12,
+      "completedCount": 12,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "67": {
+      "surahNumber": 67,
+      "totalVerses": 30,
+      "completedCount": 30,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "68": {
+      "surahNumber": 68,
+      "totalVerses": 52,
+      "completedCount": 52,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "69": {
+      "surahNumber": 69,
+      "totalVerses": 52,
+      "completedCount": 52,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "70": {
+      "surahNumber": 70,
+      "totalVerses": 44,
+      "completedCount": 44,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "71": {
+      "surahNumber": 71,
+      "totalVerses": 28,
+      "completedCount": 28,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "72": {
+      "surahNumber": 72,
+      "totalVerses": 28,
+      "completedCount": 28,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "73": {
+      "surahNumber": 73,
+      "totalVerses": 20,
+      "completedCount": 20,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "74": {
+      "surahNumber": 74,
+      "totalVerses": 56,
+      "completedCount": 56,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "75": {
+      "surahNumber": 75,
+      "totalVerses": 40,
+      "completedCount": 40,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "76": {
+      "surahNumber": 76,
+      "totalVerses": 31,
+      "completedCount": 31,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "77": {
+      "surahNumber": 77,
+      "totalVerses": 50,
+      "completedCount": 50,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "78": {
+      "surahNumber": 78,
+      "totalVerses": 40,
+      "completedCount": 40,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "79": {
+      "surahNumber": 79,
+      "totalVerses": 46,
+      "completedCount": 46,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "80": {
+      "surahNumber": 80,
+      "totalVerses": 42,
+      "completedCount": 42,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "81": {
+      "surahNumber": 81,
+      "totalVerses": 29,
+      "completedCount": 29,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "82": {
+      "surahNumber": 82,
+      "totalVerses": 19,
+      "completedCount": 19,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "83": {
+      "surahNumber": 83,
+      "totalVerses": 36,
+      "completedCount": 36,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "84": {
+      "surahNumber": 84,
+      "totalVerses": 25,
+      "completedCount": 25,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "85": {
+      "surahNumber": 85,
+      "totalVerses": 22,
+      "completedCount": 22,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "86": {
+      "surahNumber": 86,
+      "totalVerses": 17,
+      "completedCount": 17,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "87": {
+      "surahNumber": 87,
+      "totalVerses": 19,
+      "completedCount": 19,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "88": {
+      "surahNumber": 88,
+      "totalVerses": 26,
+      "completedCount": 26,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "89": {
+      "surahNumber": 89,
+      "totalVerses": 30,
+      "completedCount": 30,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "90": {
+      "surahNumber": 90,
+      "totalVerses": 20,
+      "completedCount": 20,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "91": {
+      "surahNumber": 91,
+      "totalVerses": 15,
+      "completedCount": 15,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "92": {
+      "surahNumber": 92,
+      "totalVerses": 21,
+      "completedCount": 21,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "93": {
+      "surahNumber": 93,
+      "totalVerses": 11,
+      "completedCount": 11,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "94": {
+      "surahNumber": 94,
+      "totalVerses": 8,
+      "completedCount": 8,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "95": {
+      "surahNumber": 95,
+      "totalVerses": 8,
+      "completedCount": 8,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "96": {
+      "surahNumber": 96,
+      "totalVerses": 19,
+      "completedCount": 19,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "97": {
+      "surahNumber": 97,
+      "totalVerses": 5,
+      "completedCount": 5,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "98": {
+      "surahNumber": 98,
+      "totalVerses": 8,
+      "completedCount": 8,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "99": {
+      "surahNumber": 99,
+      "totalVerses": 8,
+      "completedCount": 8,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "100": {
+      "surahNumber": 100,
+      "totalVerses": 11,
+      "completedCount": 11,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "101": {
+      "surahNumber": 101,
+      "totalVerses": 11,
+      "completedCount": 11,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "102": {
+      "surahNumber": 102,
+      "totalVerses": 8,
+      "completedCount": 8,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "103": {
+      "surahNumber": 103,
+      "totalVerses": 3,
+      "completedCount": 3,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "104": {
+      "surahNumber": 104,
+      "totalVerses": 9,
+      "completedCount": 9,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "105": {
+      "surahNumber": 105,
+      "totalVerses": 5,
+      "completedCount": 5,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "106": {
+      "surahNumber": 106,
+      "totalVerses": 4,
+      "completedCount": 4,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "107": {
+      "surahNumber": 107,
+      "totalVerses": 7,
+      "completedCount": 7,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "108": {
+      "surahNumber": 108,
+      "totalVerses": 3,
+      "completedCount": 3,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "109": {
+      "surahNumber": 109,
+      "totalVerses": 6,
+      "completedCount": 6,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "110": {
+      "surahNumber": 110,
+      "totalVerses": 3,
+      "completedCount": 3,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "111": {
+      "surahNumber": 111,
+      "totalVerses": 5,
+      "completedCount": 5,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "112": {
+      "surahNumber": 112,
+      "totalVerses": 4,
+      "completedCount": 4,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "113": {
+      "surahNumber": 113,
+      "totalVerses": 5,
+      "completedCount": 5,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
+    },
+    "114": {
+      "surahNumber": 114,
+      "totalVerses": 6,
+      "completedCount": 6,
+      "status": "DEPLOYED",
+      "lastUpdated": "2026-11-05T05:41:56.929Z",
+      "deployedAt": "2026-11-05T05:41:56.929Z"
     }
   }
 }

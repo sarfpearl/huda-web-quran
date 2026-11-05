@@ -402,23 +402,34 @@ async function upload(report) {
     endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
   });
-  await pool(ready, 6, async ([key, r]) => {
+  await pool(ready, 2, async ([key, r]) => {
     const file = path.join(ENCODED, key);
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: BUCKET,
-        Key: key.replace(/^\//, ""),
-        Body: fs.createReadStream(file),
-        ContentLength: fs.statSync(file).size,
-        ContentType: "video/mp4",
-        CacheControl: "public, max-age=31536000, immutable", // same as upload-to-r2.mjs
-      }),
-    );
-    // Confirm the public copy is the new file before marking it done.
-    const live = await remoteSize(key);
-    r.uploaded = live === r.outSize;
-    console.log(`  ${r.uploaded ? "✓" : "✗ size mismatch on R2"} ${key}`);
-    saveReport(report);
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        attempts++;
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: BUCKET,
+            Key: key.replace(/^\//, ""),
+            Body: fs.createReadStream(file),
+            ContentLength: fs.statSync(file).size,
+            ContentType: "video/mp4",
+            CacheControl: "public, max-age=31536000, immutable", // same as upload-to-r2.mjs
+          }),
+        );
+        // Confirm the public copy is the new file before marking it done.
+        const live = await remoteSize(key);
+        r.uploaded = live === r.outSize;
+        console.log(`  ${r.uploaded ? "✓" : "✗ size mismatch on R2"} ${key}`);
+        saveReport(report);
+        break;
+      } catch (err) {
+        console.warn(`  ⚠ Upload attempt ${attempts} failed for ${key}: ${err.message}`);
+        if (attempts >= 3) throw err;
+        await new Promise((res) => setTimeout(res, 2000));
+      }
+    }
   });
 }
 
