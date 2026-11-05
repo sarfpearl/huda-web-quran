@@ -15,6 +15,9 @@ This skill guides the autonomous, resumable execution of the Surah video product
 > **Activation & Discovery:** Antigravity discovers workspace skills located under `.agents/skills/<name>/SKILL.md`.
 > This skill is loaded on-demand via progressive disclosure when triggered by relevant Surah video production tasks.
 
+> [!IMPORTANT]
+> **Media is outside the repo (since 2026-11-05).** Masters, staging and candidates live in `../huda-media/` (or `$HUDA_MEDIA`), not in the repo — see `docs/FOLDER_MAP.md`. `scratch/` → `huda-media/3-working/scratch/`, `public/videos/` → `huda-media/2-masters/videos/`, `assets/video-masters/` → `huda-media/2-masters/video-masters/`, `Unused Items/` → `huda-media/4-unused/unused-items/`. In scripts, resolve every media path with `mediaPath()` from `scripts/lib/paths.mjs` — never hard-code it. `surah-pipeline.mjs` still names repo `scratch/`; switch it to `mediaPath()` before the next run. In a worktree, set `HUDA_MEDIA=/Users/pearl-9744/Claude/Projects/huda-media`.
+
 ---
 
 ## 1. 16-State Workflow Architecture
@@ -28,7 +31,7 @@ flowchart TD
     S3 -->|Human Image Approval| S4["4. VIDEO_GENERATION_PENDING_APPROVAL"]
     S4 -->|Human Video Auth| S5["5. VIDEO_GENERATING (Veo 3.1 Fast / Polling Resume)"]
     S5 --> S6["6. VIDEO_HUMAN_REVIEW_PENDING (0.40s Seam Crossfade + Contact Sheet)"]
-    S6 -->|Human Video Approval| S7["7. LOCAL_STAGING_PENDING (scratch/staging/)"]
+    S6 -->|Human Video Approval| S7["7. LOCAL_STAGING_PENDING (huda-media/3-working/scratch/staging/)"]
     S7 --> S8["8. LOCAL_QA_PENDING (FFprobe + SSIM + Unit Tests)"]
     S8 --> S9["9. GIT_COMMIT_PENDING (Feature Branch)"]
     S9 --> S10["10. PUSH_PENDING (Remote Push)"]
@@ -95,7 +98,7 @@ node scripts/pipeline/surah-pipeline.mjs <surahNum> --approve-video --clip=<clip
 
 ### D. Local Staging & QA
 ```bash
-# Stage video non-destructively into scratch/staging/<NNN>/:
+# Stage video non-destructively into huda-media/3-working/scratch/staging/<NNN>/ (mediaPath("scratch/staging/<NNN>")):
 node scripts/pipeline/surah-pipeline.mjs <surahNum> --stage-local --clips=<clipId>
 
 # Run composite QA and full unit test suite:

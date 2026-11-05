@@ -2,12 +2,19 @@
 
 Repo: `huda-web-quran` (Next.js + TypeScript). Reply in Tamil, write code / commits in English.
 Read first: `.agents/rules/video-pipeline-gates.md`, `.agents/skills/surah-video-production/SKILL.md`,
-`HANDOFF.md` §2b, `docs/SURAH_VISUAL_TOPIC_CATALOGUE.md`.
+`HANDOFF.md` §2b, `docs/SURAH_VISUAL_TOPIC_CATALOGUE.md`, `docs/FOLDER_MAP.md`.
+
+**Media paths:** since 2026-11-05 the media sits outside the repo in `../huda-media/`
+(or `$HUDA_MEDIA`). Below, `Unused Items/…` = `huda-media/4-unused/unused-items/…`,
+`scratch/…` = `huda-media/3-working/scratch/…`, `public/videos/…` =
+`huda-media/2-masters/videos/…`, `.media-work/…` = `huda-media/1-live-copy/media-work/…`.
+In scripts always resolve them with `mediaPath("<old path>")` from `scripts/lib/paths.mjs`,
+never a hard-coded path. (`public/data/…` is code and stays in the repo.)
 
 ## Goal
 
 Give every Surah that has no background video yet a set of thematic clips,
-**reusing the videos we already have in `Unused Items/`**. No new generation:
+**reusing the videos we already have in `Unused Items/`** (`huda-media/4-unused/unused-items/`). No new generation:
 no Veo / Vertex AI / any paid API (Vertex is suspended anyway — `CONSUMER_SUSPENDED`).
 Do as much of the matching yourself as possible. Only where nothing fits,
 write a short content brief for that one set so the owner can pick a video.
@@ -28,7 +35,7 @@ Work in batches, one PR per batch:
 4. **71–90**
 5. **91–114** (short Surahs: often a single set for the whole Surah)
 
-## Where the candidate videos are (Mac only, not in git)
+## Where the candidate videos are (Mac only, not in git — under `huda-media/4-unused/unused-items/`)
 
 | Place | What | How to know what a clip shows |
 |---|---|---|
@@ -72,7 +79,7 @@ extract 3 frames (0 s, middle, last second) with `ffmpeg` and look at them.
 
 ## Output for each batch (planning only — no uploads yet)
 
-- `scratch/matching/<NNN>/plan.json` per Surah:
+- `scratch/matching/<NNN>/plan.json` per Surah (→ `huda-media/3-working/scratch/matching/`; keep the old-style paths in the JSON, resolve with `mediaPath()`):
   ```json
   {
     "surah": 18,
@@ -110,7 +117,8 @@ extract 3 frames (0 s, middle, last second) with `ffmpeg` and look at them.
 
 ## After the owner approves a Surah (not before)
 
-Copy (never move) each approved clip to `public/videos/surah_<N>/set_<NN>_ayah_<from>-<to>.mp4`,
+Copy (never move) each approved clip to `public/videos/surah_<N>/set_<NN>_ayah_<from>-<to>.mp4`
+(= `huda-media/2-masters/videos/surah_<N>/…`, `mediaPath("public/videos/…")`),
 for owner-supplied clips too, then (`HANDOFF.md` §2b):
 
 ```bash
