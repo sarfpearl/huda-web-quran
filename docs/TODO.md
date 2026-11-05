@@ -153,7 +153,7 @@ never generate anything per Juz.
        (`HANDOFF.md` §2a; Antigravity skill `surah-video-production`). Check
        `docs/VIDEO_BUDGET_LEDGER.json` first (₹600 floor). Owner approves each
        Surah's sets on an approval board (Approve / Redo per set) before upload.
-5. [ ] **After each approved Surah** (`HANDOFF.md` §2b) — without the registry
+5. [x] **After each approved Surah** (all 112 set Surahs registered and live, 2026-11-05) (`HANDOFF.md` §2b) — without the registry
        the app never shows the sets:
        ```bash
        node scripts/tools/reencode-videos.mjs --new --encode
@@ -164,13 +164,13 @@ never generate anything per Juz.
        then commit `surahSetVideos.ts` + `videoManifest.ts`, set the Surah to
        `DEPLOYED` in `data/progress.json`, PR. Budget: ~3.1 MB a set, ~1.2 GB
        for the rest of the Quran; R2 is at 4.14 GB of 10 GB.
-6. [ ] **Mac clean-up, after a few days of normal playback:** delete
+6. [x] **Mac clean-up, after a few days of normal playback (done 2026-11-05, ~3 GB freed):** delete
        `~/huda-r2-backup/2026-10-25/` (395 MB, the 17 deleted objects) and
        `../huda-media/1-live-copy/media-work/originals/` (R2 copies before
        re-encoding; was `.media-work/originals/`).
 7. [ ] Optional: move the R2 audio (2.04 GB) to Backblaze B2 — only if R2
        space gets tight again.
-8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
+8. [x] Before January 2027: Node 22 on the Mac (done 2026-11-05: nvm default 22.23.4; tsc, build, R2 scripts pass, AWS SDK warning gone) — the AWS SDK used by the R2
        scripts warns that later versions need Node ≥ 22 (now v20.20.0).
 9. [x] **Real-phone checks (2026-11-04) — all 4 fine (owner, on the phone, 2026-11-04).** — everything else from
        the Launch QA phone list was checked by the owner (2026-10-24, calls
