@@ -17,12 +17,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { mediaPath } from "../lib/paths.mjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, "../..");
-const VIDEOS_DIR = path.join(ROOT_DIR, "public/videos");
+const VIDEOS_DIR = mediaPath("public/videos");
 
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 

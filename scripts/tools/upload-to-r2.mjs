@@ -39,6 +39,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -116,7 +117,7 @@ const MAPPINGS = [
   },
   {
     category: "videos",
-    localDir: path.join(ROOT_DIR, "public", "videos"),
+    localDir: mediaPath("public/videos"),
     remotePrefix: "videos",
   },
   {

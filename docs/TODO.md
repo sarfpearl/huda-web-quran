@@ -166,7 +166,8 @@ never generate anything per Juz.
        for the rest of the Quran; R2 is at 4.14 GB of 10 GB.
 6. [ ] **Mac clean-up, after a few days of normal playback:** delete
        `~/huda-r2-backup/2026-10-25/` (395 MB, the 17 deleted objects) and
-       `.media-work/originals/` (R2 copies before re-encoding).
+       `../huda-media/1-live-copy/media-work/originals/` (R2 copies before
+       re-encoding; was `.media-work/originals/`).
 7. [ ] Optional: move the R2 audio (2.04 GB) to Backblaze B2 — only if R2
        space gets tight again.
 8. [ ] Before January 2027: Node 22 on the Mac — the AWS SDK used by the R2
@@ -194,8 +195,10 @@ never generate anything per Juz.
        ```
        Keep `public.admins`. Check live after: view counts `{}`, comments
        `total: 0`.
-11. [ ] **Folder re-organisation (owner: "folder reorganisation" → start here;
-       noted 2026-10-31, NOT started — do it in a new chat).** Problem: on the
+11. [~] **Folder re-organisation — done 2026-11-05 except `assets/audio`**
+       (media moved to `../huda-media/`, see `docs/FOLDER_MAP.md`; move
+       `assets/audio` once the meaning-audio batch is finished). Notes from
+       2026-10-31 below. Problem: on the
        owner's Mac the code and the media sit mixed in one folder, so it is not
        clear what is where. Where things really live:
        - **GitHub** = code only (`src`, `scripts`, `docs`, `supabase`, `tests`,

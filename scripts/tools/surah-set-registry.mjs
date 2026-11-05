@@ -28,6 +28,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mediaPath } from "../lib/paths.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OUT = path.join(ROOT, "src/lib/data/surahSetVideos.ts");
@@ -77,7 +78,7 @@ async function r2Keys() {
 }
 
 function localKeys() {
-  const base = path.join(ROOT, "public/videos");
+  const base = mediaPath("public/videos");
   if (!fs.existsSync(base)) return [];
   return fs.readdirSync(base)
     .filter((d) => /^surah_\d+$/.test(d))
