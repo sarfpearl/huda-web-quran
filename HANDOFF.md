@@ -79,7 +79,7 @@
 - **Git Tracking Cleanup:**
   - Removed 177 previously tracked media files from Git tracking index (`git rm --cached`).
   - **100% of all local files preserved on disk**; zero files were deleted.
-  - **Where the local copies actually live (checked 2026-10-05):**
+  - **Where the local copies actually live (checked 2026-10-05; since 2026-11-05 they are in `../huda-media/` — `assets/images` → `2-masters/images`, `public/videos` → `2-masters/videos`, see `docs/FOLDER_MAP.md`):**
     - Surah / Juz / bayan artwork → repo-root `assets/images/{surah,quran,bayan}/` (114 + 30 + 15 files, git-ignored via `/assets`), **not** `public/assets/images/`. Folder dates show they have been there since mid-September.
     - `public/assets/images/` now holds only `reciters/` (51 reciter portraits, also on R2).
     - Videos → `public/videos/{surah,juz}/`; prelude audio → `public/audio/prelude/`.
@@ -125,21 +125,21 @@
 
 **Where things stand:** bucket `huda-quran-media` **4.16 GB / 10 GB free tier** (1,189 objects; was 9.20 GB). Videos under `videos/`: 497 objects = the 497 in `videoManifest.ts` — **0 unused**.
 
-- **Re-encoded every clip the app uses** (`scripts/tools/reencode-videos.mjs`, run on the owner's Mac): x264 `veryslow` + `tune film`, bitrate ladder 1080p 1.5M→12M / ≤720p 1M→4M, each clip stops at the lowest rung with **VMAF ≥ 88** vs its source; uploaded only when ≥ 20% smaller. Two runs: Surahs 19–32 + older clips (235 clips, 2,112 → 739 MB) and Surahs 4–17 sets (233 clips, 4,312 → 1,027 MB). 468 uploaded, 0 failed, same R2 keys (no app change, no version bump: same scenes). R2 originals are kept on the Mac in `.media-work/originals/` — delete only after a few days of normal playback.
+- **Re-encoded every clip the app uses** (`scripts/tools/reencode-videos.mjs`, run on the owner's Mac): x264 `veryslow` + `tune film`, bitrate ladder 1080p 1.5M→12M / ≤720p 1M→4M, each clip stops at the lowest rung with **VMAF ≥ 88** vs its source; uploaded only when ≥ 20% smaller. Two runs: Surahs 19–32 + older clips (235 clips, 2,112 → 739 MB) and Surahs 4–17 sets (233 clips, 4,312 → 1,027 MB). 468 uploaded, 0 failed, same R2 keys (no app change, no version bump: same scenes). R2 originals are kept on the Mac in `.media-work/originals/` (now `huda-media/1-live-copy/media-work/originals/`) — delete only after a few days of normal playback.
 - **Video scrim:** `bg-black/20` over the clip in `SurahCinematicBackground.tsx` / `JuzCinematicBackground.tsx` (video only) keeps the backdrop subtle behind the verse and hides compression.
 - **Thematic sets now shown (they never were):** the `videos/surah_<N>/set_<NN>_ayah_<from>-<to>.mp4` clips were on R2, but no resolver named them, so each Surah showed one clip. Now:
   - `scripts/tools/surah-set-registry.mjs` (R2 / `--source=local` / `--source=manifest`) → generated `src/lib/data/surahSetVideos.ts` (`getSetVideo(surah, ayah)`); a Surah is written only when its sets cover ayah 1…last with no gap/overlap.
   - `resolveSurahClip` (`SurahCinematicBackground.tsx`): ayah video → **set** → chapter → Surah clip; set 1 before any ayah is known.
   - **Juz reuses the Surah sets** (`ImmersiveBackground.tsx` + `juzScenePair` in `ImmersiveHomeClient.tsx`): the current [surah, ayah] of the per-ayah sequence (the Juz's first ayah before it starts, and for Maher's full-Juz recordings); the Juz image where that Surah has no clip.
   - Test: `node --test tests/video/surah-set-videos.test.mjs`.
-- **Adding a new Surah's sets** (after the owner approves them): upload the masters to `public/videos/surah_<N>/`, then
+- **Adding a new Surah's sets** (after the owner approves them): put the masters in `huda-media/2-masters/videos/surah_<N>/` (old `public/videos/`; scripts find it via `mediaPath()`), then
   ```bash
   node scripts/tools/reencode-videos.mjs --new --encode && node scripts/tools/reencode-videos.mjs --new --upload --execute
   node scripts/tools/surah-set-registry.mjs   # → surahSetVideos.ts (refuses a Surah with a gap)
   node scripts/tools/video-manifest.mjs       # → videoManifest.ts
   ```
   commit both generated files. Average set ≈ 3.1 MB after encoding, so the remaining ~370 sets need ~1.2 GB — the whole Quran fits in the free tier.
-- **Audit:** `node scripts/tools/r2-unused-videos.mjs` (read-only) lists `videos/` objects the app never requests → `.media-work/r2-unused.md`. On 2026-10-25 it found 17 (9 old `videos/surah/002-al-baqarah/` copies, mostly `-4k`; the 8-clip `videos/juz/juz-01-0N-*` playlist, whose dead `JUZ_1_PLAYLIST` constant PR #147 removed). All 17 were backed up to `~/huda-r2-backup/2026-10-25/` on the owner's Mac and deleted with one `DeleteObjectsCommand` (`Errors: []`, 381,595,067 bytes freed); `juz-01.mp4`, `002-al-baqarah/01-the-book-of-guidance.mp4` and `001-al-fatihah.mp4` still return 200. Audit now: 0 unused. Then 158 unused images (~18 MB: `assets/images/bayan/*` except `quran.jpg`, `assets/images/{surah,quran}/thumbs/*.jpg` — the app loads the `.webp` thumbnails) were backed up to `.media-work/r2-deleted-2026-10-25/` and deleted (`Errors: 0`) → **1,031 objects, 4.14 GB**. Kept on purpose: the 2560px scene JPEGs (source for `webp-images.mjs`) and Maher's full-Juz MP3s (`QURAN_TRACKS` fallback).
+- **Audit:** `node scripts/tools/r2-unused-videos.mjs` (read-only) lists `videos/` objects the app never requests → `.media-work/r2-unused.md` (script still writes the repo path; move it to `mediaPath()` before the next run). On 2026-10-25 it found 17 (9 old `videos/surah/002-al-baqarah/` copies, mostly `-4k`; the 8-clip `videos/juz/juz-01-0N-*` playlist, whose dead `JUZ_1_PLAYLIST` constant PR #147 removed). All 17 were backed up to `~/huda-r2-backup/2026-10-25/` on the owner's Mac and deleted with one `DeleteObjectsCommand` (`Errors: []`, 381,595,067 bytes freed); `juz-01.mp4`, `002-al-baqarah/01-the-book-of-guidance.mp4` and `001-al-fatihah.mp4` still return 200. Audit now: 0 unused. Then 158 unused images (~18 MB: `assets/images/bayan/*` except `quran.jpg`, `assets/images/{surah,quran}/thumbs/*.jpg` — the app loads the `.webp` thumbnails) were backed up to `.media-work/r2-deleted-2026-10-25/` and deleted (`Errors: 0`) → **1,031 objects, 4.14 GB**. Kept on purpose: the 2560px scene JPEGs (source for `webp-images.mjs`) and Maher's full-Juz MP3s (`QURAN_TRACKS` fallback).
 - **Approval board:** the owner approves sets on a claude.ai artifact (Approve / Redo per set) — Surahs 19–32 all approved 2026-10-25.
 
 ---
@@ -246,7 +246,7 @@
 
 ## 5. Git / Uncommitted Work
 
-*2026-10-24: the pipeline work listed here on 2026-10-18 (`.agents/`, `AGENTS.md`, `data/progress.json`, `docs/VIDEO_BUDGET_LEDGER.json`, `scripts/pipeline/`, `scripts/tools/video-budget-guard.mjs`, `tests/pipeline/`) is now committed. Run `git status` on the owner's Mac before starting: anything left there (local `review_surah_*.html`, `scratch/` media) is not in git — keep large media out.*
+*2026-10-24: the pipeline work listed here on 2026-10-18 (`.agents/`, `AGENTS.md`, `data/progress.json`, `docs/VIDEO_BUDGET_LEDGER.json`, `scripts/pipeline/`, `scripts/tools/video-budget-guard.mjs`, `tests/pipeline/`) is now committed. Run `git status` on the owner's Mac before starting: anything left there (local `review_surah_*.html`) is not in git — keep large media out. Since 2026-11-05 `scratch/`, `Unused Items/`, `user_candidates/` and the other media folders live in `../huda-media/` (`docs/FOLDER_MAP.md`); scripts reach them via `mediaPath()` in `scripts/lib/paths.mjs`.*
 
 > [!WARNING]
 > **Two AI sessions edited the same checkout at the same time on 2026-10-06.** One session's onboarding work was briefly swept into another's commit, and a commit landed on the wrong branch (fixed by cherry-picking onto a fresh branch). Run **one session per checkout**, or give each session its own `git worktree`. Before committing, run `git status` and stage files by name, not `git add -A`. **This applies directly to the Claude ↔ Antigravity handoff now** — if both touch this checkout at once, expect the same collision.
@@ -380,13 +380,13 @@
    - `src/lib/media.ts` was implemented and all 15 app components and data files route media paths through `mediaUrl()`.
    - `next.config.mjs` was updated with `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` in `images.remotePatterns`.
    - Media tracking deletions (177 files) and ignore rules were committed (`967a134`) and merged to `main` via PR #8.
-   - All local files are physically preserved on disk (artwork under repo-root `assets/images/`, see §2).
+   - All local files are physically preserved on disk (artwork now in `huda-media/2-masters/images/`, see §2 and `docs/FOLDER_MAP.md`).
 
 2. **Production media issue (resolved):**
    - `NEXT_PUBLIC_MEDIA_BASE_URL` had an extra `"4f"` (`.r2.dev4f`). Corrected in Vercel and redeployed; verified live on 2026-10-05 (images, Juz thumbnails, video, prelude audio all load from R2).
 
 3. **What must NOT be changed unnecessarily:**
-   - Do NOT delete or move any local media files under `assets/images/`, `public/assets/images/`, `public/videos/`, or `public/audio/prelude/`.
+   - Do NOT delete or move any local media files under `huda-media/` (`2-masters/images/`, `2-masters/videos/`, …), `public/assets/images/`, or `public/audio/prelude/`.
    - Do NOT commit the untracked generation scripts or logo files unless asked.
    - Do NOT modify audio preludes or Indo-Pak Juz boundary logic.
    - Do NOT change `mediaUrl()` logic — it is verified correct.
