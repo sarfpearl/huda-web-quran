@@ -1888,6 +1888,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // The meaning clip finished (or failed): the recitation goes on — from
   // where it waited, or with the sequence's next ayah.
   const onEndedRef = useRef<() => void>(() => {});
+  const onErrorRef = useRef<() => void>(() => {});
   const startMeaningRef = useRef<(url: string, key: string, then: MeaningThen, resumeAt?: number, showAt?: number) => void>(() => {});
   // Meaning only, on a whole-Surah track at `t`: the next ayah's meaning —
   // or, past the last cue, on to the track's end (its last ayah's meaning).
@@ -2060,6 +2061,17 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsPlaying(false);
       return;
     }
+    // A whole-Surah track "ending" far short of its length is a failed
+    // stream (iOS on a cold start, right after a stream error), not its end:
+    // retry it — else the last ayah's meaning is read and the next Surah
+    // starts with this one never recited.
+    const el = audioRef.current;
+    const expected = current?.durationSeconds ?? 0;
+    if (el && current && isSurahTrackId(current.id) && expected > 10 && el.currentTime < expected * 0.9) {
+      console.warn(`[HuDa Audio] Early end at ${el.currentTime.toFixed(1)}s of ${expected}s — treating as a stream error`);
+      onErrorRef.current();
+      return;
+    }
     // A whole-Surah track: its last ayah's meaning before going on.
     if (meaningDoneRef.current !== TRACK_MEANING_DONE) {
       const m = ayahMeaningRef.current?.(null);
@@ -2165,6 +2177,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     setIsLoading(false);
     setError(t(storedUiLang(), "Couldn't load this audio. Check your connection and press play to try again."));
   }, [current, advanceAyahSequence]);
+  onErrorRef.current = onError;
 
   const value = useMemo<AudioPlayerApi>(
     () => ({
