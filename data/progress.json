@@ -1,11 +1,27 @@
 {
   "pipelineVersion": "1.0.0",
-  "lastUpdated": "2026-11-05T05:41:56.929Z",
+  "lastUpdated": "2026-11-05T08:18:24.000Z",
   "currentSurah": 17,
   "status": "COMPLETED",
   "totalSurahs": 114,
-  "completedSurahCount": 112,
+  "completedSurahCount": 114,
   "surahs": {
+    "1": {
+      "surahNumber": 1,
+      "totalVerses": 7,
+      "completedCount": 7,
+      "status": "CURATED_CLIPS",
+      "note": "Covered by curated chapter clips, not sets (docs/TODO.md Surah 1 and Surah 2 notes)",
+      "lastUpdated": "2026-11-05T08:18:24.000Z"
+    },
+    "2": {
+      "surahNumber": 2,
+      "totalVerses": 286,
+      "completedCount": 286,
+      "status": "CURATED_CLIPS",
+      "note": "Covered by curated chapter clips, not sets (docs/TODO.md Surah 1 and Surah 2 notes)",
+      "lastUpdated": "2026-11-05T08:18:24.000Z"
+    },
     "3": {
       "surahNumber": 3,
       "totalVerses": 200,
