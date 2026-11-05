@@ -24,6 +24,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,8 +33,8 @@ const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = "/opt/homebrew/bin/ffmpeg";
 const FFPROBE = "/opt/homebrew/bin/ffprobe";
 
-const HIGHRES_DIR = path.join(ROOT, "scratch/storyboard_panels/highres");
-const OUT_DIR = path.join(ROOT, "scratch/surah_114_video3");
+const HIGHRES_DIR = mediaPath("scratch/storyboard_panels/highres");
+const OUT_DIR = mediaPath("scratch/surah_114_video3");
 const WORK_DIR = path.join(OUT_DIR, "temp");
 
 fs.mkdirSync(OUT_DIR, { recursive: true });

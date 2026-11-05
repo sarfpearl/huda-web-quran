@@ -59,6 +59,7 @@ import {
 
 import { evaluateImageWithVisualAI } from "./visual-evaluator.mjs";
 import { runLocalStaging } from "./surah-staging.mjs";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -272,7 +273,7 @@ export function buildClipVersePlan(options = {}) {
     createdAt: new Date().toISOString(),
   };
 
-  const plansDir = customPlansDir || path.join(ROOT, "scratch/plans", String(surahNum).padStart(3, "0"));
+  const plansDir = customPlansDir || path.join(mediaPath("scratch/plans"), String(surahNum).padStart(3, "0"));
   fs.mkdirSync(plansDir, { recursive: true });
   const planPath = path.join(plansDir, `${clipId}_verse_plan.md`);
 
@@ -432,7 +433,7 @@ export function generateClipSummary({
 
   const padSurah = String(surahNum).padStart(3, "0");
   const summaryDir =
-    customSummaryDir || path.join(ROOT, `scratch/summaries/surah_${padSurah}`);
+    customSummaryDir || mediaPath(`scratch/summaries/surah_${padSurah}`);
   fs.mkdirSync(summaryDir, { recursive: true });
 
   const resolvedClipId = clip.id || clipId;
@@ -696,7 +697,7 @@ export function verifySurahCompletion(surahNum, state, { customSummaryDir = null
 
   // Criteria 7: Durable summary exists for every clip
   const padSurah = String(surahNum).padStart(3, "0");
-  const summaryDir = customSummaryDir || path.join(ROOT, `scratch/summaries/surah_${padSurah}`);
+  const summaryDir = customSummaryDir || mediaPath(`scratch/summaries/surah_${padSurah}`);
   let summariesCount = 0;
   if (fs.existsSync(summaryDir)) {
     summariesCount = fs.readdirSync(summaryDir).filter((f) => f.endsWith("_summary.md")).length;

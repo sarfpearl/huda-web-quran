@@ -44,6 +44,7 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "../..");
 
 import crypto from "node:crypto";
+import { mediaPath } from "../lib/paths.mjs";
 
 export const PRODUCTION_STATES = {
   // 16 Explicit End-to-End Workflow States
@@ -546,7 +547,7 @@ export function invalidateApprovalIfConfigChanged({ clip, prompt, videoConfig = 
  * Resolves the state file path for a Surah.
  */
 export function getStateFilePath(surahNum, customDir = null) {
-  const dir = customDir || path.join(ROOT, "scratch/surah_states");
+  const dir = customDir || mediaPath("scratch/surah_states");
   const pad = String(surahNum).padStart(3, "0");
   return path.join(dir, `surah_${pad}_state.json`);
 }

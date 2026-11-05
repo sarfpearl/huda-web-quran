@@ -25,6 +25,7 @@ import { execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { probeVideo, detectLetterbox, generateContactSheet } from "./seam-processor.mjs";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -103,7 +104,7 @@ const report = {
 
 async function checkAsset(asset) {
   const localRel = asset.path.startsWith("/") ? asset.path.slice(1) : asset.path;
-  const localAbs = path.join(ROOT, "public", localRel);
+  const localAbs = mediaPath(path.join("public", localRel));
   const existsLocal = fs.existsSync(localAbs);
 
   let probe = null;
@@ -138,10 +139,9 @@ async function checkAsset(asset) {
   let contactSheet = null;
   if (existsLocal && (targetClips || args.includes("--seam"))) {
     try {
-      const framesDir = path.join(ROOT, "scratch/qa_pilot_surah3/frames", String(asset.id));
+      const framesDir = path.join(mediaPath("scratch/qa_pilot_surah3/frames"), String(asset.id));
       const sheetPath = path.join(
-        ROOT,
-        "scratch/qa_pilot_surah3",
+        mediaPath("scratch/qa_pilot_surah3"),
         `${path.basename(asset.path, ".mp4")}_contact_sheet.jpg`
       );
       const res = generateContactSheet(localAbs, sheetPath, framesDir);
@@ -593,7 +593,7 @@ async function main() {
   const markdown = generateMarkdownReport();
 
   const outPath =
-    outputArg || path.join(ROOT, `scratch/qa_reports/surah_${String(surahNum).padStart(3, "0")}_qa_report.md`);
+    outputArg || mediaPath(`scratch/qa_reports/surah_${String(surahNum).padStart(3, "0")}_qa_report.md`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, markdown, "utf8");
 

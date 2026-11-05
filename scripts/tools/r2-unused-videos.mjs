@@ -20,9 +20,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { mediaPath } from "../lib/paths.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const WORK = path.join(ROOT, ".media-work");
+const WORK = mediaPath(".media-work");
 
 // ── env (same loader as upload-to-r2.mjs) ────────────────────────────────────
 for (const f of [".env.local", ".env"]) {
