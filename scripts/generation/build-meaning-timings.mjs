@@ -30,12 +30,13 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import readline from "node:readline";
+import { mediaPath } from "../lib/paths.mjs";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
 const MANIFEST_PATH = path.join(ROOT, "src/lib/data/meaningAudioManifest.json");
 const VERSES_DIR = path.join(ROOT, "public/data/quran-verses");
 const OUT_DIR = path.join(ROOT, "public/data/meaning-timings");
-const LOCAL_AUDIO_DIR = path.join(ROOT, "assets/audio/meaning/v1");
+const LOCAL_AUDIO_DIR = mediaPath("assets/audio/meaning/v1");
 const ALIGNER_PY = path.join(ROOT, "docs/meaning-word-sync-spike/aligner.py");
 const R2_BASE = "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev";
 

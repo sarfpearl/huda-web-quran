@@ -21,6 +21,7 @@ export const MEDIA_ROOT = process.env.HUDA_MEDIA
 /** [old place in the repo, place under MEDIA_ROOT] */
 export const MEDIA_FOLDERS = [
   [".media-work", "1-live-copy/media-work"],
+  ["assets/audio", "1-live-copy/audio"],
   ["public/videos", "2-masters/videos"],
   ["assets/video-masters", "2-masters/video-masters"],
   ["assets/images", "2-masters/images"],

@@ -127,12 +127,12 @@ const MAPPINGS = [
   },
   {
     category: "audio-juz",
-    localDir: path.join(ROOT_DIR, "assets", "audio", "juz"),
+    localDir: mediaPath("assets/audio/juz"),
     remotePrefix: "audio/juz",
   },
   {
     category: "audio-meaning",
-    localDir: path.join(ROOT_DIR, "assets", "audio", "meaning"),
+    localDir: mediaPath("assets/audio/meaning"),
     remotePrefix: "audio/meaning",
   },
 ];

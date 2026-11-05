@@ -17,12 +17,12 @@ nothing was deleted (`../huda-media/MOVE-LOG.txt` has the file counts).
 
 ```
 huda-web-quran/          ← the repo (code)
-  assets/audio/          Juz MP3s + meaning audio (still here: see below)
   public/audio/prelude/  Isti'adhah / Surah-name clips (small, uploaded to R2)
   .qa-cache/             word-sync QA cache (models, 16 kHz audio)
 huda-media/
   1-live-copy/media-work/   ← .media-work: encoded = local copy of R2's clips,
                               originals = re-encode backup, reports
+  1-live-copy/audio/        ← assets/audio: Juz MP3s + meaning audio (moved 2026-11-06)
   2-masters/videos/         ← public/videos: set / ayah masters (upload source)
   2-masters/video-masters/  ← assets/video-masters: Veo 4K masters
   2-masters/images/         ← assets/images: scene JPEG sources
@@ -40,14 +40,11 @@ Scripts name a media folder by its old repo path; `mediaPath()` in
 `scripts/lib/paths.mjs` resolves it to the folder's place under `huda-media`
 (or the repo, if that folder hasn't moved). Switched over: `reencode-videos`,
 `upload-to-r2`, `surah-set-registry`, `compress-videos`, `fix-letterboxing`,
-`webp-images`, `cbr-audio`, `r2-unused-videos`, `automated-quran-video-pipeline`
+`webp-images`, `cbr-audio`, `r2-unused-videos`, `build-meaning-audio`,
+`build-meaning-timings`, `automated-quran-video-pipeline`
 and the `surah-pipeline` modules (staging, state machine, orchestrator, QA
 composite, generation adapters). The finished one-off batch
 scripts (`scripts/pipeline/build-batch-*`, `stage-batch-*`,
 `build-surahs-from-library`, `archive-surah3-unused`) and the Veo generation
 scripts still name the old paths — run them with `mediaPath()` first if ever
 needed again.
-
-**Still to move:** `assets/audio` → `1-live-copy/audio` once the meaning-audio
-batch is done (`build-meaning-audio.mjs`, `build-meaning-timings.mjs` and
-`upload-to-r2.mjs` read it).
