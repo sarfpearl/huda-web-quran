@@ -646,13 +646,12 @@ export function CompactBayanPlayer({
 
   const ringPct = dragPct ?? Math.min(Math.max(juzProgressPct, 0), 100);
   const thumbAngle = (ringPct / 100) * 2 * Math.PI;
-  // Compact pill: controls centred and spaced exactly like the full card's
-  // transport row. Phones / small tablets: as wide as the full card (less the
-  // frame's 10px inset + border); only the width grows, not the gaps.
+  // Compact pill hugs its controls at every size, spaced exactly like the full
+  // card's transport row — no stretched pill with empty space around them.
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] max-md:w-[calc(100vw-2rem-22px)] sm:max-md:w-[calc(80dvw-22px)] max-md:max-w-[578px] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2`}
       >
         <VolumeControl buttonClassName={compactBtn} active={collapsed} />
 
