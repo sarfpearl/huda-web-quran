@@ -136,7 +136,7 @@ never generate anything per Juz.
        Surah 4's sets should show. **Checked live 2026-11-05:** 19:12 switches
        `set_01_ayah_1-11` → `set_02_ayah_12-15`; Juz 5 opens on
        `surah_4/set_04_ayah_22-28` (Surah 50 has sets now too).
-3. [ ] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
+3. [x] **Surah 3 (Aal-Imran): the remaining 83 ayahs.** 117 per-ayah files
        exist only on the Mac (moved 2026-10-29 to
        `Unused Items/archive/Inbox/surah_3/`, 2.94 GB, not on R2 — the pipeline
        still counts them as done). 2026-10-31: the rest of Surah 3's non-live
@@ -146,6 +146,9 @@ never generate anything per Juz.
        `.media-work/encoded/…/003-aal-e-imran` (what is live) stays;
        the app shows its 20 chapter clips. Decide with the owner: thematic sets
        like the other Surahs (then register them, step 5), or keep the chapters.
+       **Done 2026-11-05 (owner, PR #199):** thematic sets for the whole
+       Surah — ayahs 1–25 dropped their chapter clips for sets 1–4 too.
+       Follow-up if wanted: set 2 has letterbox bars, set 4 is a space scene.
 4. [x] **New Surahs: 18, 20–22, 24, 27, 29, 33–114** (all live, see Added 2026-11-04) with the pipeline
        (`HANDOFF.md` §2a; Antigravity skill `surah-video-production`). Check
        `docs/VIDEO_BUDGET_LEDGER.json` first (₹600 floor). Owner approves each
