@@ -42,7 +42,7 @@ never generate anything per Juz.
   node scripts/generation/build-meaning-stops.mjs        # all 9 Word Sync reciters
   ```
   A stopped run resumes with the same command (pending jobs in
-  `assets/audio/meaning/v1/batches.json`).
+  `../huda-media/1-live-copy/audio/meaning/v1/batches.json`).
 - **Real costs:** Surah 108 pilot (12 clips) cost $0.006. Measured speeds:
   Tamil 12.2, English 12.7 chars/s. All 4 combos (2 voices × 2 languages):
   Juz 30 ≈ ₹111, Juz 29 + 30 ≈ ₹235, whole Quran ≈ ₹3,600. Google's price
@@ -205,9 +205,8 @@ never generate anything per Juz.
        ```
        Keep `public.admins`. Check live after: view counts `{}`, comments
        `total: 0`.
-11. [~] **Folder re-organisation — done 2026-11-05 except `assets/audio`**
-       (media moved to `../huda-media/`, see `docs/FOLDER_MAP.md`; move
-       `assets/audio` once the meaning-audio batch is finished). Notes from
+11. [x] **Folder re-organisation — done 2026-11-05; `assets/audio` moved**
+       **2026-11-06** (media in `../huda-media/`, see `docs/FOLDER_MAP.md`). Notes from
        2026-10-31 below. Problem: on the
        owner's Mac the code and the media sit mixed in one folder, so it is not
        clear what is where. Where things really live:

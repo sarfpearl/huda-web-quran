@@ -9,6 +9,7 @@
 //    assets/audio/meaning/v1/<voice>/<lang>/<SSS><AAA>.mp3   (git-ignored)
 //    assets/audio/meaning/v1/ledger.jsonl                    (tokens per clip)
 //    assets/audio/meaning/v1/batches.json                    (--batch jobs pending)
+//    (assets/audio now lives in ../huda-media/1-live-copy/audio — mediaPath())
 //
 //  Usage (GEMINI_API_KEY in the environment — never commit it — or, in a
 //  Claude Code cloud session, a Network secret for
@@ -54,10 +55,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { appendFile, mkdir, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { mediaPath } from "../lib/paths.mjs";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
 const VERSION = 1;
-const OUT_ROOT = path.join(ROOT, "assets/audio/meaning", `v${VERSION}`);
+const OUT_ROOT = path.join(mediaPath("assets/audio/meaning"), `v${VERSION}`);
 const LEDGER = path.join(OUT_ROOT, "ledger.jsonl");
 const BATCHES = path.join(OUT_ROOT, "batches.json");
 const MANIFEST = path.join(ROOT, "src/lib/data/meaningAudioManifest.json");
