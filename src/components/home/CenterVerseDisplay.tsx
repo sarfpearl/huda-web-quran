@@ -281,8 +281,7 @@ export function CenterVerseDisplay({
   // player 343 / 371px) so the server-rendered ayah doesn't jump on hydration.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
-  // Layout phase: measured before the first paint after hydration, while the
-  // player still has its pre-hydration (compact) size — see playerCollapsedInit.
+  // Layout phase: measured before the first paint after hydration.
   useLayoutEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
     const header = document.querySelector<HTMLElement>("[data-scene-header]");
