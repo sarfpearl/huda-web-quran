@@ -65,12 +65,13 @@ import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { mediaPath } from "../lib/paths.mjs";
 
 // The real fetch: registryVideos() loads scripts/qa/lib/load.cjs, which
 // replaces the global one (see video-manifest.mjs's nativeFetch).
 const nativeFetch = globalThis.fetch;
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const WORK = path.join(ROOT, ".media-work");
+const WORK = mediaPath(".media-work");
 const ORIGINALS = path.join(WORK, "originals");
 const ENCODED = path.join(WORK, "encoded");
 const REPORT_JSON = path.join(WORK, "report.json");
@@ -256,7 +257,7 @@ async function inventory() {
   const rows = [];
   const candidates = [];
   for (const key of keys) {
-    const local = path.join(ROOT, "public", key);
+    const local = mediaPath(path.join("public", key));
     const localSize = fs.existsSync(local) ? fs.statSync(local).size : null;
     if (NEW && localSize === null) continue;
     candidates.push({ key, local: localSize !== null ? local : null, localSize });

@@ -45,10 +45,11 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { mediaPath } from "../lib/paths.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const require = createRequire(import.meta.url);
-const WORK = path.join(ROOT, ".media-work", "images");
+const WORK = mediaPath(".media-work/images");
 const JPG_DIR = path.join(WORK, "jpg");
 const WEBP_DIR = path.join(WORK, "webp");
 const REPORT_JSON = path.join(WORK, "report.json");

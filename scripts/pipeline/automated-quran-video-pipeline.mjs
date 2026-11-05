@@ -39,6 +39,7 @@ import path from "node:path";
 import readline from "node:readline";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { mediaPath } from "../lib/paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,10 +55,10 @@ export const PIPELINE_CONFIG = {
   resolution: "1080p",
   defaultBatchSize: 5,
   progressPath: path.join(ROOT_DIR, "data/progress.json"),
-  videosDir: path.join(ROOT_DIR, "public/videos"),
+  videosDir: mediaPath("public/videos"),
   // Finished per-ayah clips the app doesn't use, moved out of public/ (e.g.
   // Surah 3's 117, 2026-10-28). They still count as done: never paid for again.
-  archiveVideosDir: path.join(ROOT_DIR, "Unused Items/archive/Inbox"),
+  archiveVideosDir: mediaPath("Unused Items/archive/Inbox"),
   quranVersesDir: path.join(ROOT_DIR, "public/data/quran-verses"),
 };
 
@@ -335,7 +336,7 @@ export function preserveExistingVideos() {
     7: "assets/video-masters/001-al-fatihah/scenes/04-guidance.mp4",
   };
   for (const [ay, srcRel] of Object.entries(fatihahScenes)) {
-    const srcAbs = path.join(ROOT_DIR, srcRel);
+    const srcAbs = mediaPath(srcRel);
     const dstAbs = path.join(fatihahDir, `ayah_${ay}.mp4`);
     if (fs.existsSync(srcAbs) && !fs.existsSync(dstAbs)) {
       try {
@@ -388,7 +389,7 @@ export function preserveExistingVideos() {
   ];
 
   for (const clip of surah3Clips) {
-    const srcAbs = path.join(ROOT_DIR, clip.src);
+    const srcAbs = mediaPath(clip.src);
     if (fs.existsSync(srcAbs)) {
       const dstAbs = path.join(imranDir, `ayah_${clip.start}.mp4`);
       if (!fs.existsSync(dstAbs)) {
