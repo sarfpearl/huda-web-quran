@@ -711,7 +711,6 @@ and text are used unmodified, and the credits are shown** (About → credits).
       Live: the migration is applied (2026-10-14 anon probe of
       `quran_has_link` → permission denied, i.e. present) and the owner checked
       a link comment lands under Hidden.
-- [ ] **Later, if spam still gets through:** Cloudflare Turnstile on comments.
 - [x] **Admin login** — `/admin/comments` signs in with an email magic link
       (Supabase Auth); only users in `public.admins` can moderate. The
       moderator key is gone
