@@ -21,7 +21,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
       no local deletion until the upload is verified.
 
-### Meaning audio — where it stands (updated 2026-10-27)
+### Meaning audio — where it stands (updated 2026-11-06)
 
 After each ayah the recitation stops and its meaning is read aloud (Gemini
 3.8 Flash TTS, voices **Cruz** male / **Lora** female, **Tamil + English**).
@@ -54,18 +54,18 @@ never generate anything per Juz.
 - Long ayahs (e.g. 73:20, 1,158 Tamil chars) can come back from a batch
   without audio: re-run that Surah without `--batch`. Re-make any clip
   with a long internal gap, or whose length is far from its text's.
-- **2026-11-05/06: Surahs 21–66** (owner added ₹1,500). 10,868 of 11,032
-  clips made ($12.6 ≈ ₹1,070) and on R2; stops measured for all 9 reciters.
-  The manifest lists a Surah only when all its clips exist, so 18 Surahs miss
-  one or more voice/language until the last **164 clips** are made. Those
-  come back from every batch without audio (`OTHER`): make them without
-  `--batch` (same command, no `--batch`). That mode allows ~100 requests a
-  day, so it takes two days. Then re-run `--manifest` and the stops script.
+- **2026-11-05/06: Surahs 21–66 — all 11,032 clips** (owner added ₹1,500;
+  $13.1 ≈ ₹1,115) on R2, stops measured for all 9 reciters. The last 159
+  clips were meanings over ~220 characters, which Gemini answers without
+  audio (`OTHER`) in batch and direct mode alike. `--split=200` reads them
+  in sentence/clause pieces joined by a 0.35 s pause (batch, $0.52, 6 min).
+  Use `--split=200` for whatever a run can't make; direct mode only allows
+  ~100 requests a day.
 - **Quota gotchas:** Tier 1 allows 100k *active* batch tokens at once (the
   script now waits on 429 and sends more as jobs finish). The AI Studio
   spend cap counts the price **before** the Batch discount (₹1,057 shown for
   ≈ ₹470 real spend), so set the cap about twice the real budget.
-- **Then:** Surahs 2–20 (≈ ₹1,750) as the owner's balance allows.
+- **Then:** Surahs 2–20 (≈ ₹1,750; run batch first, then the same command with `--split=200`) as the owner's balance allows.
 - **Previews:** if a Vercel preview shows a black background or the meaning
   stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
   you blame the code.

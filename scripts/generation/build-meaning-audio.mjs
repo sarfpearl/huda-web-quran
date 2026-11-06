@@ -37,6 +37,12 @@
 //                         them up again (run the same command). --no-wait
 //                         submits and exits; --max-usd counts the estimate of
 //                         each job before it is sent.
+//    --split=N            read a meaning longer than N characters in pieces
+//                         (sentences, then clauses) and join them with a short
+//                         pause: Gemini returns no audio ("OTHER") for most
+//                         long ones. The pieces wait in parts/ until all are
+//                         back. Use it to retry the clips a run couldn't make
+//                         (e.g. --split=200).
 //    --manifest           write src/lib/data/meaningAudioManifest.json: the
 //                         Surahs with every ayah's clip on disk (upload first)
 //
@@ -52,7 +58,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { appendFile, mkdir, readdir, rename, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { mediaPath } from "../lib/paths.mjs";
@@ -109,6 +115,27 @@ function range(a, b) {
 }
 const pad3 = (n) => String(n).padStart(3, "0");
 const clipPath = (voice, lang, s, a) => path.join(OUT_ROOT, voice, lang, `${pad3(s)}${pad3(a)}.mp3`);
+// A --split piece's samples (raw 16-bit PCM at PART_RATE) until the clip is joined.
+const partPath = (voice, lang, s, a, i) => path.join(OUT_ROOT, "parts", voice, lang, `${pad3(s)}${pad3(a)}.${i}.pcm`);
+const PART_RATE = 24000;
+const PART_GAP_SECONDS = 0.35;
+const splitAt = args.split === true ? 200 : Number(args.split) || 0;
+
+/** Pieces of at most `max` characters: whole sentences where they fit, then clauses, then words. */
+function splitText(text, max) {
+  const pack = (bits, sep, limit = max) => {
+    const out = [];
+    for (const bit of bits) {
+      if (out.length && (out.at(-1) + sep + bit).length <= limit) out[out.length - 1] += sep + bit;
+      else out.push(bit);
+    }
+    return out;
+  };
+  // Mid-sentence, cut into even pieces rather than a full one and a scrap.
+  const byWords = (t) => (t.length <= max ? [t] : pack(t.split(/\s+/), " ", Math.ceil(t.length / Math.ceil(t.length / max)) + 15));
+  const byClauses = (t) => (t.length <= max ? [t] : pack(t.split(/(?<=[,;:])\s+|\s+(?=[-–—]\s)/).flatMap(byWords), " "));
+  return pack(text.split(/(?<=[.!?]["”’)\]]*)\s+/).flatMap(byClauses), " ");
+}
 
 function verses(surah) {
   return JSON.parse(readFileSync(path.join(ROOT, "public/data/quran-verses", `${surah}.json`), "utf8"));
@@ -229,14 +256,53 @@ async function synthesize(voice, lang, text) {
       return audioOf(await ai.models.generateContent({ model: MODEL, ...request(voice, text) }));
     } catch (e) {
       const status = e?.status ?? e?.code;
-      const retry = attempt < 6 && (status === 429 || status >= 500 || /fetch failed|ECONNRESET|no audio/i.test(String(e?.message)));
+      const msg = String(e?.message);
+      // The daily request quota doesn't come back for hours, and a text that
+      // got no audio twice keeps getting none: retries only spend the quota.
+      if (/PerDay/.test(msg)) throw Object.assign(e, { daily: true });
+      const retry = /no audio/i.test(msg)
+        ? attempt < 2
+        : attempt < 6 && (status === 429 || status >= 500 || /fetch failed|ECONNRESET/i.test(msg));
       if (!retry) throw e;
       await sleep(Math.min(60000, 2000 * 2 ** attempt));
     }
   }
 }
 
-const keyOf = (job) => `${job.voice}/${job.lang}/${job.s}:${job.a}`;
+const keyOf = (job) => `${job.voice}/${job.lang}/${job.s}:${job.a}${job.whole ? `#${job.part}` : ""}`;
+
+/**
+ * What to ask Gemini for one ayah's clip: the clip itself, or (--split, long
+ * text) the pieces not yet on disk — each `{ ...piece, whole: clip, part: i }`.
+ */
+function jobsFor(voice, lang, s, v) {
+  const text = (v[LANGS[lang].field] ?? "").trim();
+  const clip = { voice, lang, s, a: v.ayahNumber, text, file: clipPath(voice, lang, s, v.ayahNumber) };
+  if (!splitAt || text.length <= splitAt) return [clip];
+  clip.parts = splitText(text, splitAt);
+  return clip.parts.map((t, i) => ({ ...clip, text: t, file: partPath(voice, lang, s, v.ayahNumber, i), whole: clip, part: i }));
+}
+
+/** Saves a response: a clip's MP3, or a piece — and the clip once all its pieces are in. */
+async function saveResult(job, res, batch = false) {
+  if (!job.whole) return saveClip(job, res, batch);
+  if (res.rate !== PART_RATE) throw new Error(`piece at ${res.rate} Hz, expected ${PART_RATE}`);
+  await mkdir(path.dirname(job.file), { recursive: true });
+  await writeFile(job.file, res.pcm);
+  audioTokens += res.usage.candidatesTokenCount ?? 0;
+  inputTokens += res.usage.promptTokenCount ?? 0;
+  await joinParts(job.whole, batch);
+}
+
+/** Writes a --split clip from its pieces once every piece is on disk. */
+async function joinParts(clip, batch = false) {
+  const files = clip.parts.map((_, i) => partPath(clip.voice, clip.lang, clip.s, clip.a, i));
+  if (existsSync(clip.file) || !files.every((f) => existsSync(f))) return;
+  const gap = Buffer.alloc(Math.round(PART_RATE * PART_GAP_SECONDS) * 2);
+  const pcms = await Promise.all(files.map((f) => readFile(f)));
+  await saveClip(clip, { pcm: Buffer.concat(pcms.flatMap((p, i) => (i ? [gap, p] : [p]))), rate: PART_RATE, usage: {} }, batch);
+  await Promise.all(files.map((f) => unlink(f)));
+}
 
 /** Writes a clip's MP3 and its ledger line. */
 async function saveClip(job, { pcm, rate, usage }, batch = false) {
@@ -266,9 +332,11 @@ for (const voice of voices)
   for (const lang of langs)
     for (const s of surahs)
       for (const v of verses(s)) {
-        const file = clipPath(voice, lang, s, v.ayahNumber);
-        const text = (v[LANGS[lang].field] ?? "").trim();
-        if (text && !existsSync(file)) jobs.push({ voice, lang, s, a: v.ayahNumber, text, file });
+        const list = jobsFor(voice, lang, s, v);
+        const clip = list[0].whole ?? list[0];
+        if (!clip.text || existsSync(clip.file)) continue;
+        if (clip.parts && list.every((j) => existsSync(j.file))) await joinParts(clip); // stopped before joining
+        else jobs.push(...list.filter((j) => !existsSync(j.file)));
       }
 
 console.log(`\n${MODEL} · ${jobs.length} clips to make (existing ones skipped)\n`);
@@ -296,9 +364,15 @@ async function worker() {
     }
     const job = jobs.shift();
     try {
-      await saveClip(job, await synthesize(job.voice, job.lang, job.text));
+      await saveResult(job, await synthesize(job.voice, job.lang, job.text));
       if (done % 25 === 0) progress();
     } catch (e) {
+      if (e?.daily) {
+        if (!stopped) console.warn(`  ⛔ Daily request quota used up — run again after it resets (midnight Pacific).`);
+        stopped = true;
+        jobs.unshift(job);
+        return;
+      }
       failed++;
       console.error(`  ❌ ${keyOf(job)}: ${e?.message ?? e}`);
     }
@@ -314,7 +388,7 @@ function progress() {
 await mkdir(OUT_ROOT, { recursive: true });
 await Promise.all(Array.from({ length: concurrency }, worker));
 progress();
-if (stopped) console.log(`\n⛔ Stopped at the $${maxUsd} budget — ${jobs.length} clips left.\n`);
+if (stopped) console.log(`\n⛔ Stopped — ${jobs.length} requests left.\n`);
 else console.log(failed ? `\n⚠️  ${failed} failed — run again to retry them.\n` : "\n✅ Done.\n");
 
 // ── --batch ────────────────────────────────────────────────────────────────
@@ -392,10 +466,7 @@ async function runBatches() {
   for (const voice of Object.keys(VOICES))
     for (const lang of Object.keys(LANGS))
       for (const s of new Set([...pending.flatMap((b) => b.keys), ...todo.map(keyOf)].map((k) => Number(k.split("/")[2].split(":")[0]))))
-        for (const v of verses(s))
-          byKey.set(`${voice}/${lang}/${s}:${v.ayahNumber}`, {
-            voice, lang, s, a: v.ayahNumber, text: (v[LANGS[lang].field] ?? "").trim(), file: clipPath(voice, lang, s, v.ayahNumber),
-          });
+        for (const v of verses(s)) for (const j of jobsFor(voice, lang, s, v)) byKey.set(keyOf(j), j);
 
   const DONE = new Set(["JOB_STATE_SUCCEEDED", "JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED", "JOB_STATE_PARTIALLY_SUCCEEDED"]);
   while (pending.length || (next < todo.length && !stopped)) {
@@ -416,7 +487,7 @@ async function runBatches() {
         try {
           if (r.error) throw new Error(r.error.message ?? JSON.stringify(r.error));
           if (!clip) throw new Error("unknown clip");
-          await saveClip(clip, audioOf(r.response), true);
+          await saveResult(clip, audioOf(r.response), true);
         } catch (e) {
           failed++;
           console.error(`  ❌ ${key}: ${e?.message ?? e}`);
