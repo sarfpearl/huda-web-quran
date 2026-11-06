@@ -636,11 +636,9 @@ export function CenterVerseDisplay({
   const isPrelude = "type" in activeItem && (activeItem.type === "istiadhah" || activeItem.type === "bismillah" || activeItem.type === "name");
   const isNamePrelude = "type" in activeItem && activeItem.type === "name";
 
-  // Verse Sync reciters: hide the verse text + meaning — the recitation audio
-  // does not align word-for-word with the on-screen letters, so showing them
-  // would be misleading. Just the immersive background + audio play.
-  // Preludes (Surah name / Bismillah / Isti'adhah) are self-contained and always display.
-  if (!reciterWordSync && !isPrelude) return null;
+  // Audio Only reciters show the verse too (owner, 2026-11-06): the ayah is
+  // estimated (proportional timeline; exact per-ayah clips in Juz mode), so no
+  // word is singled out — hasWordTiming=false lets the whole ayah glow instead.
   const ayahNum =
     "ayahNumber" in activeItem && typeof activeItem.ayahNumber === "number" && activeItem.ayahNumber > 0
       ? activeItem.ayahNumber
