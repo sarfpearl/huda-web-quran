@@ -15,17 +15,10 @@ later; that pair marks a call and the player retries every 2 s until the
 recitation moves again. (`?debug=audio` shows the on-phone log.)
 **Still open: (2)** unmuting an Instagram feed video doesn't pause the Surah.
 
-- [ ] **Phase 8B — private R2 archive upload** (separate task, don't mix with
-      app fixes): the 2,364 duplicate videos (53.6 GB) from the duplicate
-      cleanup go to a private bucket `huda-quran-archive`; plan in
-      `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
-      no local deletion until the upload is verified.
-      **2026-11-06:** the files are in `../huda-media/4-unused/unused-items/`
-      (2,364, ~50 GB), plan in `../huda-media/3-working/scratch/staging/phase8_r2_upload_preflight/`.
-      The `.env.local` R2 key only reaches `huda-quran-media` (403 on the
-      archive bucket), so the owner also needs a key with access to
-      `huda-quran-archive`. Storage ≈ $0.65–0.80 a month (R2's 10 GB free
-      tier is already used by the live media).
+- [x] **Phase 8B — private R2 archive upload: dropped (owner, 2026-11-06).**
+      R2 stays inside the 10 GB free tier, so the 2,364 duplicate videos
+      (~50 GB) stay only on the Mac in `../huda-media/4-unused/unused-items/`.
+      Don't upload them to R2; don't delete them without the owner's OK.
 
 ### Meaning audio — where it stands (updated 2026-11-06)
 
