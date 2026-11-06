@@ -204,8 +204,13 @@ type MeaningThen = "resume" | "advance" | "prelude";
 
 /** meaningDoneRef: a whole-Surah track's last-ayah meaning has been read. */
 const TRACK_MEANING_DONE = -2;
-/** A meaning cue fires this early (s): a frame, and the output's latency. */
-const MEANING_CUE_LEAD = 0.05;
+/** A meaning cue fires this early (s): a frame, and the output's latency
+ *  (a pause is heard ~0.1 s late — more on Bluetooth — and a stop can lie
+ *  only ~0.06 s ahead of the next ayah's voice, which then leaked in). */
+const MEANING_CUE_LEAD = 0.15;
+/** Before a meaning cue the recitation fades out over this long (s), so the
+ *  next ayah's first sound, if it comes early, isn't heard. */
+const MEANING_CUE_FADE = 0.12;
 /** iOS Safari moves `currentTime` on only ~4× a second: between its steps the
  *  clock is carried on from the wall clock, by at most this much (s). */
 const MAX_CLOCK_CARRY = 0.35;
@@ -350,6 +355,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const preludeQueueRef = useRef<{ url: string; kind: string }[]>([]);
   const juzBismillahDoneRef = useRef(-1);
   const isMutedRef = useRef(false);
+  const volumeRef = useRef(1);
+  // The recitation is fading out ahead of a meaning cue (its volume lowered).
+  const cueFadingRef = useRef(false);
   // The meaning read last on this pass (a seek clears it): not again.
   const meaningCueReadRef = useRef<string | null>(null);
   // Where the last seek landed: a cue at or before it has been passed (a word
@@ -513,6 +521,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       el.playbackRate = playbackRate;
     }
     isMutedRef.current = isMuted;
+    volumeRef.current = volume;
+    cueFadingRef.current = false;
   }, [volume, isMuted, playbackRate, meaningOnly]);
 
   // Keep the screen awake while a recitation is playing (Screen Wake Lock API).
@@ -1801,6 +1811,25 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!isPlaying) return;
     let raf = 0;
+    // The recitation's volume back after a fade ahead of a meaning cue.
+    const restoreCueFade = (el: HTMLAudioElement) => {
+      if (!cueFadingRef.current) return;
+      cueFadingRef.current = false;
+      el.volume = volumeRef.current;
+    };
+    // Fade the recitation out over the MEANING_CUE_FADE before a cue fires
+    // (iOS ignores volume: there the earlier lead alone does it).
+    const fadeBeforeCue = (el: HTMLAudioElement, t: number) => {
+      const cue = meaningOnlyRef.current || meaningRef.current || ayahSeqRef.current
+        ? undefined
+        : meaningCuesRef.current.find((c) => {
+            const fire = c.at - MEANING_CUE_LEAD;
+            return t >= fire - MEANING_CUE_FADE && t < fire && c.at > meaningSeekFloorRef.current && c.key !== meaningCueReadRef.current;
+          });
+      if (!cue) return restoreCueFade(el);
+      cueFadingRef.current = true;
+      el.volume = volumeRef.current * Math.max(0, Math.min(1, (cue.at - MEANING_CUE_LEAD - t) / MEANING_CUE_FADE));
+    };
     const frame = () => {
       if (meaningCuesRef.current.length && !forcedSeekPendingRef.current && !isPreludeRef.current) {
         const el = audioRef.current;
@@ -1812,9 +1841,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           if (!step || step.raw !== el.currentTime) clockStepRef.current = { raw: el.currentTime, wall: now };
           const { raw, wall } = clockStepRef.current!;
           const carried = Math.min(MAX_CLOCK_CARRY, ((now - wall) / 1000) * (el.playbackRate || 1));
-          checkMeaningCueRef.current(raw + carried - currentTrimOffsetRef.current);
+          const t = raw + carried - currentTrimOffsetRef.current;
+          if (!checkMeaningCueRef.current(t)) fadeBeforeCue(el, t);
         }
-      }
+      } else if (cueFadingRef.current && audioRef.current) restoreCueFade(audioRef.current);
       const b = timeBoundaryRef.current;
       if (b !== null && !forcedSeekPendingRef.current) {
         if (meaningRef.current) {
@@ -1988,6 +2018,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       const el = audioRef.current;
       if (then === "resume" && el) {
         el.pause();
+        // Paused: its volume back for when it goes on.
+        if (cueFadingRef.current) {
+          cueFadingRef.current = false;
+          el.volume = volumeRef.current;
+        }
         if (resumeAt !== undefined) {
           try {
             el.currentTime = resumeAt + currentTrimOffsetRef.current;
