@@ -20,6 +20,12 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       cleanup go to a private bucket `huda-quran-archive`; plan in
       `docs/PHASE8A_PRIVATE_R2_UPLOAD_PLAN.md`. Owner creates the bucket first;
       no local deletion until the upload is verified.
+      **2026-11-06:** the files are in `../huda-media/4-unused/unused-items/`
+      (2,364, ~50 GB), plan in `../huda-media/3-working/scratch/staging/phase8_r2_upload_preflight/`.
+      The `.env.local` R2 key only reaches `huda-quran-media` (403 on the
+      archive bucket), so the owner also needs a key with access to
+      `huda-quran-archive`. Storage ≈ $0.65–0.80 a month (R2's 10 GB free
+      tier is already used by the live media).
 
 ### Meaning audio — where it stands (updated 2026-11-06)
 
@@ -115,11 +121,6 @@ never generate anything per Juz.
       wide as the full card with the full card's button sizes (PR #192); every
       screen opens on the full player, playback shrinks it, a manual expand
       stays full (PR #194). The extra small window view was not wanted.
-- [ ] **Vertex AI 403 `PERMISSION_DENIED: CONSUMER_SUSPENDED`** on
-      `veo-3.1-fast-generate-001` — Google Cloud billing / account suspended;
-      blocks any new Veo clip. Not needed for the matching task above. The
-      Surah 18 set 15 (ayahs 89–98) Gate 2 clip already exists
-      (`Unused Items/archive/Inbox/surah_18_set_15_ayah_89-98-saddayn-mountains.mp4`).
 - [x] **Surah 114 Video 3 (ayahs 5–6)** — the animated `03a`–`03c` clips
       (earth from space, ocean sunset, green valley) were rejected; replace
       with real footage via the matching task (seamless loop, no crossfade
@@ -178,8 +179,6 @@ never generate anything per Juz.
        `~/huda-r2-backup/2026-10-25/` (395 MB, the 17 deleted objects) and
        `../huda-media/1-live-copy/media-work/originals/` (R2 copies before
        re-encoding; was `.media-work/originals/`).
-7. [ ] Optional: move the R2 audio (2.04 GB) to Backblaze B2 — only if R2
-       space gets tight again.
 8. [x] Before January 2027: Node 22 on the Mac (done 2026-11-05: nvm default 22.23.4; tsc, build, R2 scripts pass, AWS SDK warning gone) — the AWS SDK used by the R2
        scripts warns that later versions need Node ≥ 22 (now v20.20.0).
 9. [x] **Real-phone checks (2026-11-04) — all 4 fine (owner, on the phone, 2026-11-04).** — everything else from
@@ -690,19 +689,6 @@ and text are used unmodified, and the credits are shown** (About → credits).
 - [x] Font self-hosted unmodified: `public/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2`
       (`'IndoPak'` in `globals.css`); credits on the About page.
 
-- [ ] **IndoPak Tajweed colours — waiting on QuranWBW's IndoPak Tajweed
-      font** (no date; "might take a few years", 2026-10-19). Their reply
-      (2026-10-14): no IndoPak Tajweed data or font exists yet, and colouring
-      their font breaks its ligatures; they are building IndoPak Mushaf Tajweed
-      fonts, likely more than a year away. Until then IndoPak has no Tajweed
-      switch (PR #103). Don't colour the IndoPak text in CSS.
-      **Glyph-by-glyph prototype (PR #115) — closed 2026-10-24.** QuranWBW
-      reviewed the live preview (2026-10-23): the `text_indopak_nastaleeq`
-      text works perfectly, but the prototype breaks on multi-letter glyphs
-      and the colours are not exactly right (~65–70%); not production level,
-      they prefer waiting for a proper font. Branch `proto/indopak-tajweed`
-      kept for reference; don't revive it without their OK.
-
 ## Quran views · live · comments · likes (Supabase)
 
 - [x] **Clear test data before launch** — done 2026-10-07 (see Open items).
@@ -743,5 +729,3 @@ and text are used unmodified, and the credits are shown** (About → credits).
       `get_quran_view_counts` RPC. Optional `CRON_SECRET` in Vercel keeps
       others from calling it. Check after deploy: Vercel → Project → Cron Jobs
       shows the job and its last run is 200.
-- [ ] Supabase Free plan has no automatic backups — consider Pro before
-      relying on the data. (Owner, 2026-10-14: not needed now.)
