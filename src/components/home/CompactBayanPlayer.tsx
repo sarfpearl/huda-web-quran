@@ -924,7 +924,8 @@ export function CompactBayanPlayer({
               const nextIdx = (rates.indexOf(player.playbackRate) + 1) % rates.length;
               player.setPlaybackRate?.(rates[nextIdx]);
             }}
-            aria-label={`${t(language, "Playback speed")} ${player.playbackRate}×`}
+            // The name starts with what the button shows ("1x", WCAG 2.5.3 label in name).
+            aria-label={`${player.playbackRate}x, ${t(language, "Playback speed")}`}
             data-tooltip={`${t(language, "Playback speed")} · ${player.playbackRate}x`}
             className="tap-44 grid h-9 w-9 place-items-center rounded-full bg-black/40 border border-white/10 text-[11px] font-bold text-emerald-400 hover:bg-black/60 active:scale-90 transition-all cursor-pointer"
           >

@@ -613,8 +613,11 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       weight 2.1 / 5.4 MB. LCP 4.4 s on home = the splash logo (as before).
       **Regression:** CLS 0.168 home / 0.128 /surah/36 (was 0.01) — 0.12 of it
       is the player frame (`#player [data-player-frame]`) moving after
-      hydration, 0.04 the verse stage block. **To fix:** reserve the player
-      frame's final height before it measures (see fix (5) above).
+      hydration, 0.04 the verse stage block. **Fixed 2026-11-04** (`913aadc`:
+      a head script marks `<html data-player-collapsed>` so phones paint the
+      compact pill before hydration). **Re-checked 2026-11-06** (local prod
+      build, Lighthouse 12 mobile): home 86 / /surah/36 83, CLS 0.001 both,
+      FCP 0.9 s, TBT 40–80 ms; LCP 4.0 s = the splash logo (as before).
 - [~] **14. Accessibility** (2026-10-07) — axe-core 4.10 (browser) on the
       home screen, a Surah link, the 404 page and with each panel open
       (content browser, reciter, translation, Tajweed, favourites, views,
@@ -648,8 +651,11 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       `bg-emerald-500` (2.53:1) on an `h-11` sheet button (12px text);
       (2) `label-content-name-mismatch`: the "Listening now" button
       (`aria-label="Listening now: 1"`) and a `role="button"` title row whose
-      visible text isn't in their accessible names. **To fix** with the CLS
-      fix above.
+      visible text isn't in their accessible names. **Fixed 2026-11-04**
+      (`913aadc`). **Re-checked 2026-11-06 (score 95):** one more
+      `label-content-name-mismatch` — the speed button shows "1x" but was
+      named "Playback speed 1×"; now "1x, Playback speed". Only
+      `meta-viewport` (owner's choice above) is left.
 
 ## IndoPak script
 
