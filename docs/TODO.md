@@ -20,6 +20,41 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       (~50 GB) stay only on the Mac in `../huda-media/4-unused/unused-items/`.
       Don't upload them to R2; don't delete them without the owner's OK.
 
+### Added 2026-11-09
+
+- [ ] **Surah name announcement should include the name's meaning.** When a
+      Surah starts, the spoken "Surah …" announcement (PR #180, #181) says only
+      the name. Each Surah name has a meaning — e.g. Surah Al-Fatihah = "The
+      Opening" — and the announcement should say the name **with its meaning,
+      in the listener's language** (Tamil: "சூரா அல்-ஃபாத்திஹா — தொடக்கம்",
+      English: "Surah Al-Fatihah — The Opening", and likewise per language).
+      Applies wherever the announcement plays: Surah start and Surah changes
+      inside a Juz, including with the screen locked.
+- [ ] **Background videos with black bars at top / bottom (letterbox).** Some
+      Surah background videos show black bars above and below the picture
+      (owner saw it but has no screenshot of which one). Check **every** clip
+      in `videoManifest.ts` (e.g. ffmpeg `cropdetect` on each R2 / live-copy
+      clip), list the ones with bars, crop the bars off and scale the rest to
+      fill the frame, re-encode, upload to R2 and bump their `?v=` in
+      `videoVersions.ts`. Known one: Surah 3 set 2 (see Next tasks #3).
+      Owner reviews the list / before-after before upload.
+- [ ] **Bismillah: the Tamil translation doesn't highlight.** When
+      "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
+      should highlight along with it, like the ayah translations do — today
+      they show but never highlight.
+- [ ] **Al-Fatihah: the Isti'adhah meaning is shown but not read aloud.**
+      For Surah Al-Fatihah, the meaning of "A'udhu billahi minash shaitanir
+      rajeem" appears on screen, but the meaning audio doesn't read it. It
+      should be read aloud too (Tamil / English, both voices), like every
+      ayah's meaning.
+- [ ] **Investigate: audio sometimes plays in the background from an
+      unknown place.** During quick random testing (tapping around fast),
+      something sometimes keeps playing in the background, and there is no
+      way to tell which Surah / ayah / audio it is. Reproduce it (rapid
+      Surah / ayah / reciter / Juz switches, meaning audio on, prelude), find
+      which audio element or source is playing (`?debug=audio` log), and fix
+      it so only one audio plays and the screen always shows what is playing.
+
 ### Meaning audio — where it stands (updated 2026-11-06)
 
 After each ayah the recitation stops and its meaning is read aloud (Gemini
