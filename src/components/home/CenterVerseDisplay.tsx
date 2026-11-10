@@ -347,8 +347,26 @@ export function CenterVerseDisplay({
           ? { kind: "ayah", surah: activeItemForFit.surahNumber, ayah: activeItemForFit.ayahNumber }
           : null;
   const extraMeaning = useExtraMeaning(translationLang, meaningTarget);
-  const targetSurahNum = activeItemForFit && "surahNumber" in activeItemForFit ? activeItemForFit.surahNumber : currentVerse?.surahNumber;
-  const targetAyahNum = activeItemForFit && "ayahNumber" in activeItemForFit ? activeItemForFit.ayahNumber : currentVerse?.ayahNumber;
+  // Meaning word timings: the Bismillah prelude's meaning clip is 1:1's, so
+  // its words are 1:1's; the other preludes have none of their own.
+  const preludeKind =
+    activeItemForFit && "type" in activeItemForFit && activeItemForFit.type !== "ayah" ? activeItemForFit.type : undefined;
+  const targetSurahNum =
+    preludeKind === "bismillah"
+      ? 1
+      : preludeKind
+        ? undefined
+        : activeItemForFit && "surahNumber" in activeItemForFit
+          ? activeItemForFit.surahNumber
+          : currentVerse?.surahNumber;
+  const targetAyahNum =
+    preludeKind === "bismillah"
+      ? 1
+      : preludeKind
+        ? undefined
+        : activeItemForFit && "ayahNumber" in activeItemForFit
+          ? activeItemForFit.ayahNumber
+          : currentVerse?.ayahNumber;
   const { words: meaningWords } = useMeaningTimings(
     meaningVoice,
     translationLang,

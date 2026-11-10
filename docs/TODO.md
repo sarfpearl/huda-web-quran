@@ -38,7 +38,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       fill the frame, re-encode, upload to R2 and bump their `?v=` in
       `videoVersions.ts`. Known one: Surah 3 set 2 (see Next tasks #3).
       Owner reviews the list / before-after before upload.
-- [ ] **Bismillah: the Tamil translation doesn't highlight.** When
+- [x] **Bismillah: the Tamil translation doesn't highlight.** When
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today
       they show but never highlight.
