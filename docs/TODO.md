@@ -552,7 +552,7 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       **After deploy:** re-run against the live site, and check a link in
       Facebook's Sharing Debugger / a WhatsApp chat (WhatsApp caches a
       preview per URL — the old image-less ones may linger).
-- [~] **13. Performance** (2026-10-07) — production build (`NEXT_DIST_DIR=.next-prod`,
+- [x] **13. Performance** (2026-10-07) — production build (`NEXT_DIST_DIR=.next-prod`,
       "prod" launch config), Lighthouse 12 mobile + `scripts/qa/perf-slow.mjs`
       (real Chrome, slow 4G + 4× CPU). Mobile score 57 → 85, desktop 99;
       FCP 2.9 → 0.9 s; CLS 0.30 → 0.01; page weight on open 17 MB → 6.4 MB
@@ -618,7 +618,11 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       compact pill before hydration). **Re-checked 2026-11-06** (local prod
       build, Lighthouse 12 mobile): home 86 / /surah/36 83, CLS 0.001 both,
       FCP 0.9 s, TBT 40–80 ms; LCP 4.0 s = the splash logo (as before).
-- [~] **14. Accessibility** (2026-10-07) — axe-core 4.10 (browser) on the
+      **Closed 2026-11-10:** nothing left to fix. The splash logo is already
+      preloaded with `fetchpriority="high"` (44 KB); the real slow-4G probe
+      paints it at 1.5 s, Lighthouse's simulated 4.0 s counts the splash's
+      parallel scene image. Re-run Lighthouse after big UI changes.
+- [x] **14. Accessibility** (2026-10-07) — axe-core 4.10 (browser) on the
       home screen, a Surah link, the 404 page and with each panel open
       (content browser, reciter, translation, Tajweed, favourites, views,
       comments): 0 violations except `meta-viewport` (below). Keyboard: every
@@ -656,6 +660,8 @@ launch. Each item: check it on the live site + locally, fix what fails, tick it.
       `label-content-name-mismatch` — the speed button shows "1x" but was
       named "Playback speed 1×"; now "1x, Playback speed". Only
       `meta-viewport` (owner's choice above) is left.
+      **Closed 2026-11-10:** that exception is the owner's choice, so nothing
+      is left to fix.
 
 ## IndoPak script
 
