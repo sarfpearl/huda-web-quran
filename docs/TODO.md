@@ -50,7 +50,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       Done 2026-11-10: `build-meaning-audio.mjs --istiadhah` made the 4
       clips (`001000.mp3`, "ayah 0" of Surah 1, $0.004), read after the
       Isti'adhah prelude in Surah mode and in the Juz 1 sequence.
-- [ ] **Investigate: audio sometimes plays in the background from an
+- [x] **Investigate: audio sometimes plays in the background from an
       unknown place.** During quick random testing (tapping around fast),
       something sometimes keeps playing in the background, and there is no
       way to tell which Surah / ayah / audio it is. Reproduce it (rapid
