@@ -42,11 +42,14 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today
       they show but never highlight.
-- [ ] **Al-Fatihah: the Isti'adhah meaning is shown but not read aloud.**
+- [x] **Al-Fatihah: the Isti'adhah meaning is shown but not read aloud.**
       For Surah Al-Fatihah, the meaning of "A'udhu billahi minash shaitanir
       rajeem" appears on screen, but the meaning audio doesn't read it. It
       should be read aloud too (Tamil / English, both voices), like every
       ayah's meaning.
+      Done 2026-11-10: `build-meaning-audio.mjs --istiadhah` made the 4
+      clips (`001000.mp3`, "ayah 0" of Surah 1, $0.004), read after the
+      Isti'adhah prelude in Surah mode and in the Juz 1 sequence.
 - [ ] **Investigate: audio sometimes plays in the background from an
       unknown place.** During quick random testing (tapping around fast),
       something sometimes keeps playing in the background, and there is no
