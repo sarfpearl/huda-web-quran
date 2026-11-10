@@ -43,8 +43,12 @@
 //                         long ones. The pieces wait in parts/ until all are
 //                         back. Use it to retry the clips a run couldn't make
 //                         (e.g. --split=200).
+//    --istiadhah          Al-Fatihah's Isti'adhah instead of ayahs (not an
+//                         ayah: CANONICAL_ISTIADHAH in src/lib/data/quranVerses.ts),
+//                         as "ayah 0" of Surah 1 → 001000.mp3
 //    --manifest           write src/lib/data/meaningAudioManifest.json: the
-//                         Surahs with every ayah's clip on disk (upload first)
+//                         Surahs with every ayah's clip on disk (upload first),
+//                         and the voices / languages with the Isti'adhah's clip
 //
 //  Env: GEMINI_TTS_MODEL (default gemini-3.8-flash-tts); MEANING_VOICE_CRUZ /
 //  MEANING_VOICE_LORA — the API's voice names (AI Studio → "Get code" shows
@@ -100,7 +104,7 @@ const voices = pick(args.voice, VOICES);
 const langs = pick(args.lang, LANGS);
 for (const v of voices) if (!VOICES[v]) fail(`Unknown voice "${v}" (cruz, lora, all).`);
 for (const l of langs) if (!LANGS[l]) fail(`Unknown language "${l}" (en, ta, all).`);
-const [fromSurah, toSurah] = String(args.surah ?? "1-114").split("-").map(Number);
+const [fromSurah, toSurah] = String(args.istiadhah ? 1 : args.surah ?? "1-114").split("-").map(Number);
 const surahs = range(fromSurah, Number.isFinite(toSurah) ? toSurah : fromSurah);
 if (!surahs.length || surahs[0] < 1 || surahs.at(-1) > 114) fail(`Bad --surah "${args.surah}".`);
 const concurrency = Math.max(1, Number(args.concurrency ?? 4));
@@ -137,7 +141,18 @@ function splitText(text, max) {
   return pack(text.split(/(?<=[.!?]["”’)\]]*)\s+/).flatMap(byClauses), " ");
 }
 
+/** The Isti'adhah's meaning, as shown on screen (CANONICAL_ISTIADHAH), as ayah 0. */
+function istiadhah() {
+  const src = readFileSync(path.join(ROOT, "src/lib/data/quranVerses.ts"), "utf8");
+  const block = /CANONICAL_ISTIADHAH = \{([\s\S]*?)\n\};/.exec(src)?.[1] ?? "";
+  const field = (name) => /"(.*)"/.exec(new RegExp(`${name}:.*`).exec(block)?.[0] ?? "")?.[1];
+  const v = { ayahNumber: 0, textEnglish: field("textEnglish"), textTamil: field("textTamil") };
+  if (!v.textEnglish || !v.textTamil) fail("CANONICAL_ISTIADHAH not found in quranVerses.ts.");
+  return v;
+}
+
 function verses(surah) {
+  if (args.istiadhah) return surah === 1 ? [istiadhah()] : [];
   return JSON.parse(readFileSync(path.join(ROOT, "public/data/quran-verses", `${surah}.json`), "utf8"));
 }
 
@@ -162,7 +177,7 @@ if (args.estimate) {
 
 // ── --manifest ─────────────────────────────────────────────────────────────
 if (args.manifest) {
-  const out = { version: VERSION, surahs: {} };
+  const out = { version: VERSION, surahs: {}, istiadhah: undefined };
   for (const voice of Object.keys(VOICES)) {
     out.surahs[voice] = {};
     for (const lang of Object.keys(LANGS)) {
@@ -171,6 +186,7 @@ if (args.manifest) {
       out.surahs[voice][lang] = range(1, 114).filter((s) =>
         verses(s).every((v) => have.has(`${pad3(s)}${pad3(v.ayahNumber)}.mp3`))
       );
+      if (have.has("001000.mp3")) ((out.istiadhah ??= {})[voice] ??= []).push(lang);
     }
   }
   await writeFile(MANIFEST, JSON.stringify(out, null, 2) + "\n");

@@ -174,6 +174,9 @@ interface AudioPlayerApi extends AudioPlayerState {
   /** Meaning only: the Bismillah's meaning, read after a Bismillah prelude
    *  (the Surah's, or one before a Juz ayah) and before the first ayah's. */
   setBismillahMeaning: (m: { url: string; key: string } | null) => void;
+  /** Al-Fatihah's Isti'adhah meaning, read after its prelude (the Surah's,
+   *  or the Juz sequence's) and before the reciter's Bismillah. */
+  setIstiadhahMeaning: (m: { url: string; key: string } | null) => void;
   previous: () => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
@@ -347,6 +350,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const setBismillahMeaning = useCallback((m: { url: string; key: string } | null) => {
     bismillahMeaningRef.current = m;
   }, []);
+  // Al-Fatihah's Isti'adhah: its meaning after its prelude, before the
+  // reciter's Bismillah (a whole-Surah track) or the sequence's next clip.
+  const istiadhahMeaningRef = useRef<{ url: string; key: string } | null>(null);
+  const setIstiadhahMeaning = useCallback((m: { url: string; key: string } | null) => {
+    istiadhahMeaningRef.current = m;
+  }, []);
   // The Surah prelude playing (its type), and the Juz ayah whose Bismillah
   // meaning was read.
   const preludeKindRef = useRef<string | null>(null);
@@ -354,6 +363,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // the Bismillah after the Surah-name announcement. Each: { url, kind }.
   const preludeQueueRef = useRef<{ url: string; kind: string }[]>([]);
   const juzBismillahDoneRef = useRef(-1);
+  const juzIstiadhahDoneRef = useRef(-1);
   const isMutedRef = useRef(false);
   const volumeRef = useRef(1);
   // The recitation is fading out ahead of a meaning cue (its volume lowered).
@@ -1085,7 +1095,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     seq.index = idx;
     cancelMeaning();
     meaningDoneRef.current = -1;
-    if (withPre) juzBismillahDoneRef.current = -1;
+    if (withPre) juzBismillahDoneRef.current = juzIstiadhahDoneRef.current = -1;
     // Meaning only: this ayah's meaning, not its recitation (its preludes
     // first, heard).
     const m = meaningOnlyRef.current && !(withPre && seq.pre[idx]?.length) ? ayahMeaningRef.current?.(idx) : null;
@@ -1727,6 +1737,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       startMeaningRef.current(bm.url, bm.key, "prelude");
       return;
     }
+    // Al-Fatihah's Isti'adhah: its meaning (the screen stays on it).
+    const im = istiadhahMeaningRef.current;
+    if (isPreludeRef.current && preludeKindRef.current === "fatihah" && im && !meaningRef.current) {
+      // The word clock can have stepped past its end, onto the Bismillah.
+      setPreludeCurrentTime((t) => Math.min(t, PRELUDE_AUDIO.fatihah.istiadhahEndTime));
+      startMeaningRef.current(im.url, im.key, "prelude");
+      return;
+    }
     // Another prelude stage to come (e.g. the Bismillah after the Surah-name
     // announcement): play it before handing off to the reciter.
     const nextStage = preludeQueueRef.current.shift();
@@ -2074,6 +2092,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         startMeaning(bm.url, bm.key, "advance");
         return;
       }
+      const im = istiadhahMeaningRef.current;
+      if (im && seq.preStep >= 0 && seq.pre[seq.index]?.[seq.preStep]?.type === "istiadhah" && juzIstiadhahDoneRef.current !== seq.index) {
+        juzIstiadhahDoneRef.current = seq.index;
+        startMeaning(im.url, im.key, "advance");
+        return;
+      }
       // The ayah itself ended (not a prelude): its meaning first, when wanted.
       if (seq.preStep < 0 && meaningDoneRef.current !== seq.index) {
         const m = ayahMeaningRef.current?.(seq.index);
@@ -2239,6 +2263,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       unlockMeaning,
       setMeaningOnly,
       setBismillahMeaning,
+      setIstiadhahMeaning,
       previous,
       setVolume,
       toggleMute,
@@ -2290,6 +2315,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       unlockMeaning,
       setMeaningOnly,
       setBismillahMeaning,
+      setIstiadhahMeaning,
       previous,
       setVolume,
       toggleMute,

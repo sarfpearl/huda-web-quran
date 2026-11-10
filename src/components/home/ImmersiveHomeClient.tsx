@@ -22,6 +22,7 @@ import { STANDALONE_SILENT, useAudioPlayer, type EndMode, type MeaningCue } from
 import {
   MEANING_AUDIO_PUBLISHED,
   hasMeaningAudio,
+  istiadhahMeaningUrl,
   isMeaningLang,
   meaningAudioUrl,
   meaningStopsFor,
@@ -1053,6 +1054,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     setBismillahMeaning(bismillahUrl ? { url: bismillahUrl, key: "bismillah" } : null);
   }, [setBismillahMeaning, bismillahUrl]);
   useEffect(() => () => setMeaningOnly(false), [setMeaningOnly]);
+  // Al-Fatihah opens with the Isti'adhah: its meaning too, before the Bismillah.
+  const { setIstiadhahMeaning } = player;
+  const istiadhahUrl = meaningOn ? istiadhahMeaningUrl(meaningPrefs.voice, translationLang) : null;
+  useEffect(() => {
+    setIstiadhahMeaning(istiadhahUrl ? { url: istiadhahUrl, key: "istiadhah" } : null);
+  }, [setIstiadhahMeaning, istiadhahUrl]);
   // Wanted where it can't be: say once that the recitation plays instead
   // (no Word Sync in this voice has its own notice, below).
   const meaningOnlyGapKey =

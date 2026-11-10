@@ -26,7 +26,11 @@ export const MEANING_VOICES: { id: MeaningVoice; label: string }[] = [
 
 export const isMeaningLang = (lang: TranslationLang): lang is MeaningLang => lang === "en" || lang === "ta";
 
-type Manifest = { version: number; surahs: Record<MeaningVoice, Record<MeaningLang, number[]>> };
+type Manifest = {
+  version: number;
+  surahs: Record<MeaningVoice, Record<MeaningLang, number[]>>;
+  istiadhah?: Partial<Record<MeaningVoice, MeaningLang[]>>;
+};
 const MANIFEST = manifest as Manifest;
 const READY = new Map<string, Set<number>>();
 for (const [voice, langs] of Object.entries(MANIFEST.surahs)) {
@@ -47,6 +51,15 @@ const pad3 = (n: number) => String(n).padStart(3, "0");
 export function meaningAudioUrl(voice: MeaningVoice, lang: TranslationLang, surah: number, ayah: number): string | null {
   if (!hasMeaningAudio(voice, lang, surah)) return null;
   return mediaUrl(`/audio/meaning/v${MANIFEST.version}/${voice}/${lang}/${pad3(surah)}${pad3(ayah)}.mp3`);
+}
+
+/**
+ * Al-Fatihah's Isti'adhah (not an ayah) read in this voice and language — its
+ * clip is "ayah 0" of Surah 1 — or null when it isn't uploaded.
+ */
+export function istiadhahMeaningUrl(voice: MeaningVoice, lang: TranslationLang): string | null {
+  if (!isMeaningLang(lang) || !MANIFEST.istiadhah?.[voice]?.includes(lang)) return null;
+  return mediaUrl(`/audio/meaning/v${MANIFEST.version}/${voice}/${lang}/001000.mp3`);
 }
 
 /**
