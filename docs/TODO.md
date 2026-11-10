@@ -22,7 +22,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
 
 ### Added 2026-11-09
 
-- [ ] **Surah name announcement should include the name's meaning.** When a
+- [x] **Surah name announcement should include the name's meaning.** When a
       Surah starts, the spoken "Surah …" announcement (PR #180, #181) says only
       the name. Each Surah name has a meaning — e.g. Surah Al-Fatihah = "The
       Opening" — and the announcement should say the name **with its meaning,

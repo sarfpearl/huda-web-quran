@@ -59,6 +59,7 @@ import {
   quranJuzToTrackForReciter,
   buildJuzAyahUrls,
   buildJuzPreludes,
+  setSurahNameLang,
   getJuzAyahPairs,
   getDefaultReciter,
   getReciterById,
@@ -138,6 +139,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
   // The ayah-meaning language (English, Tamil, Urdu…).
   const [translationLang, setTranslationLang] = useState<TranslationLang>("en");
+  // The Surah-name announcement says the name's meaning in this language too.
+  useEffect(() => setSurahNameLang(translationLang), [translationLang]);
   // The app's own labels: English unless picked otherwise — never follows
   // the meaning language (picking a Tamil meaning keeps an English app).
   const [language, setLanguage] = useState<UiLang>("en");

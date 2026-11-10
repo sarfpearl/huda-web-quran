@@ -14,6 +14,7 @@
 
 import { reciterHasWordTiming, reciterEmbedsOwnBismillah, type QuranReciter } from "./quranReciters";
 import { mediaUrl } from "@/lib/media";
+import type { TranslationLang } from "./translations";
 
 export const PRELUDE_AUDIO = {
   fatihah: {
@@ -89,11 +90,27 @@ export function getSurahPreludeConfig(
 }
 
 /**
- * A short Arabic clip announcing the Surah — "سُورَةُ <name>" — played as the
- * first prelude stage (before the Isti'adhah / Bismillah), so the listener
- * hears which Surah is beginning. One clip per Surah, generated once by
+ * The languages whose name-and-meaning announcements are uploaded (R2
+ * audio/prelude/names/<lang>/). Any other language hears the Arabic name only.
+ */
+export const SURAH_NAME_MEANING_LANGS: readonly TranslationLang[] = ["en", "ta", "ur", "ml", "hi", "id", "bn", "tr", "fr", "ms"];
+
+// The ayah-meaning language picked in the app (ImmersiveHomeClient sets it),
+// read when a Surah's preludes are queued.
+let announcementLang: TranslationLang = "en";
+export function setSurahNameLang(lang: TranslationLang) {
+  announcementLang = lang;
+}
+
+/**
+ * A short clip announcing the Surah, played as the first prelude stage
+ * (before the Isti'adhah / Bismillah), so the listener hears which Surah is
+ * beginning: the Arabic "سُورَةُ <name>", then — in the listener's meaning
+ * language — what the name means ("… — The Opening"). Generated once by
  * scripts/generation/build-surah-name-audio.mjs and served from R2:
- *   /audio/prelude/names/<SSS>.mp3
+ *   /audio/prelude/names/<lang>/<SSS>.mp3   (name + meaning)
+ *   /audio/prelude/names/<SSS>.mp3          (Arabic only: other languages)
+ * Both start with the same Arabic clip, so SURAH_PRELUDE_TIMINGS fits either.
  * Word Sync reciters only — Audio Only reciters play their raw stream with no
  * prelude at all, so they get no announcement either. Returns null when it
  * should not play.
@@ -101,7 +118,9 @@ export function getSurahPreludeConfig(
 export function getSurahNameClip(surahNumber: number, reciter?: QuranReciter | null): string | null {
   if (surahNumber < 1 || surahNumber > 114) return null;
   if (reciter && !reciterHasWordTiming(reciter)) return null;
-  return mediaUrl(`/audio/prelude/names/${String(surahNumber).padStart(3, "0")}.mp3`);
+  const file = `${String(surahNumber).padStart(3, "0")}.mp3`;
+  const lang = SURAH_NAME_MEANING_LANGS.includes(announcementLang) ? `${announcementLang}/` : "";
+  return mediaUrl(`/audio/prelude/names/${lang}${file}`);
 }
 
 /**
