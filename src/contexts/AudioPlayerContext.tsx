@@ -1731,6 +1731,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const onPreludeEnded = useCallback(() => {
+    // A prelude's meaning is being read (the Isti'adhah's prelude, paused
+    // just before its end, still fires `ended`): on only once it is over.
+    if (meaningRef.current?.then === "prelude") return;
     // Meaning only: the Bismillah's meaning first (the screen stays on it).
     const bm = bismillahMeaningRef.current;
     if (meaningOnlyRef.current && isPreludeRef.current && preludeKindRef.current === "bismillah" && bm && !meaningRef.current) {
@@ -2453,7 +2456,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         onPause={(e) => {
           const el = e.currentTarget;
           alog(`pause event ${elInfo("prelude", el)} userPaused=${userPausedRef.current}`);
-          if (isPreludeRef.current && el.paused && !el.ended && el.getAttribute("src")) {
+          // (Paused for the Isti'adhah's meaning: not that.)
+          if (isPreludeRef.current && !meaningRef.current && el.paused && !el.ended && el.getAttribute("src")) {
             if (!userPausedRef.current) interruptedRef.current = Date.now();
             setIsPlaying(false);
           }
