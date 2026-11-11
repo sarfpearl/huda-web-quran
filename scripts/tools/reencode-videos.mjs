@@ -41,6 +41,20 @@
  *     The master is the source; it passes on VMAF alone. Then re-run
  *     video-manifest.mjs so the app starts asking for them.
  *
+ * Letterboxed clips (rendered with black bars inside the 16:9 frame; the app
+ * shows them object-cover, so a phone sees the bars above and below):
+ *   node scripts/tools/reencode-videos.mjs --crops=scripts/tools/letterbox-crops.json
+ *   node scripts/tools/reencode-videos.mjs --crops=… --encode
+ *   node scripts/tools/reencode-videos.mjs --crops=… --upload [--execute]
+ *     Keys = the file's keys; each value is the picture area (w:h:x:y) in the
+ *     master. The master (else R2's copy) is cropped to it, 2 px further in on
+ *     each side with a bar, scaled to fill the frame and centre-cut back to
+ *     the frame's size. VMAF compares against the source with the same crop
+ *     and scale, so it measures the encode alone; a clip passes on VMAF and on
+ *     being no larger than R2's copy at the same rung. A clip whose recorded
+ *     crop changed is re-encoded without --force. Then bump each key in
+ *     src/lib/data/videoVersions.ts — the picture changed.
+ *
  * Options:
  *   --only=<substring>     only paths containing it (e.g. --only=002-al-baqarah)
  *   --vmaf=88              quality target (VMAF 0–100, vs the source); default 88
@@ -101,6 +115,10 @@ const LADDER_720 = opt("ladder-720", "1M,1.5M,2M,3M,4M").split(",");
 const MAX_HEIGHT = Number(opt("max-height", "1080"));
 const MIN_VMAF = Number(opt("vmaf", "88"));
 const JOBS = Math.max(1, Number(opt("jobs", "2")));
+// --crops=<json>: { "/videos/…mp4": "w:h:x:y" } — the picture inside the bars.
+const CROPS = opt("crops", "")
+  ? Object.fromEntries(Object.entries(JSON.parse(fs.readFileSync(path.resolve(opt("crops", "")), "utf8"))).filter(([k]) => k.startsWith("/videos/")))
+  : null;
 
 // ── env (same loader as upload-to-r2.mjs) ────────────────────────────────────
 for (const f of [".env.local", ".env"]) {
@@ -279,7 +297,7 @@ function saveReport(report) {
 
 // ── 1. inventory ─────────────────────────────────────────────────────────────
 async function inventory() {
-  const keys = NEW ? registryVideos() : referencedVideos();
+  const keys = CROPS ? Object.keys(CROPS).filter((k) => !ONLY || k.includes(ONLY)).sort() : NEW ? registryVideos() : referencedVideos();
   const rows = [];
   const candidates = [];
   for (const key of keys) {
@@ -319,24 +337,45 @@ async function inventory() {
 }
 
 // ── 2. encode ────────────────────────────────────────────────────────────────
+/**
+ * --crops: cut the bars off and fill the frame (object-cover, centred). The
+ * picture area is moved 2 px in on each side that has a bar, so no dark edge
+ * row from the bar's soft border survives the upscale.
+ */
+function fillFilter(info, crop) {
+  let [w, h, x, y] = crop.split(":").map(Number);
+  const m = 2;
+  if (x > 0) (x += m), (w -= m);
+  if (x + w < info.width) w -= m;
+  if (y > 0) (y += m), (h -= m);
+  if (y + h < info.height) h -= m;
+  const outH = Math.min(info.height, MAX_HEIGHT);
+  const outW = Math.round((info.width * outH) / info.height / 2) * 2;
+  return `crop=${w}:${h}:${x}:${y},scale=${outW}:${outH}:force_original_aspect_ratio=increase:flags=lanczos,crop=${outW}:${outH},setsar=1`;
+}
+
 /** Encode `src` capped at `maxrate`; returns { file, size, vmaf }. */
-async function encodeAt(src, info, maxrate, out) {
+async function encodeAt(src, info, maxrate, out, crop) {
   const tall = info.height > MAX_HEIGHT;
   const tmp = out.replace(/\.mp4$/, `.${maxrate}.part.mp4`);
+  const vf = crop ? fillFilter(info, crop) : tall ? `scale=-2:${MAX_HEIGHT}:flags=lanczos` : null;
   await run("ffmpeg", [
     "-y", "-v", "error", "-i", src,
     "-map", "0:v:0", "-an", // muted background loop: the audio track is never heard
     "-c:v", "libx264", "-preset", "veryslow", // ~5–10% smaller than slow at the same quality; only costs encode time
     "-tune", "film", "-profile:v", "high", "-pix_fmt", "yuv420p",
     "-crf", String(CRF), "-maxrate", maxrate, "-bufsize", `${parseFloat(maxrate) * 2}M`,
-    ...(tall ? ["-vf", `scale=-2:${MAX_HEIGHT}:flags=lanczos`] : []),
+    ...(vf ? ["-vf", vf] : []),
     "-movflags", "+faststart", "-tag:v", "avc1",
     tmp,
   ]);
-  // VMAF (perceptual, 0–100) against the source, at the source's size.
+  // VMAF (perceptual, 0–100) against the source, at the source's size — or,
+  // cropped, against the source put through the same crop and scale.
   const { err } = await run("ffmpeg", [
     "-v", "info", "-i", tmp, "-i", src, "-lavfi",
-    `[0:v]scale=${info.width}:${info.height}:flags=bicubic,setpts=PTS-STARTPTS[d];[1:v]setpts=PTS-STARTPTS[r];[d][r]libvmaf=n_threads=4`,
+    crop
+      ? `[0:v]setpts=PTS-STARTPTS[d];[1:v]${fillFilter(info, crop)},setpts=PTS-STARTPTS[r];[d][r]libvmaf=n_threads=4`
+      : `[0:v]scale=${info.width}:${info.height}:flags=bicubic,setpts=PTS-STARTPTS[d];[1:v]setpts=PTS-STARTPTS[r];[d][r]libvmaf=n_threads=4`,
     "-f", "null", "-",
   ]);
   const vmaf = Number((err.match(/VMAF score: ([\d.]+)/) || [])[1]);
@@ -347,7 +386,8 @@ async function encodeOne(row, report) {
   const { key } = row;
   const out = path.join(ENCODED, key);
   const prev = report[key];
-  if (!FORCE && prev?.encoded && fs.existsSync(out)) {
+  const crop = CROPS?.[key];
+  if (!FORCE && prev?.encoded && fs.existsSync(out) && (!crop || prev.crop === crop)) {
     process.stdout.write(`– ${key}  encoded before (${prev.pass ? "ready" : prev.why}) — --force to redo\n`);
     return;
   }
@@ -359,7 +399,8 @@ async function encodeOne(row, report) {
   // Source: the local master if it is the file R2 has (or, --new, the master
   // being added), else R2's copy (kept in .media-work/originals as the backup
   // of what is being replaced).
-  const src = row.local && (NEW || row.localSize === row.r2Size) ? row.local : path.join(ORIGINALS, key);
+  // --crops: the master, a better start than R2's re-encode for the upscale.
+  const src = row.local && (NEW || crop || row.localSize === row.r2Size) ? row.local : path.join(ORIGINALS, key);
   if (src !== row.local && !fs.existsSync(src)) {
     process.stdout.write(`↓ ${key}\n`);
     await download(key, src);
@@ -372,11 +413,14 @@ async function encodeOne(row, report) {
   // Quality ladder: the lowest cap whose result still looks like the source
   // (VMAF ≥ target). Detailed, fast-moving scenes (palm leaves, grass) need
   // more; calm skies settle at the first rung.
-  const ladder = (outH > 720 ? LADDER_1080 : LADDER_720).filter((r) => parseFloat(r) * 1e6 < info.bitrate * 0.9);
+  const rungs = outH > 720 ? LADDER_1080 : LADDER_720;
+  // A crop is a new picture (upscaled, so it may need more than the source's
+  // rate): the whole ladder, VMAF picks the rung.
+  const ladder = crop ? rungs : rungs.filter((r) => parseFloat(r) * 1e6 < info.bitrate * 0.9);
   process.stdout.write(`⚙ ${key}  ${info.width}×${info.height} ${mbps(info.bitrate)}  ladder ${ladder.join(" ") || "—"}\n`);
   let best = null;
   for (const rate of ladder) {
-    const r = await encodeAt(src, info, rate, out);
+    const r = await encodeAt(src, info, rate, out, crop);
     process.stdout.write(`    ${rate.padEnd(5)} ${mb(r.size).padStart(8)}  VMAF ${r.vmaf.toFixed(1)}\n`);
     if (best) fs.rmSync(best.file, { force: true });
     best = { ...r, rate };
@@ -396,8 +440,10 @@ async function encodeOne(row, report) {
     return;
   }
   fs.renameSync(best.file, out);
-  // A new clip replaces nothing worth keeping: it only has to look right.
-  const smaller = NEW || best.size < srcSize * 0.8;
+  // A new clip replaces nothing worth keeping, and a cropped one replaces a
+  // wrong picture: they only have to look right (the --crops upload dry run
+  // shows R2's total before and after).
+  const smaller = NEW || crop || best.size < srcSize * 0.8;
   const pass = smaller && best.vmaf >= MIN_VMAF;
   report[key] = {
     encoded: true,
@@ -415,20 +461,25 @@ async function encodeOne(row, report) {
     pass,
     why: pass ? undefined : !smaller ? "under 20% smaller — not worth replacing" : `VMAF ${best.vmaf.toFixed(1)} < ${MIN_VMAF} even at ${best.rate}`,
     uploaded: false,
+    ...(crop ? { crop, r2Size: row.r2Size } : {}),
   };
   process.stdout.write(`  ${pass ? "✓" : "✗"} ${mb(srcSize)} → ${mb(best.size)} at ${best.rate}  VMAF ${best.vmaf.toFixed(1)}\n`);
 }
 
 // ── 3. upload ────────────────────────────────────────────────────────────────
 async function upload(report) {
-  const ready = Object.entries(report).filter(([key, r]) => r.pass && (FORCE || !r.uploaded) && (!ONLY || key.includes(ONLY)));
+  const ready = Object.entries(report).filter(([key, r]) => r.pass && (FORCE || !r.uploaded) && (!ONLY || key.includes(ONLY)) && (!CROPS || r.crop === CROPS[key]));
   if (!ready.length) {
     console.log("Nothing to upload (run --encode first, or everything is uploaded).");
     return;
   }
   const total = ready.reduce((a, [, r]) => a + r.outSize, 0);
   console.log(`${ready.length} clips, ${mb(total)} to upload${EXECUTE ? "" : " — DRY RUN (add --execute to upload)"}:`);
-  for (const [key, r] of ready) console.log(`  ${key}  ${mb(r.srcSize)} → ${mb(r.outSize)}`);
+  for (const [key, r] of ready) console.log(`  ${key}  ${mb(r.r2Size ?? r.srcSize)} → ${mb(r.outSize)}`);
+  if (CROPS) {
+    const was = ready.reduce((a, [, r]) => a + (r.r2Size ?? 0), 0);
+    console.log(`R2 now holds ${mb(was)} for these; after: ${mb(total)} (${total > was ? "+" : ""}${mb(total - was)}).`);
+  }
   if (!EXECUTE) return;
 
   const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = process.env;

@@ -30,7 +30,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       English: "Surah Al-Fatihah — The Opening", and likewise per language).
       Applies wherever the announcement plays: Surah start and Surah changes
       inside a Juz, including with the screen locked.
-- [ ] **Background videos with black bars at top / bottom (letterbox).** Some
+- [x] **Background videos with black bars at top / bottom (letterbox).** Some
       Surah background videos show black bars above and below the picture
       (owner saw it but has no screenshot of which one). Check **every** clip
       in `videoManifest.ts` (e.g. ffmpeg `cropdetect` on each R2 / live-copy
@@ -38,6 +38,13 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       fill the frame, re-encode, upload to R2 and bump their `?v=` in
       `videoVersions.ts`. Known one: Surah 3 set 2 (see Next tasks #3).
       Owner reviews the list / before-after before upload.
+      **Done 2026-11-11:** all 902 clips scanned on R2; 62 thematic set clips
+      had bars (80–140 px top/bottom, or a frame on all sides; the whole-Surah
+      clips cropdetect flagged are only dark scenes). List in
+      `scripts/tools/letterbox-crops.json`; cropped from the masters, filled,
+      re-encoded with `reencode-videos.mjs --crops=…` (VMAF ≥ 88), uploaded,
+      `?v=2`. R2: 283.6 → 268.6 MB. Old R2 copies backed up to
+      `.media-work/r2-replaced-2026-11-11/`.
 - [ ] **Bismillah: the Tamil translation doesn't highlight.** When
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today
