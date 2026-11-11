@@ -58,6 +58,21 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       which audio element or source is playing (`?debug=audio` log), and fix
       it so only one audio plays and the screen always shows what is playing.
 
+### Added 2026-11-11 (playback QA — `docs/PLAYBACK_QA_REPORT_2026_11_11.md`)
+
+- [ ] **Word highlight for the 273 ayahs without usable word timing**
+      (Abdul Basit 135, Alafasy 54, Shatri 42, Shuraim 19, Tunaiji 13,
+      Minshawi 8, Sudais 2 — e.g. Alafasy 93:6, 93:7, 93:9): their QDC
+      segments are displaced, so no word lights. Re-place them acoustically
+      (`scripts/qa/repair-timings.cjs`), never guessed.
+- [ ] **Alafasy word timings run ~0.5 s ahead of the voice** in places
+      (93:3, 93:4 …): the highlight leads the recitation inside the ayah.
+- [ ] **Meaning word-timings for Surahs 21–66** (Tamil running; then English,
+      `build-meaning-timings.mjs --surah=21-66 --lang=en`) — without them the
+      meaning is read but its words don't light.
+- [ ] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
+      limited; a stream stalled 155 s during testing).
+
 ### Meaning audio — where it stands (updated 2026-11-06)
 
 After each ayah the recitation stops and its meaning is read aloud (Gemini
