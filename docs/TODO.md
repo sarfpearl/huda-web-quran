@@ -45,6 +45,19 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       re-encoded with `reencode-videos.mjs --crops=…` (VMAF ≥ 88), uploaded,
       `?v=2`. R2: 283.6 → 268.6 MB. Old R2 copies backed up to
       `.media-work/r2-replaced-2026-11-11/`.
+- [x] **Fake "NATIONAL GEOGRAPHIC" / "8K" / "16:K" watermarks in clips.** AI
+      rendering burned fake logos into some thematic set clips.
+      **Done 2026-11-11:** all 902 clips scanned on R2 for overlays that stay
+      put while the scene moves, flagged ones checked by eye. 34 set keys
+      (6 masters) had them; each is cropped clear of the marks and filled,
+      re-encoded (VMAF ≥ 88), uploaded, `?v=` bumped. List in
+      `scripts/tools/watermark-crops.json`. surah_6/set_21's logo was already
+      cut off by its letterbox crop. R2: 107.3 → 106.0 MB. Old R2 copies
+      backed up to `.media-work/r2-replaced-2026-11-11-watermarks/`.
+- [ ] **Background videos still letterboxed:** 7 sets sharing one palm-valley
+      master (surah_6/set_15, 18/set_06, 20/set_06, 21/set_09, 23/set_03,
+      26/set_01, 95/set_01) still show black bars on R2 — not in
+      `letterbox-crops.json`. Owner OK before upload.
 - [ ] **Bismillah: the Tamil translation doesn't highlight.** When
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today
