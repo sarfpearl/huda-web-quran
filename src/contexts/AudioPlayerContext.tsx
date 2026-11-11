@@ -2011,15 +2011,41 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cancelMeaning]);
 
+  // A meaning clip that failed to load or start is tried once more before the
+  // recitation goes on without it (a skipped meaning sounded like ayahs read
+  // with no translation between them). 0 = not yet, 1 = retry due, 2 = retried.
+  // True while that one try is still to come (a failure reports twice: the
+  // element's error and play()'s rejection).
+  const meaningRetryRef = useRef(0);
+  const retryMeaning = useCallback((): boolean => {
+    const mel = meaningAudioRef.current;
+    const m = meaningRef.current;
+    const url = mel?.getAttribute("src");
+    if (meaningRetryRef.current === 1) return true;
+    if (!mel || !m || !url || meaningRetryRef.current === 2) return false;
+    meaningRetryRef.current = 1;
+    setTimeout(() => {
+      if (meaningRef.current !== m) return;
+      meaningRetryRef.current = 2;
+      mel.src = url;
+      mel.load();
+      mel.play().catch(() => { if (meaningRef.current === m) finishMeaningRef.current(); });
+    }, 400);
+    return true;
+  }, []);
+  const finishMeaningRef = useRef<() => void>(() => {});
   const startMeaning = useCallback(
     (url: string, key: string, then: MeaningThen, resumeAt?: number, showAt?: number) => {
       const mel = meaningAudioRef.current;
       if (!mel) return;
       // Set first: the recitation's own pause / seek events check it.
       meaningRef.current = { key, then };
+      meaningRetryRef.current = 0;
       setMeaningClip({ key });
       setMeaningCurrentTime(0);
-      if (mel.getAttribute("src") !== url) {
+      // (A clip fetched ahead whose load failed — a dropped connection — is
+      // loaded again: playing it as it was skipped that ayah's meaning.)
+      if (mel.getAttribute("src") !== url || mel.error) {
         mel.src = url;
         mel.load();
       } else if (mel.currentTime > 0) {
@@ -2028,6 +2054,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Can't start (no tap yet on iOS, say): carry on without it — or, with
       // meaning only (nothing else to hear), wait for play.
       mel.play().catch((e: unknown) => {
+        if (meaningRef.current?.key !== key) return;
+        // Not refused by the browser (a load that failed or was cut off): once more.
+        if (!(e instanceof DOMException && e.name === "NotAllowedError") && retryMeaning()) return;
         if (!meaningOnlyRef.current) return finishMeaning();
         // Aborted by the next clip's load: that one plays.
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -2055,9 +2084,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         }
       }
     },
-    [finishMeaning]
+    [finishMeaning, retryMeaning]
   );
   startMeaningRef.current = startMeaning;
+  finishMeaningRef.current = finishMeaning;
 
   checkMeaningCueRef.current = (t) => {
     if (ayahSeqRef.current || isPreludeRef.current || meaningRef.current) return false;
@@ -2422,6 +2452,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // A pending forced start applies duration + time together on
       // loadedmetadata; updating duration alone first flashed a wrong ayah.
       if (forcedSeekPendingRef.current) return;
+      // Safari can report Infinity while a stream loads: the ring and slider
+      // (time ÷ duration) then sat at 0 for the whole Surah. Keep the length
+      // known so far; a real one follows with the next durationchange.
+      if (e.currentTarget.duration === Infinity) return;
       const rawDur = e.currentTarget.duration || 0;
       const offset = currentTrimOffsetRef.current;
       setDuration(Math.max(0, rawDur - offset));
@@ -2507,8 +2541,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           if (!meaningRef.current && e.currentTarget.getAttribute("src") !== SILENT_WAV) e.currentTarget.pause();
         }}
         onEnded={finishMeaning}
-        // A missing clip just skips its meaning.
-        onError={() => { if (meaningRef.current) finishMeaning(); }}
+        // A clip that fails to load is tried once more, then skipped.
+        onError={() => { if (meaningRef.current && !retryMeaning()) finishMeaning(); }}
       />
 
       {/* Persistent HTML5 audio elements for direct local MP3 audio (A is the
