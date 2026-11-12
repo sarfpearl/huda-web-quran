@@ -362,7 +362,7 @@ export function CompactBayanPlayer({
   const stripTitle = useArabicFits([displayTitle, surah?.arabicName, footerSlot]);
   const currentSurah = activeSurah ?? (isSurahTrackId(bayan.id) ? getSurahByTrackId(bayan.id) : undefined);
   const currentTime = isCurrentTrack ? player.currentTime : 0;
-  const totalDuration = isCurrentTrack && player.duration > 0
+  const totalDuration = isCurrentTrack && player.duration > 0 && Number.isFinite(player.duration)
     ? player.duration
     : (bayan.durationSeconds || (currentSurah ? SURAH_DURATIONS[currentSurah.number] : 300));
 

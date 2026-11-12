@@ -52,3 +52,5 @@ user_candidates/
 # Python bytecode caches (scripts/qa, docs spikes)
 __pycache__/
 *.pyc
+/.next-qa
+/.next-qa-prod

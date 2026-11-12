@@ -22,6 +22,7 @@ import { STANDALONE_SILENT, useAudioPlayer, type EndMode, type MeaningCue } from
 import {
   MEANING_AUDIO_PUBLISHED,
   hasMeaningAudio,
+  istiadhahMeaningUrl,
   isMeaningLang,
   meaningAudioUrl,
   meaningStopsFor,
@@ -58,6 +59,7 @@ import {
   quranJuzToTrackForReciter,
   buildJuzAyahUrls,
   buildJuzPreludes,
+  setSurahNameLang,
   getJuzAyahPairs,
   getDefaultReciter,
   getReciterById,
@@ -137,6 +139,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
   // The ayah-meaning language (English, Tamil, Urdu…).
   const [translationLang, setTranslationLang] = useState<TranslationLang>("en");
+  // The Surah-name announcement says the name's meaning in this language too.
+  useEffect(() => setSurahNameLang(translationLang), [translationLang]);
   // The app's own labels: English unless picked otherwise — never follows
   // the meaning language (picking a Tamil meaning keeps an English app).
   const [language, setLanguage] = useState<UiLang>("en");
@@ -351,7 +355,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           : [activeBayan];
         player.playBayan(activeBayan, contextList, { startAt: targetTimeOrIndex });
       } else {
-        player.seek(targetTimeOrIndex);
+        // An ayah's timed start can lie before the previous ayah's meaning
+        // stop: landing there read the previous ayah's meaning after « Next
+        // Ayah ». Start just past that stop (before this ayah's voice).
+        const cue = meaningHoldRef.current?.find((c) => c.at > targetTimeOrIndex);
+        const past = cue && cue.showAt !== undefined && targetTimeOrIndex > cue.showAt ? cue.at + 0.02 : null;
+        player.seek(past ?? targetTimeOrIndex);
       }
     }
   };
@@ -858,6 +867,22 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncGapKey, player.isPlaying]);
 
+  // Meaning audio: the recitation stops for an ayah's meaning at the ayah's
+  // measured end (the cue's `at`), but the next ayah's timed words often start
+  // before it (a quarter of all boundaries; Alafasy 93:6 by 1 s, Abdul Basit by
+  // up to 2 s) — the screen moved on to the next ayah, then back for the
+  // meaning, as if the next ayah were recited first. Until the stop, the screen
+  // holds the ayah whose meaning comes next (the cues of the last render).
+  const meaningHoldRef = useRef<MeaningCue[] | null>(null);
+  const heldCue = (() => {
+    const cues = meaningHoldRef.current;
+    if (!cues?.length || isJuz || player.isPrelude || player.meaningClip) return null;
+    const t = player.currentTime;
+    const cue = cues.find((c) => c.at > t);
+    return cue && cue.showAt !== undefined && t > cue.showAt ? cue : null;
+  })();
+  const syncClock = heldCue?.showAt ?? player.currentTime;
+
   const {
     verses,
     segments,
@@ -880,7 +905,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   } = useQuranVerseSync({
     surahNumber: isJuz ? null : (activeSurah?.number ?? null),
     categorySlug: activeBayan?.category?.slug || "quran-recitation",
-    currentTime: player.currentTime,
+    currentTime: syncClock,
     duration: player.duration,
     isPlaying: player.isPlaying,
     onSeekToVerse: handleSeekToVerse,
@@ -924,6 +949,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       return setTimeBoundary(getNextMeaningBoundary(activeMeaningWords, player.meaningCurrentTime));
     }
     if (!isJuz) {
+      // Held for a meaning: nothing changes on screen until its stop.
+      if (heldCue) return setTimeBoundary(heldCue.at);
       const clock = player.isPrelude ? player.preludeCurrentTime : player.currentTime;
       return setTimeBoundary(
         player.isPrelude ? nextWordBoundary(currentSegment, clock) : nextTimelineBoundary(segments, currentSegment, clock),
@@ -943,7 +970,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     setTimeBoundary, isJuz, segments, currentSegment, juzAyahVerse, juzClipWindow, juzWordSync.hasWordTiming,
     player.isPlaying, player.isPrelude, player.preludeCurrentTime, player.currentTime, player.duration, player.ayahSequence?.preType,
     player.meaningClip, player.meaningCurrentTime, activeMeaningWords,
-    juzPreType, juzPreSegment,
+    juzPreType, juzPreSegment, heldCue,
   ]);
   // Translation off = Arabic only: no meaning voice either. Reading mode shows
   // only the Arabic Mushaf text (the Translate button is hidden there), so the
@@ -981,8 +1008,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // short and let others' next ayah start first); without it, just after the
   // last timed word. The last ayah's meaning comes with the track's end.
   // Needs word timings — an Audio Only reciter's ayah ends are estimates.
+  // The reciter's, for the whole Surah: `hasWordTiming` is the ayah being
+  // recited, false on one whose words aren't timed (Alafasy 93:6) — that
+  // dropped every cue and its meaning was never read.
+  const surahWordSync = Boolean(activeSurah && reciterHasWordTimingFor(selectedReciter, activeSurah.number));
   const { setMeaningCues, setAyahMeaning } = player;
-  const cueSurah = meaningOn && !isJuz && activeSurah && hasWordTiming ? activeSurah : null;
+  const cueSurah = meaningOn && !isJuz && activeSurah && surahWordSync ? activeSurah : null;
   const meaningCues = useMemo(() => {
     if (!cueSurah) return null;
     const stops = meaningStopsFor(selectedReciter.id, cueSurah.number);
@@ -1005,6 +1036,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     // meaningFor reads meaningOn, the voice and the language.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cueSurah, segments, selectedReciter.id, meaningPrefs.voice, translationLang]);
+  // (Meaning only skips the recitation: nothing to hold the screen over.)
+  meaningHoldRef.current = meaningPrefs.only ? null : meaningCues;
   useEffect(() => {
     setMeaningCues(meaningCues);
     return () => setMeaningCues(null);
@@ -1015,7 +1048,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const meaningAtEndRef = useRef<(index: number | null) => { url: string; key: string } | null>(() => null);
   meaningAtEndRef.current = (index) => {
     if (index === null) {
-      if (isJuz || !activeSurah || !hasWordTiming) return null;
+      if (isJuz || !activeSurah || !surahWordSync) return null;
       // Read once per pass: the player keeps track.
       return meaningFor(activeSurah.number, activeSurah.verses);
     }
@@ -1053,6 +1086,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     setBismillahMeaning(bismillahUrl ? { url: bismillahUrl, key: "bismillah" } : null);
   }, [setBismillahMeaning, bismillahUrl]);
   useEffect(() => () => setMeaningOnly(false), [setMeaningOnly]);
+  // Al-Fatihah opens with the Isti'adhah: its meaning too, before the Bismillah.
+  const { setIstiadhahMeaning } = player;
+  const istiadhahUrl = meaningOn ? istiadhahMeaningUrl(meaningPrefs.voice, translationLang) : null;
+  useEffect(() => {
+    setIstiadhahMeaning(istiadhahUrl ? { url: istiadhahUrl, key: "istiadhah" } : null);
+  }, [setIstiadhahMeaning, istiadhahUrl]);
   // Wanted where it can't be: say once that the recitation plays instead
   // (no Word Sync in this voice has its own notice, below).
   const meaningOnlyGapKey =
@@ -1069,7 +1108,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
   // A Surah without word timings in this voice: say once why it stays silent.
   const meaningGapKey =
-    meaningOn && !isJuz && activeSurah && !hasWordTiming && hasMeaningAudio(meaningPrefs.voice, translationLang, activeSurah.number)
+    meaningOn && !isJuz && activeSurah && !surahWordSync && hasMeaningAudio(meaningPrefs.voice, translationLang, activeSurah.number)
       ? `${selectedReciter.id}:${activeSurah.number}`
       : null;
   const lastMeaningGapRef = useRef<string | null>(null);
@@ -1774,7 +1813,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         key={readingActive ? "reading" : "scene"}
         currentVerse={isJuz ? (juzPreSegment ? null : juzAyahVerse) : currentVerse}
         currentSegment={isJuz ? juzPreSegment : currentSegment}
-        currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+        currentTime={player.isPrelude ? player.preludeCurrentTime : syncClock}
         isPlaying={player.isPlaying}
         language={language}
         translationLang={translationLang}
@@ -1834,7 +1873,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         qaHud={
           showQaHud && !isJuz && (
             <SyncQADebugHUD
-              currentTime={player.isPrelude ? player.preludeCurrentTime : player.currentTime}
+              currentTime={player.isPrelude ? player.preludeCurrentTime : syncClock}
               activeSurah={activeSurah}
               currentVerse={currentVerse}
               currentSegment={currentSegment}

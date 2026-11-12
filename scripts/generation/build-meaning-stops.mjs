@@ -149,7 +149,14 @@ for (const reciter of reciters) {
       const speech = Float64Array.from(db).sort()[Math.floor(db.length * 0.9)];
       const stops = [];
       for (let k = 0; k < verses.length - 1; k++) {
-        const nextStart = verses[k + 1].segments?.[0]?.startSec ?? verses[k + 1].timestampFromSec;
+        // The next ayah's first timed word — unless it lies away from that
+        // ayah's own window (displaced data: Alafasy 29:11's first word sits
+        // 50 s early, in ayah 10): the stop landed inside the ayah, its
+        // meaning read halfway and the rest recited with none. Its window then.
+        const next = verses[k + 1];
+        const first = next.segments?.[0]?.startSec;
+        const nextStart =
+          typeof first === "number" && Math.abs(first - next.timestampFromSec) <= 1 ? first : next.timestampFromSec;
         stops.push(stopBetween(db, nextStart, speech));
       }
       (out[reciter] ??= {})[surah] = stops;

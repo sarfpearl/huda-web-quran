@@ -22,7 +22,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
 
 ### Added 2026-11-09
 
-- [ ] **Surah name announcement should include the name's meaning.** When a
+- [x] **Surah name announcement should include the name's meaning.** When a
       Surah starts, the spoken "Surah …" announcement (PR #180, #181) says only
       the name. Each Surah name has a meaning — e.g. Surah Al-Fatihah = "The
       Opening" — and the announcement should say the name **with its meaning,
@@ -30,7 +30,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       English: "Surah Al-Fatihah — The Opening", and likewise per language).
       Applies wherever the announcement plays: Surah start and Surah changes
       inside a Juz, including with the screen locked.
-- [ ] **Background videos with black bars at top / bottom (letterbox).** Some
+- [x] **Background videos with black bars at top / bottom (letterbox).** Some
       Surah background videos show black bars above and below the picture
       (owner saw it but has no screenshot of which one). Check **every** clip
       in `videoManifest.ts` (e.g. ffmpeg `cropdetect` on each R2 / live-copy
@@ -38,22 +38,60 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       fill the frame, re-encode, upload to R2 and bump their `?v=` in
       `videoVersions.ts`. Known one: Surah 3 set 2 (see Next tasks #3).
       Owner reviews the list / before-after before upload.
+      **Done 2026-11-11:** all 902 clips scanned on R2; 62 thematic set clips
+      had bars (80–140 px top/bottom, or a frame on all sides; the whole-Surah
+      clips cropdetect flagged are only dark scenes). List in
+      `scripts/tools/letterbox-crops.json`; cropped from the masters, filled,
+      re-encoded with `reencode-videos.mjs --crops=…` (VMAF ≥ 88), uploaded,
+      `?v=2`. R2: 283.6 → 268.6 MB. Old R2 copies backed up to
+      `.media-work/r2-replaced-2026-11-11/`.
+- [x] **Fake "NATIONAL GEOGRAPHIC" / "8K" / "16:K" watermarks in clips.** AI
+      rendering burned fake logos into some thematic set clips.
+      **Done 2026-11-11:** all 902 clips scanned on R2 for overlays that stay
+      put while the scene moves, flagged ones checked by eye. 34 set keys
+      (6 masters) had them; each is cropped clear of the marks and filled,
+      re-encoded (VMAF ≥ 88), uploaded, `?v=` bumped. List in
+      `scripts/tools/watermark-crops.json`. surah_6/set_21's logo was already
+      cut off by its letterbox crop. R2: 107.3 → 106.0 MB. Old R2 copies
+      backed up to `.media-work/r2-replaced-2026-11-11-watermarks/`.
+- [ ] **Background videos still letterboxed:** 7 sets sharing one palm-valley
+      master (surah_6/set_15, 18/set_06, 20/set_06, 21/set_09, 23/set_03,
+      26/set_01, 95/set_01) still show black bars on R2 — not in
+      `letterbox-crops.json`. Owner OK before upload.
 - [x] **Bismillah: the Tamil translation doesn't highlight.** When
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today
       they show but never highlight.
-- [ ] **Al-Fatihah: the Isti'adhah meaning is shown but not read aloud.**
+- [x] **Al-Fatihah: the Isti'adhah meaning is shown but not read aloud.**
       For Surah Al-Fatihah, the meaning of "A'udhu billahi minash shaitanir
       rajeem" appears on screen, but the meaning audio doesn't read it. It
       should be read aloud too (Tamil / English, both voices), like every
       ayah's meaning.
-- [ ] **Investigate: audio sometimes plays in the background from an
+      Done 2026-11-10: `build-meaning-audio.mjs --istiadhah` made the 4
+      clips (`001000.mp3`, "ayah 0" of Surah 1, $0.004), read after the
+      Isti'adhah prelude in Surah mode and in the Juz 1 sequence.
+- [x] **Investigate: audio sometimes plays in the background from an
       unknown place.** During quick random testing (tapping around fast),
       something sometimes keeps playing in the background, and there is no
       way to tell which Surah / ayah / audio it is. Reproduce it (rapid
       Surah / ayah / reciter / Juz switches, meaning audio on, prelude), find
       which audio element or source is playing (`?debug=audio` log), and fix
       it so only one audio plays and the screen always shows what is playing.
+
+### Added 2026-11-11 (playback QA — `docs/PLAYBACK_QA_REPORT_2026_11_11.md`)
+
+- [ ] **Word highlight for the 273 ayahs without usable word timing**
+      (Abdul Basit 135, Alafasy 54, Shatri 42, Shuraim 19, Tunaiji 13,
+      Minshawi 8, Sudais 2 — e.g. Alafasy 93:6, 93:7, 93:9): their QDC
+      segments are displaced, so no word lights. Re-place them acoustically
+      (`scripts/qa/repair-timings.cjs`), never guessed.
+- [ ] **Alafasy word timings run ~0.5 s ahead of the voice** in places
+      (93:3, 93:4 …): the highlight leads the recitation inside the ayah.
+- [ ] **Meaning word-timings for Surahs 21–66** (Tamil running; then English,
+      `build-meaning-timings.mjs --surah=21-66 --lang=en`) — without them the
+      meaning is read but its words don't light.
+- [ ] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
+      limited; a stream stalled 155 s during testing).
 
 ### Meaning audio — where it stands (updated 2026-11-06)
 
