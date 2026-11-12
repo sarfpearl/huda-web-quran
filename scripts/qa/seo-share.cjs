@@ -7,10 +7,10 @@
 //
 // Usage: node scripts/qa/seo-share.cjs [base-url]   (default: the live site)
 // Locally (a separate build dir, so a running `next dev` keeps working):
-//   NEXT_DIST_DIR=.next-prod NEXT_PUBLIC_SITE_URL=https://huda-web-quran.vercel.app next build
+//   NEXT_DIST_DIR=.next-prod NEXT_PUBLIC_SITE_URL=https://www.hudaguidance.com next build
 // then the "prod" launch config (`next start -p 3100`) and pass http://localhost:3100.
-const BASE = (process.argv[2] || "https://huda-web-quran.vercel.app").replace(/\/$/, "");
-const SITE = "https://huda-web-quran.vercel.app";
+const BASE = (process.argv[2] || "https://www.hudaguidance.com").replace(/\/$/, "");
+const SITE = "https://www.hudaguidance.com";
 
 const PAGES = [
   { path: "/", canonical: SITE, ld: "WebSite" },

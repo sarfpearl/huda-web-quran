@@ -715,7 +715,7 @@ const SHARE = (
 function UrlPill({ children }: { children?: ReactNode }) {
   return (
     <span className="flex h-5 min-w-0 flex-1 items-center gap-1 rounded-full bg-white/10 px-2 text-[8px] text-white/60">
-      <span className="truncate">huda-web-quran.vercel.app</span>
+      <span className="truncate">hudaguidance.com</span>
       {children}
     </span>
   );
@@ -737,7 +737,7 @@ function Toolbars({ chrome, hot, hold = false }: { chrome: Chrome; hot: boolean;
             }`}
           >
             <span className="shrink-0">≡</span>
-            <span className="truncate">huda-web-quran.vercel.app</span>
+            <span className="truncate">hudaguidance.com</span>
             <span className="ml-auto shrink-0">↻</span>
             {hot && <Tap hold={hold} className="left-1/2 top-1/2" />}
           </span>

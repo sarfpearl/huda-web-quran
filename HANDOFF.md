@@ -4,7 +4,7 @@
 > **Last Updated:** 2026-10-25  
 > **Project Path:** `/Users/pearl-9744/Claude/Projects/huda-web-quran`  
 > **Dev Server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)  
-> **Live Production:** `https://huda-web-quran.vercel.app` (Vercel auto-deploys on push/merge to `main`)  
+> **Live Production:** `https://www.hudaguidance.com` (`hudaguidance.com` and the old `huda-web-quran.vercel.app` redirect here) (Vercel auto-deploys on push/merge to `main`)  
 > **GitHub Repository:** `github.com/sarfpearl/huda-web-quran`  
 
 ---
@@ -20,7 +20,7 @@
 | **`main`** | `5cd1784` — Merge PR #145: thematic set clips shown in Surahs and Juz (Surahs 4–32) |
 | **Latest merged PRs** | #145 thematic set clips shown in Surahs & Juz · #143 lighter R2 encodes, video scrim, R2 audit script · #142 Uthmani font docs · #141 verse word gap · #130 search clear button & voice FAB · #129 fonts self-hosted (`next/font/local`) · #128 handoff snapshot & pipeline status · #127 Android player navigation bar clearance · #126 iOS search alignment, keyboard clearance, voice recognition · #125 Android player dock sizing, keyboard dismissal, scroll conflicts · #124 Share link sent to QuranWBW · #123 Surah 17 Al-Isra videos · #122 IndoPak nastaleeq & weekly check handoff · #121 Surah 16 An-Nahl videos · #120 Surah 15 Al-Hijr videos · #119 weekly IndoPak check · #118 IndoPak `text_indopak_nastaleeq` |
 | **Open PRs** | none — #115 (IndoPak Tajweed prototype) closed unmerged 2026-10-24 after QuranWBW's review; branch `proto/indopak-tajweed` kept for reference |
-| **Production** | [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — auto-deploys `main` |
+| **Production** | [www.hudaguidance.com](https://www.hudaguidance.com) — auto-deploys `main` |
 | **Video Production & R2 Storage** | Thematic sets for 22 Surahs (4–17, 19, 23, 25, 26, 28, 30, 31, 32; 310 clips) shown behind the verse and reused by Juz (PR #145). R2 **4.16 GB / 10 GB** after re-encoding every app clip and deleting the 17 unused objects (PR #143, #147, 2026-10-25) — see §2b |
 
 ---
@@ -350,7 +350,7 @@
 | `R2_BUCKET_NAME` | Local `.env.local` | Cloudflare R2 bucket name (`huda-quran-media`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Production & `.env.local` | Supabase project API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production & `.env.local` | Supabase anonymous client key |
-| `NEXT_PUBLIC_SITE_URL` | Vercel Production (Config) | Canonical site URL `https://huda-web-quran.vercel.app` for sitemap, robots, canonical and `og:url`. Without it they fall back to `http://localhost:3000`. Not needed locally. |
+| `NEXT_PUBLIC_SITE_URL` | Vercel Production (Config) | Canonical site URL `https://www.hudaguidance.com` for sitemap, robots, canonical and `og:url`. Without it they fall back to `http://localhost:3000`. Not needed locally. |
 | `CRON_SECRET` | Vercel Production (optional) | Vercel sends it to `/api/keepalive`; when set, other callers get 401 |
 | `NEXT_PUBLIC_INDOPAK` | Optional | `1` turns on the IndoPak script outside `next dev` — only once the font is licensed |
 
@@ -408,7 +408,7 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 | **Claude** (Claude Code) | Writing and testing code, PRs, this handoff | `sarf.pearl@zohocorp.com` |
 | **Antigravity** (Google AI IDE) | Second AI assistant; this file was first written for it | Account not recorded |
 | **GitHub** | Source code, PRs, history | User `sarfpearl` · repo `sarfpearl/huda-web-quran` (**public**) · commit author `sarf-pearl` |
-| **Vercel** | Hosting; auto-deploys `main`, preview per PR | Team `hu-da-right-guidance` (`team_wteEbzTnEOJuAid754cd4N78`) · project `huda-web-quran` (`prj_OSs76BUbUlrTpgDxbOkJHTDg35Sz`) · `huda-web-quran.vercel.app` |
+| **Vercel** | Hosting; auto-deploys `main`, preview per PR | Team `hu-da-right-guidance` (`team_wteEbzTnEOJuAid754cd4N78`) · project `huda-web-quran` (`prj_OSs76BUbUlrTpgDxbOkJHTDg35Sz`) · `www.hudaguidance.com` (domain bought at GoDaddy 2026-11-12, 3 years, renews Nov 2029; DNS: A `@` → `216.198.79.1`, CNAME `www` → Vercel) |
 | **Cloudflare R2** | All media: artwork, videos, prelude audio, reciter portraits, Maher's full-Juz audio | Bucket `huda-quran-media` · public URL `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` · account ID in `R2_ACCOUNT_ID` |
 | **Supabase** | Surah/Juz views, likes, comments (anonymous RPCs); comment moderation | Project ref `astqipbwohonowaoufwi` |
 | **Google Cloud – Vertex AI (Veo)** | Generating the Surah/Juz background videos (`scripts/generation/generate_vertex_*.mjs`); not used at runtime | Project `gen-lang-client-0172381348` |
