@@ -93,7 +93,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
 - [ ] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
       limited; a stream stalled 155 s during testing).
 
-### Meaning audio — where it stands (updated 2026-11-06)
+### Meaning audio — where it stands (updated 2026-11-12)
 
 After each ayah the recitation stops and its meaning is read aloud (Gemini
 3.8 Flash TTS, voices **Cruz** male / **Lora** female, **Tamil + English**).
@@ -137,7 +137,13 @@ never generate anything per Juz.
   script now waits on 429 and sends more as jobs finish). The AI Studio
   spend cap counts the price **before** the Batch discount (₹1,057 shown for
   ≈ ₹470 real spend), so set the cap about twice the real budget.
-- **Then:** Surahs 2–20 (≈ ₹1,750; run batch first, then the same command with `--split=200`) as the owner's balance allows.
+- **2026-11-12: Surahs 2–20 — all 9,904 clips** (owner added ₹2,000 + ₹270).
+  4–20 in batch with no failures; 2–3 in batch, and the rest with
+  `--split=200`. Cost: $16.96. **The whole Quran (1–114) is now done in all
+  4 voice/language combos.**
+- **Real cost = token price × ≈ ₹97/$ + 18% GST** (≈ ₹115 per $ in the
+  ledger). The script's estimate runs ≈ 18% above the real token use.
+  Quote the owner the GST-inclusive figure up front.
 - **Previews:** if a Vercel preview shows a black background or the meaning
   stays silent, check that the NEXT_PUBLIC_* env vars cover Preview, before
   you blame the code.
