@@ -54,6 +54,8 @@
  *     being no larger than R2's copy at the same rung. A clip whose recorded
  *     crop changed is re-encoded without --force. Then bump each key in
  *     src/lib/data/videoVersions.ts — the picture changed.
+ *     scripts/tools/watermark-crops.json works the same way: there the crop
+ *     leaves out fake logos burned into the picture.
  *
  * Options:
  *   --only=<substring>     only paths containing it (e.g. --only=002-al-baqarah)
