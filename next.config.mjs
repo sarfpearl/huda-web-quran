@@ -14,6 +14,19 @@ const nextConfig = {
       { protocol: "https", hostname: "pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev", pathname: "/assets/images/**" },
     ],
   },
+  // The old Vercel address sends visitors to www.hudaguidance.com, keeping the
+  // path. /api stays put so the keepalive cron isn't redirected. Preview
+  // deployments have their own hosts and are untouched.
+  async redirects() {
+    return [
+      {
+        source: "/:path((?!api/).*)",
+        has: [{ type: "host", value: "huda-web-quran.vercel.app" }],
+        destination: "https://www.hudaguidance.com/:path",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

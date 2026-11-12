@@ -2,7 +2,7 @@
 
 An immersive Holy Quran listening & reading web app, built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS** and **Supabase**. Inspired by `https://tamilfm.co/v/auto`.
 
-**Live:** [huda-web-quran.vercel.app](https://huda-web-quran.vercel.app) — Vercel auto-deploys every push to `main`.
+**Live:** [www.hudaguidance.com](https://www.hudaguidance.com) (old `huda-web-quran.vercel.app` redirects here) — Vercel auto-deploys every push to `main`.
 
 ---
 
