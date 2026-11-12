@@ -58,7 +58,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       master (surah_6/set_15, 18/set_06, 20/set_06, 21/set_09, 23/set_03,
       26/set_01, 95/set_01) still show black bars on R2 — not in
       `letterbox-crops.json`. Owner OK before upload.
-- [ ] **Bismillah: the Tamil translation doesn't highlight.** When
+- [x] **Bismillah: the Tamil translation doesn't highlight.** When
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today
       they show but never highlight.
