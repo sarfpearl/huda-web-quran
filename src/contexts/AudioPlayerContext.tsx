@@ -451,6 +451,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       el.addEventListener(
         "loadedmetadata",
         () => {
+          // Moved on meanwhile (another track or clip on this element, a
+          // pause): not this old position, and not played again.
+          const still = prelude ? isPreludeRef.current : audioRef.current === el;
+          if (!still || el.getAttribute("src") !== src || userPausedRef.current) return;
           try {
             el.currentTime = t0;
           } catch {
@@ -924,6 +928,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setPreludeType(null);
       currentTrimOffsetRef.current = 0;
       retryCountRef.current = 0;
+      // A Surah stream's pending retry must not load it back over the Juz.
+      retryTokenRef.current += 1;
       setError(null);
 
       standbyUrlRef.current = null;
@@ -1177,17 +1183,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Still in the same call (a second pause action): keep the marker.
       else if (wasCall) markCall("pause during a call");
     }
-    if (meaningRef.current) {
-      meaningAudioRef.current?.pause();
-      setIsPlaying(false);
-      return;
+    // Pause silences every element, not only the one in use: one still
+    // playing unseen would go on with the button on Play.
+    for (const el of [meaningAudioRef.current, preludeAudioRef.current, audioARef.current, audioBRef.current]) {
+      if (el && !el.paused) {
+        alog(`pause() ${elInfo(el === meaningAudioRef.current ? "meaning" : el === preludeAudioRef.current ? "prelude" : el === audioRef.current ? "main" : "standby", el)}`);
+        el.pause();
+      }
     }
-    if (isPreludeRef.current && preludeAudioRef.current) {
-      preludeAudioRef.current.pause();
-      setIsPlaying(false);
-      return;
-    }
-    audioRef.current?.pause();
     setIsPlaying(false);
   }, [markCall]);
 
@@ -2224,7 +2227,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       retryCountRef.current += 1;
       const token = ++retryTokenRef.current;
       const resumeAt = lastRawTimeRef.current;
-      setIsLoading(true);
+      // Only a stream that was playing plays again. A cued (or paused) Surah
+      // whose stream failed is just loaded again: it started by itself, unseen
+      // under the prelude's Play button, and Pause couldn't stop it.
+      const wasPlaying = !el.paused;
+      if (wasPlaying) setIsLoading(true);
       const attempt = () => {
         if (retryTokenRef.current !== token || audioRef.current !== el) return;
         retryResumeRef.current = resumeAt;
@@ -2239,6 +2246,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             } catch {
               /* ignore */
             }
+            // Paused meanwhile, or the prelude plays first (it hands over).
+            if (!wasPlaying || userPausedRef.current || isPreludeRef.current) return setIsLoading(false);
             el.play().catch(() => setIsLoading(false));
           },
           { once: true },
@@ -2376,7 +2385,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // the main one while the prelude plays): two recitations at once. Any
   // element that starts while it isn't the one in use is stopped.
   const strayStarted = (el: HTMLAudioElement) => {
-    const stray = el !== audioRef.current || (isPreludeRef.current && !preludeAudioRef.current?.paused) || meaningRef.current !== null;
+    // (While the prelude is on — playing or paused — the reciter waits for it.)
+    const stray = el !== audioRef.current || isPreludeRef.current || meaningRef.current !== null;
     // unlockStandby's muted silent clip pauses itself.
     if (stray && el.getAttribute("src") !== SILENT_WAV) el.pause();
     return stray;
