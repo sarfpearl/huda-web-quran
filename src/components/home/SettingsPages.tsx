@@ -12,6 +12,7 @@ import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningA
 import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
+import { SCENE_DIM_DEFAULTS, type SceneDim } from "./SceneOverlay";
 
 /*
  * Settings (⚙ in the content browser): every preference in one place. The
@@ -34,6 +35,8 @@ export interface HomeSettings {
   onChooseScript?: (s: QuranScript) => void;
   visualMode: "video" | "image";
   onToggleVisualMode: () => void;
+  /** The black overlay over the scene, per mode (0–1). */
+  sceneDim: { values: SceneDim; onChange: (mode: keyof SceneDim, v: number) => void };
   reciterName: string;
   /** The meaning read aloud after each ayah; unset until its clips are published. */
   meaningAudio?: MeaningAudioSettings;
@@ -134,6 +137,44 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
                 </button>
               ))}
             </div>
+            {/* Dim + Reset: always there, idle while both are at their defaults. */}
+            <div className="mt-4 mb-1 flex items-center justify-between">
+              <p className="text-sm font-semibold text-white">{t(lang, "Dim")}</p>
+              <button
+                type="button"
+                disabled={s.sceneDim.values.video === SCENE_DIM_DEFAULTS.video && s.sceneDim.values.image === SCENE_DIM_DEFAULTS.image}
+                onClick={() => {
+                  s.sceneDim.onChange("video", SCENE_DIM_DEFAULTS.video);
+                  s.sceneDim.onChange("image", SCENE_DIM_DEFAULTS.image);
+                }}
+                className="rounded-full border border-amber-300/40 px-3 py-1 text-[11px] font-semibold text-amber-300 transition-colors hover:bg-amber-300/10 cursor-pointer disabled:cursor-default disabled:border-white/10 disabled:text-sand-200/40 disabled:hover:bg-transparent"
+              >
+                {t(lang, "Reset")}
+              </button>
+            </div>
+            {(["video", "image"] as const).map((m) => {
+              const pct = Math.round(s.sceneDim.values[m] * 100);
+              return (
+                <label key={m} className="mt-2 block">
+                  <span className="mb-1 flex justify-between text-xs text-sand-200/80">
+                    <span className={s.visualMode === m ? "font-semibold text-amber-300" : undefined}>
+                      {t(lang, m === "video" ? "Video" : "Image")}
+                    </span>
+                    <span className="tabular-nums">{pct}%</span>
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={90}
+                    step={1}
+                    value={pct}
+                    onChange={(e) => s.sceneDim.onChange(m, Number(e.target.value) / 100)}
+                    aria-label={`${t(lang, "Dim")} · ${t(lang, m === "video" ? "Video" : "Image")}`}
+                    className="w-full cursor-pointer accent-amber-300"
+                  />
+                </label>
+              );
+            })}
           </div>
         </>
       )}

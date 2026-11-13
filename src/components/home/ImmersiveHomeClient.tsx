@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
 import { ImmersiveBackground } from "./ImmersiveBackground";
+import { SceneOverlay, useSceneDim } from "./SceneOverlay";
 import { ImmersiveHeader, READER_SCALES, defaultReaderScale } from "./ImmersiveHeader";
 import { CompactBayanPlayer } from "./CompactBayanPlayer";
 import { TopicPickerModal } from "./TopicPickerModal";
@@ -137,6 +138,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const player = useAudioPlayer();
   const [mounted, setMounted] = useState(false);
   const [visualMode, setVisualMode] = useState<"video" | "image">("video");
+  const [sceneDim, setSceneDim] = useSceneDim();
   // The ayah-meaning language (English, Tamil, Urdu…).
   const [translationLang, setTranslationLang] = useState<TranslationLang>("en");
   // The Surah-name announcement says the name's meaning in this language too.
@@ -1783,19 +1785,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         visualMode={visualMode}
       />
 
-      {/* Legibility scrim over every background: darker through the vertical
-          band where the verse sits (so the calligraphy reads even where the
-          clip is bright and WebKit has dropped the glyph shadow), easing to a
-          lighter wash at the top and bottom edges so the scene still shows
-          through (owner, 2026-11-01: darker behind the text, lighter scene). */}
-      <div
-        className="absolute inset-0 z-[1] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 62% at 50% 46%, rgba(0,0,0,0.60), rgba(0,0,0,0.46) 55%, rgba(0,0,0,0.30) 100%)",
-        }}
-        aria-hidden="true"
-      />
+      {/* Flat black overlay over the whole scene, image or video (owner,
+          2026-11-12: even dim edge to edge, not a scrim behind the text). */}
+      <SceneOverlay opacity={sceneDim[visualMode]} />
 
       {/* Center Quran Verses Stage (Pure Arabic Calligraphy + English/Tamil Translation).
           Phones / tablets: the open comments panel (and the keyboard) take the
@@ -1923,6 +1915,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             onChooseScript: handleChooseScript,
             visualMode,
             onToggleVisualMode: handleToggleVisualMode,
+            sceneDim: { values: sceneDim, onChange: setSceneDim },
             reciterName: selectedReciter.displayName,
             meaningAudio: meaningAudioSettings,
           }}

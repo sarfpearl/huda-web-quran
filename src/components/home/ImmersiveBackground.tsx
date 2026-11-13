@@ -97,7 +97,8 @@ export function ImmersiveBackground({
             />
           </motion.div>
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
+        {/* No dim of its own: like video mode, the scene overlay
+            (SceneOverlay, set in Settings) is the only dim (owner, 2026-11-12). */}
       </div>
     );
   }
@@ -173,7 +174,8 @@ export function ImmersiveBackground({
             />
           </motion.div>
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/45 pointer-events-none" />
+        {/* No dim of its own: like video mode, the scene overlay
+            (SceneOverlay, set in Settings) is the only dim (owner, 2026-11-12). */}
       </div>
     );
   }
