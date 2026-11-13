@@ -166,6 +166,8 @@ export interface SearchOpts {
   limit?: number;
   /** OR semantics: a verse matching ANY term counts (for topic chips). */
   anyTerm?: boolean;
+  /** Return the best matches in Mushaf order (Surah 1 → 114), not by score. */
+  mushafOrder?: boolean;
 }
 
 /**
@@ -173,7 +175,7 @@ export interface SearchOpts {
  * match (AND); with `anyTerm`, any word matching is enough (topic chips).
  */
 export function searchVerses(index: IndexEntry[], query: string, opts: SearchOpts = {}): VerseHit[] {
-  const { limit = 40, anyTerm = false } = opts;
+  const { limit = 40, anyTerm = false, mushafOrder = false } = opts;
   const qWords = query
     .trim()
     .split(/\s+/)
@@ -181,8 +183,8 @@ export function searchVerses(index: IndexEntry[], query: string, opts: SearchOpt
     .filter((w) => w.length >= 2);
   if (qWords.length === 0) return [];
 
-  const scored: { e: IndexEntry; score: number }[] = [];
-  for (const e of index) {
+  const scored: { e: IndexEntry; score: number; i: number }[] = [];
+  for (const [i, e] of index.entries()) {
     const tokens = e[2].split(" ");
     let exact = 0;
     let hits = 0;
@@ -194,10 +196,13 @@ export function searchVerses(index: IndexEntry[], query: string, opts: SearchOpt
       }
     }
     const ok = anyTerm ? hits > 0 : hits === qWords.length;
-    if (ok) scored.push({ e, score: exact * 10 + hits });
+    if (ok) scored.push({ e, score: exact * 10 + hits, i });
   }
 
   // Best matches first; ties keep Mushaf order (index is already in order).
   scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit).map((s) => toHit(s.e));
+  const best = scored.slice(0, limit);
+  // Topic chips: those best matches read in order, Al-Baqarah before Aal-Imran …
+  if (mushafOrder) best.sort((a, b) => a.i - b.i);
+  return best.map((s) => toHit(s.e));
 }
