@@ -10,8 +10,16 @@ import { useEffect, useRef } from "react";
  *
  * Listeners sit on the window in the capture phase, so activity anywhere —
  * inside the popup or on the scene behind it — counts as "still being used".
+ * While a text field has focus (e.g. the search box tapped) it never closes:
+ * the visitor is about to type (owner, 2026-11-13; the wait went 7 s → 16 s).
  */
-export function useAutoCloseIdle(open: boolean, onClose: () => void, delayMs = 7000) {
+const isEditing = () => {
+  const el = document.activeElement as HTMLElement | null;
+  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)
+    && !(el instanceof HTMLInputElement && ["range", "checkbox", "radio", "button"].includes(el.type));
+};
+
+export function useAutoCloseIdle(open: boolean, onClose: () => void, delayMs = 16000) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -20,7 +28,7 @@ export function useAutoCloseIdle(open: boolean, onClose: () => void, delayMs = 7
     let timer: ReturnType<typeof setTimeout>;
     const arm = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => closeRef.current(), delayMs);
+      timer = setTimeout(() => (isEditing() ? arm() : closeRef.current()), delayMs);
     };
     arm();
 

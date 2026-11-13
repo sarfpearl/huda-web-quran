@@ -28,10 +28,10 @@ import { MUSHAF_PAGE_COUNT, mushafPageOf } from "@/lib/data/mushafPages";
 import { searchSurahs } from "@/lib/data/surahSearch";
 import { loadSearchIndex, parseVerseRef, searchVerses, type VerseHit } from "@/lib/data/verseSearch";
 import { VERSE_TOPICS } from "@/lib/data/verseTopics";
-import { toArabicNumerals } from "@/lib/data/quranVerses";
 import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
-import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, type SettingsPage } from "./SettingsPages";
+import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
+import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
 import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
@@ -39,6 +39,46 @@ import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/se
 import { UI_LANGS, surahNameIn, t, uiLocale, useSetUiLang, useUiLang, word } from "@/lib/uiLang";
 
 type ModalTab = "surah" | "quran";
+
+/**
+ * A verse row's Arabic: one line, ellipsized, in the reader's script — the
+ * Uthmani words in the Hafs font or the IndoPak words in the IndoPak font
+ * (the same per-surah word data the reader loads). The index's Tanzil text
+ * (Amiri) shows until those words arrive, or if they can't be fetched.
+ */
+function VerseLine({ hit, script }: { hit: VerseHit; script: QuranScript }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    setText(null);
+    fetchSurahWords(hit.surah, script).then((verses) => {
+      const v = verses?.find((x) => x.a === hit.ayah);
+      if (live && v) setText(v.w.map((w) => w[2]).join(" "));
+    });
+    return () => {
+      live = false;
+    };
+  }, [hit.surah, hit.ayah, script]);
+  return (
+    <span
+      lang="ar"
+      dir="rtl"
+      className={cn(
+        // Generous line-height + padding so the marks above and below aren't
+        // clipped; the line fades out at its end (left) instead of cutting a word.
+        "mt-1 block overflow-hidden whitespace-nowrap py-1 text-right font-arabic text-sand-50/90",
+        "[mask-image:linear-gradient(to_left,black_75%,transparent)]",
+        text === null
+          ? "quran-tanzil text-lg leading-[2]" // Hafs draws U+06DF as a dotted circle; Amiri doesn't.
+          : script === "indopak"
+            ? "quran-indopak text-xl leading-[2.2]"
+            : "text-xl leading-[2]",
+      )}
+    >
+      {text ?? hit.arabic}
+    </span>
+  );
+}
 
 interface TopicPickerModalProps {
   surahTracks?: BayanWithRelations[];
@@ -324,6 +364,7 @@ export function TopicPickerModal({
   // prebuilt index (loadSearchIndex memoizes it, fetched on first search);
   // a topic chip runs the same engine with OR semantics over its keywords.
   const [verseTopicKey, setVerseTopicKey] = useState<string | null>(null);
+  const chosenTopic = verseTopicKey ? VERSE_TOPICS.find((x) => x.key === verseTopicKey) ?? null : null;
   const trimmedQuery = searchQuery.trim();
   const isSearching = !isFavourites && (trimmedQuery.length >= 2 || !!verseTopicKey);
   const verseQuery = isSearching ? trimmedQuery : "";
@@ -351,7 +392,7 @@ export function TopicPickerModal({
       loadSearchIndex(lang)
         .then((index) => {
           if (cancelled) return;
-          setVerseHits(searchVerses(index, terms, { anyTerm: !!topic }));
+          setVerseHits(searchVerses(index, terms, { anyTerm: !!topic, mushafOrder: !!topic, limit: topic ? 60 : 40 }));
           setVerseLoading(false);
         })
         .catch(() => {
@@ -553,6 +594,8 @@ export function TopicPickerModal({
     if (!isOpen && listening) stopVoice();
   }, [isOpen, listening, stopVoice]);
 
+  // Verse rows follow the reader's script (Uthmani / IndoPak, Settings).
+  const script = useHomeSettings()?.script ?? "uthmani";
   const renderVerseCard = (h: VerseHit) => {
     const s = QURAN_SURAHS[h.surah - 1];
     return (
@@ -580,16 +623,7 @@ export function TopicPickerModal({
           <span className="mt-0.5 block text-[11px] text-sand-200/70">
             {word("surah", lang)} {h.surah} · {word("ayah", lang)} {h.ayah}
           </span>
-          <span
-            lang="ar"
-            dir="rtl"
-            // quran-tanzil → Amiri: the stored text is Tanzil-encoded and the
-            // Hafs font draws U+06DF as a dotted circle; Amiri renders it right.
-            className="quran-tanzil mt-1.5 line-clamp-2 block text-right font-arabic text-base leading-[1.9] text-sand-50/90"
-          >
-            {h.arabic}
-            <span className="mx-1 text-amber-300">{toArabicNumerals(h.ayah)}</span>
-          </span>
+          <VerseLine hit={h} script={script} />
         </span>
         <ChevronRightIcon className="h-4 w-4 shrink-0 self-center text-sand-200/50" />
       </button>
@@ -822,9 +856,26 @@ export function TopicPickerModal({
                 <AboutView />
               ) : (
                 <>
-                  {/* 3. Search Input Box — above the tabs */}
-                  <div className="relative mt-4 mb-3">
-                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sand-200/50 text-base pointer-events-none" />
+                  {/* 3. Search Input Box — above the tabs. A chosen topic sits
+                      inside it as a chip; the ✕ at its end clears both. */}
+                  <div className="mt-4 mb-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-3.5 pr-1.5 transition-all focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
+                    <SearchIcon className="shrink-0 text-base text-sand-200/50 pointer-events-none" />
+                    {chosenTopic && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVerseTopicKey(null);
+                          searchInputRef.current?.focus();
+                        }}
+                        aria-label={`${t(lang, "Clear search")}: ${t(lang, chosenTopic.label)}`}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-300/50 bg-amber-300/15 py-0.5 ps-2.5 pe-1 text-[11px] font-medium text-amber-200 cursor-pointer"
+                      >
+                        {t(lang, chosenTopic.label)}
+                        <span aria-hidden="true" className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-200/20">
+                          <CloseIcon className="h-2.5 w-2.5" />
+                        </span>
+                      </button>
+                    )}
                     <input
                       ref={searchInputRef}
                       type="search"
@@ -834,9 +885,11 @@ export function TopicPickerModal({
                       autoCapitalize="none"
                       spellCheck={false}
                       placeholder={
-                        isFavourites
-                          ? t(lang, "Search favourites...")
-                          : t(lang, "Search a Surah, word, topic or 2:255...")
+                        chosenTopic
+                          ? ""
+                          : isFavourites
+                            ? t(lang, "Search favourites...")
+                            : t(lang, "Search a Surah, word, topic or 2:255...")
                       }
                       aria-label={
                         isFavourites ? t(lang, "Search favourites") : t(lang, "Search the Quran")
@@ -850,21 +903,21 @@ export function TopicPickerModal({
                         if (e.key === "Enter") {
                           (e.target as HTMLElement).blur();
                         }
+                        // Backspace in an empty box takes the topic chip out.
+                        if (e.key === "Backspace" && !searchQuery && chosenTopic) setVerseTopicKey(null);
                       }}
-                      className={cn(
-                        "w-full rounded-full bg-white/5 border border-white/10 pl-10 py-2.5 text-xs text-white placeholder:text-sand-200/40 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-all",
-                        searchQuery ? "pr-11" : "pr-4",
-                      )}
+                      className="min-w-0 flex-1 bg-transparent py-2.5 pr-2 text-xs text-white placeholder:text-sand-200/40 focus:outline-none"
                     />
-                    {searchQuery && (
+                    {(searchQuery || chosenTopic) && (
                       <button
                         type="button"
                         onClick={() => {
                           setSearchQuery("");
+                          setVerseTopicKey(null);
                           searchInputRef.current?.focus();
                         }}
                         aria-label={t(lang, "Clear search")}
-                        className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-sand-200/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-sand-200/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                       >
                         <CloseIcon className="h-3.5 w-3.5" />
                       </button>
@@ -921,23 +974,19 @@ export function TopicPickerModal({
                   </div>
                   )}
 
-                  {/* Topic chips (browser): a keyword preset searched across all. */}
+                  {/* Topic chips (browser): a keyword preset searched across all; the
+                      chosen one moves into the search box. */}
                   {!isFavourites && (
                     <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-1">
-                      {VERSE_TOPICS.map((topic) => (
+                      {VERSE_TOPICS.filter((topic) => topic.key !== verseTopicKey).map((topic) => (
                         <button
                           key={topic.key}
                           type="button"
                           onClick={() => {
-                            setVerseTopicKey((prev) => (prev === topic.key ? null : topic.key));
+                            setVerseTopicKey(topic.key);
                             setSearchQuery("");
                           }}
-                          className={cn(
-                            "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors cursor-pointer",
-                            verseTopicKey === topic.key
-                              ? "border-amber-300/50 bg-amber-300/15 text-amber-200"
-                              : "border-white/15 bg-white/5 text-sand-100 hover:bg-white/10",
-                          )}
+                          className="shrink-0 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-medium text-sand-100 transition-colors hover:bg-white/10 cursor-pointer"
                         >
                           {t(lang, topic.label)}
                         </button>
