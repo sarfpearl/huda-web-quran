@@ -1,5 +1,5 @@
 {
-  "_note": "Picture area (w:h:x:y, in the 1920x1080 master) of each clip rendered with black bars. Measured 2026-11-10 with ffmpeg cropdetect=limit=24 over every frame of the master; surah_7/set_29 set by hand (its top bar holds a logo). surah_6/set_13 moved to watermark-crops.json (its crop also cuts out burned-in logos). Used by reencode-videos.mjs --crops.",
+  "_note": "Picture area (w:h:x:y, in the 1920x1080 master) of each clip rendered with black bars. Measured 2026-11-10 with ffmpeg cropdetect=limit=24 over every frame of the master; surah_7/set_29 set by hand (its top bar holds a logo). surah_6/set_13 moved to watermark-crops.json (its crop also cuts out burned-in logos). The 7 palm-valley sets (bars at luma 26-27, above limit=24) were measured 2026-11-13 with limit=32. Used by reencode-videos.mjs --crops.",
   "/videos/surah_3/set_02_ayah_8-14.mp4": "1920:884:0:98",
   "/videos/surah_5/set_03_ayah_15-21.mp4": "1920:886:0:98",
   "/videos/surah_5/set_11_ayah_71-77.mp4": "1920:886:0:98",
@@ -60,5 +60,12 @@
   "/videos/surah_67/set_01_ayah_1-14.mp4": "1920:864:0:108",
   "/videos/surah_68/set_02_ayah_17-33.mp4": "1920:886:0:98",
   "/videos/surah_74/set_02_ayah_11-30.mp4": "1920:886:0:98",
-  "/videos/surah_92/set_02_ayah_12-21.mp4": "1920:886:0:98"
+  "/videos/surah_92/set_02_ayah_12-21.mp4": "1920:886:0:98",
+  "/videos/surah_6/set_15_ayah_99-105.mp4": "1920:864:0:108",
+  "/videos/surah_18/set_06_ayah_32-44.mp4": "1920:864:0:108",
+  "/videos/surah_20/set_06_ayah_49-55.mp4": "1920:864:0:108",
+  "/videos/surah_21/set_09_ayah_71-77.mp4": "1920:864:0:108",
+  "/videos/surah_23/set_03_ayah_17-22.mp4": "1920:864:0:108",
+  "/videos/surah_26/set_01_ayah_1-9.mp4": "1920:864:0:108",
+  "/videos/surah_95/set_01_ayah_1-8.mp4": "1920:864:0:108"
 }

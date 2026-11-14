@@ -54,10 +54,16 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       `scripts/tools/watermark-crops.json`. surah_6/set_21's logo was already
       cut off by its letterbox crop. R2: 107.3 → 106.0 MB. Old R2 copies
       backed up to `.media-work/r2-replaced-2026-11-11-watermarks/`.
-- [ ] **Background videos still letterboxed:** 7 sets sharing one palm-valley
+- [x] **Background videos still letterboxed:** 7 sets sharing one palm-valley
       master (surah_6/set_15, 18/set_06, 20/set_06, 21/set_09, 23/set_03,
       26/set_01, 95/set_01) still show black bars on R2 — not in
       `letterbox-crops.json`. Owner OK before upload.
+      **Done 2026-11-14:** the bars are dark grey (luma 26–27), above the
+      scan's limit=24, so cropdetect missed them; limit=32 gives 108 px top and
+      bottom (picture 1920:864:0:108). Added to `letterbox-crops.json`,
+      re-encoded (VMAF 92, 6.3 MB each), uploaded with the owner's OK and
+      bumped to `?v=2`. R2: 43.7 → 44.3 MB. Old copies backed up to
+      `.media-work/r2-replaced-2026-11-13-palm/`.
 - [x] **Bismillah: the Tamil translation doesn't highlight.** When
       "Bismillahir Rahmanir Raheem" is recited, its Tamil (translation) words
       should highlight along with it, like the ayah translations do — today

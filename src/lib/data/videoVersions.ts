@@ -125,6 +125,14 @@ const VIDEO_VERSIONS: Readonly<Record<string, number>> = {
   "/videos/surah_72/set_01_ayah_1-15.mp4": 2,
   "/videos/surah_86/set_01_ayah_1-10.mp4": 2,
   "/videos/surah_96/set_02_ayah_9-19.mp4": 2,
+  // 2026-11-13: the 7 palm-valley sets — grey letterbox bars (luma 26–27) cropped off
+  "/videos/surah_6/set_15_ayah_99-105.mp4": 2,
+  "/videos/surah_18/set_06_ayah_32-44.mp4": 2,
+  "/videos/surah_20/set_06_ayah_49-55.mp4": 2,
+  "/videos/surah_21/set_09_ayah_71-77.mp4": 2,
+  "/videos/surah_23/set_03_ayah_17-22.mp4": 2,
+  "/videos/surah_26/set_01_ayah_1-9.mp4": 2,
+  "/videos/surah_95/set_01_ayah_1-8.mp4": 2,
 };
 
 /** R2 URL of a background clip (a "/videos/…" path or its URL), with its version if replaced. */
