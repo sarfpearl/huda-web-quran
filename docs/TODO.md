@@ -93,9 +93,15 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       (`scripts/qa/repair-timings.cjs`), never guessed.
 - [ ] **Alafasy word timings run ~0.5 s ahead of the voice** in places
       (93:3, 93:4 …): the highlight leads the recitation inside the ayah.
-- [ ] **Meaning word-timings for Surahs 21–66** (Tamil running; then English,
-      `build-meaning-timings.mjs --surah=21-66 --lang=en`) — without them the
-      meaning is read but its words don't light.
+- [x] **Meaning word-timings for Surahs 21–66** — done (2026-11-14). Tamil
+      (PR #228) and English (PR #230) are on main for both voices: all 2,758
+      ayahs × 4 sets, word counts match the text, last word ends with the
+      clip. Checked on the live site: 36 Tamil/Cruz and 55 English/Lora light
+      word by word.
+- [ ] **Meaning word-timings for Surahs 2–20** — the audio landed in PR #233
+      but `public/data/meaning-timings/*/*/2…20.json` don't exist yet, so those
+      meanings are read without lighting. Local and free:
+      `node scripts/generation/build-meaning-timings.mjs --surah=2-20`.
 - [ ] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
       limited; a stream stalled 155 s during testing).
 
