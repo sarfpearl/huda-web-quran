@@ -18,6 +18,8 @@ type Tap = {
   ctx: AudioContext;
   /** What the recorder takes: everything the elements play. */
   dest: MediaStreamAudioDestinationNode;
+  /** Measures what goes into the recording (the level meter). */
+  meter: AnalyserNode;
   els: Set<HTMLMediaElement>;
 };
 
@@ -59,9 +61,21 @@ function patch(el: HTMLMediaElement) {
  */
 export function ensureAudioTap(): Tap {
   if (!tap) {
+    // iPhone: Web Audio is silenced by the ring/silent switch unless the page
+    // asks for media playback (Safari 16.4+); the <audio> elements weren't.
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session) {
+      try {
+        session.type = "playback";
+      } catch {
+        /* ignore */
+      }
+    }
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new Ctx();
-    tap = { ctx, dest: ctx.createMediaStreamDestination(), els: new Set() };
+    const meter = ctx.createAnalyser();
+    meter.fftSize = 1024;
+    tap = { ctx, dest: ctx.createMediaStreamDestination(), meter, els: new Set() };
     // A call or Siri interrupts the context: back on once the page is in use.
     const wake = () => {
       if (tap && tap.ctx.state !== "running" && tap.ctx.state !== "closed") void tap.ctx.resume().catch(() => {});
@@ -69,7 +83,7 @@ export function ensureAudioTap(): Tap {
     document.addEventListener("visibilitychange", wake);
     document.addEventListener("pointerdown", wake, true);
   }
-  const { ctx, dest, els } = tap;
+  const { ctx, dest, meter, els } = tap;
   void ctx.resume().catch(() => {});
   document.querySelectorAll("audio").forEach((el) => {
     if (els.has(el)) return;
@@ -85,6 +99,17 @@ export function ensureAudioTap(): Tap {
     const node = ctx.createMediaElementSource(el);
     node.connect(ctx.destination);
     node.connect(dest);
+    node.connect(meter);
   });
   return tap;
+}
+
+const buf = new Float32Array(1024);
+/** The sound level going into the recording now, 0–1 (RMS). */
+export function audioLevel(): number {
+  if (!tap) return 0;
+  tap.meter.getFloatTimeDomainData(buf);
+  let sum = 0;
+  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  return Math.sqrt(sum / buf.length);
 }

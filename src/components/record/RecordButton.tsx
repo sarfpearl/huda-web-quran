@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { haptic } from "@/lib/haptics";
 import { t } from "@/lib/uiLang";
@@ -11,6 +11,8 @@ import type { RecordStudioProps } from "./RecordStudio";
  * trim library behind it) loads on the first tap, so the page carries only
  * this button. Hidden where the browser can't record a canvas.
  */
+let loading: Promise<typeof import("./RecordStudio")> | null = null;
+
 export function RecordButton(props: Omit<RecordStudioProps, "onClose"> & { className?: string }) {
   const { className, ...studio } = props;
   const [supported, setSupported] = useState(false);
@@ -21,16 +23,28 @@ export function RecordButton(props: Omit<RecordStudioProps, "onClose"> & { class
     setSupported(typeof MediaRecorder !== "undefined" && typeof HTMLCanvasElement.prototype.captureStream === "function");
   }, []);
 
+  // Loaded a little after the page, so the first tap opens the sheet at once.
+  const load = useCallback(() => {
+    if (!loading) loading = import("./RecordStudio");
+    void loading.then((m) => setStudio(() => m.default));
+  }, []);
+  useEffect(() => {
+    if (!supported) return;
+    const id = setTimeout(load, 4000);
+    return () => clearTimeout(id);
+  }, [supported, load]);
+
   if (!supported) return null;
   const label = t(props.language, "Record video");
   return (
     <>
       <button
         type="button"
+        onPointerEnter={load}
         onClick={() => {
           haptic();
           setOpen(true);
-          if (!Studio) void import("./RecordStudio").then((m) => setStudio(() => m.default));
+          load();
         }}
         aria-label={label}
         data-tooltip={label}

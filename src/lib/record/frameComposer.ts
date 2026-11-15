@@ -27,6 +27,11 @@ type Stage = {
 type Placed = { text: string; x: number; y: number; w: number; idx: number };
 type Block = { size: number; lineH: number; placed: Placed[]; height: number };
 
+function uiFontFamily(): string {
+  const poppins = getComputedStyle(document.documentElement).getPropertyValue("--font-poppins").trim();
+  return poppins ? `${poppins}, sans-serif` : "Poppins, sans-serif";
+}
+
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicNumerals = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_DIGITS[Number(d)]);
 
@@ -191,6 +196,22 @@ class BackgroundMirror {
   }
 }
 
+// Loaded while the setup sheet is open, so the video's first frame already
+// has the scene (the clip takes a moment to arrive through /media-cors).
+let warm: BackgroundMirror | null = null;
+
+/** Starts (and keeps following) the background copy before recording. */
+export function warmBackground() {
+  warm ??= new BackgroundMirror();
+  warm.layers(performance.now());
+}
+
+/** Drops a warmed copy that no recording took. */
+export function coolBackground() {
+  warm?.dispose();
+  warm = null;
+}
+
 function drawCover(ctx: CanvasRenderingContext2D, el: HTMLVideoElement | HTMLImageElement, w: number, h: number) {
   const iw = el instanceof HTMLVideoElement ? el.videoWidth : el.naturalWidth;
   const ih = el instanceof HTMLVideoElement ? el.videoHeight : el.naturalHeight;
@@ -268,19 +289,23 @@ export interface ComposerOptions {
 export class FrameComposer {
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private bg = new BackgroundMirror();
+  private bg: BackgroundMirror;
   private logo = new Image();
-  /** The app's own UI font (self-hosted Poppins under a generated name). */
-  private uiFont = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+  /** The app's UI font, Poppins (self-hosted: next/font's own family name). */
+  private uiFont = uiFontFamily();
   private stage: Stage | null = null;
   private layout: { key: string; arabic: Block; meaning: Block | null; top: number; meaningTop: number } | null = null;
 
   constructor(private opts: ComposerOptions) {
+    this.bg = warm ?? new BackgroundMirror();
+    warm = null;
     this.canvas = document.createElement("canvas");
     this.canvas.width = opts.width;
     this.canvas.height = opts.height;
     this.ctx = this.canvas.getContext("2d", { alpha: false })!;
     this.logo.src = "/huda-logo.webp?v=3";
+    // The canvas only draws a web font that is already loaded.
+    void document.fonts?.load(`600 32px ${this.uiFont}`, SITE_LINK).catch(() => {});
   }
 
   /** Scale against a 1080-wide portrait frame. */
