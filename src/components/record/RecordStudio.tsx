@@ -59,6 +59,8 @@ const isPhone = () =>
 // The app's own sheet pieces (LocationAskSheet, PrayerTimesSheet, the Translation sheet).
 const BTN = "h-11 rounded-full px-4 text-sm font-semibold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer";
 const PRIMARY = `${BTN} bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98]`;
+// Start recording: the recording red.
+const RECORD = `${BTN} bg-red-600 text-white hover:bg-red-500 active:scale-[0.98]`;
 const TEXT_BTN = `${BTN} text-sand-200/80 hover:bg-white/10 hover:text-sand-50`;
 const OUTLINE = `${BTN} border border-white/15 bg-white/[0.06] text-sand-50 hover:bg-white/10`;
 const CARD = "rounded-2xl border border-white/10 bg-white/5 px-4 py-3";
@@ -267,11 +269,21 @@ export default function RecordStudio(props: RecordStudioProps) {
   }, [warming]);
   useEffect(() => coolBackground, []);
 
-  // (The setup sheet handles Back itself.)
+  // Back: the setup sheet handles it itself. The recording takes it over only
+  // once rolling — closing the sheet drops its history entry, and Safari
+  // delivered that pop to a handler registered in the same moment (it closed
+  // the recorder right after Start).
+  // One entry from then on through saving and the preview: dropping one and
+  // pushing the next together raced the same way.
   useBackToClose(
-    phase.kind !== "setup" && phase.kind !== "error",
-    phase.kind === "recording" && rolling ? () => void finish(null) : phase.kind === "starting" || phase.kind === "recording" ? cancel : close,
+    phase.kind === "preview" || phase.kind === "saving" || (phase.kind === "recording" && rolling),
+    phase.kind === "preview" ? close : phase.kind === "recording" ? () => void finish(null) : () => {},
   );
+
+  // The sheet mounts closed, then opens (its slide-up; a sheet open on mount
+  // pushed and dropped its history entry twice in dev).
+  const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => setSheetOpen(true), []);
 
   // Inside the tap: play the first ayah again (a browser that held back the start).
   const retryPlay = () => {
@@ -297,7 +309,7 @@ export default function RecordStudio(props: RecordStudioProps) {
     const mbPerMin = Math.round(((VIDEO_BPS[quality] + 128_000) * 60) / 8 / 1e6);
     const count = to - from + 1;
     return (
-      <ActionSheet open onClose={close} label={L("Record video")} noAutoClose>
+      <ActionSheet open={sheetOpen} onClose={close} label={L("Record video")} noAutoClose>
         <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
           <div>
             <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">{L("Record video")}</h3>
@@ -379,7 +391,7 @@ export default function RecordStudio(props: RecordStudioProps) {
           <button type="button" className={`flex-1 ${TEXT_BTN}`} onClick={close}>{L("Cancel")}</button>
           <button
             type="button"
-            className={`flex-[1.4] ${PRIMARY}`}
+            className={`flex-[1.4] ${RECORD}`}
             onClick={() => {
               rangeRef.current = { from, to };
               partRef.current = 1;
@@ -387,7 +399,7 @@ export default function RecordStudio(props: RecordStudioProps) {
             }}
           >
             <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-600" aria-hidden />
+              <span className="h-2.5 w-2.5 rounded-full bg-white" aria-hidden />
               {L("Start recording")}
             </span>
           </button>
@@ -563,6 +575,11 @@ function Preview({
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    // Safari shows nothing until play: a tiny seek paints the first frame.
+    const onData = () => {
+      if (v.currentTime === 0 && v.paused) v.currentTime = 0.05;
+    };
+    v.addEventListener("loadeddata", onData, { once: true });
     const onMeta = () => {
       if (Number.isFinite(v.duration) && v.duration > 0) {
         setDuration(v.duration);
@@ -683,7 +700,7 @@ function Preview({
           <h3 className="text-base font-bold text-white">{L("Preview")}{phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}</h3>
           <button type="button" onClick={onClose} className={TEXT_BTN}>{L("Discard")}</button>
         </div>
-        <video ref={videoRef} src={phase.url} controls playsInline className="w-full flex-1 min-h-0 max-h-[55vh] rounded-2xl bg-black object-contain" />
+        <video ref={videoRef} src={phase.url} controls playsInline preload="auto" className="w-full flex-1 min-h-0 max-h-[55vh] rounded-2xl bg-black object-contain" />
 
         {/* Trim: start / end handles over the timeline */}
         <div className="select-none">
