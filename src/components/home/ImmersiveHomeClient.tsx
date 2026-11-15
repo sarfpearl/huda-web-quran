@@ -16,6 +16,8 @@ import { MushafPagePicker } from "./MushafPagePicker";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
+import { SupportSheet } from "@/components/support/SupportSheet";
+import { SupportStar } from "@/components/support/SupportStar";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
@@ -2233,6 +2235,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />
+
+      {/* Help keep HuDa free: the quiet edge star + its sheet (components/support) */}
+      <SupportStar playing={player.isPlaying} suppressed={readingActive} />
+      <SupportSheet />
     </div>
     </SetUiLangContext.Provider>
     </UiLangContext.Provider>
