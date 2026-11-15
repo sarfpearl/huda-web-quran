@@ -33,6 +33,11 @@ export function SplashScreen() {
         {/* Loading mark: four dots rearranging, pure CSS so it paints with
             the server HTML before any script */}
         <DotLoader className="huda-splash-mark" />
+        {/* The greeting writes itself in, right to left, under the dots and
+            is done before MIN_MS is up (timing in globals.css) */}
+        <p className="huda-splash-salam" lang="ar" dir="rtl">
+          السَّلَامُ عَلَيْكُمْ
+        </p>
       </div>
       <script dangerouslySetInnerHTML={{ __html: hideScript }} />
     </>
