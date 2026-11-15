@@ -86,11 +86,31 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
 
 ### Added 2026-11-11 (playback QA — `docs/PLAYBACK_QA_REPORT_2026_11_11.md`)
 
-- [ ] **Word highlight for the 273 ayahs without usable word timing**
-      (Abdul Basit 135, Alafasy 54, Shatri 42, Shuraim 19, Tunaiji 13,
-      Minshawi 8, Sudais 2 — e.g. Alafasy 93:6, 93:7, 93:9): their QDC
-      segments are displaced, so no word lights. Re-place them acoustically
-      (`scripts/qa/repair-timings.cjs`), never guessed.
+- [x] **Word highlight for the 273 ayahs without usable word timing** —
+      266 fixed (2026-11-15). Their words were re-measured on the streamed
+      audio by CTC forced alignment, neighbour ayahs as anchors
+      (`scripts/generation/align-ayah-timings.py`, kind
+      `forced-alignment-ayah` in `repairs`); Shatri 10, whose QDC timings
+      drift 0 → 3.5 s over the Surah, was re-aligned whole
+      (`align-reciter-timings.py`). Verified by measurement
+      (`scripts/qa/verify-ayah-repairs.cjs`): every re-measured ayah's first
+      word starts within 0.3 s of the voice coming back after its pause
+      (median 0.02 s; the old QDC starts: median 0.56 s, 66/251 within
+      0.3 s). sync-suite: ayahs without word timing 273 → 9. Left without
+      highlight (not guessed):
+      - Shatri 17:48–50, 10:42–43 — re-measured starts sit on the voice,
+        but repair-timings' block dip test still finds −1.4 s; the two
+        methods disagree.
+      - Shatri 37:66–67 — the model's transcript matches the text only
+        0.34 / 0.59 (66 has no QDC segments at all).
+      - Shuraim 57:7, Tunaiji 34:50 — the measured first word sits 0.4 s
+        before / 1.2 s after the voice onset.
+- [ ] **QDC timings off on ayahs the app still highlights.** The anchor
+      check of the repair above measured "good" neighbour ayahs 1–7.5 s off
+      the voice in Abdul Basit 4, 30, 32, 33, 35, 36; Alafasy 13; Shatri 2,
+      5, 7, 34, 35, 37; Tunaiji 34 (drifting recordings the stream verdict
+      rates match/inconclusive). Candidates for a whole-Surah
+      `align-reciter-timings.py` run, as done for Shatri 10.
 - [ ] **Alafasy word timings run ~0.5 s ahead of the voice** in places
       (93:3, 93:4 …): the highlight leads the recitation inside the ayah.
 - [x] **Meaning word-timings for Surahs 21–66** — done (2026-11-14). Tamil
