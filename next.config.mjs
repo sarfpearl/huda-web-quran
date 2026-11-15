@@ -11,6 +11,8 @@ const nextConfig = {
     // Only our R2 bucket's images (NEXT_PUBLIC_MEDIA_BASE_URL); every next/image
     // source goes through mediaUrl() → /assets/images/… on it.
     remotePatterns: [
+      { protocol: "https", hostname: "media.hudaguidance.com", pathname: "/assets/images/**" },
+      // The old r2.dev address, until every env and cached page uses media.
       { protocol: "https", hostname: "pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev", pathname: "/assets/images/**" },
     ],
   },
