@@ -1,15 +1,26 @@
 import { cn } from "@/lib/utils";
 
+export const DOT_LOADER_LOOKS = ["grid", "orbit", "wave", "chase", "merge", "swap"] as const;
+export type DotLoaderLook = (typeof DOT_LOADER_LOOKS)[number];
+
 /*
- * HuDa's loading mark: four warm-orange dots that keep rearranging — a square,
- * dots 2↔3 swapping, 1↔4 swapping, folding into a triangle, a line, a diamond,
- * and back. Pure CSS (keyframes in globals.css), so it also runs in the server
- * HTML before any script. Size follows `font-size` (the box is 1em); colour is
- * `currentColor`.
+ * HuDa's loading mark: four brand-gold dots in continuous motion, in one of
+ * six looks (keyframes in globals.css). Without `look` it takes the one the
+ * splash script picked at random for this app open. Pure CSS, so it also runs
+ * in the server HTML before any script. Size follows `font-size` (the box is
+ * 1em); colour is `currentColor`.
  */
-export function DotLoader({ className, label = "Loading" }: { className?: string; label?: string }) {
+export function DotLoader({
+  className,
+  label = "Loading",
+  look,
+}: {
+  className?: string;
+  label?: string;
+  look?: DotLoaderLook;
+}) {
   return (
-    <span className={cn("huda-dots", className)} role="img" aria-label={label}>
+    <span className={cn("huda-dots", className)} data-look={look} role="img" aria-label={label}>
       <i />
       <i />
       <i />

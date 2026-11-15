@@ -1,4 +1,4 @@
-import { DotLoader } from "@/components/ui/DotLoader";
+import { DOT_LOADER_LOOKS, DotLoader } from "@/components/ui/DotLoader";
 
 /**
  * Opening splash: logo, name and a loading bar, in the server HTML so it
@@ -15,7 +15,7 @@ const MAX_MS = 8000;
 
 const hideScript = `(function(){
 var d=document.documentElement,t0=Date.now(),done=false;
-var L=["grid","orbit","wave","chase","merge","swap"],q=/[?&]dots=([a-z]+)/.exec(location.search);
+var L=${JSON.stringify(DOT_LOADER_LOOKS)},q=/[?&]dots=([a-z]+)/.exec(location.search);
 d.setAttribute("data-huda-dots",q&&L.indexOf(q[1])>=0?q[1]:L[Math.floor(Math.random()*L.length)]);
 function hide(){if(done)return;done=true;setTimeout(function(){d.classList.add("huda-ready")},Math.max(0,${MIN_MS}-(Date.now()-t0)))}
 if(document.readyState==="complete")hide();else window.addEventListener("load",hide);

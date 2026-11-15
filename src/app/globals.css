@@ -588,17 +588,20 @@ html:has([data-not-found]) #huda-splash {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
 }
-/* Loading mark (DotLoader): four brand-gold dots in a 1em box that never sit
-   still. Six looks, one picked at random per app open (data-huda-dots on
-   <html>, set by the splash script; ?dots=<look> forces one):
-   grid   — square into a "\" diagonal, back, "/", back, a Z and an S shear
-   orbit  — circling the centre, each swelling and shrinking on its own beat
-   wave   — a row, each dot hopping a beat after the one before
-   chase  — following each other round the square, the leader biggest
-   merge  — folding into the centre and opening out while turning
-   swap   — 1↔4 then 2↔3 trading corners on curved paths
-   Moves ease with a slight overshoot and the dots are staggered, so the shape
-   flows instead of snapping. */
+/* Loading mark (DotLoader): four brand-gold dots in a 1em box. Six looks; an
+   unnamed loader takes the one the splash script picked at random for this
+   app open (data-huda-dots on <html>; ?dots=<look> forces one), a loader with
+   data-look keeps its own (the /loaders page shows them all).
+   Every move is one continuous curve, a steady turn or an ease-in-out swing
+   between two shapes, so a dot never stops mid-path or jerks; it only slows
+   into a shape and out of it.
+   grid   square to a "\" diagonal and back, then to a "/" diagonal and back
+   orbit  circling the centre, each swelling and shrinking on its own beat
+   wave   a row, each dot bobbing a beat after the one before
+   chase  round a circle, bunching up and spreading out, the leader biggest
+   merge  drawing into the centre and opening out while turning
+   swap   1<->4 then 2<->3 trading corners along an arc
+   Dots sit centred in the box; --x/--y is a dot's corner, in dot widths. */
 .huda-dots {
   position: relative;
   display: inline-block;
@@ -609,173 +612,89 @@ html:has([data-not-found]) #huda-splash {
 }
 .huda-dots > i {
   position: absolute;
-  left: 0;
-  top: 0;
+  left: 40%;
+  top: 40%;
   width: 20%;
   height: 20%;
   border-radius: 50%;
   background: currentColor;
-  animation: 4.8s cubic-bezier(0.5, 0, 0.2, 1.18) infinite both;
+  transform: translate(var(--x), var(--y));
+  will-change: transform;
 }
-.huda-dots > i:nth-child(1) { animation-name: huda-dot-1; animation-delay: 0s; }
-.huda-dots > i:nth-child(2) { animation-name: huda-dot-2; animation-delay: 0.05s; }
-.huda-dots > i:nth-child(3) { animation-name: huda-dot-3; animation-delay: 0.1s; }
-.huda-dots > i:nth-child(4) { animation-name: huda-dot-4; animation-delay: 0.15s; }
-@keyframes huda-dot-1 {
-  0%, 3% { transform: translate(50%, 50%); }
-  12.5%, 15.5% { transform: translate(50%, 50%); }
-  25%, 28% { transform: translate(50%, 50%); }
-  37.5%, 40.5% { transform: translate(150%, 250%); }
-  50%, 53% { transform: translate(50%, 50%); }
-  62.5%, 65.5% { transform: translate(50%, 50%); }
-  75%, 78% { transform: translate(50%, 50%); }
-  87.5%, 90.5% { transform: translate(220%, 50%); }
-  100% { transform: translate(50%, 50%); }
+.huda-dots > i:nth-child(1) { --x: -150%; --y: -150%; }
+.huda-dots > i:nth-child(2) { --x: 150%; --y: -150%; }
+.huda-dots > i:nth-child(3) { --x: -150%; --y: 150%; }
+.huda-dots > i:nth-child(4) { --x: 150%; --y: 150%; }
+:is([data-huda-dots="grid"] .huda-dots:not([data-look]), .huda-dots[data-look="grid"]) > i { animation: huda-grid 3s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+:is([data-huda-dots="grid"] .huda-dots:not([data-look]), .huda-dots[data-look="grid"]) > i:nth-child(1) { --ax: -150%; --ay: -150%; --bx: -50%; --by: 50%; animation-delay: 0s; }
+:is([data-huda-dots="grid"] .huda-dots:not([data-look]), .huda-dots[data-look="grid"]) > i:nth-child(2) { --ax: 50%; --ay: 50%; --bx: 150%; --by: -150%; animation-delay: 0.04s; }
+:is([data-huda-dots="grid"] .huda-dots:not([data-look]), .huda-dots[data-look="grid"]) > i:nth-child(3) { --ax: -50%; --ay: -50%; --bx: -150%; --by: 150%; animation-delay: 0.08s; }
+:is([data-huda-dots="grid"] .huda-dots:not([data-look]), .huda-dots[data-look="grid"]) > i:nth-child(4) { --ax: 150%; --ay: 150%; --bx: 50%; --by: -50%; animation-delay: 0.12s; }
+@keyframes huda-grid {
+  0%, 50%, 100% { transform: translate(var(--x), var(--y)); }
+  25% { transform: translate(var(--ax), var(--ay)); }
+  75% { transform: translate(var(--bx), var(--by)); }
 }
-@keyframes huda-dot-2 {
-  0%, 3% { transform: translate(350%, 50%); }
-  12.5%, 15.5% { transform: translate(250%, 250%); }
-  25%, 28% { transform: translate(350%, 50%); }
-  37.5%, 40.5% { transform: translate(350%, 50%); }
-  50%, 53% { transform: translate(350%, 50%); }
-  62.5%, 65.5% { transform: translate(180%, 50%); }
-  75%, 78% { transform: translate(350%, 50%); }
-  87.5%, 90.5% { transform: translate(350%, 50%); }
-  100% { transform: translate(350%, 50%); }
-}
-@keyframes huda-dot-3 {
-  0%, 3% { transform: translate(50%, 350%); }
-  12.5%, 15.5% { transform: translate(150%, 150%); }
-  25%, 28% { transform: translate(50%, 350%); }
-  37.5%, 40.5% { transform: translate(50%, 350%); }
-  50%, 53% { transform: translate(50%, 350%); }
-  62.5%, 65.5% { transform: translate(220%, 350%); }
-  75%, 78% { transform: translate(50%, 350%); }
-  87.5%, 90.5% { transform: translate(50%, 350%); }
-  100% { transform: translate(50%, 350%); }
-}
-@keyframes huda-dot-4 {
-  0%, 3% { transform: translate(350%, 350%); }
-  12.5%, 15.5% { transform: translate(350%, 350%); }
-  25%, 28% { transform: translate(350%, 350%); }
-  37.5%, 40.5% { transform: translate(250%, 150%); }
-  50%, 53% { transform: translate(350%, 350%); }
-  62.5%, 65.5% { transform: translate(350%, 350%); }
-  75%, 78% { transform: translate(350%, 350%); }
-  87.5%, 90.5% { transform: translate(180%, 350%); }
-  100% { transform: translate(350%, 350%); }
-}
-[data-huda-dots="orbit"] .huda-dots > i {
-  left: 40%;
-  top: 40%;
+:is([data-huda-dots="orbit"] .huda-dots:not([data-look]), .huda-dots[data-look="orbit"]) > i {
   transform: translateX(150%);
+  animation: huda-turn 2.4s linear infinite, huda-orbit-size 0.8s ease-in-out infinite alternate;
 }
-[data-huda-dots="orbit"] .huda-dots > i:nth-child(n) { animation: huda-orbit 2.4s linear infinite, huda-orbit-size 1.6s ease-in-out infinite; }
-[data-huda-dots="orbit"] .huda-dots > i:nth-child(2) { animation-delay: -0.6s, -0.5s; }
-[data-huda-dots="orbit"] .huda-dots > i:nth-child(3) { animation-delay: -1.2s, -1.1s; }
-[data-huda-dots="orbit"] .huda-dots > i:nth-child(4) { animation-delay: -1.8s, -0.25s; }
-@keyframes huda-orbit {
+:is([data-huda-dots="orbit"] .huda-dots:not([data-look]), .huda-dots[data-look="orbit"]) > i:nth-child(2) { animation-delay: -0.6s, -0.5s; }
+:is([data-huda-dots="orbit"] .huda-dots:not([data-look]), .huda-dots[data-look="orbit"]) > i:nth-child(3) { animation-delay: -1.2s, -1.1s; }
+:is([data-huda-dots="orbit"] .huda-dots:not([data-look]), .huda-dots[data-look="orbit"]) > i:nth-child(4) { animation-delay: -1.8s, -0.25s; }
+@keyframes huda-turn {
   to { rotate: 360deg; }
 }
 @keyframes huda-orbit-size {
-  0%, 100% { scale: 1.15; }
-  50% { scale: 0.35; }
+  from { scale: 1.15; }
+  to { scale: 0.35; }
 }
-[data-huda-dots="wave"] .huda-dots > i:nth-child(n) { scale: 0.8; animation: huda-wave 1.3s ease-in-out infinite both; }
-[data-huda-dots="wave"] .huda-dots > i:nth-child(1) { translate: 25% 200%; }
-[data-huda-dots="wave"] .huda-dots > i:nth-child(2) { translate: 141.67% 200%; animation-delay: 0.13s; }
-[data-huda-dots="wave"] .huda-dots > i:nth-child(3) { translate: 258.33% 200%; animation-delay: 0.26s; }
-[data-huda-dots="wave"] .huda-dots > i:nth-child(4) { translate: 375% 200%; animation-delay: 0.39s; }
+:is([data-huda-dots="wave"] .huda-dots:not([data-look]), .huda-dots[data-look="wave"]) > i { scale: 0.65; animation: huda-wave 0.6s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate both; }
+:is([data-huda-dots="wave"] .huda-dots:not([data-look]), .huda-dots[data-look="wave"]) > i:nth-child(1) { --x: -195%; animation-delay: -0.6s; }
+:is([data-huda-dots="wave"] .huda-dots:not([data-look]), .huda-dots[data-look="wave"]) > i:nth-child(2) { --x: -65%; animation-delay: -0.45s; }
+:is([data-huda-dots="wave"] .huda-dots:not([data-look]), .huda-dots[data-look="wave"]) > i:nth-child(3) { --x: 65%; animation-delay: -0.3s; }
+:is([data-huda-dots="wave"] .huda-dots:not([data-look]), .huda-dots[data-look="wave"]) > i:nth-child(4) { --x: 195%; animation-delay: -0.15s; }
 @keyframes huda-wave {
-  0%, 55%, 100% { transform: translateY(0) scale(1); }
-  25% { transform: translateY(-130%) scale(1.1); }
+  from { transform: translate(var(--x), 70%); }
+  to { transform: translate(var(--x), -70%); }
 }
-[data-huda-dots="chase"] .huda-dots > i:nth-child(n) { animation: huda-chase 2.4s cubic-bezier(0.5, 0, 0.2, 1.12) infinite both; }
-[data-huda-dots="chase"] .huda-dots > i:nth-child(1) { scale: 0.5; }
-[data-huda-dots="chase"] .huda-dots > i:nth-child(2) { scale: 0.68; animation-delay: -0.1s; }
-[data-huda-dots="chase"] .huda-dots > i:nth-child(3) { scale: 0.85; animation-delay: -0.2s; }
-[data-huda-dots="chase"] .huda-dots > i:nth-child(4) { scale: 1.05; animation-delay: -0.3s; }
-@keyframes huda-chase {
-  0% { transform: translate(50%, 50%); }
-  25% { transform: translate(350%, 50%); }
-  50% { transform: translate(350%, 350%); }
-  75% { transform: translate(50%, 350%); }
-  100% { transform: translate(50%, 50%); }
-}
-[data-huda-dots="merge"] .huda-dots { animation: huda-orbit 3.2s linear infinite; }
-[data-huda-dots="merge"] .huda-dots > i { left: 40%; top: 40%; }
-[data-huda-dots="merge"] .huda-dots > i:nth-child(n) { animation: huda-merge 1.6s cubic-bezier(0.5, 0, 0.2, 1.2) infinite both; }
-[data-huda-dots="merge"] .huda-dots > i:nth-child(1) { --dx: -150%; --dy: -150%; }
-[data-huda-dots="merge"] .huda-dots > i:nth-child(2) { --dx: 150%; --dy: -150%; animation-delay: 0.06s; }
-[data-huda-dots="merge"] .huda-dots > i:nth-child(3) { --dx: 150%; --dy: 150%; animation-delay: 0.12s; }
-[data-huda-dots="merge"] .huda-dots > i:nth-child(4) { --dx: -150%; --dy: 150%; animation-delay: 0.18s; }
+:is([data-huda-dots="chase"] .huda-dots:not([data-look]), .huda-dots[data-look="chase"]) > i { transform: translateY(-160%); animation: huda-turn 1.8s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite both; }
+:is([data-huda-dots="chase"] .huda-dots:not([data-look]), .huda-dots[data-look="chase"]) > i:nth-child(1) { scale: 0.45; animation-delay: -0.69s; }
+:is([data-huda-dots="chase"] .huda-dots:not([data-look]), .huda-dots[data-look="chase"]) > i:nth-child(2) { scale: 0.65; animation-delay: -0.56s; }
+:is([data-huda-dots="chase"] .huda-dots:not([data-look]), .huda-dots[data-look="chase"]) > i:nth-child(3) { scale: 0.85; animation-delay: -0.43s; }
+:is([data-huda-dots="chase"] .huda-dots:not([data-look]), .huda-dots[data-look="chase"]) > i:nth-child(4) { scale: 1.05; animation-delay: -0.3s; }
+:is([data-huda-dots="merge"] .huda-dots:not([data-look]), .huda-dots[data-look="merge"]) { animation: huda-turn 3s linear infinite; }
+:is([data-huda-dots="merge"] .huda-dots:not([data-look]), .huda-dots[data-look="merge"]) > i { animation: huda-merge 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate both; }
 @keyframes huda-merge {
-  0%, 12%, 100% { transform: translate(var(--dx), var(--dy)) scale(1); }
-  45%, 58% { transform: translate(0, 0) scale(0.75); }
+  from { transform: translate(var(--x), var(--y)); }
+  to { transform: translate(calc(var(--x) * 0.18), calc(var(--y) * 0.18)) scale(0.8); }
 }
-[data-huda-dots="swap"] .huda-dots > i:nth-child(1) { animation: huda-swap-1 3.6s ease-in-out infinite both; }
-[data-huda-dots="swap"] .huda-dots > i:nth-child(2) { animation: huda-swap-2 3.6s ease-in-out infinite both; }
-[data-huda-dots="swap"] .huda-dots > i:nth-child(3) { animation: huda-swap-3 3.6s ease-in-out infinite both; }
-[data-huda-dots="swap"] .huda-dots > i:nth-child(4) { animation: huda-swap-4 3.6s ease-in-out infinite both; }
-@keyframes huda-swap-1 {
-  0% { transform: translate(50%, 50%); }
-  8% { transform: translate(275%, 125%); }
-  16% { transform: translate(350%, 350%); }
-  25% { transform: translate(350%, 350%); }
-  50% { transform: translate(350%, 350%); }
-  58% { transform: translate(125%, 275%); }
-  66% { transform: translate(50%, 50%); }
-  75% { transform: translate(50%, 50%); }
-  100% { transform: translate(50%, 50%); }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i { animation: huda-swap-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both; }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(2),
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(3) { animation-name: huda-swap-b; }
+/* Half a turn about the centre takes a dot to the opposite corner and its
+   partner to its own, so the loop's jump back to 0deg can't be seen */
+@keyframes huda-swap-a {
+  0% { rotate: 0deg; }
+  40%, 100% { rotate: 180deg; }
 }
-@keyframes huda-swap-2 {
-  0% { transform: translate(350%, 50%); }
-  25% { transform: translate(350%, 50%); }
-  33% { transform: translate(125%, 125%); }
-  41% { transform: translate(50%, 350%); }
-  50% { transform: translate(50%, 350%); }
-  75% { transform: translate(50%, 350%); }
-  83% { transform: translate(275%, 275%); }
-  91% { transform: translate(350%, 50%); }
-  100% { transform: translate(350%, 50%); }
+@keyframes huda-swap-b {
+  0%, 50% { rotate: 0deg; }
+  90%, 100% { rotate: 180deg; }
 }
-@keyframes huda-swap-3 {
-  0% { transform: translate(50%, 350%); }
-  25% { transform: translate(50%, 350%); }
-  33% { transform: translate(275%, 275%); }
-  41% { transform: translate(350%, 50%); }
-  50% { transform: translate(350%, 50%); }
-  75% { transform: translate(350%, 50%); }
-  83% { transform: translate(125%, 125%); }
-  91% { transform: translate(50%, 350%); }
-  100% { transform: translate(50%, 350%); }
-}
-@keyframes huda-swap-4 {
-  0% { transform: translate(350%, 350%); }
-  8% { transform: translate(125%, 275%); }
-  16% { transform: translate(50%, 50%); }
-  25% { transform: translate(50%, 50%); }
-  50% { transform: translate(50%, 50%); }
-  58% { transform: translate(275%, 125%); }
-  66% { transform: translate(350%, 350%); }
-  75% { transform: translate(350%, 350%); }
-  100% { transform: translate(350%, 350%); }
-}
+/* Reduced motion: the dots hold the square and only fade in turn */
 @media (prefers-reduced-motion: reduce) {
-  html[data-huda-dots] .huda-dots { animation: none; }
-  html .huda-dots > i:nth-child(n),
-  html[data-huda-dots] .huda-dots > i:nth-child(n) {
-    left: 0;
-    top: 0;
-    translate: none;
-    rotate: none;
-    scale: none;
-    animation: huda-dot-still 1.8s ease-in-out infinite;
+  .huda-dots { animation: none !important; }
+  .huda-dots > i {
+    transform: none !important;
+    rotate: none !important;
+    scale: none !important;
+    animation: huda-dot-still 1.8s ease-in-out infinite both !important;
   }
-  html[data-huda-dots] .huda-dots > i:nth-child(1) { transform: translate(50%, 50%); }
-  html[data-huda-dots] .huda-dots > i:nth-child(2) { transform: translate(350%, 50%); animation-delay: 0.45s; }
-  html[data-huda-dots] .huda-dots > i:nth-child(3) { transform: translate(50%, 350%); animation-delay: 1.35s; }
-  html[data-huda-dots] .huda-dots > i:nth-child(4) { transform: translate(350%, 350%); animation-delay: 0.9s; }
+  .huda-dots > i:nth-child(1) { translate: -150% -150%; }
+  .huda-dots > i:nth-child(2) { translate: 150% -150%; animation-delay: 0.45s !important; }
+  .huda-dots > i:nth-child(3) { translate: -150% 150%; animation-delay: 1.35s !important; }
+  .huda-dots > i:nth-child(4) { translate: 150% 150%; animation-delay: 0.9s !important; }
 }
 @keyframes huda-dot-still {
   0%, 100% { opacity: 0.4; }
