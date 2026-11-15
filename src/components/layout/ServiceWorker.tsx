@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { resyncReminders } from "@/lib/reminders/push";
 
 /**
  * Registers /sw.js (public/sw.js) so the site opens and reads offline.
@@ -22,8 +23,14 @@ export function ServiceWorker() {
             .filter((u) => u.startsWith(location.origin));
           const page = location.origin + location.pathname;
           reg.active?.postMessage({ type: "cache-urls", urls: [page, ...urls], page });
+          // Reading reminders: re-save if the language / time zone changed.
+          void resyncReminders().catch(() => {});
         })
         .catch(() => {});
+      // …and when leaving the page (a language picked in this visit).
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") void resyncReminders().catch(() => {});
+      });
     };
     if (document.readyState === "complete") register();
     else {
