@@ -111,8 +111,24 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       5, 7, 34, 35, 37; Tunaiji 34 (drifting recordings the stream verdict
       rates match/inconclusive). Candidates for a whole-Surah
       `align-reciter-timings.py` run, as done for Shatri 10.
-- [ ] **Alafasy word timings run ~0.5 s ahead of the voice** in places
+- [x] **Alafasy word timings run ~0.5 s ahead of the voice** in places
       (93:3, 93:4 …): the highlight leads the recitation inside the ayah.
+      **Done 2026-11-15:** measured, not guessed — every Alafasy word's onset
+      by CTC forced alignment on the streamed audio (`scripts/qa/word-lead.py`,
+      73,880 words), vs its QDC start (convention: ~0.08 s before the voice;
+      the median word reads 0.105 s). Not uniform, so no whole-reciter shift:
+      713 of 6,184 ayahs led by ≥ 0.15 s, clustered (Surah 20: 75, 19: 45,
+      53: 42, 4 and 18: 28 each; 93:3–5, 8: 0.43–0.53 s). In each such ayah
+      the words lead together, so `scripts/qa/fix-word-lead.cjs` shifts that
+      ayah's segments rigidly onto the voice (`repairs` kind `lead-shift`,
+      with evidence): **613 ayahs, median shift 0.395 s (0.23–0.57 s
+      p10–p90, 21 over 1 s)**. Their words' lead: median 0.495 → 0.08 s,
+      p90 1.065 → 0.26 s; ayahs leading ≥ 0.15 s on main (after #239): 668 → 55. Results in `scripts/qa/results/word-lead/`. Left
+      alone: 56 ayahs with an earlier repair (incl. the 273 item's), 44 whose
+      words don't share one offset, 8 that lag 0.15–0.35 s (e.g. 92:5, 99:4),
+      and single words mid-ayah that still light 0.3–1 s early (~10% of
+      words — QDC word-boundary precision; fixing those needs per-word
+      re-timing, not a shift).
 - [x] **Meaning word-timings for Surahs 21–66** — done (2026-11-14). Tamil
       (PR #228) and English (PR #230) are on main for both voices: all 2,758
       ayahs × 4 sets, word counts match the text, last word ends with the

@@ -1,7 +1,7 @@
 {
  "summary": {
-  "generated": "2026-11-15T04:52:01.439Z",
-  "secs": 26,
+  "generated": "2026-11-15T06:07:58.518Z",
+  "secs": 23,
   "totals": {
    "ayahs": 6236,
    "words": 77430,
@@ -61,6 +61,7 @@
   "timingRepairsApplied": {
    "forced-alignment-ayah": 263,
    "forced-alignment": 24,
+   "lead-shift": 613,
    "displaced-shift": 43,
    "zero-based-index": 1,
    "embedded-prelude": 77,
@@ -190,8 +191,8 @@
     "measured": 77212,
     "estimated": 218,
     "unsynced": 0,
-    "voiceSamples": 5275301,
-    "voiceMatch": 5275301
+    "voiceSamples": 5274887,
+    "voiceMatch": 5274887
    },
    "dosari": {
     "surahs": 114,
@@ -279,132 +280,11 @@
    }
   },
   "failuresBySeverity": {
-   "HIGH audio-timing-pair": 18,
    "INFO ayah-no-word-timing": 9,
    "INFO juz-unavailable": 1
   }
  },
  "failures": [
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "sudais",
-   "surah": 3,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/sudais/3.mp3",
-   "actual": "/audio/quran-cbr/sudais/3.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "sudais",
-   "surah": 4,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/sudais/4.mp3",
-   "actual": "/audio/quran-cbr/sudais/4.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "sudais",
-   "surah": 5,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/sudais/5.mp3",
-   "actual": "/audio/quran-cbr/sudais/5.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "sudais",
-   "surah": 27,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/sudais/27.mp3",
-   "actual": "/audio/quran-cbr/sudais/27.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "sudais",
-   "surah": 28,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/sudais/28.mp3",
-   "actual": "/audio/quran-cbr/sudais/28.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "sudais",
-   "surah": 29,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/sudais/29.mp3",
-   "actual": "/audio/quran-cbr/sudais/29.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "alafasy",
-   "surah": 1,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/alafasy/1.mp3",
-   "actual": "/audio/quran-cbr/alafasy/1.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "alafasy",
-   "surah": 37,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/alafasy/37.mp3",
-   "actual": "/audio/quran-cbr/alafasy/37.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "alafasy",
-   "surah": 59,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/alafasy/59.mp3",
-   "actual": "/audio/quran-cbr/alafasy/59.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "alafasy",
-   "surah": 78,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/alafasy/78.mp3",
-   "actual": "/audio/quran-cbr/alafasy/78.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "alafasy",
-   "surah": 82,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/alafasy/82.mp3",
-   "actual": "/audio/quran-cbr/alafasy/82.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "abdulbaset",
-   "surah": 2,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/abdulbaset/2.mp3",
-   "actual": "/audio/quran-cbr/abdulbaset/2.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "minshawi",
-   "surah": 13,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/minshawi/13.mp3",
-   "actual": "/audio/quran-cbr/minshawi/13.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "hussary",
-   "surah": 6,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/hussary/6.mp3",
-   "actual": "/audio/quran-cbr/hussary/6.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "hussary",
-   "surah": 26,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/hussary/26.mp3",
-   "actual": "/audio/quran-cbr/hussary/26.mp3"
-  },
   {
    "category": "ayah-no-word-timing",
    "severity": "INFO",
@@ -470,36 +350,12 @@
    "detail": "too few word segments (under half the words)"
   },
   {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "shatri",
-   "surah": 41,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/shatri/41.mp3",
-   "actual": "/audio/quran-cbr/shatri/41.mp3"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "tunaiji",
-   "surah": 14,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/tunaiji/14.mp3",
-   "actual": "/audio/quran-cbr/tunaiji/14.mp3"
-  },
-  {
    "category": "ayah-no-word-timing",
    "severity": "INFO",
    "reciter": "tunaiji",
    "surah": 34,
    "ayah": 50,
    "detail": "too few word segments (under half the words)"
-  },
-  {
-   "category": "audio-timing-pair",
-   "severity": "HIGH",
-   "reciter": "tunaiji",
-   "surah": 72,
-   "expected": "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev/audio/quran-cbr/tunaiji/72.mp3",
-   "actual": "/audio/quran-cbr/tunaiji/72.mp3"
   },
   {
    "category": "juz-unavailable",
