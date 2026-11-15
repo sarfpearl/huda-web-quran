@@ -584,48 +584,42 @@ html:has([data-not-found]) #huda-splash {
   margin-top: 30px;
   font-size: 34px;
 }
-/* "As-salamu alaykum" in Uthmanic Hafs (preloaded in layout.tsx), in a
-   gold-to-emerald gradient. A soft-edged mask sweeps right to left so it
-   writes itself in from 0.35s and is whole by 1.5s, inside the splash's 1.7s
-   minimum; the colours then drift slowly. */
-.huda-splash-salam {
-  margin-top: 18px;
-  padding: 0.15em 0.3em 0.35em;
-  font-family: var(--font-arabic);
-  font-size: 2rem;
-  line-height: 1.6;
-  background: linear-gradient(90deg, #34d399, #fcd34d 30%, #f59e0b 50%, #fcd34d 70%, #34d399);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-mask-image: linear-gradient(to left, #000 40%, transparent 60%);
-  mask-image: linear-gradient(to left, #000 40%, transparent 60%);
-  -webkit-mask-size: 300% 100%;
-  mask-size: 300% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+/* "As-salamu alaykum" (SalamWriting: the Uthmanic Hafs outlines as paths),
+   written in under the dots: each letter's outline draws itself right to
+   left, a beat after the one before, and fills with ink as it closes; then
+   the harakat. All done by ~1.65s, inside the splash's 1.7s minimum. */
+.huda-salam {
+  display: block;
+  width: min(68vw, 250px);
+  height: auto;
+  margin-top: 20px;
+  overflow: visible;
+}
+.huda-salam path {
+  fill: url(#huda-salam-ink);
+  fill-opacity: 0;
+  stroke: url(#huda-salam-ink);
+  stroke-width: 22;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.huda-salam .huda-salam-letter {
   animation:
-    huda-salam-write 1.15s cubic-bezier(0.35, 0, 0.25, 1) 0.35s both,
-    huda-salam-colour 5s ease-in-out 1.5s infinite alternate;
+    huda-salam-draw 0.5s cubic-bezier(0.45, 0, 0.35, 1) calc(0.3s + var(--i) * 0.065s) both,
+    huda-salam-fill 0.35s ease-out calc(0.65s + var(--i) * 0.065s) both;
 }
-@keyframes huda-salam-write {
-  from { -webkit-mask-position: 0% 0; mask-position: 0% 0; }
-  to { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
-}
-/* /loaders: the same writing on repeat, with a pause to read it */
-.huda-splash-salam.huda-salam-loop {
+.huda-salam .huda-salam-mark {
   animation:
-    huda-salam-write-loop 3.2s cubic-bezier(0.35, 0, 0.25, 1) infinite both,
-    huda-salam-colour 5s ease-in-out infinite alternate;
+    huda-salam-draw 0.25s ease-out calc(1.05s + var(--i) * 0.04s) both,
+    huda-salam-fill 0.25s ease-out calc(1.15s + var(--i) * 0.04s) both;
 }
-@keyframes huda-salam-write-loop {
-  0%, 11% { -webkit-mask-position: 0% 0; mask-position: 0% 0; }
-  47%, 100% { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+@keyframes huda-salam-draw {
+  to { stroke-dashoffset: 0; }
 }
-@keyframes huda-salam-colour {
-  from { background-position: 0% 0; }
-  to { background-position: 100% 0; }
+@keyframes huda-salam-fill {
+  to { fill-opacity: 1; }
 }
 @keyframes huda-splash-breathe {
   0%, 100% { transform: scale(1); }
@@ -783,7 +777,7 @@ html:has([data-not-found]) #huda-splash {
   .huda-splash-name { margin-top: 24px; font-size: 3rem; }
   .huda-splash-tagline { font-size: 0.85rem; }
   .huda-splash-mark { margin-top: 38px; font-size: 40px; }
-  .huda-splash-salam { font-size: 2.6rem; }
+  .huda-salam { width: 320px; margin-top: 26px; }
 }
 @media (min-width: 1280px) {
   .huda-splash-logo { width: 280px; }
@@ -791,7 +785,7 @@ html:has([data-not-found]) #huda-splash {
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-splash-logo { animation: none; }
-  .huda-splash-salam { animation: none; -webkit-mask-image: none; mask-image: none; }
+  .huda-salam path { animation: none !important; stroke-dashoffset: 0; fill-opacity: 1; }
 }
 
 /* App-like touch: no text selection (Copy / Look Up) and no long-press image
