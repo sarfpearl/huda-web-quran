@@ -7,13 +7,15 @@ import { DotLoader } from "@/components/ui/DotLoader";
  * it doesn't flash, and never longer than MAX_MS. Hiding is a class on <html>
  * (which already takes suppressHydrationWarning) rather than removing the
  * node, so React hydration still matches; client navigations keep the class,
- * so the splash only shows on a full open of the app.
+ * so the splash only shows on a full open of the app. The script also picks
+ * the loader's look for this open (data-huda-dots: grid or orbit).
  */
 const MIN_MS = 1700;
 const MAX_MS = 8000;
 
 const hideScript = `(function(){
 var d=document.documentElement,t0=Date.now(),done=false;
+d.setAttribute("data-huda-dots",Math.random()<0.5?"orbit":"grid");
 function hide(){if(done)return;done=true;setTimeout(function(){d.classList.add("huda-ready")},Math.max(0,${MIN_MS}-(Date.now()-t0)))}
 if(document.readyState==="complete")hide();else window.addEventListener("load",hide);
 setTimeout(hide,${MAX_MS});

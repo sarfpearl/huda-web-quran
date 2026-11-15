@@ -588,14 +588,16 @@ html:has([data-not-found]) #huda-splash {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
 }
-/* Loading mark (DotLoader): four dots in a 1em box rearranging — square,
-   2↔3 swap, 1↔4 swap, triangle, line, diamond — with a short hold on each */
+/* Loading mark (DotLoader): four dots in a 1em box that never stop — from a
+   square into a "\" diagonal, back, a "/" diagonal, back, a Z and an S shear.
+   Each move eases with a slight overshoot and each dot starts a beat after
+   the one before, so the shape flows instead of snapping. */
 .huda-dots {
   position: relative;
   display: inline-block;
   width: 1em;
   height: 1em;
-  color: #f0943a;
+  color: #e07a52;
   vertical-align: middle;
 }
 .huda-dots > i {
@@ -606,55 +608,83 @@ html:has([data-not-found]) #huda-splash {
   height: 20%;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 0.18em currentColor;
-  animation: 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation: 4.8s cubic-bezier(0.5, 0, 0.2, 1.18) infinite both;
 }
-.huda-dots > i:nth-child(1) { animation-name: huda-dot-1; }
-.huda-dots > i:nth-child(2) { animation-name: huda-dot-2; }
-.huda-dots > i:nth-child(3) { animation-name: huda-dot-3; }
-.huda-dots > i:nth-child(4) { animation-name: huda-dot-4; }
+.huda-dots > i:nth-child(1) { animation-name: huda-dot-1; animation-delay: 0s; }
+.huda-dots > i:nth-child(2) { animation-name: huda-dot-2; animation-delay: 0.05s; }
+.huda-dots > i:nth-child(3) { animation-name: huda-dot-3; animation-delay: 0.1s; }
+.huda-dots > i:nth-child(4) { animation-name: huda-dot-4; animation-delay: 0.15s; }
 @keyframes huda-dot-1 {
-  0%, 10% { transform: translate(50%, 50%); }
-  18%, 28% { transform: translate(50%, 50%); }
-  36%, 46% { transform: translate(350%, 350%); }
-  54%, 62% { transform: translate(200%, 50%); }
-  70%, 78% { transform: translate(133.33%, 200%); }
-  86%, 92% { transform: translate(200%, 16.67%); }
+  0%, 3% { transform: translate(50%, 50%); }
+  12.5%, 15.5% { transform: translate(50%, 50%); }
+  25%, 28% { transform: translate(50%, 50%); }
+  37.5%, 40.5% { transform: translate(150%, 250%); }
+  50%, 53% { transform: translate(50%, 50%); }
+  62.5%, 65.5% { transform: translate(50%, 50%); }
+  75%, 78% { transform: translate(50%, 50%); }
+  87.5%, 90.5% { transform: translate(220%, 50%); }
   100% { transform: translate(50%, 50%); }
 }
 @keyframes huda-dot-2 {
-  0%, 10% { transform: translate(350%, 50%); }
-  18%, 28% { transform: translate(50%, 350%); }
-  36%, 46% { transform: translate(50%, 350%); }
-  54%, 62% { transform: translate(50%, 350%); }
-  70%, 78% { transform: translate(0%, 200%); }
-  86%, 92% { transform: translate(16.67%, 200%); }
+  0%, 3% { transform: translate(350%, 50%); }
+  12.5%, 15.5% { transform: translate(250%, 250%); }
+  25%, 28% { transform: translate(350%, 50%); }
+  37.5%, 40.5% { transform: translate(350%, 50%); }
+  50%, 53% { transform: translate(350%, 50%); }
+  62.5%, 65.5% { transform: translate(180%, 50%); }
+  75%, 78% { transform: translate(350%, 50%); }
+  87.5%, 90.5% { transform: translate(350%, 50%); }
   100% { transform: translate(350%, 50%); }
 }
 @keyframes huda-dot-3 {
-  0%, 10% { transform: translate(50%, 350%); }
-  18%, 28% { transform: translate(350%, 50%); }
-  36%, 46% { transform: translate(350%, 50%); }
-  54%, 62% { transform: translate(350%, 350%); }
-  70%, 78% { transform: translate(400%, 200%); }
-  86%, 92% { transform: translate(383.33%, 200%); }
+  0%, 3% { transform: translate(50%, 350%); }
+  12.5%, 15.5% { transform: translate(150%, 150%); }
+  25%, 28% { transform: translate(50%, 350%); }
+  37.5%, 40.5% { transform: translate(50%, 350%); }
+  50%, 53% { transform: translate(50%, 350%); }
+  62.5%, 65.5% { transform: translate(220%, 350%); }
+  75%, 78% { transform: translate(50%, 350%); }
+  87.5%, 90.5% { transform: translate(50%, 350%); }
   100% { transform: translate(50%, 350%); }
 }
 @keyframes huda-dot-4 {
-  0%, 10% { transform: translate(350%, 350%); }
-  18%, 28% { transform: translate(350%, 350%); }
-  36%, 46% { transform: translate(50%, 50%); }
-  54%, 62% { transform: translate(200%, 50%); }
-  70%, 78% { transform: translate(266.67%, 200%); }
-  86%, 92% { transform: translate(200%, 383.33%); }
+  0%, 3% { transform: translate(350%, 350%); }
+  12.5%, 15.5% { transform: translate(350%, 350%); }
+  25%, 28% { transform: translate(350%, 350%); }
+  37.5%, 40.5% { transform: translate(250%, 150%); }
+  50%, 53% { transform: translate(350%, 350%); }
+  62.5%, 65.5% { transform: translate(350%, 350%); }
+  75%, 78% { transform: translate(350%, 350%); }
+  87.5%, 90.5% { transform: translate(180%, 350%); }
   100% { transform: translate(350%, 350%); }
 }
+/* Second look, picked at random per app open (data-huda-dots on <html>, set
+   by the splash script): the four dots orbit the centre, each swelling and
+   shrinking on its own beat — the shrinking also draws it inward. */
+[data-huda-dots="orbit"] .huda-dots > i {
+  left: 40%;
+  top: 40%;
+  transform: translateX(150%);
+  animation: huda-orbit 2.4s linear infinite, huda-orbit-size 1.6s ease-in-out infinite;
+}
+[data-huda-dots="orbit"] .huda-dots > i:nth-child(1) { animation-delay: 0s, 0s; }
+[data-huda-dots="orbit"] .huda-dots > i:nth-child(2) { animation-delay: -0.6s, -0.5s; }
+[data-huda-dots="orbit"] .huda-dots > i:nth-child(3) { animation-delay: -1.2s, -1.1s; }
+[data-huda-dots="orbit"] .huda-dots > i:nth-child(4) { animation-delay: -1.8s, -0.25s; }
+@keyframes huda-orbit {
+  to { rotate: 360deg; }
+}
+@keyframes huda-orbit-size {
+  0%, 100% { scale: 1.15; }
+  50% { scale: 0.35; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .huda-dots > i { animation: huda-dot-still 1.8s ease-in-out infinite; }
-  .huda-dots > i:nth-child(1) { transform: translate(50%, 50%); }
-  .huda-dots > i:nth-child(2) { transform: translate(350%, 50%); animation-delay: 0.45s; }
-  .huda-dots > i:nth-child(3) { transform: translate(50%, 350%); animation-delay: 1.35s; }
-  .huda-dots > i:nth-child(4) { transform: translate(350%, 350%); animation-delay: 0.9s; }
+  html .huda-dots > i,
+  html[data-huda-dots] .huda-dots > i { left: 0; top: 0; animation: huda-dot-still 1.8s ease-in-out infinite; }
+  html .huda-dots > i:nth-child(1) { transform: translate(50%, 50%); }
+  html .huda-dots > i:nth-child(2) { transform: translate(350%, 50%); animation-delay: 0.45s; }
+  html .huda-dots > i:nth-child(3) { transform: translate(50%, 350%); animation-delay: 1.35s; }
+  html .huda-dots > i:nth-child(4) { transform: translate(350%, 350%); animation-delay: 0.9s; }
 }
 @keyframes huda-dot-still {
   0%, 100% { opacity: 0.4; }
