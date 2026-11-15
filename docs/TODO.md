@@ -98,10 +98,10 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       ayahs × 4 sets, word counts match the text, last word ends with the
       clip. Checked on the live site: 36 Tamil/Cruz and 55 English/Lora light
       word by word.
-- [ ] **Meaning word-timings for Surahs 2–20** — the audio landed in PR #233
-      but `public/data/meaning-timings/*/*/2…20.json` don't exist yet, so those
-      meanings are read without lighting. Local and free:
-      `node scripts/generation/build-meaning-timings.mjs --surah=2-20`.
+- [x] **Meaning word-timings for Surahs 2–20** — done (2026-11-15). Both
+      voices × Tamil/English: all 2,476 ayahs × 4 sets (9,904 clips, local
+      aeneas, $0). Every ayah has words, word counts match the text, start
+      times run in order, last word ends with the clip.
 - [ ] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
       limited; a stream stalled 155 s during testing).
 
