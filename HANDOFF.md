@@ -69,7 +69,7 @@
 
 ### Cloudflare R2 Media Migration
 - **Bucket:** `huda-quran-media`
-- **Public R2 Base URL:** `https://media.hudaguidance.com` (custom domain since 2026-11-15; the old `https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` is rate limited and kept only as a fallback)
+- **Public R2 Base URL:** `https://media.hudaguidance.com` (custom domain since 2026-11-15; the old rate-limited `pub-….r2.dev` URL is disabled)
 - **Assets Uploaded:** **270 total files** (~2.84 GB total):
   - **Images:** 159 files (172.00 MB)
   - **Videos:** 109 files (2.68 GB)
@@ -409,7 +409,7 @@ No secret values here — those live only in `.env.local` (git-ignored) and Verc
 | **Antigravity** (Google AI IDE) | Second AI assistant; this file was first written for it | Account not recorded |
 | **GitHub** | Source code, PRs, history | User `sarfpearl` · repo `sarfpearl/huda-web-quran` (**public**) · commit author `sarf-pearl` |
 | **Vercel** | Hosting; auto-deploys `main`, preview per PR | Team `hu-da-right-guidance` (`team_wteEbzTnEOJuAid754cd4N78`) · project `huda-web-quran` (`prj_OSs76BUbUlrTpgDxbOkJHTDg35Sz`) · `www.hudaguidance.com` (domain bought at GoDaddy 2026-11-12, 3 years, renews Nov 2029; DNS: A `@` → `216.198.79.1`, CNAME `www` → Vercel) |
-| **Cloudflare R2** | All media: artwork, videos, prelude audio, reciter portraits, Maher's full-Juz audio | Bucket `huda-quran-media` · public URL `media.hudaguidance.com` (old `pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev` kept as fallback) · account ID in `R2_ACCOUNT_ID` |
+| **Cloudflare R2** | All media: artwork, videos, prelude audio, reciter portraits, Maher's full-Juz audio | Bucket `huda-quran-media` · public URL `media.hudaguidance.com` · account ID in `R2_ACCOUNT_ID` |
 | **Supabase** | Surah/Juz views, likes, comments (anonymous RPCs); comment moderation | Project ref `astqipbwohonowaoufwi` |
 | **Google Cloud – Vertex AI (Veo)** | Generating the Surah/Juz background videos (`scripts/generation/generate_vertex_*.mjs`); not used at runtime | Project `gen-lang-client-0172381348` |
 

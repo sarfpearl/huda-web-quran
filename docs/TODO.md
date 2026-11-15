@@ -147,8 +147,9 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       connected as `https://media.hudaguidance.com` (Cloudflare edge cache;
       objects keep `Cache-Control: public, max-age=31536000, immutable`; no
       CORS policy, as before). Vercel `NEXT_PUBLIC_MEDIA_BASE_URL` points
-      there; `next.config.mjs` / `sw.js` / scripts too. The r2.dev URL stays
-      enabled as a fallback until old cached pages are gone.
+      there; `next.config.mjs` / `sw.js` / scripts too. The r2.dev public URL
+      is disabled (owner, 2026-11-15; the site wasn't public yet) and the
+      fallbacks for it removed.
 
 ### Meaning audio — where it stands (updated 2026-11-12)
 
