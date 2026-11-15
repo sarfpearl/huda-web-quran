@@ -582,33 +582,83 @@ html:has([data-not-found]) #huda-splash {
 }
 .huda-splash-mark {
   margin-top: 30px;
-  filter: drop-shadow(0 0 8px rgba(252, 211, 77, 0.45));
-  animation: huda-splash-glow 2.6s ease-in-out infinite;
-}
-.huda-splash-mark-spin {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: huda-splash-spin 5.5s linear infinite;
-}
-.huda-splash-mark-core {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: huda-splash-core 2.6s ease-in-out infinite;
+  font-size: 34px;
 }
 @keyframes huda-splash-breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
 }
-@keyframes huda-splash-spin {
-  to { transform: rotate(360deg); }
+/* Loading mark (DotLoader): four dots in a 1em box rearranging — square,
+   2↔3 swap, 1↔4 swap, triangle, line, diamond — with a short hold on each */
+.huda-dots {
+  position: relative;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  color: #f0943a;
+  vertical-align: middle;
 }
-@keyframes huda-splash-glow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(252, 211, 77, 0.35)); }
-  50% { filter: drop-shadow(0 0 13px rgba(252, 211, 77, 0.65)); }
+.huda-dots > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20%;
+  height: 20%;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0.18em currentColor;
+  animation: 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
-@keyframes huda-splash-core {
-  0%, 100% { transform: scale(0.85); opacity: 0.8; }
-  50% { transform: scale(1.15); opacity: 1; }
+.huda-dots > i:nth-child(1) { animation-name: huda-dot-1; }
+.huda-dots > i:nth-child(2) { animation-name: huda-dot-2; }
+.huda-dots > i:nth-child(3) { animation-name: huda-dot-3; }
+.huda-dots > i:nth-child(4) { animation-name: huda-dot-4; }
+@keyframes huda-dot-1 {
+  0%, 10% { transform: translate(50%, 50%); }
+  18%, 28% { transform: translate(50%, 50%); }
+  36%, 46% { transform: translate(350%, 350%); }
+  54%, 62% { transform: translate(200%, 50%); }
+  70%, 78% { transform: translate(133.33%, 200%); }
+  86%, 92% { transform: translate(200%, 16.67%); }
+  100% { transform: translate(50%, 50%); }
+}
+@keyframes huda-dot-2 {
+  0%, 10% { transform: translate(350%, 50%); }
+  18%, 28% { transform: translate(50%, 350%); }
+  36%, 46% { transform: translate(50%, 350%); }
+  54%, 62% { transform: translate(50%, 350%); }
+  70%, 78% { transform: translate(0%, 200%); }
+  86%, 92% { transform: translate(16.67%, 200%); }
+  100% { transform: translate(350%, 50%); }
+}
+@keyframes huda-dot-3 {
+  0%, 10% { transform: translate(50%, 350%); }
+  18%, 28% { transform: translate(350%, 50%); }
+  36%, 46% { transform: translate(350%, 50%); }
+  54%, 62% { transform: translate(350%, 350%); }
+  70%, 78% { transform: translate(400%, 200%); }
+  86%, 92% { transform: translate(383.33%, 200%); }
+  100% { transform: translate(50%, 350%); }
+}
+@keyframes huda-dot-4 {
+  0%, 10% { transform: translate(350%, 350%); }
+  18%, 28% { transform: translate(350%, 350%); }
+  36%, 46% { transform: translate(50%, 50%); }
+  54%, 62% { transform: translate(200%, 50%); }
+  70%, 78% { transform: translate(266.67%, 200%); }
+  86%, 92% { transform: translate(200%, 383.33%); }
+  100% { transform: translate(350%, 350%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .huda-dots > i { animation: huda-dot-still 1.8s ease-in-out infinite; }
+  .huda-dots > i:nth-child(1) { transform: translate(50%, 50%); }
+  .huda-dots > i:nth-child(2) { transform: translate(350%, 50%); animation-delay: 0.45s; }
+  .huda-dots > i:nth-child(3) { transform: translate(50%, 350%); animation-delay: 1.35s; }
+  .huda-dots > i:nth-child(4) { transform: translate(350%, 350%); animation-delay: 0.9s; }
+}
+@keyframes huda-dot-still {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 /* About HuDa: a light sweep across the maker's gold logo (masked to its
    letters by an inline mask-image), every few seconds */
@@ -635,17 +685,14 @@ html:has([data-not-found]) #huda-splash {
   .huda-splash-logo { width: 240px; }
   .huda-splash-name { margin-top: 24px; font-size: 3rem; }
   .huda-splash-tagline { font-size: 0.85rem; }
-  .huda-splash-mark { margin-top: 38px; width: 68px; height: 68px; }
+  .huda-splash-mark { margin-top: 38px; font-size: 40px; }
 }
 @media (min-width: 1280px) {
   .huda-splash-logo { width: 280px; }
   .huda-splash-name { font-size: 3.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .huda-splash-logo,
-  .huda-splash-mark,
-  .huda-splash-mark-spin,
-  .huda-splash-mark-core { animation: none; }
+  .huda-splash-logo { animation: none; }
 }
 
 /* App-like touch: no text selection (Copy / Look Up) and no long-press image
