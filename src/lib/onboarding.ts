@@ -1,11 +1,12 @@
 /*
  * The first-open sequence, one thing at a time:
- * splash → location permission → Add to Home Screen guide → content browser.
+ * splash → location permission → Add to Home Screen guide → first-visit tour
+ * (FirstVisitTour) → content browser.
  * Each step waits for the one before it to be answered or skipped, so the
  * prompts never stack on top of each other.
  */
 
-type Stage = "location" | "install";
+type Stage = "location" | "install" | "tour";
 
 const resolvers: Partial<Record<Stage, () => void>> = {};
 const promises: Partial<Record<Stage, Promise<void>>> = {};

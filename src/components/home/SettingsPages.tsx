@@ -13,6 +13,8 @@ import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 import { SCENE_DIM_DEFAULTS, type SceneDim } from "./SceneOverlay";
+import { tourT } from "@/lib/i18n/tour";
+import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
 
 /*
  * Settings (⚙ in the content browser): every preference in one place. The
@@ -176,6 +178,7 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
               );
             })}
           </div>
+          <Row label={tourT(lang, "App tour")} value={tourT(lang, "Show again")} onClick={() => onLeave(OPEN_TOUR_EVENT)} />
         </>
       )}
     </div>

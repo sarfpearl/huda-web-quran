@@ -67,6 +67,7 @@ export function ShareMenu({
         }}
         aria-label={label}
         data-tooltip={label}
+        data-tour="share"
         className={className}
       >
         <ShareIcon className="text-base sm:text-lg" />
