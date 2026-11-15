@@ -31,6 +31,7 @@ import {
   type MeaningVoice,
 } from "@/lib/data/meaningAudio";
 import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
+import { RecordButton } from "@/components/record/RecordButton";
 import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
@@ -2133,6 +2134,22 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               >
                 <ShareIcon className="text-base sm:text-lg" />
               </button>
+            )}
+            {/* Record a video of the recitation (src/components/record) */}
+            {!isJuz && activeSurah && (
+              <RecordButton
+                surah={activeSurah.number}
+                surahTitle={surahNameIn(activeSurah.number, language)}
+                verseCount={activeSurah.verses ?? verses.length}
+                currentAyah={onAirAyah?.ayah ?? 1}
+                startAt={(ayah) => {
+                  setReadingMode(false);
+                  jumpToVerse(ayah - 1);
+                  if (player.current) player.resume();
+                }}
+                language={language}
+                className="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
+              />
             )}
             </div>
           }

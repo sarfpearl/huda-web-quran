@@ -17,6 +17,13 @@ const nextConfig = {
   // The old Vercel address sends visitors to www.hudaguidance.com, keeping the
   // path. /api stays put so the keepalive cron isn't redirected. Preview
   // deployments have their own hosts and are untouched.
+  // Record (src/lib/record): the canvas and Web Audio need CORS media, and R2
+  // sends no CORS headers — the recorder loads R2 files through this
+  // same-origin path instead (src/lib/record/corsMedia.ts).
+  async rewrites() {
+    const base = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "").trim().replace(/\/+$/, "");
+    return base ? [{ source: "/media-cors/:path*", destination: `${base}/:path*` }] : [];
+  },
   async redirects() {
     return [
       {
