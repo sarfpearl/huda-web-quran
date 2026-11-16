@@ -486,10 +486,10 @@ export default function RecordStudio(props: RecordStudioProps) {
         </button>
       </div>
       {/* What happens next, said once recording starts; problems stay up.
-          Low on the frame, just above its logo and link (they sit in the
+          Low on the frame, clear above its logo and link (they sit in the
           frame's bottom ~10%; the frame fills the height above the bar). */}
       {(stalled || (rolling && showGuide) || silent) && phase.kind !== "saving" && (
-        <div style={{ bottom: "calc(env(safe-area-inset-bottom) + 4.25rem + 0.13 * (100dvh - 4.25rem - env(safe-area-inset-bottom)))" }} className={`absolute inset-x-3 mx-auto max-w-[480px] rounded-[22px] px-4 py-3 text-sm leading-relaxed text-sand-50 ${BAR}`} role="status">
+        <div style={{ bottom: "calc(env(safe-area-inset-bottom) + 4.25rem + 0.17 * (100dvh - 4.25rem - env(safe-area-inset-bottom)))" }} className={`absolute inset-x-3 mx-auto max-w-[480px] rounded-[22px] px-4 py-3 text-sm leading-relaxed text-sand-50 ${BAR}`} role="status">
           {stalled ? (
             <>
               <p>{L("The recitation hasn't started yet.")}</p>

@@ -252,6 +252,21 @@ class BackgroundMirror {
   }
 }
 
+// The logo, loaded once and decoded ahead (from when this module loads, a
+// little after the page): a recording's first frames had no logo while it
+// was still arriving.
+let logo: HTMLImageElement | null = null;
+function sharedLogo(): HTMLImageElement {
+  if (!logo) {
+    logo = new Image();
+    logo.decoding = "async";
+    logo.src = "/huda-logo.webp?v=3";
+    void logo.decode?.().catch(() => {});
+  }
+  return logo;
+}
+if (typeof window !== "undefined") sharedLogo();
+
 // Loaded while the setup sheet is open, so the video's first frame already
 // has the scene (the clip takes a moment to arrive through /media-cors).
 let warm: BackgroundMirror | null = null;
@@ -346,7 +361,7 @@ export class FrameComposer {
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private bg: BackgroundMirror;
-  private logo = new Image();
+  private logo = sharedLogo();
   /** The app's UI font, Poppins (self-hosted: next/font's own family name). */
   private uiFont = uiFontFamily();
   /** The title's serif: Amiri (self-hosted, also used for the app's Arabic). */
@@ -372,7 +387,6 @@ export class FrameComposer {
     this.canvas.width = opts.width;
     this.canvas.height = opts.height;
     this.ctx = this.canvas.getContext("2d", { alpha: false })!;
-    this.logo.src = "/huda-logo.webp?v=3";
     this.observer = new MutationObserver(() => {
       this.stageDirtyUntil = performance.now() + 300;
     });
