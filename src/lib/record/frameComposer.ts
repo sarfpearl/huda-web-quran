@@ -350,6 +350,14 @@ export class FrameComposer {
   /** The app's UI font, Poppins (self-hosted: next/font's own family name). */
   private uiFont = uiFontFamily();
   private stage: Stage | null = null;
+  // The verse stage is read again only after it changed (and for a moment
+  // after, while its colour transitions run) — not every frame: reading every
+  // word's computed style 30 times a second made garbage that piled up.
+  private stageDirtyUntil = 0;
+  private stageReadAt = -Infinity;
+  private observer: MutationObserver | null = null;
+  private observed: Element | null = null;
+  private scrim: { h: number; g: CanvasGradient } | null = null;
   private layout: { key: string; arabic: Block; meaning: Block | null; top: number; meaningTop: number } | null = null;
 
   constructor(private opts: ComposerOptions) {
@@ -360,6 +368,9 @@ export class FrameComposer {
     this.canvas.height = opts.height;
     this.ctx = this.canvas.getContext("2d", { alpha: false })!;
     this.logo.src = "/huda-logo.webp?v=3";
+    this.observer = new MutationObserver(() => {
+      this.stageDirtyUntil = performance.now() + 300;
+    });
     // The canvas only draws a web font that is already loaded.
     void document.fonts?.load(`600 32px ${this.uiFont}`, SITE_LINK).catch(() => {});
   }
@@ -422,8 +433,20 @@ export class FrameComposer {
     const { width: W, height: H } = this.opts;
     const u = this.unit;
     const margin = W * 0.07;
-    const fresh = readStage();
-    if (fresh) this.stage = fresh;
+    // Watch the verse stage (re-attached if the page swaps it).
+    const stageEl = document.querySelector("[data-verse-stage]");
+    if (stageEl !== this.observed && this.observer) {
+      this.observer.disconnect();
+      this.observed = stageEl;
+      this.stageDirtyUntil = now + 300;
+      if (stageEl) this.observer.observe(stageEl, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"], characterData: true });
+    }
+    // Changed recently, or a slow safety refresh (twice a second).
+    if (now <= this.stageDirtyUntil || now - this.stageReadAt > 500) {
+      this.stageReadAt = now;
+      const fresh = readStage();
+      if (fresh) this.stage = fresh;
+    }
     const stage = this.stage;
 
     // Background
@@ -436,10 +459,14 @@ export class FrameComposer {
     }
     ctx.globalAlpha = 1;
     // The app's scrim: darker at the bottom and top, so the text reads on any clip.
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "rgba(0,0,0,0.6)");
-    g.addColorStop(0.5, "rgba(0,0,0,0.45)");
-    g.addColorStop(1, "rgba(0,0,0,0.82)");
+    if (this.scrim?.h !== H) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "rgba(0,0,0,0.6)");
+      grad.addColorStop(0.5, "rgba(0,0,0,0.45)");
+      grad.addColorStop(1, "rgba(0,0,0,0.82)");
+      this.scrim = { h: H, g: grad };
+    }
+    const g = this.scrim.g;
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
@@ -504,6 +531,8 @@ export class FrameComposer {
   }
 
   dispose() {
+    this.observer?.disconnect();
+    this.observer = null;
     this.bg.dispose();
   }
 }
