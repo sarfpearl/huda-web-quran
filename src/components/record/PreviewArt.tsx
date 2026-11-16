@@ -1,6 +1,7 @@
 /**
  * Record › Preview: the screen's ornaments, drawn as SVG (no image files) —
- * the Islamic arch behind the title, the Quran emblem, and the mosque
+ * the Islamic arch behind the title (its emblem is Hugeicons' Quran01, in
+ * Icon.tsx), and the mosque
  * skyline with two lit lanterns at the foot. Colours: midnight navy and gold.
  */
 
@@ -16,8 +17,8 @@ export function ArchHeader({ className }: { className?: string }) {
     <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={className} aria-hidden>
       <defs>
         <linearGradient id="arch-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#0a1124" />
-          <stop offset="1" stopColor="#0a1124" stopOpacity="0" />
+          <stop offset="0" stopColor="#000" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#000" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="arch-gold" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor={GOLD} stopOpacity="0" />
@@ -38,27 +39,6 @@ export function ArchHeader({ className }: { className?: string }) {
         strokeWidth="2"
         vectorEffect="non-scaling-stroke"
       />
-    </svg>
-  );
-}
-
-/** An open Quran on its stand, in gold. */
-export function QuranEmblem({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 36" className={className} aria-hidden>
-      <defs>
-        <linearGradient id="emblem-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f8dc9b" />
-          <stop offset="1" stopColor="#c48a32" />
-        </linearGradient>
-      </defs>
-      <g fill="none" stroke="url(#emblem-gold)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
-        <path d="M24 9C19 5.5 12 5 5 6.5V27C12 25.5 19 26 24 29.5C29 26 36 25.5 43 27V6.5C36 5 29 5.5 24 9Z" fill="#1a1406" />
-        <path d="M24 9V29.5" />
-        <path d="M9 11.5C13 10.8 17 11.2 20.5 12.8M9 16C13 15.3 17 15.7 20.5 17.3M9 20.5C13 19.8 17 20.2 20.5 21.8" strokeWidth="1.4" />
-        <path d="M39 11.5C35 10.8 31 11.2 27.5 12.8M39 16C35 15.3 31 15.7 27.5 17.3M39 20.5C35 19.8 31 20.2 27.5 21.8" strokeWidth="1.4" />
-        <path d="M3 27.5C11 26 18.5 26.8 24 31C29.5 26.8 37 26 45 27.5" />
-      </g>
     </svg>
   );
 }

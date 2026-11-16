@@ -26,12 +26,13 @@ import {
   LayersIcon,
   MuteIcon,
   PauseIcon,
+  QuranStandIcon,
   PlayIcon,
   ShareIcon,
   StopIcon,
   VolumeIcon,
 } from "@/components/ui/Icon";
-import { ArchHeader, GOLD, MosqueFooter, PATTERN_BG, QuranEmblem } from "./PreviewArt";
+import { ArchHeader, GOLD, MosqueFooter, PATTERN_BG } from "./PreviewArt";
 import { extFor, prepareSession, VIDEO_BPS, webmOnly, type Quality, type Session, type Shape } from "@/lib/record/recorder";
 
 /** HuDa's glass (the player card's, ActionSheet's PLAYER_GLASS). */
@@ -594,6 +595,8 @@ function Preview({
   const [msg, setMsg] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => setSheetOpen(true), []);
   const [full, setFull] = useState(false);
   // Frames along the timeline under the trim handles (like the iPhone's editor).
   const [thumbs, setThumbs] = useState<string[]>([]);
@@ -636,7 +639,8 @@ function Preview({
       v.removeEventListener("play", onPlay);
       v.removeEventListener("pause", onPause);
     };
-  }, [phase.duration]);
+    // (The video is in the sheet: it exists once the sheet has opened.)
+  }, [phase.duration, sheetOpen]);
 
   // The filmstrip: frames read from a second, hidden copy of the file.
   useEffect(() => {
@@ -849,7 +853,7 @@ function Preview({
       ro.disconnect();
       v?.removeEventListener("loadedmetadata", fit);
     };
-  }, []);
+  }, [sheetOpen]);
 
   // Full screen: the card itself (custom controls stay); iPhone: the native player.
   const cardRef = useRef<HTMLDivElement>(null);
@@ -897,37 +901,31 @@ function Preview({
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] overflow-hidden bg-[#070c1a] text-sand-50" role="dialog" aria-modal="true" aria-label={L("Video Preview")}>
-      {/* Ambient light: the frame on screen, blurred, under a navy scrim (as the
-          home screen's scene sits under its scrim) */}
-      {thumbs[current] && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={thumbs[current]} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-45 blur-3xl" />
-      )}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,12,26,0.72)_0%,rgba(7,12,26,0.86)_45%,rgba(5,8,15,0.95)_100%)]" aria-hidden />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 [mask-image:linear-gradient(to_bottom,#000,transparent)]" style={{ backgroundImage: PATTERN_BG }} aria-hidden />
-
-      {/* One screen, no scrolling: the preview area takes the height left over,
-          Download / Share are pinned at the foot. */}
-      <div className="relative flex h-full flex-col">
+    // The app's own action sheet (its glass over the scene, handle, Back /
+    // Escape / swipe down to close), nearly full height.
+    <ActionSheet open={sheetOpen} onClose={onClose} label={L("Video Preview")} noAutoClose className="h-[94dvh] max-h-[94dvh]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 [mask-image:linear-gradient(to_bottom,#000,transparent)]" style={{ backgroundImage: PATTERN_BG }} aria-hidden />
+      {/* One sheet, no scrolling: the preview area takes the height left over. */}
+      <div className="relative flex h-full min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1">
-          <div className="mx-auto flex h-full w-full max-w-[440px] flex-col px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-3">
+          <div className="mx-auto flex h-full w-full max-w-[440px] flex-col pb-3">
             {/* Header: the arch, the Quran emblem, title and subtitle; close at top right */}
             {/* Shorter screens: a tighter header, so the video keeps its height. */}
-            <header className="relative shrink-0 pt-6 pb-4 text-center [@media(max-height:800px)]:pt-3 [@media(max-height:800px)]:pb-2">
+            <header className="relative shrink-0 pt-3 pb-4 text-center [@media(max-height:800px)]:pt-1 [@media(max-height:800px)]:pb-2">
               <ArchHeader className="pointer-events-none absolute -inset-x-4 -top-2 h-[calc(100%+1.5rem)] w-[calc(100%+2rem)]" />
               <button
                 type="button"
                 onClick={onClose}
                 aria-label={L("Close")}
-                className={`absolute right-0 top-2 z-10 grid h-11 w-11 place-items-center rounded-full text-white transition hover:bg-black/20 active:scale-95 cursor-pointer ${GLASS}`}
+                className="absolute right-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-sand-200 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
               <div className="relative flex flex-col items-center">
-                <QuranEmblem className="h-9 w-12 drop-shadow-[0_0_10px_rgba(227,182,90,0.45)] [@media(max-height:800px)]:h-7 [@media(max-height:800px)]:w-9" />
+                {/* Hugeicons Quran01: the open Quran on its stand, in the app's gold */}
+                <QuranStandIcon className="text-[38px] text-[#f6de9a] drop-shadow-[0_0_10px_rgba(227,182,90,0.45)] [@media(max-height:800px)]:text-[30px]" />
                 <h3 className="mt-4 text-[28px] leading-tight text-white [@media(max-height:800px)]:mt-2 [@media(max-height:800px)]:text-[23px]" style={{ fontFamily: "var(--font-amiri), serif" }}>
                   {L("Video Preview")}
                   {phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}
@@ -1082,11 +1080,9 @@ function Preview({
           </div>
         </div>
 
-        {/* Download · Share, pinned on a glass foot with the mosque skyline */}
-        <div className="relative shrink-0 border-t border-white/10 bg-black/[0.25] backdrop-blur-[14px]">
-          {/* Under the buttons, as in the design: the skyline and lanterns */}
-          <MosqueFooter className="absolute inset-x-0 bottom-[env(safe-area-inset-bottom)] h-12 opacity-80" />
-          <div className="relative mx-auto grid w-full max-w-[440px] grid-cols-2 gap-3 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+3.25rem)]">
+        {/* Download · Share; the skyline and lanterns under them */}
+        <div className="relative shrink-0">
+          <div className="relative mx-auto grid w-full max-w-[440px] grid-cols-2 gap-3 pb-12">
             <button
               type="button"
               disabled={busy !== null}
@@ -1094,23 +1090,25 @@ function Preview({
                 const r = await prepare();
                 download(r.file);
               }}
-              className={`flex h-14 items-center justify-center gap-2.5 rounded-full text-base font-semibold text-white transition hover:bg-black/30 active:scale-[0.98] disabled:opacity-50 cursor-pointer ${GLASS}`}
+              className={`flex h-11 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white transition hover:bg-black/30 active:scale-[0.98] disabled:opacity-50 cursor-pointer ${GLASS}`}
             >
-              <DownloadIcon className="text-2xl" />
+              <DownloadIcon className="text-xl" />
               {L("Download")}
             </button>
+            {/* The app's gold: gold edge, gold label and the logo's shine (.huda-tab-gold) */}
             <button
               type="button"
               disabled={busy !== null}
               onClick={share}
-              className="flex h-14 items-center justify-center gap-2.5 rounded-full bg-[linear-gradient(120deg,#f6de9a,#d6a64e_40%,#f6de9a_65%,#b98532)] text-base font-semibold text-[#1b1406] shadow-[0_6px_22px_rgba(232,196,110,0.3)] transition hover:brightness-105 active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+              className="huda-tab-gold flex h-11 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition active:scale-[0.98] disabled:opacity-60 cursor-pointer"
             >
-              <ShareIcon className="text-2xl" />
-              {busy !== null ? `${L("Preparing…")} ${Math.round(busy * 100)}%` : L("Share")}
+              <ShareIcon className="relative z-[1] text-xl" />
+              <span className="relative z-[1]">{busy !== null ? `${L("Preparing…")} ${Math.round(busy * 100)}%` : L("Share")}</span>
             </button>
           </div>
+          <MosqueFooter className="absolute -inset-x-4 bottom-0 h-10 opacity-75" />
         </div>
       </div>
-    </div>
+    </ActionSheet>
   );
 }
