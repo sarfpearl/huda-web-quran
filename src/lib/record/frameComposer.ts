@@ -75,8 +75,26 @@ function readStage(): Stage | null {
   return { key, arabic, ayah, meaning, meaningDir };
 }
 
+type Bg = HTMLVideoElement | HTMLImageElement;
+
+/** The page's large scene images (the Surah artwork sits under its clips). */
+function sceneImage(): HTMLImageElement | null {
+  let img: HTMLImageElement | null = null;
+  let area = 0;
+  document.querySelectorAll("img").forEach((el) => {
+    if (!el.currentSrc || !el.complete || !el.naturalWidth) return;
+    const r = el.getBoundingClientRect();
+    if (r.width * r.height < window.innerWidth * window.innerHeight * 0.6) return;
+    if (r.width * r.height >= area) {
+      area = r.width * r.height;
+      img = el;
+    }
+  });
+  return img;
+}
+
 /** The scene's background as the page shows it: the top visible clip, else the artwork. */
-function visibleBackground(own: Set<HTMLVideoElement>): HTMLVideoElement | HTMLImageElement | null {
+function visibleBackground(own: Set<HTMLVideoElement>): Bg | null {
   let best: HTMLVideoElement | null = null;
   let bestZ = -Infinity;
   document.querySelectorAll("video").forEach((v) => {
@@ -91,31 +109,40 @@ function visibleBackground(own: Set<HTMLVideoElement>): HTMLVideoElement | HTMLI
       best = v;
     }
   });
-  if (best) return best;
-  let img: HTMLImageElement | null = null;
-  let area = 0;
-  document.querySelectorAll("img").forEach((el) => {
-    if (!el.currentSrc || !el.complete || !el.naturalWidth) return;
-    const r = el.getBoundingClientRect();
-    if (r.width * r.height < window.innerWidth * window.innerHeight * 0.6) return;
-    if (Number(getComputedStyle(el).opacity) < 0.5) return;
-    if (r.width * r.height >= area) {
-      area = r.width * r.height;
-      img = el;
-    }
-  });
-  return img;
+  return best ?? sceneImage();
 }
 
-/** A CORS-clean copy of the page's background clip, kept in step with it. */
+/**
+ * A CORS-clean copy of the page's background (through /media-cors), kept in
+ * step with it. Never draws nothing: a clip that is still loading, failed or
+ * stalled leaves the last good picture — or the Surah artwork — on screen.
+ */
 class BackgroundMirror {
   own = new Set<HTMLVideoElement>();
-  private cur: { src: string; el: HTMLVideoElement | HTMLImageElement; since: number } | null = null;
-  private prev: { el: HTMLVideoElement | HTMLImageElement } | null = null;
-  private loading: { src: string; el: HTMLVideoElement | HTMLImageElement } | null = null;
+  private cur: { src: string; el: Bg; since: number } | null = null;
+  private prev: { el: Bg } | null = null;
+  private loading: { src: string; el: Bg; at: number } | null = null;
+  /** The artwork, loaded too, for whenever no clip is ready. */
+  private art: { src: string; el: HTMLImageElement; ok: boolean } | null = null;
+  /** URLs that failed, and when they may be tried again. */
+  private failed = new Map<string, { n: number; next: number }>();
   private lastSync = 0;
 
-  private load(src: HTMLVideoElement | HTMLImageElement) {
+  private fail(url: string, el: Bg) {
+    const f = this.failed.get(url) ?? { n: 0, next: 0 };
+    f.n += 1;
+    f.next = performance.now() + 2000 * f.n;
+    this.failed.set(url, f);
+    if (el instanceof HTMLVideoElement) this.drop(el);
+    if (this.loading?.src === url) this.loading = null;
+  }
+
+  private canTry(url: string) {
+    const f = this.failed.get(url);
+    return !f || (f.n < 4 && performance.now() >= f.next);
+  }
+
+  private load(src: Bg) {
     const url = src.currentSrc;
     if (src instanceof HTMLVideoElement) {
       const v = document.createElement("video");
@@ -124,7 +151,6 @@ class BackgroundMirror {
       v.loop = src.loop;
       v.crossOrigin = "anonymous";
       v.preload = "auto";
-      v.src = corsUrl(url);
       this.own.add(v);
       v.addEventListener(
         "loadeddata",
@@ -139,21 +165,37 @@ class BackgroundMirror {
         },
         { once: true },
       );
-      this.loading = { src: url, el: v };
+      v.addEventListener("error", () => this.fail(url, v), { once: true });
+      v.src = corsUrl(url);
+      this.loading = { src: url, el: v, at: performance.now() };
     } else {
       const im = new Image();
       im.crossOrigin = "anonymous";
       im.decoding = "async";
       im.onload = () => this.ready(url, im);
+      im.onerror = () => this.fail(url, im);
       im.src = corsUrl(url);
-      this.loading = { src: url, el: im };
+      this.loading = { src: url, el: im, at: performance.now() };
     }
   }
 
-  private ready(url: string, el: HTMLVideoElement | HTMLImageElement) {
+  private loadArt(img: HTMLImageElement) {
+    const url = img.currentSrc;
+    if (this.art?.src === url || !this.canTry(url)) return;
+    const im = new Image();
+    im.crossOrigin = "anonymous";
+    const art = { src: url, el: im, ok: false };
+    im.onload = () => (art.ok = true);
+    im.onerror = () => this.failed.set(url, { n: (this.failed.get(url)?.n ?? 0) + 1, next: performance.now() + 4000 });
+    im.src = corsUrl(url);
+    this.art = art;
+  }
+
+  private ready(url: string, el: Bg) {
     if (this.loading?.src !== url) return;
     this.loading = null;
-    if (this.prev?.el instanceof HTMLVideoElement) this.drop(this.prev.el);
+    this.failed.delete(url);
+    if (this.prev?.el instanceof HTMLVideoElement && this.prev.el !== this.cur?.el) this.drop(this.prev.el);
     this.prev = this.cur ? { el: this.cur.el } : null;
     this.cur = { src: url, el, since: performance.now() };
   }
@@ -165,10 +207,19 @@ class BackgroundMirror {
     this.own.delete(v);
   }
 
+  /** Has a picture to show (a broken or empty video has none). */
+  private static shows(el: Bg) {
+    return el instanceof HTMLVideoElement ? !el.error && el.readyState >= 2 && el.videoWidth > 0 : el.complete && el.naturalWidth > 0;
+  }
+
   /** Follows the page; returns what to draw (with the incoming one's fade). */
-  layers(now: number): { el: HTMLVideoElement | HTMLImageElement; alpha: number }[] {
+  layers(now: number): { el: Bg; alpha: number }[] {
     const src = visibleBackground(this.own);
-    if (src && src.currentSrc !== this.cur?.src && src.currentSrc !== this.loading?.src) this.load(src);
+    const art = sceneImage();
+    if (art) this.loadArt(art);
+    // A load that hangs (a stalled request) is given up and tried again.
+    if (this.loading && now - this.loading.at > 12000) this.fail(this.loading.src, this.loading.el);
+    if (src && src.currentSrc !== this.cur?.src && src.currentSrc !== this.loading?.src && this.canTry(src.currentSrc)) this.load(src);
     // Drift: the page's clip is the clock (it loops and follows the scene).
     if (src instanceof HTMLVideoElement && this.cur?.el instanceof HTMLVideoElement && this.cur.src === src.currentSrc && now - this.lastSync > 1000) {
       this.lastSync = now;
@@ -182,17 +233,22 @@ class BackgroundMirror {
       }
       if (m.paused && !src.paused) void m.play().catch(() => {});
     }
-    const out: { el: HTMLVideoElement | HTMLImageElement; alpha: number }[] = [];
-    if (!this.cur) return out;
-    const fade = Math.min(1, (now - this.cur.since) / 700);
-    if (fade < 1 && this.prev) out.push({ el: this.prev.el, alpha: 1 });
-    out.push({ el: this.cur.el, alpha: this.prev ? fade : 1 });
+    const out: { el: Bg; alpha: number }[] = [];
+    // Underneath everything: the artwork, so there is never a black frame.
+    if (this.art?.ok) out.push({ el: this.art.el, alpha: 1 });
+    if (this.cur && BackgroundMirror.shows(this.cur.el)) {
+      const fade = Math.min(1, (now - this.cur.since) / 700);
+      if (fade < 1 && this.prev && BackgroundMirror.shows(this.prev.el)) out.push({ el: this.prev.el, alpha: 1 });
+      out.push({ el: this.cur.el, alpha: this.prev || this.art?.ok ? fade : 1 });
+    } else if (this.prev && BackgroundMirror.shows(this.prev.el)) {
+      out.push({ el: this.prev.el, alpha: 1 });
+    }
     return out;
   }
 
   dispose() {
     for (const v of [...this.own]) this.drop(v);
-    this.cur = this.prev = this.loading = null;
+    this.cur = this.prev = this.loading = this.art = null;
   }
 }
 

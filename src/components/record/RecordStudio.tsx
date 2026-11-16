@@ -429,10 +429,11 @@ export default function RecordStudio(props: RecordStudioProps) {
     <div className="fixed inset-0 z-[1000] bg-black flex items-center justify-center" role="dialog" aria-modal="true" aria-label={L("Recording")}>
       <div
         ref={stageRef}
-        className="h-full w-full flex items-center justify-center [&>canvas]:max-h-full [&>canvas]:max-w-full [&>canvas]:h-auto [&>canvas]:w-auto [&>canvas]:object-contain"
+        // Room below the frame for the status bar, so it never covers the logo and link.
+        className="h-full w-full flex items-center justify-center pb-[calc(env(safe-area-inset-bottom)+4.25rem)] [&>canvas]:max-h-full [&>canvas]:max-w-full [&>canvas]:h-auto [&>canvas]:w-auto [&>canvas]:object-contain"
       />
-      {/* Status bar: REC + time, which ayah, the sound going in, Stop */}
-      <div className={`absolute left-1/2 top-[calc(env(safe-area-inset-top)+0.75rem)] -translate-x-1/2 flex max-w-[calc(100vw-1.5rem)] items-center gap-2.5 rounded-full px-3 py-1.5 text-xs font-medium text-white ${BAR}`}>
+      {/* Status bar, floating at the bottom: REC + time, which ayah, the sound going in, Stop */}
+      <div className={`absolute left-1/2 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] -translate-x-1/2 flex max-w-[calc(100vw-1.5rem)] items-center gap-2.5 rounded-full px-3 py-1.5 text-xs font-medium text-white ${BAR}`}>
         {rolling ? (
           <>
             <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 animate-pulse" aria-hidden />
@@ -462,9 +463,10 @@ export default function RecordStudio(props: RecordStudioProps) {
           <span className="h-3 w-3 rounded-[3px] bg-red-500" aria-hidden />
         </button>
       </div>
-      {/* What happens next, said once recording starts; problems stay up. */}
+      {/* What happens next, said once recording starts; problems stay up.
+          At the top, clear of the logo and link at the frame's foot. */}
       {(stalled || (rolling && showGuide) || silent) && phase.kind !== "saving" && (
-        <div className={`absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] mx-auto max-w-[480px] rounded-[22px] px-4 py-3 text-sm leading-relaxed text-sand-50 ${BAR}`} role="status">
+        <div className={`absolute inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] mx-auto max-w-[480px] rounded-[22px] px-4 py-3 text-sm leading-relaxed text-sand-50 ${BAR}`} role="status">
           {stalled ? (
             <>
               <p>{L("The recitation hasn't started yet.")}</p>
@@ -568,6 +570,9 @@ function Preview({
   const [busy, setBusy] = useState<number | null>(null);
   const [ready, setReady] = useState<{ key: string; file: File; webm: boolean } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  // Frames along the timeline under the trim handles (like the iPhone's editor).
+  const [thumbs, setThumbs] = useState<string[]>([]);
   const key = `${start.toFixed(2)}-${end.toFixed(2)}`;
   const trimmed = start > 0.05 || end < duration - 0.05;
   const sizeMb = (phase.file.size / 1e6) * ((end - start) / Math.max(duration, 0.1));
@@ -593,15 +598,84 @@ function Preview({
         v.currentTime = startRef.current;
       }
     };
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
     v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("durationchange", onMeta);
     v.addEventListener("timeupdate", onTime);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
     return () => {
       v.removeEventListener("loadedmetadata", onMeta);
       v.removeEventListener("durationchange", onMeta);
       v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
     };
   }, [phase.duration]);
+
+  // The filmstrip: frames read from a second, hidden copy of the file.
+  useEffect(() => {
+    let stop = false;
+    const v = document.createElement("video");
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = "auto";
+    v.src = phase.url;
+    void (async () => {
+      await new Promise((r) => {
+        v.onloadeddata = r;
+        setTimeout(r, 6000);
+      });
+      const total = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : phase.duration;
+      if (!v.videoWidth || !total) return;
+      const n = 10;
+      const h = 72;
+      const w = Math.round((h * v.videoWidth) / v.videoHeight);
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      const out: string[] = [];
+      for (let i = 0; i < n && !stop; i++) {
+        v.currentTime = Math.min(total - 0.05, ((i + 0.5) / n) * total);
+        await new Promise((r) => {
+          v.onseeked = r;
+          setTimeout(r, 2000);
+        });
+        ctx?.drawImage(v, 0, 0, w, h);
+        out.push(c.toDataURL("image/jpeg", 0.6));
+        if (!stop) setThumbs([...out]);
+      }
+    })();
+    return () => {
+      stop = true;
+      v.removeAttribute("src");
+      v.load();
+    };
+  }, [phase.url, phase.duration]);
+
+  // Play / pause: within the handles, from the start handle at the end.
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (!v.paused) {
+      v.pause();
+      return;
+    }
+    if (v.currentTime < startRef.current || v.currentTime >= endRef.current - 0.1) v.currentTime = startRef.current;
+    void v.play().catch(() => {});
+  }, []);
+  // Space plays and pauses, as in a video editor.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || (e.target as HTMLElement)?.closest?.("input, textarea, select, [role=slider], button")) return;
+      e.preventDefault();
+      togglePlay();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [togglePlay]);
   const startRef = useRef(start);
   const endRef = useRef(end);
   startRef.current = start;
@@ -692,46 +766,102 @@ function Preview({
 
   const pct = (s: number) => `${(s / Math.max(duration, 0.1)) * 100}%`;
   const len = end - start;
+  const seekTo = (e: React.PointerEvent) => {
+    const track = trackRef.current;
+    const v = videoRef.current;
+    if (!track || !v) return;
+    const r = track.getBoundingClientRect();
+    const t = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * duration;
+    v.currentTime = Math.min(Math.max(t, start), end);
+  };
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-[#0b0d0c] flex flex-col items-center overflow-y-auto" role="dialog" aria-modal="true" aria-label={L("Preview")}>
-      <div className="w-full max-w-3xl flex flex-col gap-3 p-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-full">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">{L("Preview")}{phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}</h3>
+    <div className="fixed inset-0 z-[1000] bg-[#0b0d0c] flex flex-col items-center" role="dialog" aria-modal="true" aria-label={L("Preview")}>
+      <div className="w-full max-w-3xl flex flex-col gap-3 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] h-full min-h-0">
+        {/* Top bar, as in the iPhone's editor: Discard · title · Share */}
+        <div className="flex items-center justify-between gap-2">
           <button type="button" onClick={onClose} className={TEXT_BTN}>{L("Discard")}</button>
+          <h3 className="truncate text-sm font-semibold text-sand-50">
+            {L("Preview")}
+            {phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}
+          </h3>
+          <button type="button" className={PRIMARY} disabled={busy !== null} onClick={share}>
+            {busy !== null ? `${L("Preparing…")} ${Math.round(busy * 100)}%` : L("Share")}
+          </button>
         </div>
-        <video ref={videoRef} src={phase.url} controls playsInline preload="auto" className="w-full flex-1 min-h-0 max-h-[55vh] rounded-2xl bg-black object-contain" />
 
-        {/* Trim: start / end handles over the timeline */}
+        {/* The video: tap to play / pause */}
+        <div className="relative flex-1 min-h-0 flex items-center justify-center">
+          <video ref={videoRef} src={phase.url} playsInline preload="auto" onClick={togglePlay} className="h-full w-full rounded-2xl bg-black object-contain cursor-pointer" />
+          {!playing && (
+            <button
+              type="button"
+              onClick={togglePlay}
+              aria-label={L("Play")}
+              className="absolute grid h-16 w-16 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/60 cursor-pointer"
+            >
+              <PlayGlyph className="h-7 w-7 translate-x-0.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Trimmer: play / pause, then the filmstrip with the start / end handles */}
         <div className="select-none">
-          <div className="flex items-center justify-between text-xs text-sand-300/80 mb-1.5 tabular-nums">
-            <span>{L("Trim")}: {fmt(start)} – {fmt(end)}</span>
-            <span>{fmt(len)} · ≈ {sizeMb < 10 ? sizeMb.toFixed(1) : Math.round(sizeMb)} MB</span>
-          </div>
-          <div ref={trackRef} className="relative h-12 rounded-xl bg-white/10 touch-none">
-            <div className="absolute inset-y-0 bg-white/[0.11] border-y border-amber-200/40" style={{ left: pct(start), width: `calc(${pct(end)} - ${pct(start)})` }} />
-            <div className="absolute inset-y-0 w-0.5 bg-white/80 pointer-events-none" style={{ left: pct(now) }} />
-            {(["start", "end"] as const).map((w) => (
-              <div
-                key={w}
-                role="slider"
-                tabIndex={0}
-                aria-label={w === "start" ? L("Trim start") : L("Trim end")}
-                aria-valuemin={0}
-                aria-valuemax={Math.round(duration)}
-                aria-valuenow={Math.round(w === "start" ? start : end)}
-                aria-valuetext={fmt(w === "start" ? start : end)}
-                onPointerDown={drag(w)}
-                onKeyDown={(e) => {
-                  if (e.key === "ArrowLeft") nudge(w, -1);
-                  if (e.key === "ArrowRight") nudge(w, 1);
-                }}
-                className="absolute inset-y-0 -ml-3 w-6 grid place-items-center cursor-ew-resize"
-                style={{ left: pct(w === "start" ? start : end) }}
-              >
-                <span className="h-full w-3 rounded-md bg-sand-50 shadow" />
+          <div className="flex h-14 items-stretch gap-1.5">
+            <button
+              type="button"
+              onClick={togglePlay}
+              aria-label={playing ? L("Pause") : L("Play")}
+              className="grid w-12 shrink-0 place-items-center rounded-xl bg-white/10 text-white transition hover:bg-white/15 cursor-pointer"
+            >
+              {playing ? <PauseGlyph className="h-5 w-5" /> : <PlayGlyph className="h-5 w-5 translate-x-px" />}
+            </button>
+            <div ref={trackRef} onPointerDown={seekTo} className="relative flex-1 overflow-hidden rounded-xl bg-white/10 touch-none cursor-pointer">
+              {/* Frames */}
+              <div className="absolute inset-0 flex">
+                {thumbs.map((src, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={src} alt="" className="h-full min-w-0 flex-1 object-cover" draggable={false} />
+                ))}
               </div>
-            ))}
+              {/* Outside the handles: dimmed */}
+              <div className="absolute inset-y-0 left-0 bg-black/60" style={{ width: pct(start) }} />
+              <div className="absolute inset-y-0 right-0 bg-black/60" style={{ left: pct(end) }} />
+              {/* The kept part: framed */}
+              <div className="pointer-events-none absolute inset-y-0 border-y-[3px] border-sand-50" style={{ left: pct(start), width: `calc(${pct(end)} - ${pct(start)})` }} />
+              {/* Playhead */}
+              <div className="pointer-events-none absolute inset-y-0 w-0.5 -ml-px bg-white shadow-[0_0_4px_rgba(0,0,0,0.8)]" style={{ left: pct(now) }} />
+              {(["start", "end"] as const).map((w) => (
+                <div
+                  key={w}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label={w === "start" ? L("Trim start") : L("Trim end")}
+                  aria-valuemin={0}
+                  aria-valuemax={Math.round(duration)}
+                  aria-valuenow={Math.round(w === "start" ? start : end)}
+                  aria-valuetext={fmt(w === "start" ? start : end)}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    drag(w)(e);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowLeft") nudge(w, -1);
+                    if (e.key === "ArrowRight") nudge(w, 1);
+                  }}
+                  className={`absolute inset-y-0 grid w-4 place-items-center bg-sand-50 text-slate-900 cursor-ew-resize ${w === "start" ? "rounded-l-lg" : "-ml-4 rounded-r-lg"}`}
+                  style={{ left: pct(w === "start" ? start : end) }}
+                >
+                  <svg viewBox="0 0 8 14" className="h-3 w-2" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d={w === "start" ? "M6 1 1 7l5 6" : "M2 1l5 6-5 6"} />
+                  </svg>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-sand-300/80 tabular-nums">
+            <span>{fmt(start)} – {fmt(end)}</span>
+            <span>{fmt(len)} · ≈ {sizeMb < 10 ? sizeMb.toFixed(1) : Math.round(sizeMb)} MB</span>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             <span className="text-sand-300/70">{L("Hints")}:</span>
@@ -776,11 +906,25 @@ function Preview({
           >
             {L("Download")}
           </button>
-          <button type="button" className={PRIMARY} disabled={busy !== null} onClick={share}>
-            {busy !== null ? `${L("Preparing…")} ${Math.round(busy * 100)}%` : L("Share")}
-          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function PlayGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" />
+    </svg>
+  );
+}
+
+function PauseGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <rect x="6" y="4" width="4" height="16" rx="1.2" />
+      <rect x="14" y="4" width="4" height="16" rx="1.2" />
+    </svg>
   );
 }
