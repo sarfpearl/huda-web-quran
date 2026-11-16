@@ -34,6 +34,9 @@ import {
 import { ArchHeader, GOLD, MosqueFooter, PATTERN_BG, QuranEmblem } from "./PreviewArt";
 import { extFor, prepareSession, VIDEO_BPS, webmOnly, type Quality, type Session, type Shape } from "@/lib/record/recorder";
 
+/** The preview's controls bar under the video (px). */
+const CONTROLS_H = 56;
+
 /** Longest single video; past it the recording stops at the ayah's end and offers Part 2. */
 export const MAX_SECONDS = 600;
 
@@ -816,7 +819,9 @@ function Preview({
     window.addEventListener("pointerup", up);
   };
 
-  // The card takes the video's own shape (9:16, 1:1 or 16:9), as large as fits.
+  // The card: wide like the reference (about 0.86 : 1 with its controls
+  // bar), never narrower than the video; the video keeps its own shape
+  // (9:16 on phones) inside, the sides filled by a blur of its frame.
   useEffect(() => {
     const box = cardBoxRef.current;
     if (!box) return;
@@ -824,8 +829,9 @@ function Preview({
       const v = videoRef.current;
       const ratio = v?.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 9 / 16;
       const { width, height } = box.getBoundingClientRect();
-      const w = Math.min(width, height * ratio);
-      setCardSize({ w: Math.floor(w), h: Math.floor(w / ratio) });
+      const w = Math.min(width, Math.max(height * 0.86, (height - CONTROLS_H) * ratio));
+      const videoH = Math.min(height - CONTROLS_H, w / ratio);
+      setCardSize({ w: Math.floor(w), h: Math.floor(videoH + CONTROLS_H) });
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -890,46 +896,54 @@ function Preview({
           </div>
         </header>
 
-        {/* The video in a gold frame, its controls on it */}
+        {/* The video in a gold frame; its controls in a bar under it, so they
+            never cover the video's own logo and link. */}
         <div ref={cardBoxRef} className="relative flex min-h-0 flex-1 items-center justify-center py-1">
           <div
             ref={cardRef}
-            className={`relative overflow-hidden bg-black ${full ? "h-full w-full" : "rounded-[22px] border-[1.5px] shadow-[0_0_24px_rgba(227,182,90,0.18)]"}`}
+            className={`relative flex flex-col overflow-hidden bg-[#05080f] ${full ? "h-full w-full" : "rounded-[22px] border-[1.5px] shadow-[0_0_24px_rgba(227,182,90,0.18)]"}`}
             style={full ? undefined : { borderColor: GOLD, width: cardSize?.w, height: cardSize?.h }}
           >
-            <video ref={videoRef} src={phase.url} playsInline preload="auto" muted={muted} onClick={togglePlay} className="h-full w-full object-contain cursor-pointer" />
-            <button
-              type="button"
-              onClick={toggleFull}
-              aria-label={full ? L("Exit full screen") : L("Full screen")}
-              className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/60 cursor-pointer"
-            >
-              {full ? <ExitFullscreenIcon className="text-xl" /> : <FullscreenIcon className="text-xl" />}
-            </button>
-            {!playing && (
+            <div className="relative min-h-0 flex-1 overflow-hidden">
+              {/* The sides around a tall video: a blur of the frame on screen */}
+              {thumbs[current] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={thumbs[current]} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl" />
+              )}
+              <video ref={videoRef} src={phase.url} playsInline preload="auto" muted={muted} onClick={togglePlay} className="relative h-full w-full object-contain cursor-pointer" />
               <button
                 type="button"
-                onClick={togglePlay}
-                aria-label={L("Play")}
-                className="absolute left-1/2 top-1/2 grid h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white/85 bg-black/35 text-white backdrop-blur-sm transition hover:bg-black/50 cursor-pointer"
+                onClick={toggleFull}
+                aria-label={full ? L("Exit full screen") : L("Full screen")}
+                className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/60 cursor-pointer"
               >
-                <PlayIcon className="translate-x-0.5 text-4xl [&_path]:fill-current" />
+                {full ? <ExitFullscreenIcon className="text-xl" /> : <FullscreenIcon className="text-xl" />}
               </button>
-            )}
-            {/* Playback controls along the bottom */}
-            <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/75 to-transparent px-4 pb-3 pt-8 text-sm tabular-nums text-white">
-              <button type="button" onClick={togglePlay} aria-label={playing ? L("Pause") : L("Play")} className="grid h-11 w-8 shrink-0 place-items-center cursor-pointer">
-                {playing ? <PauseIcon className="text-2xl [&_path]:fill-current" /> : <PlayIcon className="text-2xl [&_path]:fill-current" />}
+              {!playing && (
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  aria-label={L("Play")}
+                  className="absolute left-1/2 top-1/2 grid h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white/85 bg-black/35 text-white backdrop-blur-sm transition hover:bg-black/50 cursor-pointer"
+                >
+                  <PlayIcon className="translate-x-0.5 text-4xl [&_path]:fill-current" />
+                </button>
+              )}
+            </div>
+            {/* Controls: play · time · progress · duration · volume, evenly spaced */}
+            <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-[#0a1124] px-3 text-[13px] tabular-nums text-white" style={{ height: CONTROLS_H }}>
+              <button type="button" onClick={togglePlay} aria-label={playing ? L("Pause") : L("Play")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
+                {playing ? <PauseIcon className="text-[22px] [&_path]:fill-current" /> : <PlayIcon className="text-[22px] [&_path]:fill-current" />}
               </button>
-              <span className="shrink-0">{fmt(now)}</span>
-              <div ref={progressRef} onPointerDown={scrub} className="relative h-6 flex-1 cursor-pointer touch-none" role="slider" aria-label={L("Seek")} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(now)} aria-valuetext={fmt(now)} tabIndex={0}>
-                <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/30" />
+              <span className="w-9 shrink-0 text-right">{fmt(now)}</span>
+              <div ref={progressRef} onPointerDown={scrub} className="relative h-11 min-w-0 flex-1 cursor-pointer touch-none" role="slider" aria-label={L("Seek")} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(now)} aria-valuetext={fmt(now)} tabIndex={0}>
+                <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/25" />
                 <div className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white" style={{ width: pct(now) }} />
                 <div className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow" style={{ left: pct(now) }} />
               </div>
-              <span className="shrink-0">{fmt(duration)}</span>
-              <button type="button" onClick={() => setMuted((m) => !m)} aria-label={muted ? L("Unmute") : L("Mute")} className="grid h-11 w-8 shrink-0 place-items-center cursor-pointer">
-                {muted ? <MuteIcon className="text-2xl" /> : <VolumeIcon className="text-2xl" />}
+              <span className="w-9 shrink-0">{fmt(duration)}</span>
+              <button type="button" onClick={() => setMuted((m) => !m)} aria-label={muted ? L("Unmute") : L("Mute")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
+                {muted ? <MuteIcon className="text-[22px]" /> : <VolumeIcon className="text-[22px]" />}
               </button>
             </div>
           </div>
