@@ -87,7 +87,7 @@ function Lantern({ className }: { className?: string }) {
 /** The foot of the screen: a mosque skyline at dusk between two lanterns. */
 export function MosqueFooter({ className }: { className?: string }) {
   return (
-    <div className={`pointer-events-none relative ${className ?? ""}`} aria-hidden>
+    <div className={`pointer-events-none ${className ?? "relative"}`} aria-hidden>
       {/* Dusk glow behind the skyline */}
       <div className="absolute inset-x-0 bottom-0 h-full bg-[radial-gradient(ellipse_at_50%_100%,rgba(240,165,58,0.32),rgba(240,165,58,0)_60%)]" />
       <svg viewBox="0 0 400 70" preserveAspectRatio="xMidYMax meet" className="absolute inset-x-0 bottom-0 h-full w-full">
@@ -108,8 +108,8 @@ export function MosqueFooter({ className }: { className?: string }) {
         </g>
         <path d="M200 7.5A3.2 3.2 0 1 0 202.6 12.4A2.6 2.6 0 1 1 200 7.5Z" fill={GOLD} opacity="0.9" />
       </svg>
-      <Lantern className="absolute left-3 bottom-1 h-16 w-8 drop-shadow-[0_0_14px_rgba(255,190,90,0.75)]" />
-      <Lantern className="absolute right-3 bottom-1 h-16 w-8 drop-shadow-[0_0_14px_rgba(255,190,90,0.75)]" />
+      <Lantern className="absolute left-3 bottom-1 h-11 w-6 drop-shadow-[0_0_14px_rgba(255,190,90,0.75)]" />
+      <Lantern className="absolute right-3 bottom-1 h-11 w-6 drop-shadow-[0_0_14px_rgba(255,190,90,0.75)]" />
     </div>
   );
 }
