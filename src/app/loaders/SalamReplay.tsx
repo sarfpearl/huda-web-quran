@@ -10,5 +10,5 @@ export function SalamReplay() {
     const id = setInterval(() => setRun((n) => n + 1), 3600);
     return () => clearInterval(id);
   }, []);
-  return <SalamWriting key={run} />;
+  return <SalamWriting key={run} id="huda-salam-demo" />;
 }

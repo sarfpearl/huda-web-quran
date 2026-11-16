@@ -584,10 +584,11 @@ html:has([data-not-found]) #huda-splash {
   margin-top: 30px;
   font-size: 34px;
 }
-/* "As-salamu alaykum" (SalamWriting: the Uthmanic Hafs outlines as paths),
-   written in under the dots: each letter's outline draws itself right to
-   left, a beat after the one before, and fills with ink as it closes; then
-   the harakat. All done by ~1.65s, inside the splash's 1.7s minimum. */
+/* "As-salamu alaykum" (SalamWriting), written in under the dots the way a
+   hand writes it: each letter is uncovered by a pen stroke running down its
+   centreline, letter after letter right to left, then the harakat. Each
+   stroke's start and length come from the component; it ends by ~1.65s,
+   inside the splash's 1.7s minimum. */
 .huda-salam {
   display: block;
   width: min(68vw, 250px);
@@ -595,31 +596,29 @@ html:has([data-not-found]) #huda-splash {
   margin-top: 20px;
   overflow: visible;
 }
-.huda-salam path {
-  fill: url(#huda-salam-ink);
-  fill-opacity: 0;
-  stroke: url(#huda-salam-ink);
-  stroke-width: 22;
-  stroke-linejoin: round;
+.huda-salam-pen {
+  fill: none;
+  stroke: #fff;
   stroke-linecap: round;
+  stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
+  animation-name: huda-salam-pen;
+  animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
+  animation-fill-mode: both;
 }
-.huda-salam .huda-salam-letter {
-  animation:
-    huda-salam-draw 0.5s cubic-bezier(0.45, 0, 0.35, 1) calc(0.3s + var(--i) * 0.065s) both,
-    huda-salam-fill 0.35s ease-out calc(0.65s + var(--i) * 0.065s) both;
+/* Once a glyph's last stroke is down, it settles fully inked (covering any
+   hairline the pen's centreline missed) */
+.huda-salam-settle {
+  fill: #fff;
+  opacity: 0;
+  animation: huda-salam-settle 0.12s ease-out both;
 }
-.huda-salam .huda-salam-mark {
-  animation:
-    huda-salam-draw 0.25s ease-out calc(1.05s + var(--i) * 0.04s) both,
-    huda-salam-fill 0.25s ease-out calc(1.15s + var(--i) * 0.04s) both;
-}
-@keyframes huda-salam-draw {
+@keyframes huda-salam-pen {
   to { stroke-dashoffset: 0; }
 }
-@keyframes huda-salam-fill {
-  to { fill-opacity: 1; }
+@keyframes huda-salam-settle {
+  to { opacity: 1; }
 }
 @keyframes huda-splash-breathe {
   0%, 100% { transform: scale(1); }
@@ -785,7 +784,7 @@ html:has([data-not-found]) #huda-splash {
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-splash-logo { animation: none; }
-  .huda-salam path { animation: none !important; stroke-dashoffset: 0; fill-opacity: 1; }
+  .huda-salam-pen, .huda-salam-settle { animation: none !important; stroke-dashoffset: 0; opacity: 1; }
 }
 
 /* App-like touch: no text selection (Copy / Look Up) and no long-press image
