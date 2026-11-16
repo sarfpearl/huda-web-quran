@@ -18,12 +18,11 @@ import { audioLevel } from "@/lib/record/audioTap";
 import { coolBackground, warmBackground } from "@/lib/record/frameComposer";
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { SELECTED } from "@/components/ui/selection";
+import { DownloadIcon, PauseIcon, PlayIcon, ShareIcon, StopIcon } from "@/components/ui/Icon";
 import { extFor, prepareSession, VIDEO_BPS, webmOnly, type Quality, type Session, type Shape } from "@/lib/record/recorder";
 
 /** Longest single video; past it the recording stops at the ayah's end and offers Part 2. */
 export const MAX_SECONDS = 600;
-const WHATSAPP_STATUS = 90;
-const REELS = 180;
 
 export interface RecordStudioProps {
   surah: number;
@@ -381,6 +380,9 @@ export default function RecordStudio(props: RecordStudioProps) {
           <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">
             {L("Records in real time, with the recitation and meaning audio as you have them on. Over 10 minutes it continues as Part 2.")}
           </p>
+          <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">
+            {L("Tip: WhatsApp Status takes about 90 s, Reels up to about 3 min. You can trim the video in the preview.")}
+          </p>
           {webmOnly() && (
             <p className="rounded-2xl bg-amber-300/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
               {L("This browser records WebM. HuDa turns it into MP4 when you share, if the browser can; otherwise the WebM file is shared.")}
@@ -460,13 +462,14 @@ export default function RecordStudio(props: RecordStudioProps) {
           aria-label={rolling ? L("Stop recording") : L("Cancel")}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95 cursor-pointer"
         >
-          <span className="h-3 w-3 rounded-[3px] bg-red-500" aria-hidden />
+          <StopIcon className="text-base text-red-400" />
         </button>
       </div>
       {/* What happens next, said once recording starts; problems stay up.
-          At the top, clear of the logo and link at the frame's foot. */}
+          Low on the frame, just above its logo and link (they sit in the
+          frame's bottom ~10%; the frame fills the height above the bar). */}
       {(stalled || (rolling && showGuide) || silent) && phase.kind !== "saving" && (
-        <div className={`absolute inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] mx-auto max-w-[480px] rounded-[22px] px-4 py-3 text-sm leading-relaxed text-sand-50 ${BAR}`} role="status">
+        <div style={{ bottom: "calc(env(safe-area-inset-bottom) + 4.25rem + 0.13 * (100dvh - 4.25rem - env(safe-area-inset-bottom)))" }} className={`absolute inset-x-3 mx-auto max-w-[480px] rounded-[22px] px-4 py-3 text-sm leading-relaxed text-sand-50 ${BAR}`} role="status">
           {stalled ? (
             <>
               <p>{L("The recitation hasn't started yet.")}</p>
@@ -778,16 +781,13 @@ function Preview({
   return (
     <div className="fixed inset-0 z-[1000] bg-[#0b0d0c] flex flex-col items-center" role="dialog" aria-modal="true" aria-label={L("Preview")}>
       <div className="w-full max-w-3xl flex flex-col gap-3 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] h-full min-h-0">
-        {/* Top bar, as in the iPhone's editor: Discard · title · Share */}
+        {/* Top bar: title · close (discards the recording) */}
         <div className="flex items-center justify-between gap-2">
-          <button type="button" onClick={onClose} className={TEXT_BTN}>{L("Discard")}</button>
           <h3 className="truncate text-sm font-semibold text-sand-50">
             {L("Preview")}
             {phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}
           </h3>
-          <button type="button" className={PRIMARY} disabled={busy !== null} onClick={share}>
-            {busy !== null ? `${L("Preparing…")} ${Math.round(busy * 100)}%` : L("Share")}
-          </button>
+          <CloseButton onClick={onClose} label={L("Discard")} />
         </div>
 
         {/* The video: tap to play / pause */}
@@ -800,21 +800,22 @@ function Preview({
               aria-label={L("Play")}
               className="absolute grid h-16 w-16 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/60 cursor-pointer"
             >
-              <PlayGlyph className="h-7 w-7 translate-x-0.5" />
+              <PlayIcon className="text-3xl" />
             </button>
           )}
         </div>
 
         {/* Trimmer: play / pause, then the filmstrip with the start / end handles */}
         <div className="select-none">
-          <div className="flex h-14 items-stretch gap-1.5">
+          <div className="flex h-14 items-stretch gap-3">
+            {/* A square button, the filmstrip's height */}
             <button
               type="button"
               onClick={togglePlay}
               aria-label={playing ? L("Pause") : L("Play")}
-              className="grid w-12 shrink-0 place-items-center rounded-xl bg-white/10 text-white transition hover:bg-white/15 cursor-pointer"
+              className="grid aspect-square h-14 w-14 shrink-0 place-items-center rounded-xl bg-white/10 text-white transition hover:bg-white/15 cursor-pointer"
             >
-              {playing ? <PauseGlyph className="h-5 w-5" /> : <PlayGlyph className="h-5 w-5 translate-x-px" />}
+              {playing ? <PauseIcon className="text-2xl" /> : <PlayIcon className="text-2xl" />}
             </button>
             <div ref={trackRef} onPointerDown={seekTo} className="relative flex-1 overflow-hidden rounded-xl bg-white/10 touch-none cursor-pointer">
               {/* Frames */}
@@ -863,20 +864,13 @@ function Preview({
             <span>{fmt(start)} – {fmt(end)}</span>
             <span>{fmt(len)} · ≈ {sizeMb < 10 ? sizeMb.toFixed(1) : Math.round(sizeMb)} MB</span>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-sand-300/70">{L("Hints")}:</span>
-            <button type="button" className={chip(Math.abs(len - WHATSAPP_STATUS) < 1)} onClick={() => setEnd(Math.min(duration, start + WHATSAPP_STATUS))}>
-              {L("WhatsApp Status ≈ 90 s")}
-            </button>
-            <button type="button" className={chip(Math.abs(len - REELS) < 1)} onClick={() => setEnd(Math.min(duration, start + REELS))}>
-              {L("Reels up to ~3 min")}
-            </button>
-            {trimmed && (
+          {trimmed && (
+            <div className="mt-2">
               <button type="button" className={chip(false)} onClick={() => { setStart(0); setEnd(duration); }}>
                 {L("Reset")}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {msg && <p className="text-xs text-sand-200/80">{msg}</p>}
@@ -904,27 +898,19 @@ function Preview({
               download(r.file);
             }}
           >
-            {L("Download")}
+            <span className="inline-flex items-center gap-2">
+              <DownloadIcon className="text-lg" />
+              {L("Download")}
+            </span>
+          </button>
+          <button type="button" className={PRIMARY} disabled={busy !== null} onClick={share}>
+            <span className="inline-flex items-center gap-2">
+              <ShareIcon className="text-lg" />
+              {busy !== null ? `${L("Preparing…")} ${Math.round(busy * 100)}%` : L("Share")}
+            </span>
           </button>
         </div>
       </div>
     </div>
-  );
-}
-
-function PlayGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" />
-    </svg>
-  );
-}
-
-function PauseGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <rect x="6" y="4" width="4" height="16" rx="1.2" />
-      <rect x="14" y="4" width="4" height="16" rx="1.2" />
-    </svg>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
+import { RecordIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import { t } from "@/lib/uiLang";
 import type { RecordStudioProps } from "./RecordStudio";
@@ -55,15 +56,5 @@ export function RecordButton(props: Omit<RecordStudioProps, "onClose"> & { class
       {/* On <body>: the player strip's backdrop blur would trap a fixed overlay. */}
       {open && Studio && createPortal(<Studio {...studio} onClose={() => setOpen(false)} />, document.body)}
     </>
-  );
-}
-
-function RecordIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>
-      <rect x="2.5" y="6" width="13" height="12" rx="2.5" />
-      <path d="M15.5 10.2 21 7v10l-5.5-3.2" />
-      <circle cx="9" cy="12" r="2" fill="#ef4444" stroke="none" />
-    </svg>
   );
 }
