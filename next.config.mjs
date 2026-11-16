@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // No Next.js "N" badge in dev either (it sat over screens being reviewed).
+  devIndicators: false,
   // A local production build for QA (NEXT_DIST_DIR=.next-prod) must not
   // overwrite the running dev server's .next ("Cannot find module './161.js'").
   distDir: process.env.NEXT_DIST_DIR || ".next",

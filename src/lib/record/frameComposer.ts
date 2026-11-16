@@ -252,6 +252,21 @@ class BackgroundMirror {
   }
 }
 
+// The logo, loaded once and decoded ahead (from when this module loads, a
+// little after the page): a recording's first frames had no logo while it
+// was still arriving.
+let logo: HTMLImageElement | null = null;
+function sharedLogo(): HTMLImageElement {
+  if (!logo) {
+    logo = new Image();
+    logo.decoding = "async";
+    logo.src = "/huda-logo.webp?v=3";
+    void logo.decode?.().catch(() => {});
+  }
+  return logo;
+}
+if (typeof Image !== "undefined") sharedLogo();
+
 // Loaded while the setup sheet is open, so the video's first frame already
 // has the scene (the clip takes a moment to arrive through /media-cors).
 let warm: BackgroundMirror | null = null;
@@ -346,9 +361,14 @@ export class FrameComposer {
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private bg: BackgroundMirror;
-  private logo = new Image();
+  private logo = sharedLogo();
   /** The app's UI font, Poppins (self-hosted: next/font's own family name). */
   private uiFont = uiFontFamily();
+  /** The title's serif: Amiri (self-hosted, also used for the app's Arabic). */
+  private serifFont = (() => {
+    const amiri = getComputedStyle(document.documentElement).getPropertyValue("--font-amiri").trim();
+    return amiri ? `${amiri}, serif` : "serif";
+  })();
   private stage: Stage | null = null;
   // The verse stage is read again only after it changed (and for a moment
   // after, while its colour transitions run) — not every frame: reading every
@@ -367,12 +387,12 @@ export class FrameComposer {
     this.canvas.width = opts.width;
     this.canvas.height = opts.height;
     this.ctx = this.canvas.getContext("2d", { alpha: false })!;
-    this.logo.src = "/huda-logo.webp?v=3";
     this.observer = new MutationObserver(() => {
       this.stageDirtyUntil = performance.now() + 300;
     });
     // The canvas only draws a web font that is already loaded.
     void document.fonts?.load(`600 32px ${this.uiFont}`, SITE_LINK).catch(() => {});
+    void document.fonts?.load(`36px ${this.serifFont}`, "Al-Fatihah").catch(() => {});
   }
 
   /** Scale against a 1080-wide portrait frame. */
@@ -470,15 +490,8 @@ export class FrameComposer {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // Title
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-    ctx.direction = "ltr";
-    ctx.shadowColor = "rgba(0,0,0,0.85)";
-    ctx.shadowBlur = 8 * u;
-    ctx.fillStyle = "rgba(253, 230, 138, 0.95)";
-    ctx.font = `600 ${Math.round(34 * u)}px ${this.uiFont}`;
-    ctx.fillText(this.opts.title(), W / 2, H * 0.065, W - margin * 2);
+    // Title: in a gold-edged pill with a small flourish either side.
+    this.drawTitle(W / 2, H * 0.065, W - margin * 2);
 
     if (stage) {
       if (this.layout?.key !== `${stage.key}|${W}x${H}`) this.relayout(stage);
@@ -527,6 +540,61 @@ export class FrameComposer {
     if (this.logo.complete && this.logo.naturalWidth) ctx.drawImage(this.logo, x0, y0, logoH, logoH);
     ctx.fillStyle = "rgba(255,255,255,0.92)";
     ctx.fillText(SITE_LINK, x0 + logoH + gap, y0 + logoH / 2);
+    ctx.shadowBlur = 0;
+  }
+
+  private drawTitle(cx: number, cy: number, maxW: number) {
+    const { ctx } = this;
+    const u = this.unit;
+    const gold = "rgba(227, 182, 90, 0.95)";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.direction = "ltr";
+    ctx.font = `${Math.round(36 * u)}px ${this.serifFont}`;
+    const title = this.opts.title();
+    const tw = Math.min(ctx.measureText(title).width, maxW - 260 * u);
+    const h = 60 * u;
+    const w = tw + 56 * u;
+    const x = cx - w / 2;
+    const y = cy - h / 2;
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 10 * u;
+    ctx.fillStyle = "rgba(8, 12, 26, 0.5)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, h / 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2 * u;
+    ctx.strokeStyle = gold;
+    ctx.stroke();
+    // Flourishes: a line, a diamond, a scroll and a dot, mirrored.
+    for (const dir of [-1, 1]) {
+      const ex = dir < 0 ? x : x + w;
+      ctx.beginPath();
+      ctx.moveTo(ex + dir * 8 * u, cy);
+      ctx.lineTo(ex + dir * 70 * u, cy);
+      ctx.stroke();
+      const dx = ex + dir * 34 * u;
+      ctx.fillStyle = gold;
+      ctx.beginPath();
+      ctx.moveTo(dx - 7 * u, cy);
+      ctx.lineTo(dx, cy - 7 * u);
+      ctx.lineTo(dx + 7 * u, cy);
+      ctx.lineTo(dx, cy + 7 * u);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex + dir * 54 * u, cy - 6 * u, 6 * u, 0, Math.PI * 2);
+      ctx.arc(ex + dir * 54 * u, cy + 6 * u, 6 * u, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ex + dir * 76 * u, cy, 3 * u, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 6 * u;
+    ctx.fillStyle = "rgba(255, 248, 230, 0.97)";
+    ctx.fillText(title, cx, cy + 2 * u, maxW - 260 * u);
     ctx.shadowBlur = 0;
   }
 
