@@ -161,6 +161,29 @@ export const DownloadIcon = (p: IconProps) => (
     <path d="M4 15.5C4 17.98 4.52 19 7 19H17C19.48 19 20 17.98 20 15.5" />
   </Base>
 );
+export const ClockIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7.5V12L14.5 14.5" />
+  </Base>
+);
+export const LayersIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M12 3.5L3 8L12 12.5L21 8L12 3.5Z" />
+    <path d="M3 12L12 16.5L21 12" />
+    <path d="M3 16L12 20.5L21 16" />
+  </Base>
+);
+export const FullscreenIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M4 9V6C4 4.9 4.9 4 6 4H9M15 4H18C19.1 4 20 4.9 20 6V9M20 15V18C20 19.1 19.1 20 18 20H15M9 20H6C4.9 20 4 19.1 4 18V15" />
+  </Base>
+);
+export const ExitFullscreenIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M9 4V7C9 8.1 8.1 9 7 9H4M20 9H17C15.9 9 15 8.1 15 7V4M15 20V17C15 15.9 15.9 15 17 15H20M4 15H7C8.1 15 9 15.9 9 17V20" />
+  </Base>
+);
 export const RecordIcon = (p: IconProps) => (
   <Base strokeWidth={1.5} {...p}>
     <circle cx="12" cy="12" r="8" />
