@@ -265,7 +265,7 @@ function sharedLogo(): HTMLImageElement {
   }
   return logo;
 }
-if (typeof window !== "undefined") sharedLogo();
+if (typeof Image !== "undefined") sharedLogo();
 
 // Loaded while the setup sheet is open, so the video's first frame already
 // has the scene (the clip takes a moment to arrive through /media-cors).
