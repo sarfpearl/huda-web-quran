@@ -820,16 +820,35 @@ function Preview({
     window.addEventListener("pointerup", up);
   };
 
-  // The video's own shape (9:16 for Status; 1:1 / 16:9 chosen on desktop):
-  // the card is the full width of the column at that ratio, no side gutters.
-  const [ratio, setRatio] = useState(9 / 16);
+  // A fixed-height preview area (what the screen leaves between the header and
+  // the timeline). The video is as tall as it (less the controls bar), its
+  // width from its own ratio (9:16 for Status), centred; only a too-narrow
+  // screen makes the width the limit instead. Never stretched.
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [cardSize, setCardSize] = useState<{ w: number; videoH: number } | null>(null);
   useEffect(() => {
+    const area = areaRef.current;
     const v = videoRef.current;
-    if (!v) return;
-    const on = () => v.videoWidth && v.videoHeight && setRatio(v.videoWidth / v.videoHeight);
-    on();
-    v.addEventListener("loadedmetadata", on);
-    return () => v.removeEventListener("loadedmetadata", on);
+    if (!area) return;
+    const fit = () => {
+      const ratio = v?.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 9 / 16;
+      const { width, height } = area.getBoundingClientRect();
+      let videoH = Math.max(0, height - CONTROLS_H - 3);
+      let w = videoH * ratio;
+      if (w > width) {
+        w = width;
+        videoH = w / ratio;
+      }
+      setCardSize({ w: Math.floor(w), videoH: Math.floor(videoH) });
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(area);
+    v?.addEventListener("loadedmetadata", fit);
+    return () => {
+      ro.disconnect();
+      v?.removeEventListener("loadedmetadata", fit);
+    };
   }, []);
 
   // Full screen: the card itself (custom controls stay); iPhone: the native player.
@@ -888,13 +907,14 @@ function Preview({
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,12,26,0.72)_0%,rgba(7,12,26,0.86)_45%,rgba(5,8,15,0.95)_100%)]" aria-hidden />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 [mask-image:linear-gradient(to_bottom,#000,transparent)]" style={{ backgroundImage: PATTERN_BG }} aria-hidden />
 
-      {/* The page scrolls (a full-width 9:16 video is taller than most phones);
-          Download / Share stay pinned at the foot. */}
+      {/* One screen, no scrolling: the preview area takes the height left over,
+          Download / Share are pinned at the foot. */}
       <div className="relative flex h-full flex-col">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar">
-          <div className="mx-auto flex w-full max-w-[440px] flex-col px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-4">
+        <div className="min-h-0 flex-1">
+          <div className="mx-auto flex h-full w-full max-w-[440px] flex-col px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-3">
             {/* Header: the arch, the Quran emblem, title and subtitle; close at top right */}
-            <header className="relative shrink-0 pt-6 pb-4 text-center">
+            {/* Shorter screens: a tighter header, so the video keeps its height. */}
+            <header className="relative shrink-0 pt-6 pb-4 text-center [@media(max-height:800px)]:pt-3 [@media(max-height:800px)]:pb-2">
               <ArchHeader className="pointer-events-none absolute -inset-x-4 -top-2 h-[calc(100%+1.5rem)] w-[calc(100%+2rem)]" />
               <button
                 type="button"
@@ -907,8 +927,8 @@ function Preview({
                 </svg>
               </button>
               <div className="relative flex flex-col items-center">
-                <QuranEmblem className="h-9 w-12 drop-shadow-[0_0_10px_rgba(227,182,90,0.45)]" />
-                <h3 className="mt-4 text-[28px] leading-tight text-white" style={{ fontFamily: "var(--font-amiri), serif" }}>
+                <QuranEmblem className="h-9 w-12 drop-shadow-[0_0_10px_rgba(227,182,90,0.45)] [@media(max-height:800px)]:h-7 [@media(max-height:800px)]:w-9" />
+                <h3 className="mt-4 text-[28px] leading-tight text-white [@media(max-height:800px)]:mt-2 [@media(max-height:800px)]:text-[23px]" style={{ fontFamily: "var(--font-amiri), serif" }}>
                   {L("Video Preview")}
                   {phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}
                 </h3>
@@ -916,15 +936,17 @@ function Preview({
               </div>
             </header>
 
-            {/* The video: full width at its own ratio, gold-edged glass; controls in
-                the card's foot, never over the video's text or link */}
+            {/* The preview area: fixed height, the card centred in it; the video
+                gold-edged, its controls in the card's foot (never over its text
+                or link) */}
+            <div ref={areaRef} className="flex min-h-0 flex-1 items-center justify-center">
             <div
               ref={cardRef}
               className={full ? "flex h-full w-full flex-col bg-black" : "relative overflow-hidden rounded-[24px] border-[1.5px] border-transparent shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_28px_rgba(232,196,110,0.16)]"}
               // The gold edge: the app's gold (.huda-tab-gold) as a gradient border.
-              style={full ? undefined : { background: "linear-gradient(#000, #000) padding-box, linear-gradient(120deg, #f6de9a, #b98532 40%, #f6de9a 65%, #8a6424) border-box" }}
+              style={full ? undefined : { width: cardSize ? cardSize.w + 3 : undefined, background: "linear-gradient(#000, #000) padding-box, linear-gradient(120deg, #f6de9a, #b98532 40%, #f6de9a 65%, #8a6424) border-box" }}
             >
-              <div className={`relative overflow-hidden bg-black ${full ? "min-h-0 flex-1" : "w-full"}`} style={full ? undefined : { aspectRatio: `${ratio}` }}>
+              <div className={`relative overflow-hidden bg-black ${full ? "min-h-0 flex-1" : ""}`} style={full ? undefined : { width: cardSize?.w, height: cardSize?.videoH }}>
                 <video ref={videoRef} src={phase.url} playsInline preload="auto" muted={muted} onClick={togglePlay} className="absolute inset-0 h-full w-full object-contain cursor-pointer" />
                 <button
                   type="button"
@@ -945,28 +967,33 @@ function Preview({
                   </button>
                 )}
               </div>
-              {/* Controls: play · time · progress · duration · volume */}
-              <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-black/40 px-3 text-[13px] tabular-nums text-white backdrop-blur-[14px]" style={{ height: CONTROLS_H }}>
-                <button type="button" onClick={togglePlay} aria-label={playing ? L("Pause") : L("Play")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
-                  {playing ? <PauseIcon className="text-[22px] [&_path]:fill-current" /> : <PlayIcon className="text-[22px] [&_path]:fill-current" />}
-                </button>
-                <span className="w-9 shrink-0 text-right">{fmt(now)}</span>
-                <div ref={progressRef} onPointerDown={scrub} className="relative h-11 min-w-0 flex-1 cursor-pointer touch-none" role="slider" aria-label={L("Seek")} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(now)} aria-valuetext={fmt(now)} tabIndex={0}>
-                  <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/25" />
-                  <div className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,#f6de9a,#e3b65a)]" style={{ width: pct(now) }} />
-                  <div className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow" style={{ left: pct(now) }} />
+              {/* Controls: the progress line across the top, then play · time · volume */}
+              <div className="flex shrink-0 flex-col border-t border-white/10 bg-black/40 px-2 text-[12px] tabular-nums text-white backdrop-blur-[14px]" style={{ height: CONTROLS_H }}>
+                <div ref={progressRef} onPointerDown={scrub} className="relative h-4 w-full shrink-0 cursor-pointer touch-none" role="slider" aria-label={L("Seek")} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(now)} aria-valuetext={fmt(now)} tabIndex={0}>
+                  <div className="absolute inset-x-1 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/25" />
+                  <div className="absolute left-1 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,#f6de9a,#e3b65a)]" style={{ width: `calc((100% - 0.5rem) * ${now / Math.max(duration, 0.1)})` }} />
+                  <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow" style={{ left: `calc(0.25rem + (100% - 0.5rem) * ${now / Math.max(duration, 0.1)})` }} />
                 </div>
-                <span className="w-9 shrink-0">{fmt(duration)}</span>
-                <button type="button" onClick={() => setMuted((m) => !m)} aria-label={muted ? L("Unmute") : L("Mute")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
-                  {muted ? <MuteIcon className="text-[22px]" /> : <VolumeIcon className="text-[22px]" />}
-                </button>
+                <div className="flex min-h-0 flex-1 items-center justify-between gap-1">
+                  <button type="button" onClick={togglePlay} aria-label={playing ? L("Pause") : L("Play")} className="grid h-10 w-8 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
+                    {playing ? <PauseIcon className="text-[20px] [&_path]:fill-current" /> : <PlayIcon className="text-[20px] [&_path]:fill-current" />}
+                  </button>
+                  <span className="whitespace-nowrap">
+                    {fmt(now)} <span className="text-white/50">/ {fmt(duration)}</span>
+                  </span>
+                  <button type="button" onClick={() => setMuted((m) => !m)} aria-label={muted ? L("Unmute") : L("Mute")} className="grid h-10 w-8 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
+                    {muted ? <MuteIcon className="text-[20px]" /> : <VolumeIcon className="text-[20px]" />}
+                  </button>
+                </div>
               </div>
+            </div>
+
             </div>
 
             {/* Timeline: frames, the one on screen in gold, the playhead; ‹ › step
                 a frame on a tap and trim on a drag */}
             <div className="mt-3 shrink-0 select-none">
-              <div className={`relative h-[60px] rounded-2xl px-6 py-1.5 ${GLASS}`}>
+              <div className={`relative h-[60px] rounded-2xl px-6 py-1.5 [@media(max-height:800px)]:h-[52px] ${GLASS}`}>
                 <div ref={trackRef} onPointerDown={seekTo} className="relative h-full touch-none cursor-pointer">
                   <div className="absolute inset-0 flex overflow-hidden rounded-lg">
                     {thumbs.map((src, i) => (
@@ -1019,7 +1046,7 @@ function Preview({
             </div>
 
             {/* Duration · File size · Format */}
-            <div className={`mt-3 flex shrink-0 items-center rounded-2xl px-4 py-3 ${GLASS}`}>
+            <div className={`mt-3 flex shrink-0 items-center rounded-2xl px-4 py-3 [@media(max-height:800px)]:mt-2 [@media(max-height:800px)]:py-2 ${GLASS}`}>
               <div className="flex flex-1 items-center gap-3">
                 <ClockIcon className="text-2xl text-sand-200" />
                 <div className="leading-tight">
