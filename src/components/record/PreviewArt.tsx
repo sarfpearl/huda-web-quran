@@ -2,7 +2,7 @@
  * Record › Preview: the screen's ornaments, drawn as SVG (no image files) —
  * the Islamic arch behind the title (its emblem is Hugeicons' Quran01, in
  * Icon.tsx), and the mosque
- * skyline with two lit lanterns at the foot. Colours: midnight navy and gold.
+ * skyline at the foot. Colours: midnight navy and gold.
  */
 
 export const GOLD = "#e3b65a";
@@ -43,28 +43,7 @@ export function ArchHeader({ className }: { className?: string }) {
   );
 }
 
-function Lantern({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 70" className={className} aria-hidden>
-      <defs>
-        <radialGradient id="lantern-glow" cx="0.5" cy="0.55" r="0.5">
-          <stop offset="0" stopColor="#ffd77a" />
-          <stop offset="0.55" stopColor="#f0a53a" />
-          <stop offset="1" stopColor="#a35a12" />
-        </radialGradient>
-      </defs>
-      <path d="M16 0V10" stroke={GOLD} strokeWidth="1.2" />
-      <path d="M11 14L16 9L21 14Z" fill={GOLD} />
-      <path d="M8 18H24L22 14H10Z" fill="#b98a3c" />
-      <path d="M9 18C8 30 8 40 10 50H22C24 40 24 30 23 18Z" fill="url(#lantern-glow)" stroke={GOLD} strokeWidth="1.2" />
-      <path d="M16 18V50M12 18C11 30 11 40 12.5 50M20 18C21 30 21 40 19.5 50" stroke="#7a4a14" strokeWidth="0.8" opacity="0.7" />
-      <path d="M8 50H24L21 56H11Z" fill="#b98a3c" />
-      <path d="M14 56H18L16 66Z" fill={GOLD} />
-    </svg>
-  );
-}
-
-/** The foot of the screen: a mosque skyline at dusk between two lanterns. */
+/** The foot of the screen: a mosque skyline at dusk. */
 export function MosqueFooter({ className }: { className?: string }) {
   return (
     <div className={`pointer-events-none ${className ?? "relative"}`} aria-hidden>
@@ -88,8 +67,6 @@ export function MosqueFooter({ className }: { className?: string }) {
         </g>
         <path d="M200 7.5A3.2 3.2 0 1 0 202.6 12.4A2.6 2.6 0 1 1 200 7.5Z" fill={GOLD} opacity="0.9" />
       </svg>
-      <Lantern className="absolute left-3 bottom-1 h-11 w-6 drop-shadow-[0_0_14px_rgba(255,190,90,0.75)]" />
-      <Lantern className="absolute right-3 bottom-1 h-11 w-6 drop-shadow-[0_0_14px_rgba(255,190,90,0.75)]" />
     </div>
   );
 }

@@ -925,7 +925,7 @@ function Preview({
               </button>
               <div className="relative flex flex-col items-center">
                 {/* Hugeicons Quran01: the open Quran on its stand, in the app's gold */}
-                <QuranStandIcon className="text-[38px] text-[#f6de9a] drop-shadow-[0_0_10px_rgba(227,182,90,0.45)] [@media(max-height:800px)]:text-[30px]" />
+                <QuranStandIcon strokeWidth={1} className="mt-3 text-[38px] text-[#f6de9a] drop-shadow-[0_0_10px_rgba(227,182,90,0.45)] [@media(max-height:800px)]:mt-2 [@media(max-height:800px)]:text-[30px]" />
                 <h3 className="mt-4 text-[28px] leading-tight text-white [@media(max-height:800px)]:mt-2 [@media(max-height:800px)]:text-[23px]" style={{ fontFamily: "var(--font-amiri), serif" }}>
                   {L("Video Preview")}
                   {phase.part > 1 || phase.nextFrom ? ` · ${L("Part {n}", { n: phase.part })}` : ""}
@@ -993,21 +993,24 @@ function Preview({
             <div className="mt-3 shrink-0 select-none">
               <div className={`relative h-[60px] rounded-2xl px-6 py-1.5 [@media(max-height:800px)]:h-[52px] ${GLASS}`}>
                 <div ref={trackRef} onPointerDown={seekTo} className="relative h-full touch-none cursor-pointer">
-                  <div className="absolute inset-0 flex overflow-hidden rounded-lg">
-                    {thumbs.map((src, i) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={i} src={src} alt="" className="h-full min-w-0 flex-1 object-cover" draggable={false} />
-                    ))}
+                  {/* Everything on the strip stays inside its rounded corners. */}
+                  <div className="absolute inset-0 overflow-hidden rounded-lg">
+                    <div className="absolute inset-0 flex">
+                      {thumbs.map((src, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={src} alt="" className="h-full min-w-0 flex-1 object-cover" draggable={false} />
+                      ))}
+                    </div>
+                    {thumbs.length > 0 && (
+                      <div
+                        className="pointer-events-none absolute inset-y-0 rounded-lg border-2 shadow-[inset_0_0_8px_rgba(227,182,90,0.45)]"
+                        style={{ borderColor: GOLD, left: `${(current / thumbs.length) * 100}%`, width: `${100 / thumbs.length}%` }}
+                      />
+                    )}
+                    <div className="pointer-events-none absolute inset-y-0 left-0 bg-black/60" style={{ width: pct(start) }} />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 bg-black/60" style={{ left: pct(end) }} />
+                    <div className="pointer-events-none absolute inset-y-0 w-[3px] rounded-full bg-white shadow-[0_0_4px_rgba(0,0,0,0.8)]" style={{ left: `clamp(0px, calc(${pct(now)} - 1.5px), calc(100% - 3px))` }} />
                   </div>
-                  {thumbs.length > 0 && (
-                    <div
-                      className="pointer-events-none absolute inset-y-0 rounded-md border-2 shadow-[0_0_10px_rgba(227,182,90,0.55)]"
-                      style={{ borderColor: GOLD, left: `${(current / thumbs.length) * 100}%`, width: `${100 / thumbs.length}%` }}
-                    />
-                  )}
-                  <div className="pointer-events-none absolute inset-y-0 left-0 rounded-l-lg bg-black/60" style={{ width: pct(start) }} />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 rounded-r-lg bg-black/60" style={{ left: pct(end) }} />
-                  <div className="pointer-events-none absolute -inset-y-1 w-[3px] -ml-[1.5px] rounded-full bg-white shadow-[0_0_4px_rgba(0,0,0,0.8)]" style={{ left: pct(now) }} />
                 </div>
                 {(["start", "end"] as const).map((w) => (
                   <div
@@ -1057,10 +1060,11 @@ function Preview({
                 <LayersIcon className="text-2xl text-sand-200" />
                 <div className="leading-tight">
                   <p className="text-xs text-sand-200/75">{L("File size")}</p>
-                  <p className="text-base font-semibold tabular-nums">≈ {sizeMb < 10 ? sizeMb.toFixed(1) : Math.round(sizeMb)} MB</p>
+                  <p className="text-base font-semibold tabular-nums">{sizeMb < 10 ? sizeMb.toFixed(1) : Math.round(sizeMb)} MB</p>
                 </div>
               </div>
-              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-semibold">{ext}</span>
+              {/* MP4 is what everyone expects: the format shows only when it is WebM. */}
+              {ext !== "MP4" && <span className="rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-semibold">{ext}</span>}
             </div>
 
             {(msg || (ready?.key === key && ready.webm) || (phase.nextFrom !== null && phase.nextFrom <= rangeEnd)) && (
