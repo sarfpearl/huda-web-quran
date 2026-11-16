@@ -940,11 +940,11 @@ function Preview({
             <div ref={areaRef} className="flex min-h-0 flex-1 items-center justify-center">
             <div
               ref={cardRef}
-              className={full ? "flex h-full w-full flex-col bg-black" : "relative overflow-hidden rounded-[24px] border-[1.5px] border-transparent shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_28px_rgba(232,196,110,0.16)]"}
+              className={full ? "flex h-full w-full flex-col bg-black" : "relative isolate overflow-hidden rounded-[24px] border-[1.5px] border-transparent shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_28px_rgba(232,196,110,0.16)]"}
               // The gold edge: the app's gold (.huda-tab-gold) as a gradient border.
               style={full ? undefined : { width: cardSize ? cardSize.w + 3 : undefined, background: "linear-gradient(#000, #000) padding-box, linear-gradient(120deg, #f6de9a, #b98532 40%, #f6de9a 65%, #8a6424) border-box" }}
             >
-              <div className={`relative overflow-hidden bg-black ${full ? "min-h-0 flex-1" : ""}`} style={full ? undefined : { width: cardSize?.w, height: cardSize?.videoH }}>
+              <div className={`relative overflow-hidden bg-black ${full ? "min-h-0 flex-1" : "rounded-t-[22.5px]"}`} style={full ? undefined : { width: cardSize?.w, height: cardSize?.videoH }}>
                 <video ref={videoRef} src={phase.url} playsInline preload="auto" muted={muted} onClick={togglePlay} className="absolute inset-0 h-full w-full object-contain cursor-pointer" />
                 <button
                   type="button"
@@ -966,7 +966,8 @@ function Preview({
                 )}
               </div>
               {/* Controls: the progress line across the top, then play · time · volume */}
-              <div className="flex shrink-0 flex-col border-t border-white/10 bg-black/40 px-2 text-[12px] tabular-nums text-white backdrop-blur-[14px]" style={{ height: CONTROLS_H }}>
+              {/* Its own rounded foot: a blurred layer isn't clipped by the card's corners in Chrome. */}
+              <div className={`flex shrink-0 flex-col border-t border-white/10 bg-black/40 px-2 text-[12px] tabular-nums text-white backdrop-blur-[14px] ${full ? "" : "rounded-b-[22.5px]"}`} style={{ height: CONTROLS_H }}>
                 <div ref={progressRef} onPointerDown={scrub} className="relative h-4 w-full shrink-0 cursor-pointer touch-none" role="slider" aria-label={L("Seek")} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(now)} aria-valuetext={fmt(now)} tabIndex={0}>
                   <div className="absolute inset-x-1 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/25" />
                   <div className="absolute left-1 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,#f6de9a,#e3b65a)]" style={{ width: `calc((100% - 0.5rem) * ${now / Math.max(duration, 0.1)})` }} />
