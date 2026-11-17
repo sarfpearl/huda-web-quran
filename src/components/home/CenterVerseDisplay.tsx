@@ -110,20 +110,20 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           dir="rtl"
           lang="ar"
           aria-label="بسم الله الرحمن الرحيم"
-          className="font-[family-name:var(--font-amiri)] leading-[1.6] mb-1 sm:mb-3 text-[1.8rem] sm:text-[2.75rem] md:text-[3.4rem] lg:text-6xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
+          className="font-[family-name:var(--font-amiri)] leading-[1.6] mb-2 sm:mb-4 text-[1.85rem] sm:text-5xl md:text-6xl lg:text-7xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
         >
           &#xFDFD;
         </p>
         <h2
           lang={language}
           dir={dir}
-          className={`${face} font-medium text-white leading-tight text-[1.85rem] sm:text-5xl md:text-6xl lg:text-7xl tracking-wide quran-translation-shadow`}
+          className={`${face} font-medium text-white leading-tight text-2xl sm:text-4xl md:text-[2.75rem] lg:text-5xl tracking-wide quran-translation-shadow`}
         >
           {t(language, "As-salamu alaykum")}
         </h2>
         {/* Tapered green rules: thick beside the words, fading to a point. */}
         <div className="flex items-center gap-3 sm:gap-6">
-          <span aria-hidden className="h-[5px] w-8 sm:w-11 bg-green-500 [clip-path:polygon(0_50%,100%_0,100%_100%)]" />
+          <GreenRule />
           <p
             lang={language}
             dir={dir}
@@ -131,10 +131,30 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           >
             {t(language, "Guidance for every moment")}
           </p>
-          <span aria-hidden className="h-[5px] w-8 sm:w-11 bg-green-500 [clip-path:polygon(0_0,100%_50%,0_100%)]" />
+          <GreenRule flip />
         </div>
       </div>
     </div>
+  );
+}
+
+/** Tapered green rule beside the greeting's tagline: a rounded point on the
+ *  outer end, a rounded thick end beside the words. */
+function GreenRule({ flip = false }: { flip?: boolean }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 44 6"
+      className={`h-[6px] w-8 sm:w-11 text-green-500 ${flip ? "-scale-x-100" : ""}`}
+    >
+      <path
+        d="M1.5 3 L41 0.6 A2.4 2.4 0 0 1 41 5.4 Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
