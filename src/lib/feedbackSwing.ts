@@ -23,13 +23,34 @@ export function swingAngle(t: number, from: number) {
   return side * Math.max(0, amp) * Math.cos((2 * Math.PI * t) / SWING_PERIOD_S);
 }
 
+/** Most the thread bows behind a moving lantern (px), and how much per rad/s of swing speed. */
+export const THREAD_LAG_MAX_PX = 9;
+const THREAD_LAG_PX = 7;
+
 /**
- * The thread from the anchor (ax, ay) to the lantern's hook (hx, hy): it
- * leaves the anchor heading down and meets the hook from above, so it hangs
- * straight when the lantern is right below and takes one soft bend when it is
- * swung or tucked to a side.
+ * The thread from the anchor (ax, ay) to the lantern's hook (hx, hy).
+ * `curl` (0 – 1): tucked aside it is 1 — the thread leaves the anchor heading
+ * down and meets the hook from above, one soft S; let go it eases to 0, a
+ * straight line from the button to the lantern. `speed` (rad/s, + = moving
+ * right): a moving lantern pulls its thread, so the middle trails behind it
+ * in a light bow that turns as the swing turns.
  */
-export function threadPath(ax: number, ay: number, hx: number, hy: number) {
-  const drop = Math.max(1, hy - ay);
-  return `M ${ax.toFixed(1)} ${ay.toFixed(1)} C ${ax.toFixed(1)} ${(ay + drop * 0.5).toFixed(1)}, ${hx.toFixed(1)} ${(hy - drop * 0.55).toFixed(1)}, ${hx.toFixed(1)} ${hy.toFixed(1)}`;
+export function threadPath(ax: number, ay: number, hx: number, hy: number, curl = 1, speed = 0) {
+  const dx = hx - ax;
+  const dy = hy - ay;
+  const len = Math.hypot(dx, dy) || 1;
+  const drop = Math.max(1, dy);
+  const lag = Math.max(-THREAD_LAG_MAX_PX, Math.min(THREAD_LAG_MAX_PX, -speed * THREAD_LAG_PX));
+  // Normal to the thread pointing to its right-hand side on screen.
+  const nx = dy / len;
+  const ny = -dx / len;
+  const point = (k: number, cx: number, cy: number) => {
+    const sx = ax + dx * k;
+    const sy = ay + dy * k;
+    return [sx + (cx - sx) * curl + nx * lag, sy + (cy - sy) * curl + ny * lag] as const;
+  };
+  const [c1x, c1y] = point(1 / 3, ax, ay + drop * 0.5);
+  const [c2x, c2y] = point(2 / 3, hx, hy - drop * 0.55);
+  const f = (v: number) => v.toFixed(1);
+  return `M ${f(ax)} ${f(ay)} C ${f(c1x)} ${f(c1y)}, ${f(c2x)} ${f(c2y)}, ${f(hx)} ${f(hy)}`;
 }

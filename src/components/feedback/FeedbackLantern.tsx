@@ -137,10 +137,13 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     const dx = geo.w + HIDDEN_PAST_PX - geo.ax;
     const len = Math.hypot(dx, DROP_PX);
     const hidden = Math.atan2(dx, DROP_PX);
+    /** Swing speed (rad/s), smoothed, for the thread's trailing bow. */
+    let speed = 0;
     const place = (a: number) => {
       const hx = geo.ax + len * Math.sin(a);
       const hy = geo.ay + len * Math.cos(a);
-      threadRef.current?.setAttribute("d", threadPath(geo.ax, geo.ay, hx, hy));
+      // Tucked: the soft S. Let go: it eases straight and trails the swing a little.
+      threadRef.current?.setAttribute("d", threadPath(geo.ax, geo.ay, hx, hy, 1 - lean.current, speed));
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px)`;
       if (artRef.current) artRef.current.style.transform = `rotate(${-a * LEAN * lean.current}rad)`;
     };
@@ -158,18 +161,27 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     place(from);
     const start = performance.now();
     let frame = 0;
+    let last = start;
     const step = (now: number) => {
       const s = (now - start) / 1000;
+      const dt = Math.max(1 / 240, (now - last) / 1000);
+      last = now;
+      const before = theta.current;
       // The lean eases in as it is let go and out as it is tucked away.
-      lean.current = out ? Math.min(1, leanFrom + s / 0.5) : Math.max(0, leanFrom - (s * 1000) / BACK_MS);
+      // The thread unbends over the first part of the drop, quick but not at once.
+      lean.current = out ? Math.min(1, leanFrom + s / 0.6) : Math.max(0, leanFrom - (s * 1000) / BACK_MS);
       if (out) {
         theta.current = swingAngle(s, from);
       } else {
         const k = Math.min(1, (s * 1000) / BACK_MS);
         const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
         theta.current = from + (hidden - from) * ease;
-        if (k >= 1) return place(theta.current);
+        if (k >= 1) {
+          speed = 0;
+          return place(theta.current);
+        }
       }
+      speed += ((theta.current - before) / dt - speed) * Math.min(1, dt * 12);
       place(theta.current);
       frame = requestAnimationFrame(step);
     };

@@ -71,3 +71,13 @@ test("thread: straight when hanging right below, one soft bend to a side", () =>
   const d = W.threadPath(100, 50, 60, 110).match(/[\d.]+/g).map(Number);
   assert.deepEqual([d[2], d[4]], [100, 60]);
 });
+
+test("thread: let go, it unbends to a straight line and trails behind the swing", () => {
+  // Uncurled and still: both control points on the straight line from the button to the hook.
+  const d = W.threadPath(100, 50, 160, 110, 0, 0).match(/[\d.]+/g).map(Number);
+  assert.deepEqual(d.slice(2, 6), [120, 70, 140, 90]);
+  // Moving right, the middle trails to its left (and the other way round), lightly.
+  const mid = (speed) => W.threadPath(100, 50, 100, 140, 0, speed).match(/[\d.]+/g).map(Number)[2];
+  assert.ok(mid(1) < 100 && mid(-1) > 100, `${mid(1)} / ${mid(-1)}`);
+  assert.ok(Math.abs(mid(50) - 100) <= W.THREAD_LAG_MAX_PX);
+});
