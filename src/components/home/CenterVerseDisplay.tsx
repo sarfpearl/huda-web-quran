@@ -63,11 +63,7 @@ interface CenterVerseDisplayProps {
   meaningCurrentTime?: number;
 }
 
-/** UI languages in Latin script: the greeting keeps the serif face on phones. */
-const LATIN_UI: readonly UiLang[] = ["en", "id", "tr", "fr", "ms"];
-
 function Greeting({ language, style }: { language: UiLang; style: React.CSSProperties }) {
-  const face = LATIN_UI.includes(language) ? "font-serif sm:font-sans" : "font-sans";
   const dir = isRtl(language) ? "rtl" : undefined;
   // Fit: shrink the whole greeting to the room between the header and the
   // player (short landscape phones, tall players); hide it when there is
@@ -103,30 +99,33 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500"
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
-        {/* Leading repeated per breakpoint: sm:/md:/lg:text-* each carry their own
-            line-height (1 from 6xl up), which would drop the tails of م / ك into
-            the English line below. */}
-        <h2
+        {/* Bismillah: Amiri's U+FDFD ligature, one calligraphic word. */}
+        <p
           dir="rtl"
           lang="ar"
-          className="font-arabic font-normal text-amber-300 leading-[1.6] sm:leading-[1.6] md:leading-[1.6] lg:leading-[1.6] quran-arabic-shadow [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)] text-6xl sm:text-6xl md:text-7xl lg:text-8xl"
+          aria-label="بسم الله الرحمن الرحيم"
+          className="font-[family-name:var(--font-amiri)] text-sand-50/90 leading-none text-2xl sm:text-3xl md:text-4xl quran-translation-shadow"
         >
-          السَّلَامُ عَلَيْكُمْ
-        </h2>
-        <p
+          &#xFDFD;
+        </p>
+        <h2
           lang={language}
           dir={dir}
-          className={`${face} text-white text-2xl sm:text-2xl md:text-3xl tracking-wide quran-translation-shadow`}
+          className="font-sans font-semibold text-white leading-tight tracking-tight text-[1.95rem] sm:text-5xl md:text-6xl lg:text-7xl quran-translation-shadow"
         >
           {t(language, "As-salamu alaykum")}
-        </p>
-        <p
-          lang={language}
-          dir={dir}
-          className={`${face} text-sand-50/75 text-base sm:text-base md:text-lg tracking-wide quran-translation-shadow`}
-        >
-          {t(language, "Peace be upon you")}
-        </p>
+        </h2>
+        <div className="flex items-center gap-3 sm:gap-6">
+          <span aria-hidden className="h-[3px] w-6 sm:w-12 rounded-full bg-emerald-400" />
+          <p
+            lang={language}
+            dir={dir}
+            className="font-sans text-sand-50/85 text-sm sm:text-lg md:text-xl tracking-wide quran-translation-shadow"
+          >
+            {t(language, "Guidance for every moment")}
+          </p>
+          <span aria-hidden className="h-[3px] w-6 sm:w-12 rounded-full bg-emerald-400" />
+        </div>
       </div>
     </div>
   );
