@@ -312,7 +312,7 @@ export function FirstVisitTour() {
       {/* The rosette the thread hangs from, the thread, and the lantern at its end. */}
       <div
         ref={anchorRef}
-        className="pointer-events-none absolute left-1/2 top-[calc(max(env(safe-area-inset-top),0px)+2px)] -translate-x-1/2"
+        className="pointer-events-none absolute left-1/2 top-[max(env(safe-area-inset-top),0px)] -translate-x-1/2"
         aria-hidden="true"
       >
         <Rosette />
@@ -412,7 +412,7 @@ export function FirstVisitTour() {
 /** The brass rosette (an eight-point star on a ring) the thread is tied to. */
 function Rosette() {
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" className="block overflow-visible">
+    <svg width="18" height="18" viewBox="0 0 22 22" className="block overflow-visible">
       <defs>
         <linearGradient id="huda-tour-brass" x1="0" x2="1">
           <stop offset="0%" stopColor="#a9792c" />
