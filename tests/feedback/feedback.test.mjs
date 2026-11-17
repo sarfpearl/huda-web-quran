@@ -90,3 +90,49 @@ test("rope: bows and ripples while it swings, and never stretches far", () => {
   assert.ok(Number.isFinite(R.endTilt(p)) && Math.abs(R.endTilt(p)) < 1);
   assert.match(R.ropePath(p), /^M [\d.]+ [\d.]+( Q [\d. ]+)+ L [\d.]+ [\d.]+$/);
 });
+
+// The swing (src/lib/feedbackPendulum.ts).
+const P = require(path.join(ROOT, "src/lib/feedbackPendulum.ts"));
+function run(s, seconds, breeze = true) {
+  const seen = [];
+  for (let f = 0; f < seconds * 60; f++) {
+    s = P.stepSwing(s, 1 / 60, breeze);
+    seen.push(s.theta);
+  }
+  return { s, seen };
+}
+
+test("swing: let go from aside, it falls across to the other side and back", () => {
+  const { seen } = run({ theta: 0.4, omega: 0 }, 2.2);
+  const min = Math.min(...seen.slice(0, 80));
+  assert.ok(min < -0.25, `reached ${min} on the left`);
+  // About one period later it is back on the right.
+  assert.ok(Math.max(...seen.slice(100)) > 0.2);
+});
+
+test("swing: keeps a gentle sway while out, comes to rest without the breeze", () => {
+  const out = run({ theta: 0.4, omega: 0 }, 30).seen.slice(-200);
+  const sway = Math.max(...out.map(Math.abs));
+  assert.ok(sway > P.MIN_SWAY_RAD * 0.8 && sway < 0.25, `sway ${sway}`);
+  const still = run({ theta: 0.4, omega: 0 }, 30, false).seen.slice(-200);
+  assert.ok(Math.max(...still.map(Math.abs)) < 0.02);
+});
+
+test("swing: a hard fling is capped and still settles", () => {
+  const { s, seen } = run({ theta: 0, omega: 50 }, 20);
+  assert.ok(Number.isFinite(s.theta) && Math.abs(s.omega) <= P.MAX_SPEED);
+  assert.ok(Math.max(...seen.slice(-200).map(Math.abs)) < 0.3);
+});
+
+test("swing: let go, it jumps on its springy thread a few times and settles", () => {
+  let s = P.drop({ theta: 0.4, omega: 0 });
+  const give = [];
+  for (let f = 0; f < 60 * 3; f++) {
+    s = P.stepSwing(s, 1 / 60);
+    give.push(s.stretch);
+  }
+  assert.ok(Math.max(...give) > 8 && Math.max(...give) <= P.MAX_STRETCH, `peak ${Math.max(...give)}`);
+  // Up and down: it passes back above its rest length at least once.
+  assert.ok(Math.min(...give.slice(10, 60)) < 0);
+  assert.ok(Math.abs(give.at(-1)) < 0.5, `still ${give.at(-1)}`);
+});
