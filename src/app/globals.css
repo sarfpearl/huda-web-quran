@@ -588,7 +588,7 @@ html:has([data-not-found]) #huda-splash {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
 }
-/* Loading mark (DotLoader): four brand-gold dots in a 1em box. Six looks; an
+/* Loading mark (DotLoader): four brand-gold dots in a 1em box. Eleven looks; an
    unnamed loader takes the one the splash script picked at random for this
    app open (data-huda-dots on <html>; ?dots=<look> forces one), a loader with
    data-look keeps its own (the /loaders page shows them all).
@@ -601,6 +601,11 @@ html:has([data-not-found]) #huda-splash {
    chase  round a circle, bunching up and spreading out, the leader biggest
    merge  drawing into the centre and opening out while turning
    swap   1<->4 then 2<->3 trading corners along an arc
+   pulse  a row, each dot swelling and brightening in turn
+   spin   the square turning a quarter at a time, drawing in mid-turn
+   eight  following each other round a figure of eight, the leader biggest
+   ripple the corners breathing out and in one after another, clockwise
+   newton a row like a Newton's cradle, the end dots swinging out in turn
    Dots sit centred in the box; --x/--y is a dot's corner, in dot widths. */
 .huda-dots {
   position: relative;
@@ -671,8 +676,8 @@ html:has([data-not-found]) #huda-splash {
 }
 :is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i {
   transform: translateX(212.13%);
-  animation: huda-swap-turn-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both,
-    huda-swap-reach-a 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
+  animation: huda-swap-turn-a 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite both,
+    huda-swap-reach-a 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
 }
 :is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(1) { --a: 225deg; }
 :is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(4) { --a: 45deg; }
@@ -704,6 +709,68 @@ html:has([data-not-found]) #huda-splash {
   0%, 42%, 50%, 92%, 100% { transform: translateX(212.13%); }
   21% { transform: translateX(228%); }
   71% { transform: translateX(85%); }
+}
+:is([data-huda-dots="pulse"] .huda-dots:not([data-look]), .huda-dots[data-look="pulse"]) > i { --y: 0%; animation: huda-pulse 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+:is([data-huda-dots="pulse"] .huda-dots:not([data-look]), .huda-dots[data-look="pulse"]) > i:nth-child(1) { --x: -195%; animation-delay: -1.2s; }
+:is([data-huda-dots="pulse"] .huda-dots:not([data-look]), .huda-dots[data-look="pulse"]) > i:nth-child(2) { --x: -65%; animation-delay: -1.05s; }
+:is([data-huda-dots="pulse"] .huda-dots:not([data-look]), .huda-dots[data-look="pulse"]) > i:nth-child(3) { --x: 65%; animation-delay: -0.9s; }
+:is([data-huda-dots="pulse"] .huda-dots:not([data-look]), .huda-dots[data-look="pulse"]) > i:nth-child(4) { --x: 195%; animation-delay: -0.75s; }
+@keyframes huda-pulse {
+  0%, 70%, 100% { scale: 0.55; opacity: 0.45; }
+  35% { scale: 1.1; opacity: 1; }
+}
+:is([data-huda-dots="spin"] .huda-dots:not([data-look]), .huda-dots[data-look="spin"]) { animation: huda-spin-quarter 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite both; }
+:is([data-huda-dots="spin"] .huda-dots:not([data-look]), .huda-dots[data-look="spin"]) > i { animation: huda-spin-draw 0.6s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+@keyframes huda-spin-quarter {
+  0% { rotate: 0deg; }
+  25% { rotate: 90deg; }
+  50% { rotate: 180deg; }
+  75% { rotate: 270deg; }
+  100% { rotate: 360deg; }
+}
+@keyframes huda-spin-draw {
+  0%, 100% { transform: translate(var(--x), var(--y)); }
+  50% { transform: translate(calc(var(--x) * 0.5), calc(var(--y) * 0.5)) scale(0.85); }
+}
+:is([data-huda-dots="eight"] .huda-dots:not([data-look]), .huda-dots[data-look="eight"]) > i {
+  transform: none;
+  animation: huda-eight-x 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate both, huda-eight-y 0.45s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate both;
+}
+:is([data-huda-dots="eight"] .huda-dots:not([data-look]), .huda-dots[data-look="eight"]) > i:nth-child(1) { scale: 1.05; animation-delay: -0.225s, 0s; }
+:is([data-huda-dots="eight"] .huda-dots:not([data-look]), .huda-dots[data-look="eight"]) > i:nth-child(2) { scale: 0.82; animation-delay: -0.345s, -0.12s; }
+:is([data-huda-dots="eight"] .huda-dots:not([data-look]), .huda-dots[data-look="eight"]) > i:nth-child(3) { scale: 0.64; animation-delay: -0.465s, -0.24s; }
+:is([data-huda-dots="eight"] .huda-dots:not([data-look]), .huda-dots[data-look="eight"]) > i:nth-child(4) { scale: 0.48; animation-delay: -0.585s, -0.36s; }
+@keyframes huda-eight-x {
+  from { translate: -185% 0; }
+  to { translate: 185% 0; }
+}
+@keyframes huda-eight-y {
+  from { transform: translateY(-85%); }
+  to { transform: translateY(85%); }
+}
+:is([data-huda-dots="ripple"] .huda-dots:not([data-look]), .huda-dots[data-look="ripple"]) > i { animation: huda-ripple 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+:is([data-huda-dots="ripple"] .huda-dots:not([data-look]), .huda-dots[data-look="ripple"]) > i:nth-child(1) { animation-delay: -1.2s; }
+:is([data-huda-dots="ripple"] .huda-dots:not([data-look]), .huda-dots[data-look="ripple"]) > i:nth-child(2) { animation-delay: -0.9s; }
+:is([data-huda-dots="ripple"] .huda-dots:not([data-look]), .huda-dots[data-look="ripple"]) > i:nth-child(4) { animation-delay: -0.6s; }
+:is([data-huda-dots="ripple"] .huda-dots:not([data-look]), .huda-dots[data-look="ripple"]) > i:nth-child(3) { animation-delay: -0.3s; }
+@keyframes huda-ripple {
+  0%, 100% { transform: translate(calc(var(--x) * 0.7), calc(var(--y) * 0.7)) scale(0.7); opacity: 0.6; }
+  50% { transform: translate(calc(var(--x) * 1.1), calc(var(--y) * 1.1)) scale(1.1); opacity: 1; }
+}
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i { --y: 0%; }
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i:nth-child(1) { --x: -165%; }
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i:nth-child(2) { --x: -55%; }
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i:nth-child(3) { --x: 55%; }
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i:nth-child(4) { --x: 165%; }
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i:nth-child(1) { animation: huda-newton-left 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+:is([data-huda-dots="newton"] .huda-dots:not([data-look]), .huda-dots[data-look="newton"]) > i:nth-child(4) { animation: huda-newton-right 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+@keyframes huda-newton-left {
+  0%, 50%, 100% { transform: translate(var(--x), 0); }
+  25% { transform: translate(calc(var(--x) - 80%), -55%); }
+}
+@keyframes huda-newton-right {
+  0%, 50%, 100% { transform: translate(var(--x), 0); }
+  75% { transform: translate(calc(var(--x) + 80%), -55%); }
 }
 /* Reduced motion: the dots hold the square and only fade in turn */
 @media (prefers-reduced-motion: reduce) {

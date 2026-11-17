@@ -13,6 +13,11 @@ const NOTES: Record<(typeof DOT_LOADER_LOOKS)[number], string> = {
   chase: "Following round",
   merge: "In and out, turning",
   swap: "1↔4, then 2↔3",
+  pulse: "Swelling in turn",
+  spin: "Quarter turns",
+  eight: "Figure of eight",
+  ripple: "Corners breathing",
+  newton: "Newton's cradle",
 };
 
 // Every loader look side by side, large, for review. Not linked from the app.
