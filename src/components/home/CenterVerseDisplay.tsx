@@ -132,7 +132,7 @@ function Greeting({ language, tajweed = true, style }: { language: UiLang; tajwe
             dir="rtl"
             lang="ar"
             aria-label="بسم الله الرحمن الرحيم"
-            className="flex leading-[1.6] mb-2 sm:mb-4 text-[2.2rem] sm:text-6xl md:text-7xl lg:text-8xl [filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]"
+            className="flex leading-[1.6] mb-4 sm:mb-8 text-[2.2rem] sm:text-6xl md:text-7xl lg:text-8xl [filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]"
           >
             {bismillah.w.map(([code, page]) => (
               <span
@@ -150,7 +150,7 @@ function Greeting({ language, tajweed = true, style }: { language: UiLang; tajwe
             dir="rtl"
             lang="ar"
             aria-label="بسم الله الرحمن الرحيم"
-            className="font-[family-name:var(--font-amiri)] leading-[1.6] mb-2 sm:mb-4 text-[1.85rem] sm:text-5xl md:text-6xl lg:text-7xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
+            className="font-[family-name:var(--font-amiri)] leading-[1.6] mb-4 sm:mb-8 text-[1.85rem] sm:text-5xl md:text-6xl lg:text-7xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
           >
             &#xFDFD;
           </p>
