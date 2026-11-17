@@ -138,8 +138,18 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       voices × Tamil/English: all 2,476 ayahs × 4 sets (9,904 clips, local
       aeneas, $0). Every ayah has words, word counts match the text, start
       times run in order, last word ends with the clip.
-- [ ] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
-      limited; a stream stalled 155 s during testing).
+- [x] **Serve media from a custom R2 domain, not `pub-….r2.dev`** (rate
+      limited; a stream stalled 155 s during testing). Done 2026-11-15,
+      `feat/media-custom-domain`: `hudaguidance.com` moved to Cloudflare
+      (Free plan, nameservers `elmo` / `lauryn.ns.cloudflare.com`, set at
+      GoDaddy; the registration stays at GoDaddy). Its Vercel records (`@` A,
+      `www` CNAME) are **DNS only** — never proxy them. The bucket is
+      connected as `https://media.hudaguidance.com` (Cloudflare edge cache;
+      objects keep `Cache-Control: public, max-age=31536000, immutable`; no
+      CORS policy, as before). Vercel `NEXT_PUBLIC_MEDIA_BASE_URL` points
+      there; `next.config.mjs` / `sw.js` / scripts too. The r2.dev public URL
+      is disabled (owner, 2026-11-15; the site wasn't public yet) and the
+      fallbacks for it removed.
 
 ### Meaning audio — where it stands (updated 2026-11-12)
 

@@ -32,7 +32,8 @@ import {
   type MeaningVoice,
 } from "@/lib/data/meaningAudio";
 import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
-import { VideoCameraIcon, ImageIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, ShareIcon } from "@/components/ui/Icon";
+import { ShareMenu } from "@/components/record/ShareMenu";
+import { BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -1691,6 +1692,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     });
   };
 
+  // Record: each ayah's recitation length in this reciter's file (start to the
+  // next ayah's start, so pauses count), for the 10-minute estimate.
+  const recordAyahSeconds = useMemo(() => {
+    const ayahs = segments.filter((sg) => sg.type === "ayah" && sg.ayahNumber);
+    return ayahs.map((sg, i) => Math.max(0, (ayahs[i + 1]?.startTime ?? sg.endTime) - sg.startTime));
+  }, [segments]);
+
   // Share: the Surah at the ayah on screen (/surah/36/3), or the Juz (/juz/30)
   // — the link opens there, with its own preview card. Phones get the system
   // share sheet; elsewhere the link is copied.
@@ -1844,7 +1852,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* Floating Top Header with Top-Right Hamburger Menu & Mode Toggle */}
       <ImmersiveHeader
         visualMode={visualMode}
-        // The image/video toggle lives in the player strip whenever it shows.
+        // While the player strip shows, image / video is in Settings › Background
+        // (the strip has no room for it); the header has it otherwise.
         onToggleVisualMode={engagement.content ? undefined : handleToggleVisualMode}
         language={language}
         translationLang={translationLang}
@@ -2085,19 +2094,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           footerOpen={playerCollapsed}
           leading={
             <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleToggleVisualMode}
-              data-tooltip={visualMode === "video" ? t(language, "Image mode") : t(language, "Video mode")}
-              aria-label={visualMode === "video" ? t(language, "Switch to Image Mode") : t(language, "Switch to Video Mode")}
-              className="relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']"
-            >
-              {visualMode === "video" ? (
-                <VideoCameraIcon className="text-base sm:text-lg" />
-              ) : (
-                <ImageIcon className="text-base sm:text-lg" />
-              )}
-            </button>
+            {/* Image / video background: Settings › Background */}
             {/* Reopens the Add to Home Screen guide after it was dismissed —
                 compact player: leads the bottom strip instead */}
             {!playerCollapsed && installGuideButton}
@@ -2124,16 +2121,33 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 {bookmarkOn ? <BookmarkIcon filled className="text-base sm:text-lg" /> : <BookmarkAddIcon className="text-base sm:text-lg" />}
               </button>
             )}
+            {/* Share: the link, or a recorded video (src/components/record) */}
             {shareLink && (
-              <button
-                type="button"
-                onClick={handleShare}
-                aria-label={t(language, "Share")}
-                data-tooltip={t(language, "Share")}
+              <ShareMenu
+                onShareLink={handleShare}
+                record={
+                  !isJuz && activeSurah
+                    ? {
+                        surah: activeSurah.number,
+                        surahTitle: surahNameIn(activeSurah.number, language),
+                        verseCount: activeSurah.verses ?? verses.length,
+                        currentAyah: onAirAyah?.ayah ?? 1,
+                        ayahSeconds: recordAyahSeconds,
+                        meaning:
+                          MEANING_AUDIO_PUBLISHED && showTranslation && meaningPrefs.on && isMeaningLang(translationLang)
+                            ? { voice: meaningPrefs.voice, lang: translationLang }
+                            : null,
+                        startAt: (ayah) => {
+                          setReadingMode(false);
+                          jumpToVerse(ayah - 1);
+                          if (player.current) player.resume();
+                        },
+                      }
+                    : undefined
+                }
+                language={language}
                 className="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
-              >
-                <ShareIcon className="text-base sm:text-lg" />
-              </button>
+              />
             )}
             </div>
           }
