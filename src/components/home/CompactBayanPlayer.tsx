@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
@@ -1031,8 +1031,10 @@ export function CompactBayanPlayer({
         >
           {isLoading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+          ) : isPlaying ? (
+            <PauseIcon className="text-2xl text-amber-400" fill="currentColor" />
           ) : (
-            <ShimmerPlayPause playing={isPlaying} />
+            <PlayIcon className="text-2xl ml-0.5 text-amber-400" fill="currentColor" />
           )}
         </button>
 
@@ -1126,28 +1128,6 @@ export function CompactBayanPlayer({
 
 /** Volume button — tap opens a small slider (with mute) above it. The popover
  *  is portalled to <body> so the player shell's overflow clipping can't cut it. */
-/** Play/pause glyph with a green outline and a gold shimmer sweeping through its fill. */
-function ShimmerPlayPause({ playing }: { playing: boolean }) {
-  const id = `shimmer-${useId().replace(/:/g, "")}`;
-  const Glyph = playing ? PauseIcon : PlayIcon;
-  return (
-    <>
-      <svg width="0" height="0" className="absolute" aria-hidden="true">
-        <defs>
-          <linearGradient id={id} x1="-1" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#f59e0b" />
-            <stop offset="0.5" stopColor="#fef3c7" />
-            <stop offset="1" stopColor="#f59e0b" />
-            <animate attributeName="x1" values="-1;1" dur="2.4s" repeatCount="indefinite" />
-            <animate attributeName="x2" values="0;2" dur="2.4s" repeatCount="indefinite" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <Glyph className={playing ? "text-2xl" : "text-2xl ml-0.5"} fill={`url(#${id})`} strokeWidth={1.8} />
-    </>
-  );
-}
-
 function VolumeControl({
   buttonClassName = volumeBtn,
   active = true,
