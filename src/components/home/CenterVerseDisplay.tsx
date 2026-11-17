@@ -100,7 +100,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
     >
       <div
         ref={bodyRef}
-        className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500"
+        className="flex shrink-0 flex-col items-center text-center gap-4 sm:gap-6 select-none animate-in fade-in duration-500"
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
         {/* Bismillah: Amiri's U+FDFD ligature, one calligraphic word, in the
@@ -110,19 +110,20 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           dir="rtl"
           lang="ar"
           aria-label="بسم الله الرحمن الرحيم"
-          className="font-[family-name:var(--font-amiri)] leading-[1.6] pb-1 sm:pb-2 text-3xl sm:text-4xl md:text-5xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
+          className="font-[family-name:var(--font-amiri)] leading-[1.6] mb-1 sm:mb-3 text-[1.8rem] sm:text-[2.75rem] md:text-[3.4rem] lg:text-6xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
         >
           &#xFDFD;
         </p>
         <h2
           lang={language}
           dir={dir}
-          className={`${face} font-normal text-white text-2xl sm:text-2xl md:text-3xl tracking-wide quran-translation-shadow`}
+          className={`${face} font-medium text-white leading-tight text-[1.85rem] sm:text-5xl md:text-6xl lg:text-7xl tracking-wide quran-translation-shadow`}
         >
           {t(language, "As-salamu alaykum")}
         </h2>
+        {/* Tapered green rules: thick beside the words, fading to a point. */}
         <div className="flex items-center gap-3 sm:gap-6">
-          <span aria-hidden className="h-[3px] w-6 sm:w-12 rounded-full bg-emerald-400" />
+          <span aria-hidden className="h-[5px] w-8 sm:w-11 bg-green-500 [clip-path:polygon(0_50%,100%_0,100%_100%)]" />
           <p
             lang={language}
             dir={dir}
@@ -130,7 +131,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           >
             {t(language, "Guidance for every moment")}
           </p>
-          <span aria-hidden className="h-[3px] w-6 sm:w-12 rounded-full bg-emerald-400" />
+          <span aria-hidden className="h-[5px] w-8 sm:w-11 bg-green-500 [clip-path:polygon(0_0,100%_50%,0_100%)]" />
         </div>
       </div>
     </div>
