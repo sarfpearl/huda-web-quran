@@ -4,7 +4,7 @@ import type { Strings } from "@/lib/uiLang";
 const strings: Strings = {
   // ── Greeting (before the first play) ──
   "As-salamu alaykum": { ta: "அஸ்ஸலாமு அலைக்கும்", ur: "السلام علیکم", ml: "അസ്സലാമു അലൈക്കും", hi: "अस्सलामु अलैकुम", id: "Assalamu'alaikum", bn: "আসসালামু আলাইকুম", tr: "Esselâmü aleyküm", fr: "As-salamu alaykum", ms: "Assalamualaikum" },
-  "Peace be upon you": { ta: "உங்கள் மீது சாந்தி உண்டாவதாக", ur: "آپ پر سلامتی ہو", ml: "നിങ്ങൾക്ക് സമാധാനം ഉണ്ടാകട്ടെ", hi: "आप पर शांति हो", id: "Semoga keselamatan tercurah kepadamu", bn: "আপনার উপর শান্তি বর্ষিত হোক", tr: "Selam üzerinize olsun", fr: "Que la paix soit sur vous", ms: "Semoga kesejahteraan ke atas kamu" },
+  "Guidance for every moment": { ta: "ஒவ்வொரு கணத்திற்கும் வழிகாட்டல்", ur: "ہر لمحے کے لیے رہنمائی", ml: "ഓരോ നിമിഷത്തിനും മാർഗദർശനം", hi: "हर पल के लिए मार्गदर्शन", id: "Petunjuk untuk setiap saat", bn: "প্রতিটি মুহূর্তের জন্য হেদায়েত", tr: "Her an için hidayet", fr: "Une guidance pour chaque instant", ms: "Petunjuk untuk setiap saat" },
 
   // ── Notices ──
   "No internet connection. The recitation continues once you're back online.": { ta: "இணையம் இல்லை. இணைப்பு வந்ததும் ஓதல் தொடரும்.", ur: "انٹرنیٹ کنکشن نہیں۔ کنکشن بحال ہوتے ہی تلاوت جاری رہے گی۔", ml: "ഇന്റർനെറ്റ് ഇല്ല. കണക്ഷൻ തിരികെ വന്നാൽ പാരായണം തുടരും.", hi: "इंटरनेट कनेक्शन नहीं है। कनेक्शन लौटते ही तिलावत जारी रहेगी।", id: "Tidak ada koneksi internet. Bacaan berlanjut setelah Anda kembali online.", bn: "ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলেই তিলাওয়াত চলবে।", tr: "İnternet bağlantısı yok. Bağlantı gelince tilavet devam eder.", fr: "Pas de connexion Internet. La récitation reprendra dès votre retour en ligne.", ms: "Tiada sambungan internet. Bacaan diteruskan sebaik sahaja anda kembali dalam talian." },
