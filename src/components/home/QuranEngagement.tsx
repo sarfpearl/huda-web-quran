@@ -1076,7 +1076,7 @@ export function PlayerStatsFrame({
       >
         <HoverTooltips container={topStripRef} />
         {leading ?? <span />}
-        <div className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5" : "gap-3 sm:gap-4")}>
+        <div data-tour="community" className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5" : "gap-3 sm:gap-4")}>
           {fit < 2 && (
           <button
             type="button"

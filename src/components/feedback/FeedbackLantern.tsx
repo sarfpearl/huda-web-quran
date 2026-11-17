@@ -265,6 +265,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
           type="button"
           onClick={onClick}
           aria-label={t(lang, "Open feedback")}
+          data-tour="feedback"
           aria-hidden={!shown || undefined}
           tabIndex={shown ? 0 : -1}
           // Placed by its hook (each frame, above); the extra strip on the
@@ -342,7 +343,7 @@ function ChatDots() {
 }
 
 /** A small brass fanoos: ring, domed cap, arched glass panes, a flame. Hook at the top centre. */
-function LanternArt({ glow }: { glow: boolean }) {
+export function LanternArt({ glow }: { glow: boolean }) {
   return (
     <svg viewBox="0 0 34 64" width={LANTERN_W} height="64" aria-hidden="true" className="block overflow-visible">
       <defs>

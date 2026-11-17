@@ -18,6 +18,7 @@ import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FeedbackLantern } from "@/components/feedback/FeedbackLantern";
+import { FirstVisitTour } from "./FirstVisitTour";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { STANDALONE_SILENT, useAudioPlayer, type EndMode, type MeaningCue } from "@/contexts/AudioPlayerContext";
@@ -1382,8 +1383,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const [browserOpenRequest, setBrowserOpenRequest] = useState(0);
   // Every open of the app, the content browser slides in so a first-time
   // visitor sees there's a Surah / Juz list — last in the onboarding sequence
-  // (splash → location → install guide, lib/onboarding), 7 seconds after the
-  // install guide closes or is skipped, so the home screen is seen first; not
+  // (splash → location → install guide → tour, lib/onboarding), 7 seconds after
+  // the tour ends or is skipped, so the home screen is seen first; not
   // if playback has started by then, nor once the visitor taps or types
   // anything in the meantime.
   const hasPlayedRef = useRef(hasPlayed);
@@ -1401,7 +1402,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     };
     // Location too: the install step is skipped at once on desktop, in the
     // installed app and while snoozed, which mustn't let this pass the prompt.
-    Promise.all([afterSplash(), afterStage("location"), afterStage("install")]).then(() => {
+    Promise.all([afterSplash(), afterStage("location"), afterStage("install"), afterStage("tour")]).then(() => {
       if (cancelled) return;
       // Only taps after the onboarding count — its own buttons don't.
       window.addEventListener("pointerdown", onInteract, true);
@@ -1900,6 +1901,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               showNotice(t(language, on ? "Reading mode on" : "Ayah mode on"));
             }}
             aria-pressed={readingMode}
+            data-tour="reading"
             aria-label={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
             data-tooltip={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
             // On: the same line book, in gold (owner: no filled icon) — no
@@ -2114,6 +2116,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                   handleToggleBookmark();
                 }}
                 aria-pressed={bookmarkOn}
+                data-tour="bookmark"
                 aria-label={bookmarkOn ? t(language, "Remove bookmark") : t(language, "Add bookmark")}
                 data-tooltip={bookmarkOn ? t(language, "Remove bookmark") : t(language, "Add bookmark")}
                 className={`pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer ${bookmarkOn ? "text-amber-300" : "text-sand-200"}`}
@@ -2251,6 +2254,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
       {/* Feedback: a faint lantern at the screen edge (components/feedback) */}
       <FeedbackLantern playing={player.isPlaying} />
+      {/* First visit: a lantern shows what each control does */}
+      <FirstVisitTour />
     </div>
     </SetUiLangContext.Provider>
     </UiLangContext.Provider>

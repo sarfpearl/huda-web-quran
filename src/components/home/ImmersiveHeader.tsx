@@ -206,7 +206,7 @@ export function ImmersiveHeader({
       )}
       <div className={focus?.on ? "hidden" : "contents"}>
       {/* Top Left Time & Location */}
-      <TimeLocationWidget />
+      <div data-tour="prayer" className="contents"><TimeLocationWidget /></div>
 
       {/* Top Right Header Controls */}
       <div ref={controlsRef} className="flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2 shrink-0">
@@ -220,6 +220,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={() => setTranslationSheetOpen(true)}
+            data-tour="translation"
             aria-haspopup="dialog"
             aria-label={
               showMeaning
@@ -378,6 +379,7 @@ export function ImmersiveHeader({
               aria-expanded={activePopover === "tajweed"}
               aria-haspopup="dialog"
               aria-label={t(language, "Tajweed")}
+              data-tour="tajweed"
               data-tooltip={t(language, "Tajweed colours")}
               className={`tap-44 pointer-events-auto flex items-center gap-1 justify-center h-9 min-[360px]:h-10 min-[400px]:h-11 sm:h-12 px-2.5 min-[400px]:px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer hover:text-white hover:bg-black/20 hover:border-white/30 ${
                 showTajweed ? "text-amber-300" : "text-white/60"
@@ -458,6 +460,7 @@ export function ImmersiveHeader({
             ref={reciterTriggerRef}
             type="button"
             onClick={handleToggleReciterSelector}
+            data-tour="reciter"
             className="pointer-events-auto relative grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer overflow-hidden"
             data-tooltip={t(language, "Reciter · {name}", { name: selectedReciter.displayName })}
             aria-label={t(language, "Choose Quran Reciter (Current: {name})", { name: selectedReciter.displayName })}
