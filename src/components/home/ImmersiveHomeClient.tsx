@@ -1691,6 +1691,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     });
   };
 
+  // Record: each ayah's recitation length in this reciter's file (start to the
+  // next ayah's start, so pauses count), for the 10-minute estimate.
+  const recordAyahSeconds = useMemo(() => {
+    const ayahs = segments.filter((sg) => sg.type === "ayah" && sg.ayahNumber);
+    return ayahs.map((sg, i) => Math.max(0, (ayahs[i + 1]?.startTime ?? sg.endTime) - sg.startTime));
+  }, [segments]);
+
   // Share: the Surah at the ayah on screen (/surah/36/3), or the Juz (/juz/30)
   // — the link opens there, with its own preview card. Phones get the system
   // share sheet; elsewhere the link is copied.
@@ -2124,6 +2131,11 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                         surahTitle: surahNameIn(activeSurah.number, language),
                         verseCount: activeSurah.verses ?? verses.length,
                         currentAyah: onAirAyah?.ayah ?? 1,
+                        ayahSeconds: recordAyahSeconds,
+                        meaning:
+                          MEANING_AUDIO_PUBLISHED && showTranslation && meaningPrefs.on && isMeaningLang(translationLang)
+                            ? { voice: meaningPrefs.voice, lang: translationLang }
+                            : null,
                         startAt: (ayah) => {
                           setReadingMode(false);
                           jumpToVerse(ayah - 1);

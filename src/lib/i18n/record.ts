@@ -3,16 +3,16 @@ import type { Strings } from "@/lib/uiLang";
 /** UI strings (Record video): English key → other languages (missing → English). */
 const strings: Strings = {
   "Record video": { ta: "வீடியோ பதிவு", ur: "ویڈیو ریکارڈ کریں", ml: "വീഡിയോ റെക്കോർഡ് ചെയ്യുക", hi: "वीडियो रिकॉर्ड करें", id: "Rekam video", bn: "ভিডিও রেকর্ড করুন", tr: "Video kaydet", fr: "Enregistrer une vidéo", ms: "Rakam video" },
-  "Records in real time, with the recitation and meaning audio as you have them on. Over 10 minutes it continues as Part 2.": {
-    ta: "நேரடியாகப் பதிவாகும் — நீங்கள் இயக்கியுள்ள ஓதலும் பொருள் ஒலியும் சேர்த்து. 10 நிமிடத்திற்கு மேல் என்றால் பகுதி 2 ஆகத் தொடரும்.",
-    ur: "اصل وقت میں ریکارڈ ہوتا ہے، تلاوت اور ترجمے کی آواز کے ساتھ جیسے آپ نے آن کی ہے۔ 10 منٹ سے زیادہ ہو تو حصہ 2 میں جاری رہتا ہے۔",
-    ml: "തത്സമയം റെക്കോർഡ് ചെയ്യുന്നു — നിങ്ങൾ ഓണാക്കിയ പാരായണവും അർത്ഥ ശബ്ദവും ഉൾപ്പെടെ. 10 മിനിറ്റിൽ കൂടിയാൽ ഭാഗം 2 ആയി തുടരും.",
-    hi: "रियल टाइम में रिकॉर्ड होता है — तिलावत और अर्थ की आवाज़ के साथ, जैसे आपने चालू की है। 10 मिनट से ज़्यादा हो तो भाग 2 में जारी रहता है।",
-    id: "Merekam secara langsung, dengan audio bacaan dan terjemahan sesuai pengaturan Anda. Lebih dari 10 menit dilanjutkan sebagai Bagian 2.",
-    bn: "রিয়েল টাইমে রেকর্ড হয় — আপনার চালু করা তিলাওয়াত ও অর্থের শব্দসহ। ১০ মিনিটের বেশি হলে পর্ব ২ হিসেবে চলবে।",
-    tr: "Gerçek zamanlı kaydeder; açtığınız tilavet ve meal sesiyle. 10 dakikayı aşarsa Bölüm 2 olarak devam eder.",
-    fr: "Enregistre en temps réel, avec la récitation et l'audio de la traduction tels que vous les avez activés. Au-delà de 10 minutes, la suite devient la partie 2.",
-    ms: "Merakam secara langsung, dengan audio bacaan dan terjemahan seperti yang anda hidupkan. Melebihi 10 minit, ia diteruskan sebagai Bahagian 2.",
+  "Records in real time, with the recitation and meaning audio as you have them on.": {
+    ta: "நேரடியாகப் பதிவாகும் — நீங்கள் இயக்கியுள்ள ஓதலும் பொருள் ஒலியும் சேர்த்து.",
+    ur: "اصل وقت میں ریکارڈ ہوتا ہے، تلاوت اور ترجمے کی آواز کے ساتھ جیسے آپ نے آن کی ہے۔",
+    ml: "തത്സമയം റെക്കോർഡ് ചെയ്യുന്നു — നിങ്ങൾ ഓണാക്കിയ പാരായണവും അർത്ഥ ശബ്ദവും ഉൾപ്പെടെ.",
+    hi: "रियल टाइम में रिकॉर्ड होता है — तिलावत और अर्थ की आवाज़ के साथ, जैसे आपने चालू की है।",
+    id: "Merekam secara langsung, dengan audio bacaan dan terjemahan sesuai pengaturan Anda.",
+    bn: "রিয়েল টাইমে রেকর্ড হয় — আপনার চালু করা তিলাওয়াত ও অর্থের শব্দসহ।",
+    tr: "Gerçek zamanlı kaydeder; açtığınız tilavet ve meal sesiyle.",
+    fr: "Enregistre en temps réel, avec la récitation et l'audio de la traduction tels que vous les avez activés.",
+    ms: "Merakam secara langsung, dengan audio bacaan dan terjemahan seperti yang anda hidupkan.",
   },
   Size: { ta: "அளவு", ur: "سائز", ml: "വലുപ്പം", hi: "आकार", id: "Ukuran", bn: "আকার", tr: "Boyut", fr: "Format", ms: "Saiz" },
   "Phone 9:16 · Status, Reels": { ta: "போன் 9:16 · Status, Reels", ur: "فون 9:16 · اسٹیٹس، ریلز", ml: "ഫോൺ 9:16 · സ്റ്റാറ്റസ്, റീൽസ്", hi: "फ़ोन 9:16 · स्टेटस, रील्स", id: "Ponsel 9:16 · Status, Reels", bn: "ফোন ৯:১৬ · স্ট্যাটাস, রিলস", tr: "Telefon 9:16 · Durum, Reels", fr: "Téléphone 9:16 · Statut, Reels", ms: "Telefon 9:16 · Status, Reels" },
@@ -96,6 +96,14 @@ const strings: Strings = {
   "Full screen": { ta: "முழுத் திரை", ur: "پوری اسکرین", ml: "പൂർണ്ണ സ്ക്രീൻ", hi: "पूरी स्क्रीन", id: "Layar penuh", bn: "পূর্ণ স্ক্রিন", tr: "Tam ekran", fr: "Plein écran", ms: "Skrin penuh" },
   "Exit full screen": { ta: "முழுத் திரையிலிருந்து வெளியேறு", ur: "پوری اسکرین سے باہر", ml: "പൂർണ്ണ സ്ക്രീനിൽ നിന്ന് പുറത്ത്", hi: "पूरी स्क्रीन से बाहर", id: "Keluar layar penuh", bn: "পূর্ণ স্ক্রিন থেকে বের হন", tr: "Tam ekrandan çık", fr: "Quitter le plein écran", ms: "Keluar skrin penuh" },
   Seek: { ta: "நகர்த்து", ur: "آگے پیچھے کریں", ml: "നീക്കുക", hi: "आगे-पीछे करें", id: "Geser", bn: "এগিয়ে-পিছিয়ে নিন", tr: "Konum", fr: "Position", ms: "Anjak" },
+  "over 10 min": { ta: "10 நிமிடத்துக்கு மேல்", ur: "10 منٹ سے زیادہ", ml: "10 മിനിറ്റിൽ കൂടുതൽ", hi: "10 मिनट से ज़्यादा", id: "lebih dari 10 menit", bn: "১০ মিনিটের বেশি", tr: "10 dakikadan uzun", fr: "plus de 10 min", ms: "lebih 10 minit" },
+  "About {t}": { ta: "சுமார் {t}", ur: "تقریباً {t}", ml: "ഏകദേശം {t}", hi: "लगभग {t}", id: "Sekitar {t}", bn: "প্রায় {t}", tr: "Yaklaşık {t}", fr: "Environ {t}", ms: "Kira-kira {t}" },
+  "max {t} per video": { ta: "ஒரு வீடியோவுக்கு அதிகபட்சம் {t}", ur: "ایک ویڈیو زیادہ سے زیادہ {t}", ml: "ഒരു വീഡിയോയ്ക്ക് പരമാവധി {t}", hi: "एक वीडियो अधिकतम {t}", id: "maks. {t} per video", bn: "প্রতি ভিডিও সর্বোচ্চ {t}", tr: "video başına en fazla {t}", fr: "max {t} par vidéo", ms: "maks. {t} setiap video" },
+  "Length of the video": { ta: "வீடியோவின் நீளம்", ur: "ویڈیو کی لمبائی", ml: "വീഡിയോയുടെ ദൈർഘ്യം", hi: "वीडियो की लंबाई", id: "Panjang video", bn: "ভিডিওর দৈর্ঘ্য", tr: "Videonun süresi", fr: "Durée de la vidéo", ms: "Panjang video" },
+  "One video is up to 10 minutes: record ayah {n} onwards as the next video.": { ta: "ஒரு வீடியோ அதிகபட்சம் 10 நிமிடம்: ஆயத் {n} முதல் அடுத்த வீடியோவாகப் பதிவு செய்யுங்கள்.", ur: "ایک ویڈیو زیادہ سے زیادہ 10 منٹ: آیت {n} سے آگے اگلی ویڈیو میں ریکارڈ کریں۔", ml: "ഒരു വീഡിയോ പരമാവധി 10 മിനിറ്റ്: ആയത്ത് {n} മുതൽ അടുത്ത വീഡിയോയായി റെക്കോർഡ് ചെയ്യുക.", hi: "एक वीडियो अधिकतम 10 मिनट: आयत {n} से आगे अगले वीडियो में रिकॉर्ड करें।", id: "Satu video maksimal 10 menit: rekam ayat {n} dan seterusnya sebagai video berikutnya.", bn: "একটি ভিডিও সর্বোচ্চ ১০ মিনিট: আয়াত {n} থেকে পরের ভিডিওতে রেকর্ড করুন।", tr: "Bir video en fazla 10 dakika: {n}. ayetten sonrasını bir sonraki video olarak kaydedin.", fr: "Une vidéo dure au plus 10 minutes : enregistrez la suite à partir du verset {n} dans la vidéo suivante.", ms: "Satu video maksimum 10 minit: rakam ayat {n} dan seterusnya sebagai video berikutnya." },
+  "{s} s": { ta: "{s} வி", ur: "{s} سیکنڈ", ml: "{s} സെ", hi: "{s} सेकंड", id: "{s} dtk", bn: "{s} সে", tr: "{s} sn", fr: "{s} s", ms: "{s} saat" },
+  "{m} min {s} s": { ta: "{m} நிமி {s} வி", ur: "{m} منٹ {s} سیکنڈ", ml: "{m} മി {s} സെ", hi: "{m} मिनट {s} सेकंड", id: "{m} mnt {s} dtk", bn: "{m} মি {s} সে", tr: "{m} dk {s} sn", fr: "{m} min {s} s", ms: "{m} min {s} saat" },
+  "{m} min": { ta: "{m} நிமிடம்", ur: "{m} منٹ", ml: "{m} മിനിറ്റ്", hi: "{m} मिनट", id: "{m} menit", bn: "{m} মিনিট", tr: "{m} dk", fr: "{m} min", ms: "{m} minit" },
 };
 
 export default strings;
