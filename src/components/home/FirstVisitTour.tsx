@@ -7,19 +7,17 @@ import { useUiLang, isRtl } from "@/lib/uiLang";
 import { tourT } from "@/lib/i18n/tour";
 import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
-import { threadPath } from "@/lib/feedbackSwing";
 import { OPEN_TOUR_EVENT, TOUR_DONE_KEY, TOUR_STEPS, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
  * (lib/onboarding: splash → location → install guide → tour) and before the
- * content browser slides in. A gold thread hangs from a small brass crescent
- * beside the clock (top left); at its end the feedback lantern's fanoos (the same
- * lantern and thread) travels from control to control, the rest of the screen
- * dimmed, with one short line about each. Skip on every step; Settings › App
- * tour shows it again. The steps are data (lib/tour/steps); a control that
- * isn't on screen is left out.
+ * content browser slides in. The feedback lantern's fanoos (the same lantern)
+ * glides from control to control, its light on each one and the rest of the
+ * screen dimmed, with one short line about each (owner, 2026-11-17: no
+ * thread). Skip on every step; Settings › App tour shows it again. The steps
+ * are data (lib/tour/steps); a control that isn't on screen is left out.
  */
 
 // Lets the home screen settle (pills, player) after the last prompt closes.
@@ -29,19 +27,18 @@ const CARD_MAX = 340;
 // The lantern (LanternArt): its width, and how tall it hangs from its hook.
 const LANTERN_W = 34;
 const LANTERN_H = 58;
-// The crescent the thread hangs from: its size, and its gap from the clock.
-const MOON_SIZE = 20;
-const MOON_GAP = 12;
 // Lantern ↔ control and lantern ↔ card.
 const NEAR = 6;
 const CARD_GAP = 10;
-// The lantern's travel along the thread: a spring, a little under-damped so
+// The lantern's glide: a spring, a little under-damped so
 // it settles with a small sway (stiffness 1/s², damping 1/s).
 const SPRING_K = 55;
 const SPRING_C = 10.5;
 // How far it leans against its motion (rad per px/s), and at most.
 const TILT_PER_SPEED = 0.0011;
 const TILT_MAX = 0.45;
+// On the first card it floats down into place from this far above.
+const DROP_IN_PX = 28;
 
 type Rect = { x: number; y: number; w: number; h: number; r: string };
 type Point = { x: number; y: number };
@@ -95,14 +92,9 @@ export function FirstVisitTour() {
   const [rect, setRect] = useState<Rect | null>(null);
   const [card, setCard] = useState({ w: 0, h: 0 });
   const [view, setView] = useState({ w: 0, h: 0 });
-  const [anchor, setAnchor] = useState<Point | null>(null);
-  /** Where the crescent sits: just right of the clock pill (else top centre). */
-  const [moonAt, setMoonAt] = useState<Point | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const threadRef = useRef<SVGPathElement>(null);
   const lanternRef = useRef<HTMLDivElement>(null);
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
@@ -145,7 +137,6 @@ export function FirstVisitTour() {
     markDone();
     setSteps(null);
     setRect(null);
-    setAnchor(null);
     goal.current = null;
     motion.current = null;
     finishStage("tour");
@@ -163,15 +154,6 @@ export function FirstVisitTour() {
       setRect(el ? rectOf(el) : null);
       const c = cardRef.current;
       if (c) setCard((p) => (p.w === c.offsetWidth && p.h === c.offsetHeight ? p : { w: c.offsetWidth, h: c.offsetHeight }));
-      const clock = findTarget("prayer")?.getBoundingClientRect();
-      const at = clock ? { x: Math.round(clock.right + MOON_GAP), y: Math.round(clock.top + clock.height / 2 - MOON_SIZE / 2) } : null;
-      setMoonAt((p) => (p?.x === at?.x && p?.y === at?.y ? p : at));
-      // The thread is tied to the small ring under the crescent.
-      const a = anchorRef.current?.getBoundingClientRect();
-      if (at || a) {
-        const next = at ? { x: at.x + MOON_SIZE * 0.48, y: at.y + MOON_SIZE - 1 } : { x: a!.left + a!.width / 2, y: a!.bottom - 1 };
-        setAnchor((p) => (p && p.x === next.x && p.y === next.y ? p : next));
-      }
     };
     measure();
     const id = window.setInterval(measure, 400);
@@ -202,20 +184,19 @@ export function FirstVisitTour() {
     primaryRef.current?.focus({ preventScroll: true });
   }, [open, index]);
 
-  // The lantern travels along its thread, drawn straight to the DOM every
-  // frame (no React renders): it starts at the crescent, so on the first step
-  // it comes down the thread; each step it glides to the next control, leaning
-  // against the move and settling with a small sway.
+  // The lantern's glide, drawn straight to the DOM every frame (no React
+  // renders): it floats down into place on the first card, then each step it
+  // glides to the next control, leaning against the move and settling with a
+  // small sway.
   useEffect(() => {
-    if (!open || !anchor) return;
-    // Kept across re-runs (the thread's knot can shift with the layout).
-    motion.current ??= { cur: { x: anchor.x, y: anchor.y }, vel: { x: 0, y: 0 } };
+    const g0 = goal.current;
+    if (!open || !g0) return;
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 } };
     const { cur, vel } = motion.current;
     let frame = 0;
     let last = performance.now();
     const t0 = last;
     const draw = (tilt: number) => {
-      threadRef.current?.setAttribute("d", threadPath(anchor.x, anchor.y, cur.x, cur.y, 0.35, vel.x * 0.004));
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
     };
     const tick = (now: number) => {
@@ -243,7 +224,7 @@ export function FirstVisitTour() {
     draw(0);
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [open, anchor, reduce]);
+  }, [open, reduce]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -322,22 +303,11 @@ export function FirstVisitTour() {
         />
       )}
 
-      {/* The crescent the thread hangs from, the thread, and the lantern at its end. */}
-      <div
-        ref={anchorRef}
-        className={`pointer-events-none absolute ${moonAt ? "" : "left-1/2 top-[max(env(safe-area-inset-top),0px)] -translate-x-1/2"}`}
-        style={moonAt ? { left: moonAt.x, top: moonAt.y } : undefined}
-        aria-hidden="true"
-      >
-        <Crescent />
-      </div>
-      <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-        <path ref={threadRef} fill="none" stroke="#e3c06d" strokeWidth={1} strokeLinecap="round" opacity={0.9} />
-      </svg>
+      {/* The lantern, placed every frame by its glide (above). */}
       <div
         ref={lanternRef}
         className="pointer-events-none absolute left-0 top-0"
-        style={{ width: LANTERN_W, transformOrigin: `${LANTERN_W / 2}px 0`, transform: anchor ? `translate(${anchor.x - LANTERN_W / 2}px, ${anchor.y}px)` : undefined }}
+        style={{ width: LANTERN_W, transformOrigin: `${LANTERN_W / 2}px 0` }}
         aria-hidden="true"
       >
         <LanternArt glow />
@@ -420,24 +390,6 @@ export function FirstVisitTour() {
       </div>
     </div>,
     document.body
-  );
-}
-
-/** The brass crescent the thread is tied to (at the small ring under it). */
-function Crescent() {
-  return (
-    <svg width={MOON_SIZE} height={MOON_SIZE} viewBox="0 0 20 20" className="block overflow-visible">
-      <defs>
-        <linearGradient id="huda-tour-brass" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stopColor="#f0cf7a" />
-          <stop offset="60%" stopColor="#d4a64e" />
-          <stop offset="100%" stopColor="#a9792c" />
-        </linearGradient>
-      </defs>
-      <circle cx="9" cy="9" r="9" fill="#f5b84a" opacity="0.2" style={{ filter: "blur(3px)" }} />
-      <path d="M12.6 1.6 A7.6 7.6 0 1 0 16.4 13.2 A6.1 6.1 0 1 1 12.6 1.6 Z" fill="url(#huda-tour-brass)" />
-      <circle cx="9.6" cy="18" r="1.3" fill="none" stroke="#e3c06d" strokeWidth="0.9" />
-    </svg>
   );
 }
 
