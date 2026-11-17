@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
 import { CoverArt } from "@/components/ui/CoverArt";
+import { DotLoader } from "@/components/ui/DotLoader";
 import {
   PlayIcon,
   PauseIcon,
@@ -727,7 +728,7 @@ export function CompactBayanPlayer({
             )}
             <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-emerald-400 [&>*]:[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]">
               {isLoading ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+                <DotLoader className="text-base" />
               ) : isPlaying ? (
                 <PauseIcon className="text-2xl" fill="currentColor" />
               ) : (
@@ -1030,7 +1031,7 @@ export function CompactBayanPlayer({
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
           {isLoading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+            <DotLoader className="text-xl" />
           ) : isPlaying ? (
             <PauseIcon className="text-2xl text-amber-400" fill="currentColor" />
           ) : (

@@ -1,3 +1,5 @@
+import { DOT_LOADER_LOOKS, DotLoader } from "@/components/ui/DotLoader";
+
 /**
  * Opening splash: logo, name and a loading bar, in the server HTML so it
  * paints before any JS. It fades once the page has loaded (the scene image and
@@ -5,13 +7,21 @@
  * it doesn't flash, and never longer than MAX_MS. Hiding is a class on <html>
  * (which already takes suppressHydrationWarning) rather than removing the
  * node, so React hydration still matches; client navigations keep the class,
- * so the splash only shows on a full open of the app.
+ * so the splash only shows on a full open of the app. The script also picks
+ * the loader's look for this open (data-huda-dots): the next one after the
+ * look this browser showed last time, so every open or reload shows a
+ * different one and all of them come round in turn (a random one where
+ * storage is blocked; ?dots=<look> forces one).
  */
 const MIN_MS = 1700;
 const MAX_MS = 8000;
 
 const hideScript = `(function(){
 var d=document.documentElement,t0=Date.now(),done=false;
+var L=${JSON.stringify(DOT_LOADER_LOOKS)},q=/[?&]dots=([a-z]+)/.exec(location.search);
+var n=Math.floor(Math.random()*L.length);
+try{var k="huda-dots-look",p=L.indexOf(localStorage.getItem(k));if(p>=0)n=(p+1)%L.length;localStorage.setItem(k,L[n])}catch(e){}
+d.setAttribute("data-huda-dots",q&&L.indexOf(q[1])>=0?q[1]:L[n]);
 function hide(){if(done)return;done=true;setTimeout(function(){d.classList.add("huda-ready")},Math.max(0,${MIN_MS}-(Date.now()-t0)))}
 if(document.readyState==="complete")hide();else window.addEventListener("load",hide);
 setTimeout(hide,${MAX_MS});
@@ -25,17 +35,9 @@ export function SplashScreen() {
         <img src="/huda-logo.webp?v=3" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
         <p className="huda-splash-name">HuDa</p>
         <p className="huda-splash-tagline">Guidance for every moment</p>
-        {/* Loading mark: an eight-point Rub-el-Hizb star (the Quran's own
-            section glyph ۞), turning slowly in gold — reads as "loading" but in
-            the app's Arabic character, not a plain sweeping bar. Inline SVG, so
-            it paints with the server HTML before any font or script. */}
-        <svg className="huda-splash-mark" viewBox="0 0 64 64" width="56" height="56" fill="none" role="img" aria-label="Loading">
-          <g className="huda-splash-mark-spin">
-            <rect x="15" y="15" width="34" height="34" rx="3.5" stroke="#fcd34d" strokeWidth="2" opacity="0.92" />
-            <rect x="15" y="15" width="34" height="34" rx="3.5" stroke="#fcd34d" strokeWidth="2" opacity="0.5" transform="rotate(45 32 32)" />
-          </g>
-          <circle className="huda-splash-mark-core" cx="32" cy="32" r="3.5" fill="#fcd34d" />
-        </svg>
+        {/* Loading mark: four dots rearranging, pure CSS so it paints with
+            the server HTML before any script */}
+        <DotLoader className="huda-splash-mark" />
       </div>
       <script dangerouslySetInnerHTML={{ __html: hideScript }} />
     </>
