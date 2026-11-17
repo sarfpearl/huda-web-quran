@@ -104,6 +104,7 @@ const strings: Strings = {
   "{s} s": { ta: "{s} வி", ur: "{s} سیکنڈ", ml: "{s} സെ", hi: "{s} सेकंड", id: "{s} dtk", bn: "{s} সে", tr: "{s} sn", fr: "{s} s", ms: "{s} saat" },
   "{m} min {s} s": { ta: "{m} நிமி {s} வி", ur: "{m} منٹ {s} سیکنڈ", ml: "{m} മി {s} സെ", hi: "{m} मिनट {s} सेकंड", id: "{m} mnt {s} dtk", bn: "{m} মি {s} সে", tr: "{m} dk {s} sn", fr: "{m} min {s} s", ms: "{m} min {s} saat" },
   "{m} min": { ta: "{m} நிமிடம்", ur: "{m} منٹ", ml: "{m} മിനിറ്റ്", hi: "{m} मिनट", id: "{m} menit", bn: "{m} মিনিট", tr: "{m} dk", fr: "{m} min", ms: "{m} minit" },
+  "{n} ayahs": { ta: "{n} ஆயத்கள்", ur: "{n} آیات", ml: "{n} ആയത്തുകൾ", hi: "{n} आयतें", id: "{n} ayat", bn: "{n}টি আয়াত", tr: "{n} ayet", fr: "{n} versets", ms: "{n} ayat" },
 };
 
 export default strings;

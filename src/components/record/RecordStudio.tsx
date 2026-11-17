@@ -20,7 +20,8 @@ import { clearRecordings } from "@/lib/record/chunkSink";
 import { audioLevel } from "@/lib/record/audioTap";
 import { coolBackground, warmBackground } from "@/lib/record/frameComposer";
 import { ActionSheet, PLAYER_GLASS } from "@/components/ui/ActionSheet";
-import { SELECTED } from "@/components/ui/selection";
+import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
+import { SURAH_NAMES } from "@/lib/data/surahNames";
 import {
   ClockIcon,
   DownloadIcon,
@@ -419,13 +420,25 @@ export default function RecordStudio(props: RecordStudioProps) {
     return (
       <ActionSheet open={sheetOpen} onClose={close} label={L("Record video")} noAutoClose>
         <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">{L("Record video")}</h3>
-            <p className="mt-0.5 text-[11px] leading-none text-sand-300/70">{`${surahTitle} · ${L("Surah")} ${surah}`}</p>
-          </div>
+          <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">{L("Record video")}</h3>
           <CloseButton onClick={close} label={L("Close")} />
         </div>
         <div className="min-h-0 space-y-2.5 overflow-y-auto no-scrollbar pb-1">
+          {/* Which Surah is being recorded: plain to see, in the app's selected style */}
+          <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${SELECTED}`}>
+            <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-base font-bold tabular-nums ${SELECTED_BADGE}`} aria-hidden>
+              {surah}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-base font-bold text-white">{surahTitle}</span>
+              <span className="block text-xs text-sand-200/75">
+                {L("Surah")} {surah} · {L("{n} ayahs", { n: verseCount })}
+              </span>
+            </span>
+            <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xl text-amber-200">
+              {(SURAH_NAMES[surah - 1]?.[0] ?? "").replace(/^سُورَةُ\s*/, "")}
+            </span>
+          </div>
           {phase.kind === "error" && (
             <p role="alert" className="rounded-2xl bg-amber-300/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
               {L("Recording didn't work in this browser.")} <span className="opacity-60 break-all">{phase.message}</span>
