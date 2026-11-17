@@ -44,3 +44,30 @@ test("the public can only send: no table grants, upload only to a handed-out pat
   assert.match(sql, /revoke all on function public\.admin_list_feedback\(text, int\) from public, anon;/);
   assert.match(sql, /'feedback-screenshots', false, 1572864/);
 });
+
+// The swing once it is let go (src/lib/feedbackSwing.ts).
+const W = require(path.join(ROOT, "src/lib/feedbackSwing.ts"));
+const run = (from, seconds) => Array.from({ length: seconds * 60 }, (_, f) => W.swingAngle(f / 60, from));
+
+test("swing: let go from the right, it goes left, back right, left again, each smaller", () => {
+  const a = run(0.4, 6);
+  const at = (s) => a[Math.round(s * 60)];
+  assert.ok(Math.abs(at(0) - 0.4) < 1e-9, "starts where it was tucked");
+  assert.ok(at(W.SWING_PERIOD_S / 2) < -0.2, `left ${at(1)}`);
+  assert.ok(at(W.SWING_PERIOD_S) > 0.15, `back right ${at(2)}`);
+  assert.ok(at(W.SWING_PERIOD_S * 1.5) < 0);
+  assert.ok(Math.abs(at(W.SWING_PERIOD_S * 1.5)) < Math.abs(at(W.SWING_PERIOD_S / 2)));
+});
+
+test("swing: keeps a gentle sway and never stops while out", () => {
+  const late = run(0.4, 30).slice(-200).map(Math.abs);
+  const sway = Math.max(...late);
+  assert.ok(sway > W.SWING_SWAY_RAD * 0.9 && sway < W.SWING_SWAY_RAD * 1.1, `sway ${sway}`);
+});
+
+test("thread: straight when hanging right below, one soft bend to a side", () => {
+  assert.match(W.threadPath(100, 50, 100, 120), /^M 100\.0 50\.0 C 100\.0 85\.0, 100\.0 81\.5, 100\.0 120\.0$/);
+  // To the left: it leaves the anchor heading down and meets the hook from above.
+  const d = W.threadPath(100, 50, 60, 110).match(/[\d.]+/g).map(Number);
+  assert.deepEqual([d[2], d[4]], [100, 60]);
+});

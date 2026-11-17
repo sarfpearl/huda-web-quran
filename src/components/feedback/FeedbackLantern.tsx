@@ -7,6 +7,7 @@ import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
+import { swingAngle, threadPath } from "@/lib/feedbackSwing";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -30,10 +31,12 @@ function findAnchor(): HTMLElement | null {
 
 /** How far below the anchor the lantern's hook hangs. */
 const DROP_PX = 64;
-/** Out: the lantern's centre this far in from the right edge. */
-const OUT_INSET_PX = 24;
 /** Hidden: the centre this far past the edge, so about half of it shows. */
 const HIDDEN_PAST_PX = 4;
+/** Tucked back to the side after the time-out, over this long. */
+const BACK_MS = 900;
+/** The lantern leans this much of the way along its swing (it lags its thread a little). */
+const LEAN = 0.5;
 /** Out and untouched this long → back into hiding (owner: 10–15 s). */
 const OUT_MS = 12000;
 /** First visit: how long a Surah must have been playing before the one peek. */
@@ -48,9 +51,10 @@ const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-mo
 
 /**
  * The feedback entry: a small lantern (fanoos) hanging on a thread from the
- * search button, tucked half behind the right edge. A tap swings it out with
- * a "Feedback" bubble, and it keeps swinging like a lantern on a string
- * until it goes back (12 s untouched); a second tap opens the form. On the
+ * search button, tucked half behind the right edge. A tap lets it go: it
+ * drops and swings across to the left of the button, back to the right and
+ * so on (lib/feedbackSwing), with a "Feedback" bubble, until it goes back
+ * (12 s untouched); a second tap opens the form. On the
  * first visit it swings out once by itself while a Surah plays. After a send
  * the form closes and a thank-you toast shows here.
  */
@@ -66,6 +70,13 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const outTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const threadRef = useRef<SVGPathElement>(null);
+  const lanternRef = useRef<HTMLButtonElement>(null);
+  const artRef = useRef<HTMLSpanElement>(null);
+  /** The swing's angle now (radians from straight down below the anchor, + = right). */
+  const theta = useRef(Number.NaN);
+  /** 0 – 1: how much the lantern leans with its swing (none tucked aside, so half of it shows). */
+  const lean = useRef(0);
 
   const comeOut = useCallback(() => {
     setOut(true);
@@ -118,6 +129,54 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     };
   }, [ready]);
 
+  // The swing, drawn straight to the DOM every frame (no React renders). The
+  // hook moves on a circle round the anchor; tucked aside it sits half past
+  // the right edge.
+  useEffect(() => {
+    if (!geo) return;
+    const dx = geo.w + HIDDEN_PAST_PX - geo.ax;
+    const len = Math.hypot(dx, DROP_PX);
+    const hidden = Math.atan2(dx, DROP_PX);
+    const place = (a: number) => {
+      const hx = geo.ax + len * Math.sin(a);
+      const hy = geo.ay + len * Math.cos(a);
+      threadRef.current?.setAttribute("d", threadPath(geo.ax, geo.ay, hx, hy));
+      if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px)`;
+      if (artRef.current) artRef.current.style.transform = `rotate(${-a * LEAN * lean.current}rad)`;
+    };
+    if (Number.isNaN(theta.current)) theta.current = hidden;
+    // Reduced motion: no swing — straight down when out, aside when not.
+    if (reduce) {
+      theta.current = out ? 0 : hidden;
+      lean.current = 0;
+      place(theta.current);
+      return;
+    }
+    const from = theta.current;
+    const leanFrom = lean.current;
+    // Drawn once now too: frames don't run in a background tab.
+    place(from);
+    const start = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const s = (now - start) / 1000;
+      // The lean eases in as it is let go and out as it is tucked away.
+      lean.current = out ? Math.min(1, leanFrom + s / 0.5) : Math.max(0, leanFrom - (s * 1000) / BACK_MS);
+      if (out) {
+        theta.current = swingAngle(s, from);
+      } else {
+        const k = Math.min(1, (s * 1000) / BACK_MS);
+        const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+        theta.current = from + (hidden - from) * ease;
+        if (k >= 1) return place(theta.current);
+      }
+      place(theta.current);
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [geo, out, reduce]);
+
   // The one peek on the first visit: some way into a recitation.
   useEffect(() => {
     if (!ready || !playing) return;
@@ -166,13 +225,6 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
 
   if (!ready) return null;
 
-  // Hook of the lantern (top centre of its art) and the thread to it.
-  const hx = geo ? (out ? geo.w - OUT_INSET_PX : geo.w + HIDDEN_PAST_PX) : 0;
-  const hy = geo ? geo.ay + DROP_PX : 0;
-  const thread = geo
-    ? `M ${geo.ax} ${geo.ay} C ${geo.ax} ${geo.ay + DROP_PX * 0.5}, ${hx} ${hy - DROP_PX * 0.55}, ${hx} ${hy}`
-    : "";
-  const move = reduce ? { duration: 0.2 } : { type: "spring" as const, damping: 16, stiffness: 120 };
   const shown = Boolean(geo) && !open;
 
   return (
@@ -184,10 +236,9 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
           initial={false}
           animate={{ opacity: shown ? (out ? 0.9 : 0.55) : 0 }}
         >
-          <motion.path
-            initial={false}
-            animate={{ d: thread }}
-            transition={move}
+          <path
+            ref={threadRef}
+            d={`M ${geo.ax} ${geo.ay} L ${geo.ax} ${geo.ay + DROP_PX}`}
             fill="none"
             stroke="#e3c06d"
             strokeWidth={1}
@@ -197,19 +248,17 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
       )}
 
       {geo && (
-        <motion.button
+        <button
+          ref={lanternRef}
           type="button"
           onClick={onClick}
           aria-label={t(lang, "Open feedback")}
           aria-hidden={!shown || undefined}
           tabIndex={shown ? 0 : -1}
-          // Positioned by its hook; the extra strip on the left keeps the
-          // half-hidden lantern easy to tap.
+          // Placed by its hook (each frame, above); the extra strip on the
+          // left keeps the half-hidden lantern easy to tap.
           className="absolute left-0 top-0 block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 before:absolute before:-left-3 before:inset-y-0 before:w-3 before:content-['']"
-          style={{ width: LANTERN_W, pointerEvents: shown ? "auto" : "none" }}
-          initial={false}
-          animate={{ x: hx - LANTERN_W / 2, y: hy, opacity: shown ? (out ? 1 : 0.8) : 0 }}
-          transition={move}
+          style={{ width: LANTERN_W, pointerEvents: shown ? "auto" : "none", opacity: shown ? (out ? 1 : 0.8) : 0, transition: "opacity 0.25s" }}
         >
           <AnimatePresence>
             {out && (
@@ -228,8 +277,10 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
               </motion.span>
             )}
           </AnimatePresence>
-          <Swinging swinging={out && !reduce} />
-        </motion.button>
+          <span ref={artRef} className="block" style={{ transformOrigin: "50% 0%" }}>
+            <LanternArt glow={out} />
+          </span>
+        </button>
       )}
 
       {/* Sent: a thank-you on the home screen (the form has closed). */}
@@ -264,41 +315,6 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
         />
       )}
     </div>
-  );
-}
-
-/**
- * The lantern on its hook. Out: one big swing as it comes in, then an even
- * pendulum sway that keeps going (never stops) until it hides again.
- */
-function Swinging({ swinging }: { swinging: boolean }) {
-  const [settled, setSettled] = useState(false);
-  useEffect(() => {
-    if (!swinging) setSettled(false);
-  }, [swinging]);
-  return (
-    <motion.span
-      className="block"
-      style={{ transformOrigin: "50% 0%" }}
-      initial={false}
-      animate={
-        !swinging
-          ? { rotate: 0 }
-          : settled
-            ? { rotate: [-9, 9] }
-            : { rotate: [0, 22, -16, 12, -9] }
-      }
-      transition={
-        !swinging
-          ? { type: "spring", damping: 10, stiffness: 60 }
-          : settled
-            ? { duration: 1.4, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }
-            : { duration: 2.2, ease: "easeInOut" }
-      }
-      onAnimationComplete={() => swinging && !settled && setSettled(true)}
-    >
-      <LanternArt glow={swinging} />
-    </motion.span>
   );
 }
 
