@@ -1,5 +1,4 @@
 import { DOT_LOADER_LOOKS, DotLoader } from "@/components/ui/DotLoader";
-import { SalamWriting } from "@/components/ui/SalamWriting";
 
 /**
  * Opening splash: logo, name and a loading bar, in the server HTML so it
@@ -34,9 +33,6 @@ export function SplashScreen() {
         {/* Loading mark: four dots rearranging, pure CSS so it paints with
             the server HTML before any script */}
         <DotLoader className="huda-splash-mark" />
-        {/* The greeting writes itself in, letter by letter, under the dots
-            and is done before MIN_MS is up (timing in globals.css) */}
-        <SalamWriting />
       </div>
       <script dangerouslySetInnerHTML={{ __html: hideScript }} />
     </>

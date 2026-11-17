@@ -584,42 +584,6 @@ html:has([data-not-found]) #huda-splash {
   margin-top: 30px;
   font-size: 34px;
 }
-/* "As-salamu alaykum" (SalamWriting), written in under the dots the way a
-   hand writes it: each letter is uncovered by a pen stroke running down its
-   centreline, letter after letter right to left, then the harakat. Each
-   stroke's start and length come from the component; it ends by ~1.65s,
-   inside the splash's 1.7s minimum. */
-.huda-salam {
-  display: block;
-  width: min(68vw, 250px);
-  height: auto;
-  margin-top: 20px;
-  overflow: visible;
-}
-.huda-salam-pen {
-  fill: none;
-  stroke: #fff;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation-name: huda-salam-pen;
-  animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
-  animation-fill-mode: both;
-}
-/* Once a glyph's last stroke is down, it settles fully inked (covering any
-   hairline the pen's centreline missed) */
-.huda-salam-settle {
-  fill: #fff;
-  opacity: 0;
-  animation: huda-salam-settle 0.12s ease-out both;
-}
-@keyframes huda-salam-pen {
-  to { stroke-dashoffset: 0; }
-}
-@keyframes huda-salam-settle {
-  to { opacity: 1; }
-}
 @keyframes huda-splash-breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
@@ -705,30 +669,41 @@ html:has([data-not-found]) #huda-splash {
   from { transform: translate(var(--x), var(--y)); }
   to { transform: translate(calc(var(--x) * 0.18), calc(var(--y) * 0.18)) scale(0.8); }
 }
-:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i { transform: none; }
-:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(1) { left: 10%; top: 10%; --sx: 300%; --sy: 300%; --bx: 55%; --by: -55%; animation: huda-swap-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both, huda-swap-bend-a 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
-:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(2) { left: 70%; top: 10%; --sx: -300%; --sy: 300%; --bx: -55%; --by: -55%; animation: huda-swap-b 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both, huda-swap-bend-b 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
-:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(3) { left: 10%; top: 70%; --sx: 300%; --sy: -300%; --bx: 55%; --by: 55%; animation: huda-swap-b 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both, huda-swap-bend-b 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
-:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(4) { left: 70%; top: 70%; --sx: -300%; --sy: -300%; --bx: -55%; --by: 55%; animation: huda-swap-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both, huda-swap-bend-a 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
-/* 1<->4 trade corners along the "\" diagonal, then 2<->3 along the "/", each
-   bowing out sideways at the middle so the two pass without touching. The
-   trip is one ease-in-out; the bend swells and settles inside it. After both
-   swaps every corner holds a dot again, so the loop restarting can't be seen */
-@keyframes huda-swap-a {
-  0% { translate: 0 0; }
-  40%, 100% { translate: var(--sx) var(--sy); }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i {
+  transform: translateX(212.13%);
+  animation: huda-swap-turn-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both,
+    huda-swap-reach-a 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite both;
 }
-@keyframes huda-swap-b {
-  0%, 50% { translate: 0 0; }
-  90%, 100% { translate: var(--sx) var(--sy); }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(1) { --a: 225deg; }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(4) { --a: 45deg; }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(2),
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(3) { animation-name: huda-swap-turn-b, huda-swap-reach-b; }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(2) { --a: 315deg; }
+:is([data-huda-dots="swap"] .huda-dots:not([data-look]), .huda-dots[data-look="swap"]) > i:nth-child(3) { --a: 135deg; }
+/* Each dot sits on its corner's ray from the centre (angle --a, out 2.12 dot
+   widths). 1 and 4 turn half way round together, drawing in towards the
+   centre as they go so they pass inside 2 and 3, which ease out a little to
+   make room; then 2 and 3 do the same while 1 and 4 make room. The turn is
+   one ease-in-out and the reach in and out one smooth swing inside it, so the
+   path is a single unbroken curve. After both turns every corner holds a dot
+   again, so the loop restarting can't be seen. */
+@keyframes huda-swap-turn-a {
+  0% { rotate: var(--a); }
+  42%, 100% { rotate: calc(var(--a) + 180deg); }
 }
-@keyframes huda-swap-bend-a {
-  0%, 40%, 100% { transform: translate(0, 0); }
-  20% { transform: translate(var(--bx), var(--by)); }
+@keyframes huda-swap-turn-b {
+  0%, 50% { rotate: var(--a); }
+  92%, 100% { rotate: calc(var(--a) + 180deg); }
 }
-@keyframes huda-swap-bend-b {
-  0%, 50%, 90%, 100% { transform: translate(0, 0); }
-  70% { transform: translate(var(--bx), var(--by)); }
+@keyframes huda-swap-reach-a {
+  0%, 42%, 50%, 92%, 100% { transform: translateX(212.13%); }
+  21% { transform: translateX(85%); }
+  71% { transform: translateX(228%); }
+}
+@keyframes huda-swap-reach-b {
+  0%, 42%, 50%, 92%, 100% { transform: translateX(212.13%); }
+  21% { transform: translateX(228%); }
+  71% { transform: translateX(85%); }
 }
 /* Reduced motion: the dots hold the square and only fade in turn */
 @media (prefers-reduced-motion: reduce) {
@@ -776,7 +751,6 @@ html:has([data-not-found]) #huda-splash {
   .huda-splash-name { margin-top: 24px; font-size: 3rem; }
   .huda-splash-tagline { font-size: 0.85rem; }
   .huda-splash-mark { margin-top: 38px; font-size: 40px; }
-  .huda-salam { width: 320px; margin-top: 26px; }
 }
 @media (min-width: 1280px) {
   .huda-splash-logo { width: 280px; }
@@ -784,7 +758,6 @@ html:has([data-not-found]) #huda-splash {
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-splash-logo { animation: none; }
-  .huda-salam-pen, .huda-salam-settle { animation: none !important; stroke-dashoffset: 0; opacity: 1; }
 }
 
 /* App-like touch: no text selection (Copy / Look Up) and no long-press image
