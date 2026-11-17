@@ -2,38 +2,36 @@
  * The feedback lantern's thread as a soft rope (Verlet): a row of points
  * joined by links of a fixed length, the first pinned to the anchor (the
  * search button), the last to the lantern's hook. Moving the hook makes the
- * rope lag, bow and wriggle; left alone it hangs nearly straight. Pure maths,
+ * rope lag and sag; left alone it hangs straight. Pure maths,
  * so it can be tested without a browser (tests/feedback).
  */
 
 export const ROPE_POINTS = 10;
-/**
- * Rope length over the straight distance: taut when still (the lantern's
- * weight holds it straight), looser the faster it swings, so it
- * bows and ripples in motion and snaps straight at the ends of a swing.
+/*
+ * How a thread under a swinging weight behaves (owner's reference reel,
+ * 2026-11-17): its pull (tension, 1 = hanging still) is high as the weight
+ * sweeps through the bottom and low at the ends of a swing, where it is up
+ * high and stops for a moment. Taut, the thread is straight; slack, it sags
+ * into one soft curve. `looseness` (0 taut – 1 slack) comes from that pull.
  */
-export const ROPE_SLACK_STILL = 1.0;
-export const ROPE_SLACK_MOVING = 1.03;
-/** Swing speed (rad/s) at which the rope is at its loosest. */
-export const ROPE_LOOSE_AT = 0.5;
+/** Tension at or below which the thread is fully slack, and above which it is taut. */
+const SLACK_BELOW = 0.82;
+const TAUT_ABOVE = 1.0;
+export const ropeLooseness = (tension: number) =>
+  Math.max(0, Math.min(1, (TAUT_ABOVE - tension) / (TAUT_ABOVE - SLACK_BELOW)));
+/** Rope length over the straight distance: exact when taut, a little longer slack, so it can sag. */
+export const ROPE_SLACK = 1.08;
+export const ropeLength = (len: number, loose: number) => len * (1 + (ROPE_SLACK - 1) * loose);
 /**
- * The lantern's weight keeps the rope taut: each second every point is drawn
- * this much (fraction) back towards the straight line between the ends —
- * strongly when still (a straight thread), barely while swinging fast (so it
- * lags behind and bows).
+ * Pull towards the straight line (each second, the fraction of the way): the
+ * weight holding the thread straight. Strong when taut, faint when slack.
  */
-export const ROPE_TENSION_STILL = 7;
-export const ROPE_TENSION_MOVING = 0.6;
-const looseness = (speed: number) => Math.min(1, Math.abs(speed) / ROPE_LOOSE_AT);
-/** Rope length for this swing speed (rad/s) over a straight distance `len`. */
-export const ropeLength = (len: number, speed: number) =>
-  len * (ROPE_SLACK_STILL + (ROPE_SLACK_MOVING - ROPE_SLACK_STILL) * looseness(speed));
-/** Pull towards straight for this swing speed. */
-export const ropeTension = (speed: number) =>
-  ROPE_TENSION_STILL + (ROPE_TENSION_MOVING - ROPE_TENSION_STILL) * looseness(speed);
-/** Gravity (px/s²) and damping per frame: how lively it is. */
-export const ROPE_GRAVITY = 40;
-export const ROPE_DAMPING = 0.985;
+export const ROPE_PULL_TAUT = 9;
+export const ROPE_PULL_SLACK = 0.4;
+export const ropePull = (loose: number) => ROPE_PULL_TAUT + (ROPE_PULL_SLACK - ROPE_PULL_TAUT) * loose;
+/** The thread's own weight (px/s²) and damping per frame: soft and smooth, one curve, no ripples. */
+export const ROPE_GRAVITY = 600;
+export const ROPE_DAMPING = 0.95;
 /** Link passes per step: fewer = stretchier, more = stiffer. */
 const ITERATIONS = 18;
 
@@ -54,7 +52,7 @@ export function layStraight(p: Rope, ax: number, ay: number, hx: number, hy: num
 
 /**
  * One step of dt seconds with the ends pinned at (ax, ay) and (hx, hy); each
- * link `link` px long, drawn towards straight by `tension` (ropeTension). Returns the largest movement of a free point (px), so
+ * link `link` px long, drawn towards straight by `pull` (ropePull). Returns the largest movement of a free point (px), so
  * the caller can stop once it is still.
  */
 export function stepRope(
@@ -65,7 +63,7 @@ export function stepRope(
   hy: number,
   link: number,
   dt: number,
-  tension = ROPE_TENSION_STILL,
+  pull = ROPE_PULL_TAUT,
 ) {
   const n = count(p);
   let moved = 0;
@@ -84,12 +82,12 @@ export function stepRope(
   const e = (n - 1) * 4;
   p[e] = p[e + 2] = hx;
   p[e + 1] = p[e + 3] = hy;
-  const pull = Math.min(1, tension * dt);
+  const k = Math.min(1, pull * dt);
   for (let i = 1; i < n - 1; i++) {
     const o = i * 4;
-    const k = i / (n - 1);
-    p[o] += (ax + (hx - ax) * k - p[o]) * pull;
-    p[o + 1] += (ay + (hy - ay) * k - p[o + 1]) * pull;
+    const f = i / (n - 1);
+    p[o] += (ax + (hx - ax) * f - p[o]) * k;
+    p[o + 1] += (ay + (hy - ay) * f - p[o + 1]) * k;
   }
   for (let it = 0; it < ITERATIONS; it++) {
     for (let i = 0; i < n - 1; i++) {

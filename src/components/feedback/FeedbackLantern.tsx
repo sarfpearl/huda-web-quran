@@ -7,8 +7,8 @@ import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
-import { createRope, endTilt, layStraight, ropeLength, ropePath, ropeTension, stepRope, type Rope } from "@/lib/feedbackRope";
-import { MAX_SPEED, angleTo, drop, stepSwing, type Swing } from "@/lib/feedbackPendulum";
+import { createRope, endTilt, layStraight, ropeLength, ropeLooseness, ropePath, ropePull, stepRope, type Rope } from "@/lib/feedbackRope";
+import { MAX_SPEED, angleTo, drop, stepSwing, swingTension, type Swing } from "@/lib/feedbackPendulum";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -38,6 +38,8 @@ const HIDDEN_PAST_PX = 0;
 const BODY_PX = 30;
 /** Pulled back aside after the time-out, over this long. */
 const RETURN_MS = 900;
+/** Push (rad/s, to the left) given when it is let go from the side, so it swings wide (~40°). */
+const LET_GO_PUSH = 2.2;
 /** A press that moves less than this (px) is a tap; more is a grab-and-swing. */
 const DRAG_START_PX = 6;
 /** Out and untouched this long → back into hiding (owner: 10–15 s). */
@@ -114,8 +116,9 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     // Out means a tap may follow: fetch the form now so it opens at once.
     void import("./FeedbackSheet");
     if (mode.current === "aside" || mode.current === "back") {
-      // Let go from the side: it falls, jumps on its thread and swings.
-      swing.current = drop(swing.current);
+      // Let go from the side with a little push: it falls, jumps on its
+      // thread and swings wide across under the button, as in the reel.
+      swing.current = { ...drop(swing.current), omega: -LET_GO_PUSH };
       mode.current = "free";
     } else if (mode.current !== "drag") mode.current = "free";
     armTimer();
@@ -175,11 +178,13 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     const hookAt = (a: number, give = 0) => [geo.ax + (len + give) * Math.sin(a), geo.ay + (len + give) * Math.cos(a)] as const;
     const p = rope.current.pts;
     const links = p.length / 4 - 1;
-    const simulate = (a: number, dt: number, speed: number, give: number) =>
-      // The rope keeps its own length: when the lantern jumps up on the
-      // thread's give, the rope goes slack and curls (as in the owner's
-      // reference reel); dropping, it pulls straight again.
-      stepRope(p, geo.ax, geo.ay, ...hookAt(a, give), ropeLength(len, speed) / links, dt, ropeTension(speed) * (give < -1 ? 0.15 : 1));
+    /** One rope step for the swing now: taut through the bottom, sagging at the ends of a swing and on a jump. */
+    const simulate = (sw: Swing, dt: number) => {
+      // Held aside (or being pulled there) the thread is taut.
+      const held = mode.current === "aside" || mode.current === "back";
+      const loose = held ? 0 : ropeLooseness(swingTension(sw));
+      return stepRope(p, geo.ax, geo.ay, ...hookAt(sw.theta, sw.stretch ?? 0), ropeLength(len, loose) / links, dt, ropePull(loose));
+    };
     /** How much the rope is moving (0 still – 1 lively): the lantern's own wobble follows it. */
     let wobble = 0;
     const draw = () => {
@@ -243,7 +248,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
         sw.stretch = Math.abs(stretch ?? 0) < 0.05 && Math.abs(stretchV ?? 0) < 0.5 ? 0 : stretch;
         sw.stretchV = sw.stretch === 0 ? 0 : stretchV;
       }
-      const moved = simulate(sw.theta, dt, sw.omega, sw.stretch ?? 0) + Math.abs(sw.stretchV ?? 0) * dt;
+      const moved = simulate(sw, dt) + Math.abs(sw.stretchV ?? 0) * dt;
       wobble = Math.min(1, moved / 0.4);
       draw();
       // Tucked aside and the rope still: no more frames until the next kick.
