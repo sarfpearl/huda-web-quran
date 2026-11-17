@@ -63,7 +63,11 @@ interface CenterVerseDisplayProps {
   meaningCurrentTime?: number;
 }
 
+/** UI languages in Latin script: the greeting keeps the serif face on phones. */
+const LATIN_UI: readonly UiLang[] = ["en", "id", "tr", "fr", "ms"];
+
 function Greeting({ language, style }: { language: UiLang; style: React.CSSProperties }) {
+  const face = LATIN_UI.includes(language) ? "font-serif sm:font-sans" : "font-sans";
   const dir = isRtl(language) ? "rtl" : undefined;
   // Fit: shrink the whole greeting to the room between the header and the
   // player (short landscape phones, tall players); hide it when there is
@@ -99,19 +103,21 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500"
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
-        {/* Bismillah: Amiri's U+FDFD ligature, one calligraphic word. */}
+        {/* Bismillah: Amiri's U+FDFD ligature, one calligraphic word, in the
+            old greeting's gold with its glow. Leading 1.6 as the old
+            Arabic line, so the tall ascenders and low tails get room. */}
         <p
           dir="rtl"
           lang="ar"
           aria-label="بسم الله الرحمن الرحيم"
-          className="font-[family-name:var(--font-amiri)] text-sand-50/90 leading-none text-2xl sm:text-3xl md:text-4xl quran-translation-shadow"
+          className="font-[family-name:var(--font-amiri)] leading-[1.6] pb-1 sm:pb-2 text-3xl sm:text-4xl md:text-5xl text-amber-300 [text-shadow:0_0_22px_rgba(251,191,36,0.55),0_1px_3px_rgba(0,0,0,0.9)]"
         >
           &#xFDFD;
         </p>
         <h2
           lang={language}
           dir={dir}
-          className="font-sans font-semibold text-white leading-tight tracking-tight text-[1.95rem] sm:text-5xl md:text-6xl lg:text-7xl quran-translation-shadow"
+          className={`${face} font-normal text-white text-2xl sm:text-2xl md:text-3xl tracking-wide quran-translation-shadow`}
         >
           {t(language, "As-salamu alaykum")}
         </h2>
