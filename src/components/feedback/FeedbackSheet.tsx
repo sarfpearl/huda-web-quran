@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ActionSheet } from "@/components/ui/ActionSheet";
-import { CheckIcon, CloseIcon, ImageIcon } from "@/components/ui/Icon";
+import { CloseIcon, ImageIcon } from "@/components/ui/Icon";
 import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { cn } from "@/lib/utils";
 import {
@@ -14,24 +14,24 @@ import {
   type FeedbackKind,
 } from "@/lib/feedback";
 
-type Status =
-  | { kind: "idle" }
-  | { kind: "sending" }
-  | { kind: "sent"; note?: string }
-  | { kind: "error"; text: string };
+type Status = { kind: "idle" } | { kind: "sending" } | { kind: "error"; text: string };
 
 /**
  * The feedback form behind the lantern: type, message, an optional
  * screenshot (this screen, or an image from the device), Send. Loaded only
- * once the lantern is tapped open.
+ * once the lantern is tapped open. Sent: the sheet closes at once and the
+ * home screen shows a thank-you toast (FeedbackLantern).
  */
 export default function FeedbackSheet({
   open,
   onClose,
+  onSent,
   captureRoot,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Sent; false when the attached screenshot didn't upload. */
+  onSent: (screenshotUploaded: boolean) => void;
   /** The scene to draw for "Attach this screen". */
   captureRoot: () => HTMLElement | null;
 }) {
@@ -51,22 +51,6 @@ export default function FeedbackSheet({
     setShotUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [shot]);
-
-  // Sent: the thank-you shows a moment, then the sheet closes itself.
-  useEffect(() => {
-    if (!open || status.kind !== "sent") return;
-    const timer = setTimeout(onClose, status.note ? 4000 : 2200);
-    return () => clearTimeout(timer);
-  }, [open, status, onClose]);
-
-  // After a send, the next opening starts with an empty form.
-  useEffect(() => {
-    if (open || status.kind !== "sent") return;
-    setMessage("");
-    setShot(null);
-    setKind("issue");
-    setStatus({ kind: "idle" });
-  }, [open, status.kind]);
 
   const attachScreen = async () => {
     const root = captureRoot();
@@ -98,10 +82,12 @@ export default function FeedbackSheet({
     setStatus({ kind: "sending" });
     const res = await sendFeedback({ kind, message, screenshot: shot, uiLang: lang });
     if (res.ok) {
-      setStatus({
-        kind: "sent",
-        note: shot && !res.screenshotUploaded ? t(lang, "Your message was sent, but the screenshot couldn't be uploaded.") : undefined,
-      });
+      onSent(!shot || res.screenshotUploaded);
+      // The next opening starts with an empty form.
+      setMessage("");
+      setShot(null);
+      setKind("issue");
+      setStatus({ kind: "idle" });
       return;
     }
     setStatus({
@@ -135,15 +121,6 @@ export default function FeedbackSheet({
           </button>
         </div>
 
-        {status.kind === "sent" ? (
-          <div className="flex flex-col items-center gap-3 py-8 text-center" role="status">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500/20 text-emerald-300">
-              <CheckIcon className="h-6 w-6" />
-            </span>
-            <p className="text-sm font-semibold text-white">{t(lang, "Thank you! Your feedback was sent.")}</p>
-            {status.note && <p className="text-xs text-amber-200/90">{status.note}</p>}
-          </div>
-        ) : (
           <form onSubmit={submit} className="space-y-3.5 pb-1">
             <p className="text-sm leading-relaxed text-sand-200/85">
               {t(lang, "Found an issue, or have an idea to improve the app? Tell me.")}
@@ -238,7 +215,6 @@ export default function FeedbackSheet({
               {busy ? t(lang, "Sending…") : t(lang, "Send")}
             </button>
           </form>
-        )}
       </div>
     </ActionSheet>
   );
