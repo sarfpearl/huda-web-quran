@@ -589,8 +589,8 @@ html:has([data-not-found]) #huda-splash {
   50% { transform: scale(1.04); }
 }
 /* Loading mark (DotLoader): four brand-gold dots in a 1em box. Eleven looks; an
-   unnamed loader takes the one the splash script picked at random for this
-   app open (data-huda-dots on <html>; ?dots=<look> forces one), a loader with
+   unnamed loader takes the one the splash script picked for this app open
+   (the next after last time's) (data-huda-dots on <html>; ?dots=<look> forces one), a loader with
    data-look keeps its own (the /loaders page shows them all).
    Every move is one continuous curve, a steady turn or an ease-in-out swing
    between two shapes, so a dot never stops mid-path or jerks; it only slows

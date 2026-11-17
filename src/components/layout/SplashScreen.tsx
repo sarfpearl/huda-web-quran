@@ -8,7 +8,10 @@ import { DOT_LOADER_LOOKS, DotLoader } from "@/components/ui/DotLoader";
  * (which already takes suppressHydrationWarning) rather than removing the
  * node, so React hydration still matches; client navigations keep the class,
  * so the splash only shows on a full open of the app. The script also picks
- * the loader's look for this open (data-huda-dots; ?dots=<look> forces one).
+ * the loader's look for this open (data-huda-dots): the next one after the
+ * look this browser showed last time, so every open or reload shows a
+ * different one and all of them come round in turn (a random one where
+ * storage is blocked; ?dots=<look> forces one).
  */
 const MIN_MS = 1700;
 const MAX_MS = 8000;
@@ -16,7 +19,9 @@ const MAX_MS = 8000;
 const hideScript = `(function(){
 var d=document.documentElement,t0=Date.now(),done=false;
 var L=${JSON.stringify(DOT_LOADER_LOOKS)},q=/[?&]dots=([a-z]+)/.exec(location.search);
-d.setAttribute("data-huda-dots",q&&L.indexOf(q[1])>=0?q[1]:L[Math.floor(Math.random()*L.length)]);
+var n=Math.floor(Math.random()*L.length);
+try{var k="huda-dots-look",p=L.indexOf(localStorage.getItem(k));if(p>=0)n=(p+1)%L.length;localStorage.setItem(k,L[n])}catch(e){}
+d.setAttribute("data-huda-dots",q&&L.indexOf(q[1])>=0?q[1]:L[n]);
 function hide(){if(done)return;done=true;setTimeout(function(){d.classList.add("huda-ready")},Math.max(0,${MIN_MS}-(Date.now()-t0)))}
 if(document.readyState==="complete")hide();else window.addEventListener("load",hide);
 setTimeout(hide,${MAX_MS});

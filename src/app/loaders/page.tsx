@@ -26,7 +26,7 @@ export default function LoadersPage() {
     <main className="min-h-dvh bg-[#0e100f] px-4 py-10 text-[#e9e2d3]">
       <h1 className="text-center font-poppins text-2xl font-bold text-[#fcd34d]">HuDa loaders</h1>
       <p className="mt-1 text-center text-sm text-[#e9e2d3]/60">
-        One is picked at random each time the app opens.
+        Each time the app opens or reloads, the next one in turn shows.
       </p>
       <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-3">
         {DOT_LOADER_LOOKS.map((look) => (
