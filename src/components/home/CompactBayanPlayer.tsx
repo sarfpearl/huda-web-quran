@@ -729,9 +729,9 @@ export function CompactBayanPlayer({
               {isLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
               ) : isPlaying ? (
-                <PauseIcon className="text-2xl" />
+                <PauseIcon className="text-2xl" fill="currentColor" />
               ) : (
-                <PlayIcon className="text-2xl ml-0.5" />
+                <PlayIcon className="text-2xl ml-0.5" fill="currentColor" />
               )}
             </span>
           </div>
@@ -1032,9 +1032,9 @@ export function CompactBayanPlayer({
           {isLoading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
           ) : isPlaying ? (
-            <PauseIcon className="text-2xl" />
+            <PauseIcon className="text-2xl" fill="currentColor" />
           ) : (
-            <PlayIcon className="text-2xl ml-0.5" />
+            <PlayIcon className="text-2xl ml-0.5" fill="currentColor" />
           )}
         </button>
 
