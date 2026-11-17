@@ -1025,7 +1025,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
-          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-emerald-400 shadow-[0_6px_25px_rgba(16,185,129,0.35)] border-2 border-emerald-400 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.14),0_0_28px_8px_rgba(16,185,129,0.5)] border-2 border-emerald-400 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
