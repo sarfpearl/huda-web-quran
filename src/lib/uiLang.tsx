@@ -8,6 +8,7 @@ import home from "@/lib/i18n/home";
 import player from "@/lib/i18n/player";
 import pickers from "@/lib/i18n/pickers";
 import prayer from "@/lib/i18n/prayer";
+import feedback from "@/lib/i18n/feedback";
 import record from "@/lib/i18n/record";
 
 /**
@@ -45,7 +46,7 @@ export const useSetUiLang = () => useContext(SetUiLangContext);
 
 /** Translations of one area: English text (the key) → each other language. */
 export type Strings = Record<string, Partial<Record<Exclude<UiLang, "en">, string>>>;
-const DICT: Strings = { ...common, ...home, ...player, ...pickers, ...prayer, ...record };
+const DICT: Strings = { ...common, ...home, ...player, ...pickers, ...prayer, ...record, ...feedback };
 
 /**
  * The label in the UI language: `t(lang, "Page {n}", { n: 4 })`. The key is

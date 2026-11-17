@@ -17,6 +17,7 @@ import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/
 import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { afterSplash, afterStage } from "@/lib/onboarding";
+import { FeedbackLantern } from "@/components/feedback/FeedbackLantern";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { STANDALONE_SILENT, useAudioPlayer, type EndMode, type MeaningCue } from "@/contexts/AudioPlayerContext";
@@ -2247,6 +2248,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
 
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />
+
+      {/* Feedback: a faint lantern at the screen edge (components/feedback) */}
+      <FeedbackLantern playing={player.isPlaying} />
     </div>
     </SetUiLangContext.Provider>
     </UiLangContext.Provider>

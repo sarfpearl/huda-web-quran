@@ -23,6 +23,7 @@
     "@vercel/analytics": "^2.0.1",
     "adhan": "^4.4.6",
     "framer-motion": "^11.5.4",
+    "html-to-image": "^1.11.13",
     "mediabunny": "1.65.0",
     "next": "15.5.29",
     "react": "^19.3.0",
