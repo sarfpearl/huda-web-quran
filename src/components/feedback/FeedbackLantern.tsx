@@ -7,8 +7,6 @@ import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
-import { ropeCurve } from "@/lib/feedbackRope";
-import { MAX_SPEED, angleTo, drop, stepSwing, type Swing } from "@/lib/feedbackPendulum";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -30,18 +28,12 @@ function findAnchor(): HTMLElement | null {
   return best;
 }
 
-/** Thread length, from the anchor to the lantern's hook. */
-const THREAD_PX = 88;
-/** Hidden: pulled aside until the lantern's body centre sits on the edge, about half showing. */
-const HIDDEN_PAST_PX = 0;
-/** From the hook down the thread's line to the middle of the lantern's body. */
-const BODY_PX = 30;
-/** Pulled back aside after the time-out, over this long. */
-const RETURN_MS = 900;
-/** Push (rad/s, to the left) given when it is let go from the side, so it swings wide (~40°). */
-const LET_GO_PUSH = 2.2;
-/** A press that moves less than this (px) is a tap; more is a grab-and-swing. */
-const DRAG_START_PX = 6;
+/** How far below the anchor the lantern's hook hangs. */
+const DROP_PX = 64;
+/** Out: the lantern's centre this far in from the right edge. */
+const OUT_INSET_PX = 24;
+/** Hidden: the centre this far past the edge, so about half of it shows. */
+const HIDDEN_PAST_PX = 4;
 /** Out and untouched this long → back into hiding (owner: 10–15 s). */
 const OUT_MS = 12000;
 /** First visit: how long a Surah must have been playing before the one peek. */
@@ -51,24 +43,15 @@ const LANTERN_W = 34;
 
 type Geometry = { ax: number; ay: number; w: number };
 
-/** Thread length: long enough that "pulled aside" never goes past ~50°. */
-const threadLen = (g: Geometry) => Math.max(THREAD_PX, (g.w + HIDDEN_PAST_PX - g.ax) / 0.75 - BODY_PX);
-/** Angle from straight down (radians, + = right) at which the lantern's body sits tucked at the edge. */
-const hiddenAngle = (g: Geometry) =>
-  Math.asin(Math.min(0.75, (g.w + HIDDEN_PAST_PX - g.ax) / (threadLen(g) + BODY_PX)));
-
 /** Something modal is up (a sheet, the install guide, a picker): don't peek over it. */
 const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-modal="true"], [data-action-sheet]'));
 
 /**
- * The feedback entry: a small lantern (fanoos) on a thread from the search
- * button, behaving like a charm on a string (lib/feedbackPendulum,
- * lib/feedbackRope: one light bend in the thread). At rest it is pulled aside, half behind the right edge.
- * A tap lets it go: it falls, swings across under the button and back, and
- * keeps swaying (never quite stops) with a "Feedback" bubble. It can be
- * grabbed, swung and let go. 12 s untouched, it is pulled aside again. A tap
- * while it is out opens the form. On the first visit it is let go once by
- * itself while a Surah plays. After a send
+ * The feedback entry: a small lantern (fanoos) hanging on a thread from the
+ * search button, tucked half behind the right edge. A tap swings it out with
+ * a "Feedback" bubble, and it keeps swinging like a lantern on a string
+ * until it goes back (12 s untouched); a second tap opens the form. On the
+ * first visit it swings out once by itself while a Surah plays. After a send
  * the form closes and a thank-you toast shows here.
  */
 export function FeedbackLantern({ playing }: { playing: boolean }) {
@@ -83,45 +66,14 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const outTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const threadRef = useRef<SVGPathElement>(null);
-  const lanternRef = useRef<HTMLButtonElement>(null);
-  const bubbleRef = useRef<HTMLDivElement>(null);
-  /** The swing now: angle (radians from straight down, + = right) and speed (rad/s). */
-  const swing = useRef<Swing>({ theta: Number.NaN, omega: 0 });
-  /** aside: tucked at the edge · free: swinging · drag: held by a finger · back: being pulled aside. */
-  const mode = useRef<"aside" | "free" | "drag" | "back">("aside");
-  const backFrom = useRef({ theta: 0, at: 0 });
-  const press = useRef<{ id: number; x: number; y: number; moved: boolean; theta: number; at: number } | null>(null);
-  /** Starts the frame loop if it isn't running (set by the motion effect). */
-  const kick = useRef<() => void>(() => {});
 
-  const goAside = useCallback(() => {
-    clearTimeout(outTimer.current);
-    setOut(false);
-    if (mode.current === "aside") return;
-    mode.current = "back";
-    backFrom.current = { theta: swing.current.theta, at: performance.now() };
-    kick.current();
-  }, []);
-  /** Untouched this long → pulled aside again. */
-  const armTimer = useCallback(() => {
-    clearTimeout(outTimer.current);
-    outTimer.current = setTimeout(goAside, OUT_MS);
-  }, [goAside]);
-  /** Let go: from aside it falls and swings; already out, it keeps its swing. */
   const comeOut = useCallback(() => {
     setOut(true);
     // Out means a tap may follow: fetch the form now so it opens at once.
     void import("./FeedbackSheet");
-    if (mode.current === "aside" || mode.current === "back") {
-      // Let go from the side with a little push: it falls, jumps on its
-      // thread and swings wide across under the button, as in the reel.
-      swing.current = { ...drop(swing.current), omega: -LET_GO_PUSH };
-      mode.current = "free";
-    } else if (mode.current !== "drag") mode.current = "free";
-    armTimer();
-    kick.current();
-  }, [armTimer]);
+    clearTimeout(outTimer.current);
+    outTimer.current = setTimeout(() => setOut(false), OUT_MS);
+  }, []);
   useEffect(
     () => () => {
       clearTimeout(outTimer.current);
@@ -166,95 +118,6 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     };
   }, [ready]);
 
-  // The swing and its thread, drawn straight to the DOM every frame (no
-  // React renders). The pendulum moves the lantern's hook; the thread is one
-  // light curve to it, bowing out to the side the lantern swings to.
-  useEffect(() => {
-    if (!geo) return;
-    const len = threadLen(geo);
-    /** The hook at angle a, the thread stretched by `give` px. */
-    const hookAt = (a: number, give = 0) => [geo.ax + (len + give) * Math.sin(a), geo.ay + (len + give) * Math.cos(a)] as const;
-    /** 0 – 1: how much the thread bows (none while held aside, eased in once it swings). */
-    let curve = mode.current === "free" || mode.current === "drag" ? 1 : 0;
-    const draw = () => {
-      const sw = swing.current;
-      const [hx, hy] = hookAt(sw.theta, sw.stretch ?? 0);
-      const rope = ropeCurve(geo.ax, geo.ay, hx, hy, sw.theta * curve, -(sw.stretch ?? 0) * curve);
-      threadRef.current?.setAttribute("d", rope.d);
-      if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px) rotate(${-rope.endAngle}rad)`;
-      if (bubbleRef.current) bubbleRef.current.style.transform = `translate(${hx - LANTERN_W / 2 - 8}px, ${hy + 20}px) translateX(-100%)`;
-    };
-    const hidden = hiddenAngle(geo);
-    const sw = swing.current;
-    if (Number.isNaN(sw.theta)) sw.theta = hidden;
-    if (mode.current === "aside") sw.theta = hidden;
-    // Reduced motion: no swing — straight down when out, aside when not.
-    if (reduce) {
-      const place = () => {
-        sw.theta = mode.current === "aside" || mode.current === "back" ? hidden : 0;
-        sw.omega = 0;
-        sw.stretch = sw.stretchV = 0;
-        if (mode.current === "back") mode.current = "aside";
-        curve = 0;
-        draw();
-      };
-      kick.current = place;
-      place();
-      return;
-    }
-    // Drawn once now too: frames don't run in a background tab.
-    draw();
-    let frame = 0;
-    let last = 0;
-    const step = (now: number) => {
-      const dt = last ? Math.min(1 / 30, (now - last) / 1000) : 1 / 60;
-      last = now;
-      const before = sw.theta;
-      if (mode.current === "free") {
-        Object.assign(sw, stepSwing(sw, dt));
-      } else if (mode.current === "back") {
-        const k = Math.min(1, (now - backFrom.current.at) / RETURN_MS);
-        const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
-        sw.theta = backFrom.current.theta + (hidden - backFrom.current.theta) * ease;
-        sw.omega = (sw.theta - before) / dt;
-        if (k >= 1) {
-          mode.current = "aside";
-          sw.omega = 0;
-        }
-      } else if (mode.current === "aside") {
-        sw.theta = hidden;
-        sw.omega = 0;
-      }
-      // (drag: the pointer handlers set the angle and speed.)
-      if (mode.current !== "free" && (sw.stretch || sw.stretchV)) {
-        // Not swinging freely: the thread's give still settles.
-        const { stretch, stretchV } = stepSwing({ theta: 0, omega: 0, stretch: sw.stretch, stretchV: sw.stretchV }, dt, false);
-        sw.stretch = Math.abs(stretch ?? 0) < 0.05 && Math.abs(stretchV ?? 0) < 0.5 ? 0 : stretch;
-        sw.stretchV = sw.stretch === 0 ? 0 : stretchV;
-      }
-      const target = mode.current === "free" || mode.current === "drag" ? 1 : 0;
-      curve += (target - curve) * Math.min(1, dt * 4);
-      draw();
-      // Tucked aside, straight and still: no more frames until the next kick.
-      if (mode.current === "aside" && curve < 0.01 && !sw.stretch) {
-        frame = 0;
-        return;
-      }
-      frame = requestAnimationFrame(step);
-    };
-    kick.current = () => {
-      if (frame) return;
-      last = 0;
-      frame = requestAnimationFrame(step);
-    };
-    kick.current();
-    return () => {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      kick.current = () => {};
-    };
-  }, [geo, reduce]);
-
   // The one peek on the first visit: some way into a recitation.
   useEffect(() => {
     if (!ready || !playing) return;
@@ -276,82 +139,15 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const openForm = () => {
     clearTimeout(outTimer.current);
     setOut(false);
-    // Hidden while the form is up; back tucked aside after it.
-    mode.current = "aside";
-    swing.current.omega = 0;
-    kick.current();
     setEverOpened(true);
     setOpen(true);
   };
 
-  /** Where a pointer is, as an angle from the anchor. */
-  const pointerAngle = (e: React.PointerEvent) => {
-    const scene = rootRef.current?.parentElement?.getBoundingClientRect();
-    if (!scene || !geo) return swing.current.theta;
-    return Math.max(-1.3, Math.min(1.3, angleTo(geo.ax, geo.ay, e.clientX - scene.left, e.clientY - scene.top)));
-  };
-
-  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return;
-    try {
-      // Keep getting the moves while the finger leaves the small lantern.
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {}
-    press.current = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, theta: swing.current.theta, at: performance.now() };
-  };
-  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const pr = press.current;
-    if (!pr || pr.id !== e.pointerId || reduce) return;
-    if (!pr.moved) {
-      if (Math.hypot(e.clientX - pr.x, e.clientY - pr.y) < DRAG_START_PX) return;
-      // Grabbed: it follows the finger, held on its thread.
-      pr.moved = true;
-      mode.current = "drag";
-      clearTimeout(outTimer.current);
-      setOut(true);
-      void import("./FeedbackSheet");
-    }
-    const now = performance.now();
-    const a = pointerAngle(e);
-    const dt = Math.max(0.008, (now - pr.at) / 1000);
-    const sw = swing.current;
-    // Speed from the finger, smoothed so a last jitter doesn't decide the fling.
-    sw.omega = sw.omega * 0.5 + ((a - pr.theta) / dt) * 0.5;
-    sw.theta = a;
-    pr.theta = a;
-    pr.at = now;
-    kick.current();
-  };
-  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const pr = press.current;
-    if (!pr || pr.id !== e.pointerId) return;
-    press.current = null;
-    if (pr.moved) {
-      // Let go: it carries on with the speed it was given.
-      const sw = swing.current;
-      if (performance.now() - pr.at > 80) sw.omega = 0;
-      sw.omega = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, sw.omega));
-      Object.assign(sw, drop(sw, 140));
-      mode.current = "free";
-      armTimer();
-      kick.current();
-      return;
-    }
-    haptic();
-    if (out) openForm();
-    else comeOut();
-  };
-  const onPointerCancel = () => {
-    if (press.current?.moved) {
-      mode.current = "free";
-      armTimer();
-      kick.current();
-    }
-    press.current = null;
-  };
-  // Keyboard / screen reader (detail 0): straight to the form. Pointer taps are handled above.
   const onClick = (e: React.MouseEvent) => {
-    if (e.detail === 0) openForm();
+    haptic();
+    // Keyboard / screen reader (detail 0): straight to the form.
+    if (out || e.detail === 0) openForm();
+    else comeOut();
   };
 
   const onSent = useCallback(
@@ -369,73 +165,71 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   );
 
   if (!ready) return null;
+
+  // Hook of the lantern (top centre of its art) and the thread to it.
+  const hx = geo ? (out ? geo.w - OUT_INSET_PX : geo.w + HIDDEN_PAST_PX) : 0;
+  const hy = geo ? geo.ay + DROP_PX : 0;
+  const thread = geo
+    ? `M ${geo.ax} ${geo.ay} C ${geo.ax} ${geo.ay + DROP_PX * 0.5}, ${hx} ${hy - DROP_PX * 0.55}, ${hx} ${hy}`
+    : "";
+  const move = reduce ? { duration: 0.2 } : { type: "spring" as const, damping: 16, stiffness: 120 };
   const shown = Boolean(geo) && !open;
 
   return (
     <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className="pointer-events-none absolute inset-0 z-40">
       {geo && (
-        <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: shown ? 1 : 0 }}>
-          <svg className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-            <path
-              ref={threadRef}
-              d={`M ${geo.ax} ${geo.ay} L ${geo.ax} ${geo.ay + THREAD_PX}`}
-              fill="none"
-              stroke="#e3c06d"
-              strokeWidth={1}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={out ? 0.9 : 0.6}
-            />
-          </svg>
-          {/* Upright beside the lantern while it swings; tapping it opens the form too. */}
-          <div ref={bubbleRef} className="absolute left-0 top-0">
-            <AnimatePresence>
-              {out && (
-                <motion.button
-                  key="bubble"
-                  type="button"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  onClick={openForm}
-                  dir={isRtl(lang) ? "rtl" : undefined}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ duration: 0.2, delay: reduce ? 0 : 0.3 }}
-                  style={{ transformOrigin: "right center", pointerEvents: shown ? "auto" : "none" }}
-                  className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-md border border-amber-200/30 bg-black/65 px-3 py-1.5 text-xs font-semibold text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.5)] backdrop-blur-md cursor-pointer"
-                >
-                  <ChatDots />
-                  {t(lang, "Feedback")}
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-          <button
-            ref={lanternRef}
-            type="button"
-            onClick={onClick}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerCancel}
-            aria-label={t(lang, "Open feedback")}
-            aria-hidden={!shown || undefined}
-            tabIndex={shown ? 0 : -1}
-            // Placed by its hook, tilted along the thread; the strip on the
-            // left keeps the half-hidden lantern easy to tap. touch-none: a
-            // drag swings it instead of scrolling the page.
-            className="absolute left-0 top-0 block touch-none select-none cursor-grab active:cursor-grabbing rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 before:absolute before:-left-3 before:inset-y-0 before:w-3 before:content-['']"
-            style={{
-              width: LANTERN_W,
-              transformOrigin: `${LANTERN_W / 2}px 0px`,
-              pointerEvents: shown ? "auto" : "none",
-              opacity: out ? 1 : 0.85,
-            }}
-          >
-            <LanternArt glow={out} />
-          </button>
-        </div>
+        <motion.svg
+          className="absolute inset-0 h-full w-full overflow-visible"
+          aria-hidden="true"
+          initial={false}
+          animate={{ opacity: shown ? (out ? 0.9 : 0.55) : 0 }}
+        >
+          <motion.path
+            initial={false}
+            animate={{ d: thread }}
+            transition={move}
+            fill="none"
+            stroke="#e3c06d"
+            strokeWidth={1}
+            strokeLinecap="round"
+          />
+        </motion.svg>
+      )}
+
+      {geo && (
+        <motion.button
+          type="button"
+          onClick={onClick}
+          aria-label={t(lang, "Open feedback")}
+          aria-hidden={!shown || undefined}
+          tabIndex={shown ? 0 : -1}
+          // Positioned by its hook; the extra strip on the left keeps the
+          // half-hidden lantern easy to tap.
+          className="absolute left-0 top-0 block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 before:absolute before:-left-3 before:inset-y-0 before:w-3 before:content-['']"
+          style={{ width: LANTERN_W, pointerEvents: shown ? "auto" : "none" }}
+          initial={false}
+          animate={{ x: hx - LANTERN_W / 2, y: hy, opacity: shown ? (out ? 1 : 0.8) : 0 }}
+          transition={move}
+        >
+          <AnimatePresence>
+            {out && (
+              <motion.span
+                key="bubble"
+                dir={isRtl(lang) ? "rtl" : undefined}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                transition={{ duration: 0.2, delay: reduce ? 0 : 0.25 }}
+                style={{ transformOrigin: "right center" }}
+                className="absolute right-full top-6 mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-md border border-amber-200/30 bg-black/65 px-3 py-1.5 text-xs font-semibold text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.5)] backdrop-blur-md"
+              >
+                <ChatDots />
+                {t(lang, "Feedback")}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <Swinging swinging={out && !reduce} />
+        </motion.button>
       )}
 
       {/* Sent: a thank-you on the home screen (the form has closed). */}
@@ -470,6 +264,41 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * The lantern on its hook. Out: one big swing as it comes in, then an even
+ * pendulum sway that keeps going (never stops) until it hides again.
+ */
+function Swinging({ swinging }: { swinging: boolean }) {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!swinging) setSettled(false);
+  }, [swinging]);
+  return (
+    <motion.span
+      className="block"
+      style={{ transformOrigin: "50% 0%" }}
+      initial={false}
+      animate={
+        !swinging
+          ? { rotate: 0 }
+          : settled
+            ? { rotate: [-9, 9] }
+            : { rotate: [0, 22, -16, 12, -9] }
+      }
+      transition={
+        !swinging
+          ? { type: "spring", damping: 10, stiffness: 60 }
+          : settled
+            ? { duration: 1.4, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }
+            : { duration: 2.2, ease: "easeInOut" }
+      }
+      onAnimationComplete={() => swinging && !settled && setSettled(true)}
+    >
+      <LanternArt glow={swinging} />
+    </motion.span>
   );
 }
 
