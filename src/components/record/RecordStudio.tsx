@@ -13,11 +13,15 @@ import { haptic } from "@/lib/haptics";
 import { t, type UiLang } from "@/lib/uiLang";
 import { SURAH_METADATA_LIST } from "@/lib/data/surahList";
 import { useBackToClose } from "@/lib/useBackToClose";
+import { loadMeaningTimings } from "@/lib/data/meaningTimings";
+import type { MeaningVoice } from "@/lib/data/meaningAudio";
+import type { TranslationLang } from "@/lib/data/translations";
 import { clearRecordings } from "@/lib/record/chunkSink";
 import { audioLevel } from "@/lib/record/audioTap";
 import { coolBackground, warmBackground } from "@/lib/record/frameComposer";
 import { ActionSheet, PLAYER_GLASS } from "@/components/ui/ActionSheet";
-import { SELECTED } from "@/components/ui/selection";
+import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
+import { SURAH_NAMES } from "@/lib/data/surahNames";
 import {
   ClockIcon,
   DownloadIcon,
@@ -41,6 +45,16 @@ const GLASS = PLAYER_GLASS;
 /** The preview's controls bar under the video (px). */
 const CONTROLS_H = 56;
 
+/** Ayah length to assume where the reciter's timings are missing (s). */
+const AVG_AYAH_SECONDS = 9;
+
+/** The first estimate, before the meaning clips' lengths are known (meaning ≈ ayah). */
+function estimateStatic(sec: number[] | undefined, a: number, b: number, meaning: boolean) {
+  let t = 0;
+  for (let i = a; i <= b; i++) t += (sec?.[i - 1] || AVG_AYAH_SECONDS) * (meaning ? 2 : 1);
+  return t;
+}
+
 /** Longest single video; past it the recording stops at the ayah's end and offers Part 2. */
 export const MAX_SECONDS = 600;
 
@@ -53,6 +67,10 @@ export interface RecordStudioProps {
   currentAyah: number;
   /** Plays the Surah from this ayah (1-based). */
   startAt: (ayah: number) => void;
+  /** Each ayah's recitation length (s), index = ayah − 1; empty when unknown. */
+  ayahSeconds?: number[];
+  /** The meaning read aloud after each ayah, when it is on. */
+  meaning?: { voice: MeaningVoice; lang: TranslationLang } | null;
   language: UiLang;
   onClose: () => void;
 }
@@ -64,6 +82,15 @@ type Phase =
   | { kind: "saving" }
   | { kind: "preview"; file: File; url: string; duration: number; nextFrom: number | null; part: number }
   | { kind: "error"; message: string };
+
+/** "3 min 40 s" / "45 s" in the UI language. */
+function fmtLong(s: number, lang: UiLang) {
+  const v = Math.max(1, Math.round(s));
+  const m = Math.floor(v / 60);
+  const r = v % 60;
+  if (!m) return t(lang, "{s} s", { s: r });
+  return r ? t(lang, "{m} min {s} s", { m, s: r }) : t(lang, "{m} min", { m });
+}
 
 const fmt = (s: number) => {
   const v = Math.max(0, Math.round(s));
@@ -94,11 +121,73 @@ const chip = (on: boolean) =>
   `rounded-full px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${on ? SELECTED : "border border-white/10 bg-white/[0.04] text-sand-100 hover:bg-white/[0.08]"}`;
 
 export default function RecordStudio(props: RecordStudioProps) {
-  const { surah, surahTitle, verseCount, currentAyah, startAt, language, onClose } = props;
+  const { surah, surahTitle, verseCount, currentAyah, startAt, language, onClose, ayahSeconds, meaning } = props;
   const player = useAudioPlayer();
   const phone = useMemo(isPhone, []);
-  const [from, setFrom] = useState(() => (verseCount <= 20 ? 1 : Math.min(currentAyah, verseCount)));
-  const [to, setTo] = useState(() => (verseCount <= 20 ? verseCount : Math.min(verseCount, currentAyah + 9)));
+  // The meaning clips' lengths (their last word's end), when the meaning is read aloud.
+  const [meaningSecs, setMeaningSecs] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    if (!meaning) return;
+    let live = true;
+    void loadMeaningTimings(meaning.voice, meaning.lang, surah).then((tm) => {
+      if (!live || !tm) return;
+      const out: Record<string, number> = {};
+      for (const [ayah, words] of Object.entries(tm)) out[ayah] = (words[words.length - 1]?.[2] ?? 0) + 0.6;
+      setMeaningSecs(out);
+    });
+    return () => {
+      live = false;
+    };
+  }, [meaning, surah]);
+  // About how long ayahs from…to take: recitation, plus each meaning clip
+  // (measured where its timings exist, else about as long as the ayah).
+  const ayahCost = useCallback(
+    (a: number) => {
+      const rec = ayahSeconds?.[a - 1] || AVG_AYAH_SECONDS;
+      return rec + (meaning ? (meaningSecs?.[String(a)] ?? rec) : 0);
+    },
+    [ayahSeconds, meaning, meaningSecs],
+  );
+  const estimate = useCallback(
+    (a: number, b: number) => {
+      let t = 0;
+      for (let i = a; i <= b; i++) t += ayahCost(i);
+      return t;
+    },
+    [ayahCost],
+  );
+  /** The last ayah that still fits in one video from `a`. */
+  const lastFitting = useCallback(
+    (a: number) => {
+      let t = 0;
+      let b = a;
+      for (let i = a; i <= verseCount; i++) {
+        t += ayahCost(i);
+        if (t > MAX_SECONDS && i > a) break;
+        b = i;
+      }
+      return b;
+    },
+    [ayahCost, verseCount],
+  );
+  // Default: the whole Surah when it fits, else from the ayah on screen as far as fits.
+  const [from, setFrom] = useState(() => (estimateStatic(ayahSeconds, 1, verseCount, !!meaning) <= MAX_SECONDS ? 1 : Math.min(currentAyah, verseCount)));
+  const [to, setTo] = useState(() => {
+    const a = estimateStatic(ayahSeconds, 1, verseCount, !!meaning) <= MAX_SECONDS ? 1 : Math.min(currentAyah, verseCount);
+    let t = 0;
+    let b = a;
+    for (let i = a; i <= verseCount; i++) {
+      t += (ayahSeconds?.[i - 1] || AVG_AYAH_SECONDS) * (meaning ? 2 : 1);
+      if (t > MAX_SECONDS && i > a) break;
+      b = i;
+    }
+    return b;
+  });
+  const maxTo = lastFitting(from);
+  // Once the meaning lengths arrive (or the start moves), keep the end in reach.
+  useEffect(() => {
+    if (to > maxTo) setTo(maxTo);
+  }, [to, maxTo]);
   const [shape, setShape] = useState<Shape>("9:16");
   const [quality, setQuality] = useState<Quality>("1080");
   const [phase, setPhase] = useState<Phase>({ kind: "setup" });
@@ -327,16 +416,29 @@ export default function RecordStudio(props: RecordStudioProps) {
     const options = Array.from({ length: verseCount }, (_, i) => i + 1);
     const mbPerMin = Math.round(((VIDEO_BPS[quality] + 128_000) * 60) / 8 / 1e6);
     const count = to - from + 1;
+    const secs = estimate(from, to);
     return (
       <ActionSheet open={sheetOpen} onClose={close} label={L("Record video")} noAutoClose>
         <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">{L("Record video")}</h3>
-            <p className="mt-0.5 text-[11px] leading-none text-sand-300/70">{`${surahTitle} · ${L("Surah")} ${surah}`}</p>
-          </div>
+          <h3 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-white">{L("Record video")}</h3>
           <CloseButton onClick={close} label={L("Close")} />
         </div>
         <div className="min-h-0 space-y-2.5 overflow-y-auto no-scrollbar pb-1">
+          {/* Which Surah is being recorded: plain to see, in the app's selected style */}
+          <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${SELECTED}`}>
+            <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-base font-bold tabular-nums ${SELECTED_BADGE}`} aria-hidden>
+              {surah}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-base font-bold text-white">{surahTitle}</span>
+              <span className="block text-xs text-sand-200/75">
+                {L("Surah")} {surah} · {L("{n} ayahs", { n: verseCount })}
+              </span>
+            </span>
+            <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xl text-amber-200">
+              {(SURAH_NAMES[surah - 1]?.[0] ?? "").replace(/^سُورَةُ\s*/, "")}
+            </span>
+          </div>
           {phase.kind === "error" && (
             <p role="alert" className="rounded-2xl bg-amber-300/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
               {L("Recording didn't work in this browser.")} <span className="opacity-60 break-all">{phase.message}</span>
@@ -353,7 +455,9 @@ export default function RecordStudio(props: RecordStudioProps) {
                   onChange={(e) => {
                     const v = Number(e.target.value);
                     setFrom(v);
-                    if (to < v) setTo(v);
+                    // The same end if it is still after the start and fits; else as far
+                    // as one video reaches (the "next video" case).
+                    setTo((t) => (t < v ? lastFitting(v) : Math.min(t, lastFitting(v))));
                   }}
                   className={SELECT}
                   style={{ backgroundImage: CHEVRON }}
@@ -366,17 +470,34 @@ export default function RecordStudio(props: RecordStudioProps) {
               <span className="pb-3 text-sand-300/60" aria-hidden>→</span>
               <label className="flex-1 text-xs text-sand-200/80">
                 <span className="mb-1 block">{L("To ayah")}</span>
+                {/* Only ayahs that end within 10 minutes can be picked. */}
                 <select value={to} onChange={(e) => setTo(Number(e.target.value))} className={SELECT} style={{ backgroundImage: CHEVRON }}>
                   {options.filter((n) => n >= from).map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                    <option key={n} value={n} disabled={n > maxTo}>
+                      {n > maxTo ? `${n} · ${L("over 10 min")}` : n}
+                    </option>
                   ))}
                 </select>
               </label>
+            </div>
+            {/* About how long, against the 10-minute limit */}
+            <div className="mt-3">
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-sand-100">{L("About {t}", { t: fmtLong(secs, language) })}</span>
+                <span className="tabular-nums text-sand-200/60">{L("max {t} per video", { t: fmtLong(MAX_SECONDS, language) })}</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/10" role="meter" aria-valuemin={0} aria-valuemax={MAX_SECONDS} aria-valuenow={Math.round(secs)} aria-label={L("Length of the video")}>
+                <div
+                  className={`h-full rounded-full ${secs > MAX_SECONDS * 0.9 ? "bg-amber-400" : "bg-[linear-gradient(90deg,#f6de9a,#e3b65a)]"}`}
+                  style={{ width: `${Math.min(100, (secs / MAX_SECONDS) * 100)}%` }}
+                />
+              </div>
             </div>
             <p className="mt-2 text-[11px] leading-relaxed text-sand-200/60">
               {count === 1
                 ? L("1 ayah (ayah {from}). Recording stops by itself after it.", { from })
                 : L("{n} ayahs (ayah {from} to {to}). Recording stops by itself after ayah {to}.", { n: count, from, to })}
+              {maxTo < verseCount && to === maxTo && <> {L("One video is up to 10 minutes: record ayah {n} onwards as the next video.", { n: maxTo + 1 })}</>}
             </p>
           </div>
           {/* Size (desktop / tablet: phones always record 9:16) and quality */}
@@ -398,7 +519,7 @@ export default function RecordStudio(props: RecordStudioProps) {
             </Row>
           </div>
           <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">
-            {L("Records in real time, with the recitation and meaning audio as you have them on. Over 10 minutes it continues as Part 2.")}
+            {L("Records in real time, with the recitation and meaning audio as you have them on.")}
           </p>
           <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">
             {L("Tip: WhatsApp Status takes about 90 s, Reels up to about 3 min. You can trim the video in the preview.")}
