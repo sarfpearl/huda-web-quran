@@ -7,16 +7,17 @@ import { useUiLang, isRtl } from "@/lib/uiLang";
 import { tourT } from "@/lib/i18n/tour";
 import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
-import { threadPath } from "@/lib/feedbackSwing";
 import { OPEN_TOUR_EVENT, TOUR_DONE_KEY, TOUR_STEPS, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
  * (lib/onboarding: splash → location → install guide → tour) and before the
- * content browser slides in. A gold thread hangs from a small brass rosette at
- * the top of the screen; at its end the feedback lantern's fanoos (the same
- * lantern and thread) travels from control to control, the rest of the screen
+ * content browser slides in. A gold thread is tied to a small brass rosette
+ * on the left edge, half way down (nothing else sits there, on phones or
+ * desktop; the feedback lantern has the right edge). At its end the feedback
+ * lantern's fanoos travels from control to control on the sagging thread, which
+ * bends behind it as it goes; the rest of the screen
  * dimmed, with one short line about each. Skip on every step; Settings › App
  * tour shows it again. The steps are data (lib/tour/steps); a control that
  * isn't on screen is left out.
@@ -39,6 +40,14 @@ const SPRING_C = 10.5;
 // How far it leans against its motion (rad per px/s), and at most.
 const TILT_PER_SPEED = 0.0011;
 const TILT_MAX = 0.45;
+// The thread's slack: its sag (px, and px per px it runs across), and how far
+// its middle trails a moving lantern (px per px/s, and at most).
+const ROPE_SAG_PX = 6;
+const ROPE_SAG_PER_PX = 0.08;
+// The rounded bend where the thread leaves the edge (px).
+const ROPE_BEND_PX = 36;
+const ROPE_LAG_PER_SPEED = 0.05;
+const ROPE_LAG_MAX_PX = 60;
 
 type Rect = { x: number; y: number; w: number; h: number; r: string };
 type Point = { x: number; y: number };
@@ -157,7 +166,7 @@ export function FirstVisitTour() {
       if (c) setCard((p) => (p.w === c.offsetWidth && p.h === c.offsetHeight ? p : { w: c.offsetWidth, h: c.offsetHeight }));
       const a = anchorRef.current?.getBoundingClientRect();
       if (a) {
-        const next = { x: a.left + a.width / 2, y: a.bottom - 3 };
+        const next = { x: a.left + a.width / 2, y: a.top + a.height / 2 };
         setAnchor((p) => (p && p.x === next.x && p.y === next.y ? p : next));
       }
     };
@@ -202,7 +211,7 @@ export function FirstVisitTour() {
     let last = performance.now();
     const t0 = last;
     const draw = (tilt: number) => {
-      threadRef.current?.setAttribute("d", threadPath(anchor.x, anchor.y, cur.x, cur.y, 0.35, vel.x * 0.004));
+      threadRef.current?.setAttribute("d", ropePath(anchor.x, anchor.y, cur.x, cur.y, vel.x, vel.y));
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
     };
     const tick = (now: number) => {
@@ -309,17 +318,17 @@ export function FirstVisitTour() {
         />
       )}
 
-      {/* The rosette the thread hangs from, the thread, and the lantern at its end. */}
+      {/* The thread, the rosette it is tied to, and the lantern at its end. */}
+      <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
+        <path ref={threadRef} fill="none" stroke="#e3c06d" strokeWidth={1} strokeLinecap="round" opacity={0.9} />
+      </svg>
       <div
         ref={anchorRef}
-        className="pointer-events-none absolute left-1/2 top-[max(env(safe-area-inset-top),0px)] -translate-x-1/2"
+        className="pointer-events-none absolute -left-0.5 top-[42%] -translate-y-1/2"
         aria-hidden="true"
       >
         <Rosette />
       </div>
-      <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-        <path ref={threadRef} fill="none" stroke="#e3c06d" strokeWidth={1} strokeLinecap="round" opacity={0.9} />
-      </svg>
       <div
         ref={lanternRef}
         className="pointer-events-none absolute left-0 top-0"
@@ -406,6 +415,28 @@ export function FirstVisitTour() {
       </div>
     </div>,
     document.body
+  );
+}
+
+/**
+ * The thread from the rosette (ax, ay) to the lantern's hook (hx, hy). It
+ * runs up (or down) the screen's edge, clear of the card, bends round at the
+ * lantern's height and goes across to it in a slack sag. While the lantern
+ * moves (vx, vy px/s) the slack trails behind, so the bend follows it.
+ */
+function ropePath(ax: number, ay: number, hx: number, hy: number, vx: number, vy: number) {
+  const up = Math.sign(hy - ay) || 1;
+  const across = hx - ax;
+  const r = Math.max(0, Math.min(ROPE_BEND_PX, Math.abs(hy - ay) / 2, Math.abs(across) / 2));
+  const clamp = (v: number) => Math.max(-ROPE_LAG_MAX_PX, Math.min(ROPE_LAG_MAX_PX, v));
+  const sag = ROPE_SAG_PX + Math.abs(across) * ROPE_SAG_PER_PX;
+  const mx = (ax + r + hx) / 2 + clamp(-vx * ROPE_LAG_PER_SPEED);
+  const my = hy + sag + clamp(-vy * ROPE_LAG_PER_SPEED);
+  const f = (v: number) => v.toFixed(1);
+  return (
+    `M ${f(ax)} ${f(ay)} L ${f(ax)} ${f(hy - up * r)} ` +
+    `Q ${f(ax)} ${f(hy)} ${f(ax + r)} ${f(hy)} ` +
+    `Q ${f(mx)} ${f(my)} ${f(hx)} ${f(hy)}`
   );
 }
 
