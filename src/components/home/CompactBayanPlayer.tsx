@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
@@ -1025,16 +1025,14 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
-          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-emerald-400 shadow-[0_6px_25px_rgba(16,185,129,0.35)] border-2 border-emerald-400 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
           {isLoading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
-          ) : isPlaying ? (
-            <PauseIcon className="text-2xl" fill="currentColor" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
           ) : (
-            <PlayIcon className="text-2xl ml-0.5" fill="currentColor" />
+            <ShimmerPlayPause playing={isPlaying} />
           )}
         </button>
 
@@ -1128,6 +1126,28 @@ export function CompactBayanPlayer({
 
 /** Volume button — tap opens a small slider (with mute) above it. The popover
  *  is portalled to <body> so the player shell's overflow clipping can't cut it. */
+/** Play/pause glyph with a green outline and a gold shimmer sweeping through its fill. */
+function ShimmerPlayPause({ playing }: { playing: boolean }) {
+  const id = `shimmer-${useId().replace(/:/g, "")}`;
+  const Glyph = playing ? PauseIcon : PlayIcon;
+  return (
+    <>
+      <svg width="0" height="0" className="absolute" aria-hidden="true">
+        <defs>
+          <linearGradient id={id} x1="-1" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#f59e0b" />
+            <stop offset="0.5" stopColor="#fef3c7" />
+            <stop offset="1" stopColor="#f59e0b" />
+            <animate attributeName="x1" values="-1;1" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="x2" values="0;2" dur="2.4s" repeatCount="indefinite" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <Glyph className={playing ? "text-2xl" : "text-2xl ml-0.5"} fill={`url(#${id})`} strokeWidth={1.8} />
+    </>
+  );
+}
+
 function VolumeControl({
   buttonClassName = volumeBtn,
   active = true,
