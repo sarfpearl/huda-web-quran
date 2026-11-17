@@ -66,18 +66,6 @@ export function stepSwing(s: Swing, dt: number, breeze = true): Swing {
   return { theta, omega: Math.max(-MAX_SPEED, Math.min(MAX_SPEED, omega)), stretch, stretchV };
 }
 
-/**
- * The thread's pull for this swing (1 = hanging still): weight along the
- * thread plus what keeps the lantern on its circle. Low at the ends of a wide
- * swing, high through the bottom; a jump upwards on the thread's give takes
- * the weight off it.
- */
-export function swingTension(s: Swing) {
-  const pull = Math.cos(s.theta) + (s.omega * s.omega) / OMEGA2;
-  const rising = Math.max(0, -(s.stretchV ?? 0)) / DROP_SPEED;
-  return Math.max(0, pull - 1.2 * rising - ((s.stretch ?? 0) < -1 ? 0.5 : 0));
-}
-
 /** Let go: the thread gives and the lantern jumps on it. */
 export const drop = (s: Swing, speed = DROP_SPEED): Swing => ({ ...s, stretchV: (s.stretchV ?? 0) + speed });
 

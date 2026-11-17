@@ -7,8 +7,8 @@ import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
-import { createRope, endTilt, layStraight, ropeLength, ropeLooseness, ropePath, ropePull, stepRope, type Rope } from "@/lib/feedbackRope";
-import { MAX_SPEED, angleTo, drop, stepSwing, swingTension, type Swing } from "@/lib/feedbackPendulum";
+import { ropeCurve } from "@/lib/feedbackRope";
+import { MAX_SPEED, angleTo, drop, stepSwing, type Swing } from "@/lib/feedbackPendulum";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -63,7 +63,7 @@ const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-mo
 /**
  * The feedback entry: a small lantern (fanoos) on a thread from the search
  * button, behaving like a charm on a string (lib/feedbackPendulum,
- * lib/feedbackRope). At rest it is pulled aside, half behind the right edge.
+ * lib/feedbackRope: one light bend in the thread). At rest it is pulled aside, half behind the right edge.
  * A tap lets it go: it falls, swings across under the button and back, and
  * keeps swaying (never quite stops) with a "Feedback" bubble. It can be
  * grabbed, swung and let go. 12 s untouched, it is pulled aside again. A tap
@@ -94,8 +94,6 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const press = useRef<{ id: number; x: number; y: number; moved: boolean; theta: number; at: number } | null>(null);
   /** Starts the frame loop if it isn't running (set by the motion effect). */
   const kick = useRef<() => void>(() => {});
-  /** The rope's points (x, y and last frame's x, y) and the geometry they were laid out for. */
-  const rope = useRef<{ pts: Rope; for: Geometry | null }>({ pts: createRope(), for: null });
 
   const goAside = useCallback(() => {
     clearTimeout(outTimer.current);
@@ -168,42 +166,28 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     };
   }, [ready]);
 
-  // The swing and its rope, drawn straight to the DOM every frame (no React
-  // renders). The pendulum moves the lantern's hook; the rope between the
-  // button and the hook is simulated, so it flexes a little in fast motion.
+  // The swing and its thread, drawn straight to the DOM every frame (no
+  // React renders). The pendulum moves the lantern's hook; the thread is one
+  // light curve to it, bowing out to the side the lantern swings to.
   useEffect(() => {
     if (!geo) return;
     const len = threadLen(geo);
     /** The hook at angle a, the thread stretched by `give` px. */
     const hookAt = (a: number, give = 0) => [geo.ax + (len + give) * Math.sin(a), geo.ay + (len + give) * Math.cos(a)] as const;
-    const p = rope.current.pts;
-    const links = p.length / 4 - 1;
-    /** One rope step for the swing now: taut through the bottom, sagging at the ends of a swing and on a jump. */
-    const simulate = (sw: Swing, dt: number) => {
-      // Held aside (or being pulled there) the thread is taut.
-      const held = mode.current === "aside" || mode.current === "back";
-      const loose = held ? 0 : ropeLooseness(swingTension(sw));
-      return stepRope(p, geo.ax, geo.ay, ...hookAt(sw.theta, sw.stretch ?? 0), ropeLength(len, loose) / links, dt, ropePull(loose));
-    };
-    /** How much the rope is moving (0 still – 1 lively): the lantern's own wobble follows it. */
-    let wobble = 0;
+    /** 0 – 1: how much the thread bows (none while held aside, eased in once it swings). */
+    let curve = mode.current === "free" || mode.current === "drag" ? 1 : 0;
     const draw = () => {
-      threadRef.current?.setAttribute("d", ropePath(p));
-      const e = p.length - 4;
-      const hx = p[e];
-      const hy = p[e + 1];
-      if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px) rotate(${-endTilt(p, wobble)}rad)`;
+      const sw = swing.current;
+      const [hx, hy] = hookAt(sw.theta, sw.stretch ?? 0);
+      const rope = ropeCurve(geo.ax, geo.ay, hx, hy, sw.theta * curve, -(sw.stretch ?? 0) * curve);
+      threadRef.current?.setAttribute("d", rope.d);
+      if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px) rotate(${-rope.endAngle}rad)`;
       if (bubbleRef.current) bubbleRef.current.style.transform = `translate(${hx - LANTERN_W / 2 - 8}px, ${hy + 20}px) translateX(-100%)`;
     };
     const hidden = hiddenAngle(geo);
     const sw = swing.current;
     if (Number.isNaN(sw.theta)) sw.theta = hidden;
     if (mode.current === "aside") sw.theta = hidden;
-    // A new layout (first show, resize): start straight.
-    if (rope.current.for !== geo) {
-      layStraight(p, geo.ax, geo.ay, ...hookAt(sw.theta));
-      rope.current.for = geo;
-    }
     // Reduced motion: no swing — straight down when out, aside when not.
     if (reduce) {
       const place = () => {
@@ -211,7 +195,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
         sw.omega = 0;
         sw.stretch = sw.stretchV = 0;
         if (mode.current === "back") mode.current = "aside";
-        layStraight(p, geo.ax, geo.ay, ...hookAt(sw.theta));
+        curve = 0;
         draw();
       };
       kick.current = place;
@@ -248,11 +232,11 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
         sw.stretch = Math.abs(stretch ?? 0) < 0.05 && Math.abs(stretchV ?? 0) < 0.5 ? 0 : stretch;
         sw.stretchV = sw.stretch === 0 ? 0 : stretchV;
       }
-      const moved = simulate(sw, dt) + Math.abs(sw.stretchV ?? 0) * dt;
-      wobble = Math.min(1, moved / 0.4);
+      const target = mode.current === "free" || mode.current === "drag" ? 1 : 0;
+      curve += (target - curve) * Math.min(1, dt * 4);
       draw();
-      // Tucked aside and the rope still: no more frames until the next kick.
-      if (mode.current === "aside" && moved < 0.02) {
+      // Tucked aside, straight and still: no more frames until the next kick.
+      if (mode.current === "aside" && curve < 0.01 && !sw.stretch) {
         frame = 0;
         return;
       }
