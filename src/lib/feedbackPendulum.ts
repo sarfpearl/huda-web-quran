@@ -56,7 +56,7 @@ export function stepSwing(s: Swing, dt: number, breeze = true): Swing {
     }
     theta += omega * h;
     stretchV += (-BOUNCE_K * stretch - BOUNCE_DAMPING * stretchV) * h;
-    stretch = Math.max(-MAX_STRETCH / 2, Math.min(MAX_STRETCH, stretch + stretchV * h));
+    stretch = Math.max(-MAX_STRETCH * 0.7, Math.min(MAX_STRETCH, stretch + stretchV * h));
     // Flung up past the side: a string goes slack there, so it drops back.
     if (Math.abs(theta) > MAX_ANGLE) {
       theta = Math.sign(theta) * MAX_ANGLE;

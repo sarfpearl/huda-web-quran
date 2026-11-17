@@ -176,7 +176,10 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     const p = rope.current.pts;
     const links = p.length / 4 - 1;
     const simulate = (a: number, dt: number, speed: number, give: number) =>
-      stepRope(p, geo.ax, geo.ay, ...hookAt(a, give), ropeLength(len + give, speed) / links, dt, ropeTension(speed));
+      // The rope keeps its own length: when the lantern jumps up on the
+      // thread's give, the rope goes slack and curls (as in the owner's
+      // reference reel); dropping, it pulls straight again.
+      stepRope(p, geo.ax, geo.ay, ...hookAt(a, give), ropeLength(len, speed) / links, dt, ropeTension(speed) * (give < -1 ? 0.15 : 1));
     /** How much the rope is moving (0 still – 1 lively): the lantern's own wobble follows it. */
     let wobble = 0;
     const draw = () => {
@@ -301,7 +304,10 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
 
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      // Keep getting the moves while the finger leaves the small lantern.
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
     press.current = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, theta: swing.current.theta, at: performance.now() };
   };
   const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {

@@ -13,7 +13,7 @@ export const ROPE_POINTS = 10;
  * bows and ripples in motion and snaps straight at the ends of a swing.
  */
 export const ROPE_SLACK_STILL = 1.0;
-export const ROPE_SLACK_MOVING = 1.015;
+export const ROPE_SLACK_MOVING = 1.03;
 /** Swing speed (rad/s) at which the rope is at its loosest. */
 export const ROPE_LOOSE_AT = 0.5;
 /**
