@@ -27,6 +27,11 @@ type Stage = {
 type Placed = { text: string; x: number; y: number; w: number; idx: number };
 type Block = { size: number; lineH: number; placed: Placed[]; height: number };
 
+function uiFontFamily(): string {
+  const poppins = getComputedStyle(document.documentElement).getPropertyValue("--font-poppins").trim();
+  return poppins ? `${poppins}, sans-serif` : "Poppins, sans-serif";
+}
+
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicNumerals = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_DIGITS[Number(d)]);
 
@@ -70,8 +75,26 @@ function readStage(): Stage | null {
   return { key, arabic, ayah, meaning, meaningDir };
 }
 
+type Bg = HTMLVideoElement | HTMLImageElement;
+
+/** The page's large scene images (the Surah artwork sits under its clips). */
+function sceneImage(): HTMLImageElement | null {
+  let img: HTMLImageElement | null = null;
+  let area = 0;
+  document.querySelectorAll("img").forEach((el) => {
+    if (!el.currentSrc || !el.complete || !el.naturalWidth) return;
+    const r = el.getBoundingClientRect();
+    if (r.width * r.height < window.innerWidth * window.innerHeight * 0.6) return;
+    if (r.width * r.height >= area) {
+      area = r.width * r.height;
+      img = el;
+    }
+  });
+  return img;
+}
+
 /** The scene's background as the page shows it: the top visible clip, else the artwork. */
-function visibleBackground(own: Set<HTMLVideoElement>): HTMLVideoElement | HTMLImageElement | null {
+function visibleBackground(own: Set<HTMLVideoElement>): Bg | null {
   let best: HTMLVideoElement | null = null;
   let bestZ = -Infinity;
   document.querySelectorAll("video").forEach((v) => {
@@ -86,31 +109,40 @@ function visibleBackground(own: Set<HTMLVideoElement>): HTMLVideoElement | HTMLI
       best = v;
     }
   });
-  if (best) return best;
-  let img: HTMLImageElement | null = null;
-  let area = 0;
-  document.querySelectorAll("img").forEach((el) => {
-    if (!el.currentSrc || !el.complete || !el.naturalWidth) return;
-    const r = el.getBoundingClientRect();
-    if (r.width * r.height < window.innerWidth * window.innerHeight * 0.6) return;
-    if (Number(getComputedStyle(el).opacity) < 0.5) return;
-    if (r.width * r.height >= area) {
-      area = r.width * r.height;
-      img = el;
-    }
-  });
-  return img;
+  return best ?? sceneImage();
 }
 
-/** A CORS-clean copy of the page's background clip, kept in step with it. */
+/**
+ * A CORS-clean copy of the page's background (through /media-cors), kept in
+ * step with it. Never draws nothing: a clip that is still loading, failed or
+ * stalled leaves the last good picture — or the Surah artwork — on screen.
+ */
 class BackgroundMirror {
   own = new Set<HTMLVideoElement>();
-  private cur: { src: string; el: HTMLVideoElement | HTMLImageElement; since: number } | null = null;
-  private prev: { el: HTMLVideoElement | HTMLImageElement } | null = null;
-  private loading: { src: string; el: HTMLVideoElement | HTMLImageElement } | null = null;
+  private cur: { src: string; el: Bg; since: number } | null = null;
+  private prev: { el: Bg } | null = null;
+  private loading: { src: string; el: Bg; at: number } | null = null;
+  /** The artwork, loaded too, for whenever no clip is ready. */
+  private art: { src: string; el: HTMLImageElement; ok: boolean } | null = null;
+  /** URLs that failed, and when they may be tried again. */
+  private failed = new Map<string, { n: number; next: number }>();
   private lastSync = 0;
 
-  private load(src: HTMLVideoElement | HTMLImageElement) {
+  private fail(url: string, el: Bg) {
+    const f = this.failed.get(url) ?? { n: 0, next: 0 };
+    f.n += 1;
+    f.next = performance.now() + 2000 * f.n;
+    this.failed.set(url, f);
+    if (el instanceof HTMLVideoElement) this.drop(el);
+    if (this.loading?.src === url) this.loading = null;
+  }
+
+  private canTry(url: string) {
+    const f = this.failed.get(url);
+    return !f || (f.n < 4 && performance.now() >= f.next);
+  }
+
+  private load(src: Bg) {
     const url = src.currentSrc;
     if (src instanceof HTMLVideoElement) {
       const v = document.createElement("video");
@@ -119,7 +151,6 @@ class BackgroundMirror {
       v.loop = src.loop;
       v.crossOrigin = "anonymous";
       v.preload = "auto";
-      v.src = corsUrl(url);
       this.own.add(v);
       v.addEventListener(
         "loadeddata",
@@ -134,21 +165,37 @@ class BackgroundMirror {
         },
         { once: true },
       );
-      this.loading = { src: url, el: v };
+      v.addEventListener("error", () => this.fail(url, v), { once: true });
+      v.src = corsUrl(url);
+      this.loading = { src: url, el: v, at: performance.now() };
     } else {
       const im = new Image();
       im.crossOrigin = "anonymous";
       im.decoding = "async";
       im.onload = () => this.ready(url, im);
+      im.onerror = () => this.fail(url, im);
       im.src = corsUrl(url);
-      this.loading = { src: url, el: im };
+      this.loading = { src: url, el: im, at: performance.now() };
     }
   }
 
-  private ready(url: string, el: HTMLVideoElement | HTMLImageElement) {
+  private loadArt(img: HTMLImageElement) {
+    const url = img.currentSrc;
+    if (this.art?.src === url || !this.canTry(url)) return;
+    const im = new Image();
+    im.crossOrigin = "anonymous";
+    const art = { src: url, el: im, ok: false };
+    im.onload = () => (art.ok = true);
+    im.onerror = () => this.failed.set(url, { n: (this.failed.get(url)?.n ?? 0) + 1, next: performance.now() + 4000 });
+    im.src = corsUrl(url);
+    this.art = art;
+  }
+
+  private ready(url: string, el: Bg) {
     if (this.loading?.src !== url) return;
     this.loading = null;
-    if (this.prev?.el instanceof HTMLVideoElement) this.drop(this.prev.el);
+    this.failed.delete(url);
+    if (this.prev?.el instanceof HTMLVideoElement && this.prev.el !== this.cur?.el) this.drop(this.prev.el);
     this.prev = this.cur ? { el: this.cur.el } : null;
     this.cur = { src: url, el, since: performance.now() };
   }
@@ -160,10 +207,19 @@ class BackgroundMirror {
     this.own.delete(v);
   }
 
+  /** Has a picture to show (a broken or empty video has none). */
+  private static shows(el: Bg) {
+    return el instanceof HTMLVideoElement ? !el.error && el.readyState >= 2 && el.videoWidth > 0 : el.complete && el.naturalWidth > 0;
+  }
+
   /** Follows the page; returns what to draw (with the incoming one's fade). */
-  layers(now: number): { el: HTMLVideoElement | HTMLImageElement; alpha: number }[] {
+  layers(now: number): { el: Bg; alpha: number }[] {
     const src = visibleBackground(this.own);
-    if (src && src.currentSrc !== this.cur?.src && src.currentSrc !== this.loading?.src) this.load(src);
+    const art = sceneImage();
+    if (art) this.loadArt(art);
+    // A load that hangs (a stalled request) is given up and tried again.
+    if (this.loading && now - this.loading.at > 12000) this.fail(this.loading.src, this.loading.el);
+    if (src && src.currentSrc !== this.cur?.src && src.currentSrc !== this.loading?.src && this.canTry(src.currentSrc)) this.load(src);
     // Drift: the page's clip is the clock (it loops and follows the scene).
     if (src instanceof HTMLVideoElement && this.cur?.el instanceof HTMLVideoElement && this.cur.src === src.currentSrc && now - this.lastSync > 1000) {
       this.lastSync = now;
@@ -177,18 +233,54 @@ class BackgroundMirror {
       }
       if (m.paused && !src.paused) void m.play().catch(() => {});
     }
-    const out: { el: HTMLVideoElement | HTMLImageElement; alpha: number }[] = [];
-    if (!this.cur) return out;
-    const fade = Math.min(1, (now - this.cur.since) / 700);
-    if (fade < 1 && this.prev) out.push({ el: this.prev.el, alpha: 1 });
-    out.push({ el: this.cur.el, alpha: this.prev ? fade : 1 });
+    const out: { el: Bg; alpha: number }[] = [];
+    // Underneath everything: the artwork, so there is never a black frame.
+    if (this.art?.ok) out.push({ el: this.art.el, alpha: 1 });
+    if (this.cur && BackgroundMirror.shows(this.cur.el)) {
+      const fade = Math.min(1, (now - this.cur.since) / 700);
+      if (fade < 1 && this.prev && BackgroundMirror.shows(this.prev.el)) out.push({ el: this.prev.el, alpha: 1 });
+      out.push({ el: this.cur.el, alpha: this.prev || this.art?.ok ? fade : 1 });
+    } else if (this.prev && BackgroundMirror.shows(this.prev.el)) {
+      out.push({ el: this.prev.el, alpha: 1 });
+    }
     return out;
   }
 
   dispose() {
     for (const v of [...this.own]) this.drop(v);
-    this.cur = this.prev = this.loading = null;
+    this.cur = this.prev = this.loading = this.art = null;
   }
+}
+
+// The logo, loaded once and decoded ahead (from when this module loads, a
+// little after the page): a recording's first frames had no logo while it
+// was still arriving.
+let logo: HTMLImageElement | null = null;
+function sharedLogo(): HTMLImageElement {
+  if (!logo) {
+    logo = new Image();
+    logo.decoding = "async";
+    logo.src = "/huda-logo.webp?v=3";
+    void logo.decode?.().catch(() => {});
+  }
+  return logo;
+}
+if (typeof Image !== "undefined") sharedLogo();
+
+// Loaded while the setup sheet is open, so the video's first frame already
+// has the scene (the clip takes a moment to arrive through /media-cors).
+let warm: BackgroundMirror | null = null;
+
+/** Starts (and keeps following) the background copy before recording. */
+export function warmBackground() {
+  warm ??= new BackgroundMirror();
+  warm.layers(performance.now());
+}
+
+/** Drops a warmed copy that no recording took. */
+export function coolBackground() {
+  warm?.dispose();
+  warm = null;
 }
 
 function drawCover(ctx: CanvasRenderingContext2D, el: HTMLVideoElement | HTMLImageElement, w: number, h: number) {
@@ -268,19 +360,39 @@ export interface ComposerOptions {
 export class FrameComposer {
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private bg = new BackgroundMirror();
-  private logo = new Image();
-  /** The app's own UI font (self-hosted Poppins under a generated name). */
-  private uiFont = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+  private bg: BackgroundMirror;
+  private logo = sharedLogo();
+  /** The app's UI font, Poppins (self-hosted: next/font's own family name). */
+  private uiFont = uiFontFamily();
+  /** The title's serif: Amiri (self-hosted, also used for the app's Arabic). */
+  private serifFont = (() => {
+    const amiri = getComputedStyle(document.documentElement).getPropertyValue("--font-amiri").trim();
+    return amiri ? `${amiri}, serif` : "serif";
+  })();
   private stage: Stage | null = null;
+  // The verse stage is read again only after it changed (and for a moment
+  // after, while its colour transitions run) — not every frame: reading every
+  // word's computed style 30 times a second made garbage that piled up.
+  private stageDirtyUntil = 0;
+  private stageReadAt = -Infinity;
+  private observer: MutationObserver | null = null;
+  private observed: Element | null = null;
+  private scrim: { h: number; g: CanvasGradient } | null = null;
   private layout: { key: string; arabic: Block; meaning: Block | null; top: number; meaningTop: number } | null = null;
 
   constructor(private opts: ComposerOptions) {
+    this.bg = warm ?? new BackgroundMirror();
+    warm = null;
     this.canvas = document.createElement("canvas");
     this.canvas.width = opts.width;
     this.canvas.height = opts.height;
     this.ctx = this.canvas.getContext("2d", { alpha: false })!;
-    this.logo.src = "/huda-logo.webp?v=3";
+    this.observer = new MutationObserver(() => {
+      this.stageDirtyUntil = performance.now() + 300;
+    });
+    // The canvas only draws a web font that is already loaded.
+    void document.fonts?.load(`600 32px ${this.uiFont}`, SITE_LINK).catch(() => {});
+    void document.fonts?.load(`36px ${this.serifFont}`, "Al-Fatihah").catch(() => {});
   }
 
   /** Scale against a 1080-wide portrait frame. */
@@ -341,8 +453,20 @@ export class FrameComposer {
     const { width: W, height: H } = this.opts;
     const u = this.unit;
     const margin = W * 0.07;
-    const fresh = readStage();
-    if (fresh) this.stage = fresh;
+    // Watch the verse stage (re-attached if the page swaps it).
+    const stageEl = document.querySelector("[data-verse-stage]");
+    if (stageEl !== this.observed && this.observer) {
+      this.observer.disconnect();
+      this.observed = stageEl;
+      this.stageDirtyUntil = now + 300;
+      if (stageEl) this.observer.observe(stageEl, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"], characterData: true });
+    }
+    // Changed recently, or a slow safety refresh (twice a second).
+    if (now <= this.stageDirtyUntil || now - this.stageReadAt > 500) {
+      this.stageReadAt = now;
+      const fresh = readStage();
+      if (fresh) this.stage = fresh;
+    }
     const stage = this.stage;
 
     // Background
@@ -355,22 +479,23 @@ export class FrameComposer {
     }
     ctx.globalAlpha = 1;
     // The app's scrim: darker at the bottom and top, so the text reads on any clip.
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "rgba(0,0,0,0.6)");
-    g.addColorStop(0.5, "rgba(0,0,0,0.45)");
-    g.addColorStop(1, "rgba(0,0,0,0.82)");
+    if (this.scrim?.h !== H) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "rgba(0,0,0,0.6)");
+      grad.addColorStop(0.5, "rgba(0,0,0,0.45)");
+      grad.addColorStop(1, "rgba(0,0,0,0.82)");
+      this.scrim = { h: H, g: grad };
+    }
+    const g = this.scrim.g;
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // Title
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-    ctx.direction = "ltr";
-    ctx.shadowColor = "rgba(0,0,0,0.85)";
-    ctx.shadowBlur = 8 * u;
-    ctx.fillStyle = "rgba(253, 230, 138, 0.95)";
-    ctx.font = `600 ${Math.round(34 * u)}px ${this.uiFont}`;
-    ctx.fillText(this.opts.title(), W / 2, H * 0.065, W - margin * 2);
+    // Watermark: the HuDa logo as faint frosted glass over the scene, under
+    // the text — there if you look, never in the way of reading.
+    this.drawWatermark();
+
+    // Title: in a gold-edged pill with a small flourish either side.
+    this.drawTitle(W / 2, H * 0.065, W - margin * 2);
 
     if (stage) {
       if (this.layout?.key !== `${stage.key}|${W}x${H}`) this.relayout(stage);
@@ -422,7 +547,102 @@ export class FrameComposer {
     ctx.shadowBlur = 0;
   }
 
+  /** The logo's shape in one colour (for the glass watermark), made once per size. */
+  private glass: { size: number; light: HTMLCanvasElement; dark: HTMLCanvasElement } | null = null;
+
+  private drawWatermark() {
+    const lg = this.logo;
+    if (!lg.complete || !lg.naturalWidth) return;
+    const { ctx } = this;
+    const { width: W, height: H } = this.opts;
+    const size = Math.round(Math.min(W, H) * 0.62);
+    if (this.glass?.size !== size) {
+      const tint = (color: string) => {
+        const c = document.createElement("canvas");
+        c.width = c.height = size;
+        const x = c.getContext("2d")!;
+        x.drawImage(lg, 0, 0, size, size);
+        x.globalCompositeOperation = "source-in";
+        x.fillStyle = color;
+        x.fillRect(0, 0, size, size);
+        return c;
+      };
+      this.glass = { size, light: tint("#ffffff"), dark: tint("#000000") };
+    }
+    const u = this.unit;
+    const x = (W - size) / 2;
+    const y = H * 0.47 - size / 2;
+    ctx.save();
+    ctx.shadowBlur = 0;
+    // Frosted glass: a pale body, a soft shade below-right and a thin light
+    // edge above-left, so it reads as raised glass rather than a print.
+    ctx.globalAlpha = 0.08;
+    ctx.drawImage(this.glass.dark, x + 3 * u, y + 3 * u);
+    ctx.globalAlpha = 0.045;
+    ctx.drawImage(this.glass.light, x, y);
+    ctx.globalAlpha = 0.035;
+    ctx.drawImage(this.glass.light, x - 1.5 * u, y - 1.5 * u);
+    ctx.restore();
+  }
+
+  private drawTitle(cx: number, cy: number, maxW: number) {
+    const { ctx } = this;
+    const u = this.unit;
+    const gold = "rgba(227, 182, 90, 0.95)";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.direction = "ltr";
+    ctx.font = `${Math.round(36 * u)}px ${this.serifFont}`;
+    const title = this.opts.title();
+    const tw = Math.min(ctx.measureText(title).width, maxW - 260 * u);
+    const h = 60 * u;
+    const w = tw + 56 * u;
+    const x = cx - w / 2;
+    const y = cy - h / 2;
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 10 * u;
+    ctx.fillStyle = "rgba(8, 12, 26, 0.5)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, h / 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2 * u;
+    ctx.strokeStyle = gold;
+    ctx.stroke();
+    // Flourishes: a line, a diamond, a scroll and a dot, mirrored.
+    for (const dir of [-1, 1]) {
+      const ex = dir < 0 ? x : x + w;
+      ctx.beginPath();
+      ctx.moveTo(ex + dir * 8 * u, cy);
+      ctx.lineTo(ex + dir * 70 * u, cy);
+      ctx.stroke();
+      const dx = ex + dir * 34 * u;
+      ctx.fillStyle = gold;
+      ctx.beginPath();
+      ctx.moveTo(dx - 7 * u, cy);
+      ctx.lineTo(dx, cy - 7 * u);
+      ctx.lineTo(dx + 7 * u, cy);
+      ctx.lineTo(dx, cy + 7 * u);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex + dir * 54 * u, cy - 6 * u, 6 * u, 0, Math.PI * 2);
+      ctx.arc(ex + dir * 54 * u, cy + 6 * u, 6 * u, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ex + dir * 76 * u, cy, 3 * u, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 6 * u;
+    ctx.fillStyle = "rgba(255, 248, 230, 0.97)";
+    ctx.fillText(title, cx, cy + 2 * u, maxW - 260 * u);
+    ctx.shadowBlur = 0;
+  }
+
   dispose() {
+    this.observer?.disconnect();
+    this.observer = null;
     this.bg.dispose();
   }
 }
