@@ -490,6 +490,10 @@ export class FrameComposer {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
+    // Watermark: the HuDa logo as faint frosted glass over the scene, under
+    // the text — there if you look, never in the way of reading.
+    this.drawWatermark();
+
     // Title: in a gold-edged pill with a small flourish either side.
     this.drawTitle(W / 2, H * 0.065, W - margin * 2);
 
@@ -541,6 +545,44 @@ export class FrameComposer {
     ctx.fillStyle = "rgba(255,255,255,0.92)";
     ctx.fillText(SITE_LINK, x0 + logoH + gap, y0 + logoH / 2);
     ctx.shadowBlur = 0;
+  }
+
+  /** The logo's shape in one colour (for the glass watermark), made once per size. */
+  private glass: { size: number; light: HTMLCanvasElement; dark: HTMLCanvasElement } | null = null;
+
+  private drawWatermark() {
+    const lg = this.logo;
+    if (!lg.complete || !lg.naturalWidth) return;
+    const { ctx } = this;
+    const { width: W, height: H } = this.opts;
+    const size = Math.round(Math.min(W, H) * 0.62);
+    if (this.glass?.size !== size) {
+      const tint = (color: string) => {
+        const c = document.createElement("canvas");
+        c.width = c.height = size;
+        const x = c.getContext("2d")!;
+        x.drawImage(lg, 0, 0, size, size);
+        x.globalCompositeOperation = "source-in";
+        x.fillStyle = color;
+        x.fillRect(0, 0, size, size);
+        return c;
+      };
+      this.glass = { size, light: tint("#ffffff"), dark: tint("#000000") };
+    }
+    const u = this.unit;
+    const x = (W - size) / 2;
+    const y = H * 0.47 - size / 2;
+    ctx.save();
+    ctx.shadowBlur = 0;
+    // Frosted glass: a pale body, a soft shade below-right and a thin light
+    // edge above-left, so it reads as raised glass rather than a print.
+    ctx.globalAlpha = 0.08;
+    ctx.drawImage(this.glass.dark, x + 3 * u, y + 3 * u);
+    ctx.globalAlpha = 0.045;
+    ctx.drawImage(this.glass.light, x, y);
+    ctx.globalAlpha = 0.035;
+    ctx.drawImage(this.glass.light, x - 1.5 * u, y - 1.5 * u);
+    ctx.restore();
   }
 
   private drawTitle(cx: number, cy: number, maxW: number) {
