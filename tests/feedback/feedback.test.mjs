@@ -44,3 +44,49 @@ test("the public can only send: no table grants, upload only to a handed-out pat
   assert.match(sql, /revoke all on function public\.admin_list_feedback\(text, int\) from public, anon;/);
   assert.match(sql, /'feedback-screenshots', false, 1572864/);
 });
+
+// The lantern's rope (src/lib/feedbackRope.ts), with the phone layout's numbers.
+const R = require(path.join(ROOT, "src/lib/feedbackRope.ts"));
+const G = { ax: 347, ay: 58, len: 88 };
+const hook = (a) => [G.ax + G.len * Math.sin(a), G.ay + G.len * Math.cos(a)];
+const links = R.ROPE_POINTS - 1;
+function settled(a) {
+  const p = R.createRope();
+  R.layStraight(p, G.ax, G.ay, ...hook(a));
+  for (let i = 0; i < 200; i++) R.stepRope(p, G.ax, G.ay, ...hook(a), R.ropeLength(G.len, 0) / links, 1 / 60);
+  return p;
+}
+const ropeLen = (p) => {
+  let L = 0;
+  for (let o = 0; o < p.length - 4; o += 4) L += Math.hypot(p[o + 4] - p[o], p[o + 5] - p[o + 1]);
+  return L;
+};
+
+test("rope: hangs nearly straight when still, pinned at both ends", () => {
+  const p = settled(0.37);
+  // Straight (under 1 px off) and the lantern in line with it.
+  assert.ok(Math.abs(R.endTilt(p, 0) - 0.37) < 0.02);
+  assert.ok(R.ropeBend(p) < 1, `bend ${R.ropeBend(p)}`);
+  assert.deepEqual([p[0], p[1]], [G.ax, G.ay]);
+  const [hx, hy] = hook(0.37);
+  assert.ok(Math.abs(p[p.length - 4] - hx) < 1e-9 && Math.abs(p[p.length - 3] - hy) < 1e-9);
+});
+
+test("rope: bows and ripples while it swings, and never stretches far", () => {
+  const p = settled(0.37);
+  let prev = 0.37;
+  let maxBend = 0;
+  let maxLen = 0;
+  for (let f = 0; f < 60 * 6; f++) {
+    const s = f / 60;
+    const a = (0.2 + 0.17 * Math.exp(-s / 2.5)) * Math.cos((2 * Math.PI * s) / 1.9);
+    R.stepRope(p, G.ax, G.ay, ...hook(a), R.ropeLength(G.len, (a - prev) * 60) / links, 1 / 60, R.ropeTension((a - prev) * 60));
+    prev = a;
+    maxBend = Math.max(maxBend, R.ropeBend(p));
+    maxLen = Math.max(maxLen, ropeLen(p));
+  }
+  assert.ok(maxBend > 6, `max bend ${maxBend}`);
+  assert.ok(maxLen < G.len * 1.1, `rope ${maxLen} for ${G.len}`);
+  assert.ok(Number.isFinite(R.endTilt(p)) && Math.abs(R.endTilt(p)) < 1);
+  assert.match(R.ropePath(p), /^M [\d.]+ [\d.]+( Q [\d. ]+)+ L [\d.]+ [\d.]+$/);
+});

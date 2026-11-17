@@ -7,6 +7,7 @@ import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
+import { createRope, endTilt, layStraight, ropeLength, ropePath, ropeTension, stepRope, type Rope } from "@/lib/feedbackRope";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -59,8 +60,8 @@ const hiddenAngle = (g: Geometry) =>
 const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-modal="true"], [data-action-sheet]'));
 
 /**
- * The feedback entry: a small lantern (fanoos) on a straight thread from the
- * search button — a pendulum. At rest it is pulled aside, tucked half behind
+ * The feedback entry: a small lantern (fanoos) on a soft thread from the
+ * search button — a pendulum whose rope bows and wriggles as it swings. At rest it is pulled aside, tucked half behind
  * the right edge. A tap lets it go: it swings across under the button to the
  * left, back to the right, and keeps swaying (never stops) with a "Feedback"
  * bubble; 12 s untouched, it is pulled aside again. A second tap opens the form. On the
@@ -79,11 +80,13 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const outTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const threadRef = useRef<SVGLineElement>(null);
+  const threadRef = useRef<SVGPathElement>(null);
   const lanternRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   /** The pendulum's angle now (radians from straight down, + = right). */
   const theta = useRef(Number.NaN);
+  /** The rope's points (x, y and last frame's x, y) and the geometry they were laid out for. */
+  const rope = useRef<{ pts: Rope; for: Geometry | null }>({ pts: createRope(), for: null });
 
   const comeOut = useCallback(() => {
     setOut(true);
@@ -136,33 +139,61 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     };
   }, [ready]);
 
-  // The pendulum, drawn straight to the DOM every frame (no React renders).
+  // The pendulum and its rope, drawn straight to the DOM every frame (no
+  // React renders). The lantern's hook follows the pendulum; the rope between
+  // the button and the hook is simulated (Verlet), so it lags, bows and
+  // wriggles as the hook moves, and hangs nearly straight when still.
   useEffect(() => {
     if (!geo) return;
-    const place = (a: number) => {
-      const len = threadLen(geo);
-      const hx = geo.ax + len * Math.sin(a);
-      const hy = geo.ay + len * Math.cos(a);
-      threadRef.current?.setAttribute("x2", hx.toFixed(1));
-      threadRef.current?.setAttribute("y2", hy.toFixed(1));
-      if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px) rotate(${-a}rad)`;
+    const len = threadLen(geo);
+    const hookAt = (a: number) => [geo.ax + len * Math.sin(a), geo.ay + len * Math.cos(a)] as const;
+    const p = rope.current.pts;
+    // The thread is a soft rope, not a rod (owner, 2026-11-17: it bends and
+    // wriggles as it swings) — lib/feedbackRope.
+    const links = p.length / 4 - 1;
+    const lay = (a: number) => {
+      layStraight(p, geo.ax, geo.ay, ...hookAt(a));
+      rope.current.for = geo;
+    };
+    /** One rope step with the hook at angle a, swinging at `speed` rad/s. */
+    const simulate = (a: number, dt: number, speed = 0) =>
+      stepRope(p, geo.ax, geo.ay, ...hookAt(a), ropeLength(len, speed) / links, dt, ropeTension(speed));
+    /** How much the rope is moving (0 still – 1 lively): the lantern's own wobble follows it. */
+    let wobble = 0;
+    const draw = () => {
+      threadRef.current?.setAttribute("d", ropePath(p));
+      const e = p.length - 4;
+      const hx = p[e];
+      const hy = p[e + 1];
+      if (lanternRef.current) lanternRef.current.style.transform = `translate(${hx - LANTERN_W / 2}px, ${hy}px) rotate(${-endTilt(p, wobble)}rad)`;
       if (bubbleRef.current) bubbleRef.current.style.transform = `translate(${hx - LANTERN_W / 2 - 8}px, ${hy + 20}px) translateX(-100%)`;
     };
+
     const hidden = hiddenAngle(geo);
     if (Number.isNaN(theta.current)) theta.current = hidden;
-    // Reduced motion: no swing — hanging straight down when out, aside when not.
+    // Reduced motion: no swing — a straight thread, down when out, aside when not.
     if (reduce) {
       theta.current = out ? 0 : hidden;
-      place(theta.current);
-      return;
+      lay(theta.current);
+      return draw();
     }
-    const from = theta.current;
+    // A new layout (first show, resize): start straight and let it settle.
+    if (rope.current.for !== geo) {
+      lay(theta.current);
+      for (let i = 0; i < 200; i++) simulate(theta.current, 1 / 60);
+    }
     // Drawn once now too: frames don't run in a background tab.
-    place(from);
+    draw();
+    const from = theta.current;
     const start = performance.now();
+    let last = start;
     let frame = 0;
     const step = (now: number) => {
       const s = (now - start) / 1000;
+      const dt = Math.min(1 / 30, (now - last) / 1000) || 1 / 60;
+      last = now;
+      let still = false;
+      const before = theta.current;
       if (out) {
         // Let go from where it is: a wide swing that settles into an even
         // sway, and keeps going.
@@ -172,9 +203,13 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
         const k = Math.min(1, (s * 1000) / RETURN_MS);
         const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
         theta.current = from + (hidden - from) * ease;
-        if (k >= 1) return place(theta.current);
+        still = k >= 1;
       }
-      place(theta.current);
+      const moved = simulate(theta.current, dt, (theta.current - before) / dt);
+      wobble = Math.min(1, moved / 0.4);
+      draw();
+      // Pulled aside and the rope has stopped moving: no more frames.
+      if (still && moved < 0.02) return;
       frame = requestAnimationFrame(step);
     };
     frame = requestAnimationFrame(step);
@@ -235,15 +270,14 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
       {geo && (
         <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: shown ? 1 : 0 }}>
           <svg className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-            <line
+            <path
               ref={threadRef}
-              x1={geo.ax}
-              y1={geo.ay}
-              x2={geo.ax}
-              y2={geo.ay + THREAD_PX}
+              d={`M ${geo.ax} ${geo.ay} L ${geo.ax} ${geo.ay + THREAD_PX}`}
+              fill="none"
               stroke="#e3c06d"
               strokeWidth={1}
               strokeLinecap="round"
+              strokeLinejoin="round"
               opacity={out ? 0.9 : 0.6}
             />
           </svg>
