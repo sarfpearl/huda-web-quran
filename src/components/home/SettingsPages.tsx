@@ -15,6 +15,7 @@ import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 import { SCENE_DIM_DEFAULTS, type SceneDim } from "./SceneOverlay";
 import { tourT } from "@/lib/i18n/tour";
 import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
+import { useReminderSummary } from "./RemindersPage";
 
 /*
  * Settings (⚙ in the content browser): every preference in one place. The
@@ -51,13 +52,14 @@ export function HomeSettingsProvider({ value, children }: { value: HomeSettings;
 export const useHomeSettings = () => useContext(HomeSettingsContext);
 
 /** The Settings pages besides the list itself. */
-export type SettingsPage = "language" | "translation" | "textSize" | "quran";
-export const SETTINGS_PAGES: SettingsPage[] = ["language", "translation", "textSize", "quran"];
+export type SettingsPage = "language" | "translation" | "textSize" | "quran" | "reminders";
+export const SETTINGS_PAGES: SettingsPage[] = ["language", "translation", "textSize", "quran", "reminders"];
 export const SETTINGS_PAGE_TITLE: Record<SettingsPage, string> = {
   language: "App language",
   translation: "Translation",
   textSize: "Text size",
   quran: "Quran script",
+  reminders: "Reminders",
 };
 
 const ROW =
@@ -98,6 +100,7 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
   const ui = UI_LANGS.find((l) => l.id === lang);
   const [place, setPlace] = useState("");
   useEffect(() => setPlace(savedPlace()), []);
+  const reminders = useReminderSummary(lang);
   const tajweedOn = Boolean(s?.showTajweed && s.script !== "indopak");
   const scriptLabel = s ? t(lang, SCRIPT_CHOICES.find((c) => c.id === s.script)?.label ?? "Uthmani") : "";
   return (
@@ -123,6 +126,7 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
             value={place}
             onClick={() => onLeave(OPEN_PRAYER_TIMES_EVENT)}
           />
+          <Row label={t(lang, "Reminders")} value={reminders} onClick={() => onOpen("reminders")} />
           <div className={GROUP}>
             <p className="mb-2 text-sm font-semibold text-white">{t(lang, "Background")}</p>
             <div role="radiogroup" aria-label={t(lang, "Background")} className={TAB_TRACK}>

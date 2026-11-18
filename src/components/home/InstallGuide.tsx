@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { afterStage, finishStage } from "@/lib/onboarding";
+import { OPEN_INSTALL_GUIDE_EVENT } from "@/lib/settingsEvents";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
@@ -20,7 +21,7 @@ const PROMPT_WAIT_MS = 6000;
 // How long each animated step stays on screen.
 const STEP_MS = 3200;
 // Fired by InstallGuideButton to bring the guide back after "Got it".
-const OPEN_EVENT = "huda:install-guide";
+const OPEN_EVENT = OPEN_INSTALL_GUIDE_EVENT;
 
 // Chrome / Edge / Samsung Internet fire this before offering their own install.
 interface BeforeInstallPromptEvent extends Event {
@@ -520,6 +521,18 @@ export function InstallGuide() {
                     <path d="M6 6l12 12M18 6L6 18" />
                   </svg>
                 </button>
+              </div>
+
+              {/* What installing adds: reminders (Settings › Reminders). */}
+              <div className="mt-3 flex items-start gap-2.5 rounded-2xl border border-amber-300/20 bg-amber-300/[0.07] px-3 py-2">
+                <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M6 9.5a6 6 0 0 1 12 0c0 3.6 1 5.6 2 6.8H4c1-1.2 2-3.2 2-6.8Z" />
+                  <path d="M10 19.5a2 2 0 0 0 4 0" />
+                </svg>
+                <div className="min-w-0">
+                  <p className="text-[13px] leading-snug text-sand-100">Installing gives you notifications — set a reminder for your Quran reading time.</p>
+                  <p className="font-tamil mt-0.5 text-xs leading-snug text-sand-300/85">நிறுவினால் அறிவிப்புகள் வரும் — குர்ஆன் ஓதும் நேரத்திற்கு நினைவூட்டல் அமைக்கலாம்.</p>
+                </div>
               </div>
 
               {promptLayout ? (
