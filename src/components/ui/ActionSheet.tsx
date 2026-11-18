@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -10,15 +10,45 @@ import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
 /** Same glass as the player card, so sheets read as part of it. */
+/** Tells the sheet whether its StickySearch is stuck (the title's backing
+    then runs straight into the search row's, with no fade between them). */
+const SearchStuckContext = createContext<((stuck: boolean) => void) | null>(null);
+export const SearchStuckProvider = SearchStuckContext.Provider;
+
+const BACKING = "bg-[rgba(14,16,15,0.86)] backdrop-blur-md";
+const FADE_MASK = "[mask-image:linear-gradient(to_bottom,#000_62%,transparent)]";
+
+/**
+ * Dark backing behind a sheet's fixed title once its content scrolls: solid
+ * when a stuck search row continues it, otherwise feathered at the bottom.
+ * Put it first inside a `relative isolate` title block.
+ */
+export function TitleBacking({ show, joined, className }: { show: boolean; joined: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        // Phone landscape only; portrait keeps the plain glass.
+        "pointer-events-none absolute -z-10 hidden transition-opacity duration-200 phoneland:block",
+        BACKING,
+        !joined && FADE_MASK,
+        show ? "opacity-100" : "opacity-0",
+        className ?? "inset-0",
+      )}
+    />
+  );
+}
+
 /**
  * A search row that stays at the top of a scrolling sheet. Until the list
- * scrolls under it, it is just the sheet's glass; once it sticks, a dark
- * backing fades in behind the row only, feathering out at its bottom edge so
- * the list passes under it blurred.
+ * scrolls under it, it is just the sheet's glass; once it sticks (phone
+ * landscape only), the dark backing of the title above runs on behind it,
+ * feathering out at its bottom edge so the list passes under it blurred.
  */
 export function StickySearch({ children, className }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
+  const report = useContext(SearchStuckContext);
   useEffect(() => {
     const el = ref.current;
     let scroller = el?.parentElement ?? null;
@@ -31,12 +61,18 @@ export function StickySearch({ children, className }: { children: ReactNode; cla
     box.addEventListener("scroll", check, { passive: true });
     return () => box.removeEventListener("scroll", check);
   }, []);
+  useEffect(() => {
+    report?.(stuck);
+    return () => report?.(false);
+  }, [stuck, report]);
   return (
     <div ref={ref} data-stuck={stuck || undefined} className={cn("sticky top-0 z-20 -mx-4 px-4 py-2", className)}>
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 -bottom-5 -z-10 bg-[rgba(14,16,15,0.86)] backdrop-blur-md transition-opacity duration-200 [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]",
+          "pointer-events-none absolute inset-x-0 top-0 -bottom-5 -z-10 hidden transition-opacity duration-200 phoneland:block",
+          BACKING,
+          FADE_MASK,
           stuck ? "opacity-100" : "opacity-0",
         )}
       />
@@ -180,6 +216,15 @@ export function ActionSheet({
   useSheetTouchLock(open, sheetRef);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // The title's backing: shown once anything in the sheet scrolls.
+  const [scrolled, setScrolled] = useState(false);
+  const [searchStuck, setSearchStuck] = useState(false);
+  useEffect(() => {
+    if (!open) {
+      setScrolled(false);
+      setSearchStuck(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -241,13 +286,18 @@ export function ActionSheet({
           >
             {/* Handle: drag down to close */}
             <div
-              className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+              className="relative z-10 flex h-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
               onPointerDown={(ev) => drag.start(ev)}
               aria-hidden="true"
             >
               <span className="h-1 w-10 rounded-full bg-white/30" />
             </div>
-            {header && <div className="shrink-0 px-4">{header}</div>}
+            {header && (
+              <div className="relative isolate flow-root shrink-0 px-4">
+                <TitleBacking show={scrolled} joined={searchStuck} className="inset-x-0 -top-6 bottom-0" />
+                {header}
+              </div>
+            )}
             <div
               className={cn(
                 // Always able to scroll: content taller than the sheet (a phone
@@ -258,8 +308,9 @@ export function ActionSheet({
                 // (a scrolling list included: it ends above the gap).
                 kb.bottom > 0 ? "pb-3" : "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]",
               )}
+              onScrollCapture={(ev) => setScrolled((ev.target as HTMLElement).scrollTop > 0)}
             >
-              {children}
+              <SearchStuckProvider value={setSearchStuck}>{children}</SearchStuckProvider>
             </div>
           </motion.div>
         </>

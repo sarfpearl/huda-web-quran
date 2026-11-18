@@ -12,7 +12,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PLAYER_GLASS, StickySearch, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -191,6 +191,11 @@ export function TopicPickerModal({
   // only the search row stays at the top — a landscape phone has no room for
   // a fixed header above an inner list.
   const wholeScroll = isMobile && !showAbout && !showSettings;
+  const [panelScrolled, setPanelScrolled] = useState(false);
+  const [searchStuck, setSearchStuck] = useState(false);
+  useEffect(() => {
+    setPanelScrolled(false);
+  }, [view, isOpen]);
   // Phone sheet with a search box: sit on top of the on-screen keyboard.
   const kb = useKeyboardInset(isOpen && isMobile);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -783,8 +788,10 @@ export function TopicPickerModal({
               className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
-              {/* 1. Shared Header */}
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+              {/* 1. Shared Header — phones: a dark backing fades in behind it once
+                  the panel's content scrolls (joined to a stuck search row). */}
+              <div className="relative isolate flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+                {isMobile && <TitleBacking show={panelScrolled} joined={searchStuck} className="-inset-x-4 -top-4 bottom-0" />}
                 <div className="flex min-w-0 items-center gap-2">
                   {(showAbout || showSettings) && (
                     <button
@@ -861,7 +868,11 @@ export function TopicPickerModal({
 
               {/* Phones, browse list: everything under the title scrolls as one;
                   the search row sticks at the top of it. */}
-              <div className={wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]"}>
+              <SearchStuckProvider value={setSearchStuck}>
+              <div
+                className={wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]"}
+                onScrollCapture={(ev) => setPanelScrolled((ev.target as HTMLElement).scrollTop > 0)}
+              >
               {settingsPage === "language" ? (
                 <LanguageView />
               ) : settingsPage === "translation" ? (
@@ -1205,6 +1216,7 @@ export function TopicPickerModal({
                 </button>
               )}
               </div>
+              </SearchStuckProvider>
             </motion.div>
           </>
         )}

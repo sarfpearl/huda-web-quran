@@ -104,8 +104,13 @@ export default function FeedbackSheet({
   const busy = status.kind === "sending";
 
   return (
-    <ActionSheet open={open} onClose={onClose} label={t(lang, "Send feedback")} noAutoClose>
-      <div dir={isRtl(lang) ? "rtl" : undefined} className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
+    <ActionSheet
+      open={open}
+      onClose={onClose}
+      label={t(lang, "Send feedback")}
+      noAutoClose
+      header={
+        <div dir={isRtl(lang) ? "rtl" : undefined} className="px-1 pb-2">
         <div className="flex items-center justify-between gap-3 pb-1">
           <h2 className="flex items-center gap-2 text-base font-bold text-white">
             <span aria-hidden="true" className="text-amber-200">✦</span>
@@ -120,7 +125,10 @@ export default function FeedbackSheet({
             <CloseIcon className="text-sm" />
           </button>
         </div>
-
+        </div>
+      }
+    >
+      <div dir={isRtl(lang) ? "rtl" : undefined} className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
           <form onSubmit={submit} className="space-y-3.5 pb-1">
             <p className="text-sm leading-relaxed text-sand-200/85">
               {t(lang, "Found an issue, or have an idea to improve the app? Tell me.")}

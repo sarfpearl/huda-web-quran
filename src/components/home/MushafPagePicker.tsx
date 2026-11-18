@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ActionSheet } from "@/components/ui/ActionSheet";
+import { ActionSheet, StickySearch } from "@/components/ui/ActionSheet";
 import { QURAN_SURAHS } from "@/lib/data/service";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS } from "@/lib/data/mushafPages";
 import { surahsOnPage } from "@/lib/data/mushafPageSurahs";
@@ -67,7 +67,13 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
   };
 
   return (
-    <ActionSheet open={open} onClose={onClose} label={t(lang, "Choose a Mushaf page")} className="h-[70dvh]">
+    <ActionSheet
+      open={open}
+      onClose={onClose}
+      label={t(lang, "Choose a Mushaf page")}
+      className="h-[70dvh]"
+      scrollAll
+      header={
       <div className="flex items-baseline justify-between pb-3">
         <h3 className="text-lg font-black text-white tracking-tight">
           {t(lang, "Go to page")}
@@ -76,12 +82,14 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
           {word("page", lang)} {currentPage} / {range[1]}
         </span>
       </div>
+      }
+    >
+      <StickySearch className="mb-1">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (typedValid) pick(typed);
         }}
-        className="mb-3"
       >
         <input
           type="search"
@@ -95,7 +103,8 @@ export function MushafPagePicker({ open, currentPage, onPick, onClose, range = [
           )}
         />
       </form>
-      <div ref={listRef} className="no-scrollbar -mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 space-y-1">
+      </StickySearch>
+      <div ref={listRef} className="-mx-1 px-1 space-y-1">
         {pages.map(({ page, surah, ayah }) => {
           const current = page === currentPage;
           // Every Surah on the page: a page with two or three short Surahs
