@@ -11,6 +11,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.8,
     })),
+    // The Surah reading pages: the full Arabic text with Tamil and English.
+    ...Array.from({ length: 114 }, (_, i) => ({
+      url: absoluteUrl(`/surah/${i + 1}/read`),
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
     ...Array.from({ length: 30 }, (_, i) => ({
       url: absoluteUrl(`/juz/${i + 1}`),
       lastModified: now,

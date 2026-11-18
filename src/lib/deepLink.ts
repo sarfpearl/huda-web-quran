@@ -1,4 +1,5 @@
 import { QURAN_JUZ, QURAN_SURAHS } from "@/lib/data/quran";
+import { SURAH_NAMES } from "@/lib/data/surahNames";
 
 /**
  * Deep links: /surah/36, /surah/36/3 (an ayah), /juz/30. They open the app on
@@ -43,5 +44,38 @@ export function deepLinkMeta(link: DeepLink): { title: string; description: stri
   return {
     title: link.ayah > 1 ? `${s.name} ${link.surah}:${link.ayah}` : `${s.name} (${s.arabicName}) · Surah ${link.surah}`,
     description: `Read and listen to ${where} (${s.arabicName}) — ${s.verses} verses, ${s.revelation} — with word-by-word sync, Tajweed colours and translations.`,
+  };
+}
+
+/**
+ * What search engines see for a link: a longer <title>, a keyword-rich
+ * description (English meaning, Tamil name, what the page offers) and the
+ * page's <h1>. The short deepLinkMeta title stays for the tab while playing,
+ * share cards and breadcrumbs.
+ */
+export function deepLinkSearchMeta(link: DeepLink): { title: string; description: string; heading: string } {
+  if (link.kind === "juz") {
+    const j = QURAN_JUZ[link.juz - 1];
+    return {
+      title: `Juz ${link.juz} (${j.title}) · Read & Listen to the Quran`,
+      description: `Read and listen to Juz ${link.juz} (Para ${link.juz}, ${j.title}) of the Holy Quran, recited ayah by ayah with word-by-word highlighting, Tamil and English translation, free on HuDa Guidance.`,
+      heading: `Juz ${link.juz} · ${j.title}`,
+    };
+  }
+  const s = QURAN_SURAHS[link.surah - 1];
+  const [, meaning, tamil] = SURAH_NAMES[link.surah - 1];
+  const heading = `Surah ${s.name} (${s.arabicName}) · ${meaning}`;
+  const offer = "Arabic text with Tamil and English translation, 51 reciters, word-by-word sync and Tajweed colours, free on HuDa Guidance.";
+  if (link.ayah > 1) {
+    return {
+      title: `Surah ${s.name} ${link.surah}:${link.ayah} · Arabic, Tamil & English`,
+      description: `Read and listen to Surah ${s.name} (${s.arabicName}, ${tamil}) verse ${link.surah}:${link.ayah}: ${offer}`,
+      heading: `${heading} · Verse ${link.ayah}`,
+    };
+  }
+  return {
+    title: `Surah ${s.name} (${s.arabicName}) · Tamil & English Translation, Audio`,
+    description: `Read and listen to Surah ${s.name} (${s.arabicName}, ${tamil}) — "${meaning}", Surah ${link.surah}, ${s.verses} verses, ${s.revelation}. ${offer}`,
+    heading,
   };
 }

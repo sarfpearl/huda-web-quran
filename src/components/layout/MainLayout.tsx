@@ -8,7 +8,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   // The immersive home is also served at its deep links (/surah/36, /juz/30),
   // and the address follows playback there (lib/deepLink) — so after the
   // first play "/" becomes /surah/1 and must stay locked.
-  const isHome = pathname === "/" || /^\/(surah|juz)\//.test(pathname);
+  // /surah/36/read is the plain, scrollable reading page, not the app.
+  const isHome = pathname === "/" || (/^\/(surah|juz)\//.test(pathname) && !/\/read\/?$/.test(pathname));
 
   // The immersive home is a fixed full-screen view — lock the document so
   // mobile browsers can't scroll or rubber-band it.
