@@ -31,6 +31,10 @@ export default async function SurahPage({ params }: Props) {
       <JsonLd data={deepLinkJsonLd(link)} />
       {/* The page's heading for search engines and screen readers; the app shows its own. */}
       <h1 className="sr-only">{deepLinkSearchMeta(link).heading}</h1>
+      {/* The Surah's text page (Arabic, Tamil, English) for search engines and screen readers. */}
+      <a href={`/surah/${Number(p.surah)}/read`} className="sr-only">
+        Read the full text in Arabic, Tamil and English
+      </a>
       <ImmersiveHomeClient deepLink={link} />
     </>
   );

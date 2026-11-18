@@ -34,9 +34,10 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
 - [ ] **Search titles, descriptions and an `<h1>` for every Surah / Juz page**
       (`feat/seo-surah-pages`): "Surah Ya-Sin (يس) · Tamil & English
       Translation, Audio", Tamil name and meaning in the description.
-- [ ] **Readable Surah pages for Google** — owner to choose the design (see
-      `docs/SEO_PLAN.md` step 2). Today a Surah page shows Google ~300
-      characters; the ayat and translations load only in the app.
+- [ ] **Readable Surah pages for Google** (owner chose option A,
+      2026-11-18): `/surah/<n>/read` — Arabic, Tamil and English text, a
+      "Listen" link per ayah into the app, in the sitemap (259 URLs). Same PR
+      as the titles. Later: a visible "Read" button inside the app.
 - [ ] **Owner, outside the code:** Bing Webmaster Tools (import from Search
       Console), Google Business-style profiles (Instagram / YouTube / X with
       the site link), and listings on Islamic app directories — see

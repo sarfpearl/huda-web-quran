@@ -24,7 +24,7 @@ searches, where a new site can win.
 - `HuDa Guidance` as an alternate site name in structured data.
 - The tab title while playing, share cards and breadcrumbs keep the short title.
 
-## Step 2 — readable Surah text Google can see (needs the owner's design choice)
+## Step 2 — readable Surah text Google can see (option A chosen 2026-11-18)
 
 Today a Surah page gives Google about 300 characters: the ayat and the
 translations load inside the full-screen app. Pages with the full Arabic text
