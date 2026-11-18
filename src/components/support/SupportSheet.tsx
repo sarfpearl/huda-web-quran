@@ -69,6 +69,13 @@ function QrCode({ text }: { text: string }) {
   );
 }
 
+/** The one payment way that is set up, when only one is; else null. */
+function onlyWay(): SupportWay | null {
+  const upi = upiConfigured();
+  if (upi === kofiConfigured()) return null;
+  return upi ? "upi" : "kofi";
+}
+
 export function SupportSheet() {
   const lang = useUiLang();
   const reduce = useReducedMotion();
@@ -95,7 +102,9 @@ export function SupportSheet() {
       } catch {
         /* private mode */
       }
-      setWay(saved === "upi" || saved === "kofi" ? saved : defaultSupportWay());
+      // Only one way set up (e.g. Ko-fi still pending) → just that way, no switch.
+      const only = onlyWay();
+      setWay(only ?? (saved === "upi" || saved === "kofi" ? saved : defaultSupportWay()));
       setHandheld(isHandheld());
       setShowQr(false);
       setCopied(false);
@@ -147,6 +156,7 @@ export function SupportSheet() {
 
   const upiReady = upiConfigured();
   const kofiReady = kofiConfigured();
+  const single = onlyWay();
   const link = upiReady ? upiLink(amount ?? undefined) : "";
   const rtl = isRtl(lang);
   // The star's two squares draw in, one after the other.
@@ -243,37 +253,39 @@ export function SupportSheet() {
               </p>
             </motion.div>
 
-            {/* Way to give */}
-            <div
-              role="radiogroup"
-              aria-label={t(lang, "Way to give")}
-              className="relative mt-5 grid grid-cols-2 rounded-full border border-white/10 bg-black/30 p-1"
-            >
-              {(["upi", "kofi"] as const).map((w) => (
-                <button
-                  key={w}
-                  type="button"
-                  role="radio"
-                  aria-checked={way === w}
-                  onClick={() => chooseWay(w)}
-                  className={cn(
-                    "relative z-[1] flex flex-col items-center rounded-full px-2 py-1.5 leading-tight transition-colors",
-                    way === w ? "text-charcoal-950" : "text-sand-200/80 hover:text-sand-50",
-                  )}
-                >
-                  <span
+            {/* Way to give — only when both ways are set up */}
+            {!single && (
+              <div
+                role="radiogroup"
+                aria-label={t(lang, "Way to give")}
+                className="relative mt-5 grid grid-cols-2 rounded-full border border-white/10 bg-black/30 p-1"
+              >
+                {(["upi", "kofi"] as const).map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    role="radio"
+                    aria-checked={way === w}
+                    onClick={() => chooseWay(w)}
                     className={cn(
-                      "absolute inset-0 -z-[1] rounded-full bg-gradient-to-b from-amber-200 to-amber-400 shadow-[0_0_18px_rgba(252,211,77,0.35)] transition-opacity duration-300",
-                      way === w ? "opacity-100" : "opacity-0",
+                      "relative z-[1] flex flex-col items-center rounded-full px-2 py-1.5 leading-tight transition-colors",
+                      way === w ? "text-charcoal-950" : "text-sand-200/80 hover:text-sand-50",
                     )}
-                    aria-hidden="true"
-                  />
+                  >
+                    <span
+                      className={cn(
+                        "absolute inset-0 -z-[1] rounded-full bg-gradient-to-b from-amber-200 to-amber-400 shadow-[0_0_18px_rgba(252,211,77,0.35)] transition-opacity duration-300",
+                        way === w ? "opacity-100" : "opacity-0",
+                      )}
+                      aria-hidden="true"
+                    />
 
-                  <span className="text-[13px] font-semibold">{t(lang, w === "upi" ? "India" : "Other countries")}</span>
-                  <span className="text-[10.5px] opacity-75">{w === "upi" ? "UPI" : "Ko-fi"}</span>
-                </button>
-              ))}
-            </div>
+                    <span className="text-[13px] font-semibold">{t(lang, w === "upi" ? "India" : "Other countries")}</span>
+                    <span className="text-[10.5px] opacity-75">{w === "upi" ? "UPI" : "Ko-fi"}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
