@@ -655,6 +655,7 @@ export function InstallGuideButton({ className = "" }: { className?: string }) {
       onClick={onClick}
       data-tooltip="Add to Home Screen"
       aria-label="How to add HuDa to your Home Screen"
+      data-tour="install"
       className={className}
     >
       <svg className="h-[1.1em] w-[1.1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

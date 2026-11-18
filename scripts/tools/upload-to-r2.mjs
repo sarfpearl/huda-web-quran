@@ -79,7 +79,7 @@ const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "";
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "huda-quran-media";
 const PUBLIC_R2_URL =
   process.env.NEXT_PUBLIC_MEDIA_BASE_URL ||
-  "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev";
+  "https://media.hudaguidance.com";
 
 // ── 2. CLI ARGUMENT PARSING ──────────────────────────────────────────────────
 

@@ -176,7 +176,7 @@ self.addEventListener("fetch", (event) => {
     }
   }
 
-  if (request.destination === "image" && (sameOrigin || url.hostname.endsWith(".r2.dev"))) {
+  if (request.destination === "image" && (sameOrigin || url.hostname === "media.hudaguidance.com")) {
     event.respondWith(cacheFirst(event, IMAGES, IMAGE_MAX));
   }
 });

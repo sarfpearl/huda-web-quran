@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
 import { CoverArt } from "@/components/ui/CoverArt";
+import { DotLoader } from "@/components/ui/DotLoader";
 import {
   PlayIcon,
   PauseIcon,
@@ -727,11 +728,11 @@ export function CompactBayanPlayer({
             )}
             <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-emerald-400 [&>*]:[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]">
               {isLoading ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+                <DotLoader className="text-base" />
               ) : isPlaying ? (
-                <PauseIcon className="text-2xl" />
+                <PauseIcon className="text-2xl" fill="currentColor" />
               ) : (
-                <PlayIcon className="text-2xl ml-0.5" />
+                <PlayIcon className="text-2xl ml-0.5" fill="currentColor" />
               )}
             </span>
           </div>
@@ -1025,16 +1026,17 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
-          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-[0_6px_25px_rgba(16,185,129,0.45)] border border-emerald-300/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          data-tour="play"
+          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.14),0_0_28px_8px_rgba(16,185,129,0.5)] border-2 border-emerald-400 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
           {isLoading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+            <DotLoader className="text-xl" />
           ) : isPlaying ? (
-            <PauseIcon className="text-2xl" />
+            <PauseIcon className="text-2xl text-amber-400" fill="currentColor" />
           ) : (
-            <PlayIcon className="text-2xl ml-0.5" />
+            <PlayIcon className="text-2xl ml-0.5 text-amber-400" fill="currentColor" />
           )}
         </button>
 

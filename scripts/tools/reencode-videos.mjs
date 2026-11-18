@@ -135,7 +135,7 @@ for (const f of [".env.local", ".env"]) {
     if (!process.env[k]) process.env[k] = v;
   }
 }
-const PUBLIC_R2 = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "https://pub-052ee8dfbe2748bbb3b9ad42d2f9e2b1.r2.dev").replace(/\/+$/, "");
+const PUBLIC_R2 = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "https://media.hudaguidance.com").replace(/\/+$/, "");
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const mb = (n) => (n / 1e6).toFixed(1) + " MB";
