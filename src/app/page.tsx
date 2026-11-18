@@ -14,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <JsonLd data={websiteJsonLd()} />
+      <h1 className="sr-only">{siteConfig.title}</h1>
       <ImmersiveHomeClient />
     </>
   );

@@ -20,6 +20,28 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       (~50 GB) stay only on the Mac in `../huda-media/4-unused/unused-items/`.
       Don't upload them to R2; don't delete them without the owner's OK.
 
+### Added 2026-11-18 (Google Search — plan in `docs/SEO_PLAN.md`)
+
+- [x] **HuDa logo in Google results and notifications** (PR #258, live
+      2026-11-18). Search Console: Domain property `hudaguidance.com`
+      verified (DNS TXT on Cloudflare, keep it), home page "Request
+      indexing" done, sitemap submitted.
+- [ ] **Check Search Console on 2026-11-20.** Sitemaps → `sitemap.xml`
+      should read **Success** with 145 discovered pages (it read "Couldn't
+      fetch" right after submitting — normal at first). Also search
+      `hudaguidance` on Google: the result should show the HuDa logo, not a
+      globe. Still "Couldn't fetch" or a globe → check again with Claude.
+- [ ] **Search titles, descriptions and an `<h1>` for every Surah / Juz page**
+      (`feat/seo-surah-pages`): "Surah Ya-Sin (يس) · Tamil & English
+      Translation, Audio", Tamil name and meaning in the description.
+- [ ] **Readable Surah pages for Google** — owner to choose the design (see
+      `docs/SEO_PLAN.md` step 2). Today a Surah page shows Google ~300
+      characters; the ayat and translations load only in the app.
+- [ ] **Owner, outside the code:** Bing Webmaster Tools (import from Search
+      Console), Google Business-style profiles (Instagram / YouTube / X with
+      the site link), and listings on Islamic app directories — see
+      `docs/SEO_PLAN.md` step 4.
+
 ### Added 2026-11-09
 
 - [x] **Surah name announcement should include the name's meaning.** When a

@@ -15,7 +15,7 @@ export function websiteJsonLd() {
         "@type": "Organization",
         "@id": orgId,
         name: siteConfig.fullName,
-        alternateName: siteConfig.name,
+        alternateName: [siteConfig.name, "HuDa Guidance"],
         url: absoluteUrl("/"),
         logo: {
           "@type": "ImageObject",
@@ -27,7 +27,7 @@ export function websiteJsonLd() {
       {
         "@type": "WebSite",
         name: siteConfig.fullName,
-        alternateName: siteConfig.name,
+        alternateName: [siteConfig.name, "HuDa Guidance"],
         url: absoluteUrl("/"),
         description: siteConfig.description,
         inLanguage: "en",
