@@ -812,6 +812,21 @@ html:has([data-not-found]) #huda-splash {
 @media (prefers-reduced-motion: reduce) {
   .huda-logo-shine { animation: none; opacity: 0; }
 }
+/* Home greeting: the same sweep across the Arabic salam, clipped to its
+   letters (an overlay copy of the text, so the solid gold stays crisp). */
+.huda-text-shine {
+  color: transparent;
+  -webkit-text-stroke-color: transparent;
+  text-shadow: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 250, 230, 0.95) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: huda-logo-shine 4.5s ease-in-out 0.6s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .huda-text-shine { animation: none; opacity: 0; }
+}
 /* Tablet / desktop: the same splash, sized for the bigger screen */
 @media (min-width: 768px) {
   .huda-splash-logo { width: 240px; }
