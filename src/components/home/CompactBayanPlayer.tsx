@@ -1022,12 +1022,13 @@ export function CompactBayanPlayer({
           <PrevIcon className="text-lg" />
         </button>
 
-        {/* Glowing Emerald Play Button */}
+        {/* Play: green light spreading out from the centre, a 50% white rim,
+            and a soft feathered halo (no hard ring) */}
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
           data-tour="play"
-          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-black/40 text-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.14),0_0_28px_8px_rgba(16,185,129,0.5)] border-2 border-emerald-400 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.5)_0%,rgba(16,185,129,0.2)_55%,rgba(16,185,129,0.06)_100%)] backdrop-blur-sm text-emerald-400 shadow-[0_0_40px_14px_rgba(16,185,129,0.22)] border-2 border-white/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
