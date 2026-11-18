@@ -169,7 +169,7 @@ export async function showTestNotification(title: string, body: string): Promise
   try {
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg || Notification.permission !== "granted") return false;
-    await reg.showNotification(title, { body, icon: "/icon-192.png", badge: "/icon-192.png", tag: "huda-reading-reminder-test", renotify: true, data: { url: "/" } } as NotificationOptions);
+    await reg.showNotification(title, { body, icon: "/icon-192.png", badge: "/notification-badge.png", tag: "huda-reading-reminder-test", renotify: true, data: { url: "/" } } as NotificationOptions);
     return true;
   } catch {
     return false;

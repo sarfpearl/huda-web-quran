@@ -25,7 +25,7 @@ const PAGE_MAX = 40;
 // The home page (it can open any Surah) and what its first paint needs.
 const PRECACHE_PAGES = ["/", "/manifest.webmanifest"];
 const PRECACHE_STATIC = ["/fonts/UthmanicHafs1Ver18.woff2"];
-const PRECACHE_IMAGES = ["/huda-logo.webp?v=3", "/icon-192.png"];
+const PRECACHE_IMAGES = ["/huda-logo.webp?v=3", "/icon-192.png", "/notification-badge.png"];
 
 const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline · HuDa</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e100f;color:#f3eee4;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px}button{margin-top:16px;height:44px;padding:0 24px;border-radius:999px;border:0;background:#1a5140;color:#fff;font:inherit;font-weight:600}</style></head><body><div><h1 style="font-size:20px;margin:0 0 8px">You're offline</h1><p style="margin:0;opacity:.8">Connect to the internet to open HuDa.<br>இணையத்துடன் இணைந்து HuDa-வைத் திறக்கவும்.</p><button onclick="location.reload()">Try again</button></div></body></html>`;
 
@@ -195,7 +195,9 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body: data.body || "",
       icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      // Android draws the status-bar badge from the alpha channel only: the
+      // opaque app tile showed as a plain square. White logo, clear background.
+      badge: "/notification-badge.png",
       tag: data.tag || "huda-reading-reminder",
       // Yesterday's reminder may still sit in the Notification Center with
       // the same tag: without this the new one replaces it silently.
