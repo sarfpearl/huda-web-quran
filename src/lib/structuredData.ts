@@ -1,16 +1,39 @@
 import { deepLinkMeta, deepLinkPath, type DeepLink } from "@/lib/deepLink";
 import { absoluteUrl, siteConfig } from "@/lib/site";
 
-/** Home: the site's name for search results ("HuDa Web Quran", not the URL). */
+/**
+ * Home: the site's name for search results ("HuDa Web Quran", not the URL),
+ * and the Organization with its logo so Google can show HuDa's logo
+ * (knowledge panel, brand results) instead of a blank globe.
+ */
 export function websiteJsonLd() {
+  const orgId = absoluteUrl("/#organization");
   return {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: siteConfig.fullName,
-    alternateName: siteConfig.name,
-    url: absoluteUrl("/"),
-    description: siteConfig.description,
-    inLanguage: "en",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": orgId,
+        name: siteConfig.fullName,
+        alternateName: siteConfig.name,
+        url: absoluteUrl("/"),
+        logo: {
+          "@type": "ImageObject",
+          url: absoluteUrl("/icon-512.png"),
+          width: 512,
+          height: 512,
+        },
+      },
+      {
+        "@type": "WebSite",
+        name: siteConfig.fullName,
+        alternateName: siteConfig.name,
+        url: absoluteUrl("/"),
+        description: siteConfig.description,
+        inLanguage: "en",
+        publisher: { "@id": orgId },
+      },
+    ],
   };
 }
 

@@ -33,7 +33,10 @@ export const metadata: Metadata = {
     icon: [
       // The logo alone on a clear background (assets/brand/Logo_icon.png):
       // the white app tile (icon-192) showed as a white box in a dark tab bar.
-      { url: "/favicon.png?v=2", sizes: "64x64", type: "image/png" },
+      // Google Search only shows a favicon that is a multiple of 48px square.
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon-144.png", sizes: "144x144", type: "image/png" },
       { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
     ],
     // iOS ignores SVG touch icons and falls back to a page screenshot.
