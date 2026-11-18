@@ -110,7 +110,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         <p
           dir="rtl"
           lang="ar"
-          className="relative font-arabic text-[#E8C46E] leading-[1.5] text-[2rem] sm:text-5xl md:text-[3.5rem] [-webkit-text-stroke:0.03em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
+          className="relative font-arabic text-[#E8C46E] leading-[1.5] text-[2.5rem] sm:text-[3.75rem] md:text-[4.5rem] [-webkit-text-stroke:0.03em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
         >
           السَّلَامُ عَلَيۡكُمۡ
           <span aria-hidden="true" className="huda-text-shine pointer-events-none absolute inset-0">

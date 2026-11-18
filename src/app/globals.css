@@ -822,7 +822,12 @@ html:has([data-not-found]) #huda-splash {
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
-  animation: huda-logo-shine 4.5s ease-in-out 0.6s infinite;
+  animation: huda-text-shine 4.5s ease-in-out 0.6s infinite;
+}
+/* Right to left, the way Arabic reads (the logo sweep runs left to right). */
+@keyframes huda-text-shine {
+  0% { background-position: -30% 0; }
+  45%, 100% { background-position: 130% 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-text-shine { animation: none; opacity: 0; }
