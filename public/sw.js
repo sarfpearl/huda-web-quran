@@ -197,6 +197,9 @@ self.addEventListener("push", (event) => {
       icon: "/icon-192.png",
       badge: "/icon-192.png",
       tag: data.tag || "huda-reading-reminder",
+      // Yesterday's reminder may still sit in the Notification Center with
+      // the same tag: without this the new one replaces it silently.
+      renotify: true,
       lang: data.lang || "en",
       dir: data.lang === "ur" ? "rtl" : "auto",
       data: { url: data.url || "/" },
