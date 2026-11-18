@@ -199,6 +199,10 @@ export function CompactBayanPlayer({
   // The listener opened the full player themself: it stays full — playback,
   // a new track or the translation no longer shrink it, until they minimize.
   const userExpandedRef = useRef(false);
+  const collapsedRef = useRef(collapsed);
+  collapsedRef.current = collapsed;
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
   // Told in the layout phase, so the frame's bottom strip opens in the same
   // first paint as the pill (a passive effect painted the frame shut first).
   useLayoutEffect(() => {
@@ -271,6 +275,10 @@ export function CompactBayanPlayer({
     setCollapsed(next);
   };
 
+  // Latest toggle for long-lived listeners (its `collapsed` check would go stale).
+  const toggleRef = useRef(toggleCollapsed);
+  toggleRef.current = toggleCollapsed;
+
   // Small screens: turning the translation on shrinks the full player to the
   // compact pill so the meaning has room; turning it off brings it back (only
   // if it was the auto-collapse). Not when the listener opened it themself.
@@ -298,6 +306,29 @@ export function CompactBayanPlayer({
     if (forceCompact && !collapsed) toggleCollapsed(true, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCompact]);
+
+  // Phone in landscape: the full player would fill the short screen and hide
+  // the greeting, so it opens (and turns into) the compact pill. Turning back
+  // to portrait restores the full player if only the rotation shrank it.
+  const landscapeCollapsedRef = useRef(false);
+  useEffect(() => {
+    const mq = window.matchMedia(PHONE_LANDSCAPE);
+    const apply = () => {
+      if (mq.matches) {
+        if (!collapsedRef.current && !userExpandedRef.current) {
+          toggleRef.current(true, false);
+          landscapeCollapsedRef.current = true;
+        }
+      } else if (landscapeCollapsedRef.current) {
+        landscapeCollapsedRef.current = false;
+        if (collapsedRef.current && !isPlayingRef.current) toggleRef.current(false, false);
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Every screen size: the full player shows until playback starts, then it
   // shrinks to the compact pill so the ayah has the screen — unless the
@@ -1373,6 +1404,8 @@ function CoverFlight({
 const LATIN_UI = new Set<UiLang>(["en", "id", "tr", "fr", "ms"]);
 
 const SMALL_SCREEN = "(max-width: 767px)";
+/** Same as the `phoneland` Tailwind screen. */
+const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
 const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition-none";

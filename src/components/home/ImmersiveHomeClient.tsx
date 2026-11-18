@@ -1987,10 +1987,11 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           where the last Surah listened to was left — only while the
           recitation is stopped (a clean scene while it plays or buffers). */}
       {/* Always there (0 tall when empty): CenterVerseDisplay measures it to
-          keep the greeting / ayah below the pills. */}
+          keep the greeting / ayah below the pills. Wide phone landscape: stacked
+          under the time pill on the left, beside the greeting, not above it. */}
       <div
         data-home-pills
-        className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30"
+        className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] phonelandwide:right-auto phonelandwide:top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+4.5rem)] z-30"
       >
       <AnimatePresence>
         {!readingActive && (showBookmarkPill || showContinuePill || juzLink) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
@@ -2000,7 +2001,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-wrap justify-center gap-2 px-4"
+            className="flex flex-wrap justify-center gap-2 px-4 phonelandwide:flex-col phonelandwide:items-start phonelandwide:[&>button]:text-xs"
           >
             {juzLink && (
               <button

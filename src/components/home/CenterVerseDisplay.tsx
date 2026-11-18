@@ -63,6 +63,19 @@ interface CenterVerseDisplayProps {
   meaningCurrentTime?: number;
 }
 
+/** Live match of a media query (false on the server and before mount). */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatches(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return matches;
+}
+
 /** UI languages in Latin script: the greeting keeps the serif face on phones. */
 const LATIN_UI: readonly UiLang[] = ["en", "id", "tr", "fr", "ms"];
 
@@ -100,7 +113,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
     >
       <div
         ref={bodyRef}
-        className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500"
+        className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 phoneland:gap-1 phoneland:pb-3 select-none animate-in fade-in duration-500"
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
         {/* Salam in the Uthmanic Hafs Mushaf face (U+06E1 sukun, as the
@@ -110,7 +123,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         <p
           dir="rtl"
           lang="ar"
-          className="relative font-arabic text-[#E8C46E] leading-[1.5] text-[2.75rem] sm:text-[4.25rem] md:text-[5.25rem] [-webkit-text-stroke:0.01em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
+          className="relative font-arabic text-[#E8C46E] leading-[1.5] phoneland:leading-[1.3] text-[2.75rem] sm:text-[4.25rem] md:text-[5.25rem] [-webkit-text-stroke:0.01em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
         >
           السَّلَامُ عَلَيۡكُمۡ
           <span aria-hidden="true" className="huda-text-shine pointer-events-none absolute inset-0">
@@ -125,7 +138,8 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           {t(language, "As-salamu alaykum")}
         </h2>
         {/* Tapered green rules: thick beside the words, fading to a point. */}
-        <div className="mt-1 flex items-center gap-3 sm:gap-5">
+        {/* Phone landscape: no tagline, so the salam keeps its size in the short room. */}
+        <div className="mt-1 flex items-center gap-3 sm:gap-5 phoneland:hidden">
           <GreenRule />
           <p
             lang={language}
@@ -310,6 +324,9 @@ export function CenterVerseDisplay({
   // player 343 / 371px) so the server-rendered ayah doesn't jump on hydration.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
+  const [greetingTopInset, setGreetingTopInset] = useState<number | null>(null);
+  // Same as the `phonelandwide` Tailwind screen (pills beside the greeting).
+  const pillsBeside = useMediaQuery("(orientation: landscape) and (max-height: 500px) and (min-width: 830px)");
   // Layout phase: measured before the first paint after hydration.
   useLayoutEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
@@ -329,8 +346,12 @@ export function CenterVerseDisplay({
         // The header's own pb-4 (16px) is the gap below its pills.
         let bottom = header.getBoundingClientRect().bottom;
         // Clear of the pills too (they sit over the stage's top otherwise).
+        const headerOnly = bottom;
         if (pills && pills.offsetHeight > 0) bottom = Math.max(bottom, pills.getBoundingClientRect().bottom + 12);
         setTopInset(Math.max(0, bottom - (scene?.top ?? 0)));
+        // Wide phone landscape: the pills sit at the side, so the short greeting
+        // only clears the header (the wide ayah view still clears the pills).
+        setGreetingTopInset(Math.max(0, headerOnly - (scene?.top ?? 0)));
       }
     };
     measure();
@@ -672,7 +693,11 @@ export function CenterVerseDisplay({
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
   // here (its current ayah) — so we no longer blanket-hide on isJuz; we render
   // whenever there's an active verse. Maher's full-Juz file passes none.
-  if (showGreeting) return <Greeting language={language} style={stageInsets} />;
+  if (showGreeting) {
+    const greetingInsets =
+      pillsBeside && greetingTopInset != null ? { ...stageInsets, paddingTop: greetingTopInset } : stageInsets;
+    return <Greeting language={language} style={greetingInsets} />;
+  }
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;
