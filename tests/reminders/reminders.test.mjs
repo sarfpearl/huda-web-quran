@@ -54,9 +54,10 @@ test("serverTimes / syncKey follow the list's content, not its order or ids", ()
   assert.notEqual(store.syncKey(a), store.syncKey([{ id: "x", time: "20:00", on: false }, a[1]]));
 });
 
-test("formatReminderTime uses the locale's clock", () => {
+test("formatReminderTime always shows a 12-hour clock", () => {
   assert.match(store.formatReminderTime("18:05", "en-US"), /6:05\s?PM/);
-  assert.equal(store.formatReminderTime("18:05", "fr-FR"), "18:05");
+  assert.match(store.formatReminderTime("18:05", "en-GB"), /6:05\s?pm/i);
+  assert.match(store.formatReminderTime("06:30", "en-IN"), /6:30\s?am/i);
 });
 
 test("notification text exists in every app language", () => {

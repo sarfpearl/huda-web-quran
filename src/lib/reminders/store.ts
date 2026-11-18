@@ -84,11 +84,13 @@ export function serverTimes(times: ReminderTime[]): { time: string; on: boolean 
 }
 export const syncKey = (times: ReminderTime[]) => JSON.stringify(serverTimes(times));
 
-/** "06:30" in the UI language's clock ("6:30 AM", "06:30"…). */
+/** "06:30" as a 12-hour time in the UI language ("6:30 AM"). */
 export function formatReminderTime(time: string, locale: string): string {
   const [h, m] = time.split(":").map(Number);
   try {
-    return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(new Date(2000, 0, 1, h, m));
+    return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", hour12: true })
+      .format(new Date(2000, 0, 1, h, m))
+      .replace(/\b([ap])\.?m\.?(?=\s|$)/i, (_, x: string) => `${x.toUpperCase()}M`);
   } catch {
     return time;
   }
