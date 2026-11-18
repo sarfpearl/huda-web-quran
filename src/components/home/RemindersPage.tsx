@@ -6,13 +6,11 @@ import { cn } from "@/lib/utils";
 import { t, uiLocale, useUiLang, type UiLang } from "@/lib/uiLang";
 import { OPEN_INSTALL_GUIDE_EVENT } from "@/lib/settingsEvents";
 import { MAX_REMINDERS, nextReminderTime, sortReminders, formatReminderTime, type ReminderState, type ReminderTime } from "@/lib/reminders/store";
-import { REMINDER_MESSAGES } from "@/lib/reminders/messages";
 import {
   applyReminders,
   enablePush,
   loadReminders,
   pushSupport,
-  showTestNotification,
   storeReminders,
   type PushSupport,
   type ReminderError,
@@ -82,7 +80,6 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
   const [state, setState] = useState<ReminderState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ReminderError | null>(null);
-  const [tested, setTested] = useState(false);
   const [granted, setGranted] = useState(false);
   const timeTimer = useRef(0);
 
@@ -97,7 +94,6 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
   const commit = async (times: ReminderTime[], turningOn?: string) => {
     if (!state) return;
     setError(null);
-    setTested(false);
     let next: ReminderState = { ...state, times: sortReminders(times), updatedAt: Date.now() };
     setState(next);
     setBusy(true);
@@ -178,11 +174,21 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
         <ul className="space-y-1.5" aria-label={t(lang, "Reminders")}>
           {times.map((r) => (
             <li key={r.id} className={cn("flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-1 pl-4 pr-1", !r.on && "opacity-70")}>
-              <label className="flex min-w-0 flex-1 flex-col py-1.5">
-                <span className="sr-only">{t(lang, "Reminder time")}</span>
+              {/* Our own 12-hour label (the phone's picker may show 24-hour); the
+                  invisible native input on top opens the time picker. */}
+              <label className="relative flex min-w-0 flex-1 items-center justify-center py-2.5 text-white focus-within:text-amber-200">
+                <span aria-hidden="true" className="text-xl font-semibold tabular-nums">{formatReminderTime(r.time, locale)}</span>
                 <input
                   type="time"
+                  aria-label={t(lang, "Reminder time")}
                   value={r.time}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker?.();
+                    } catch {
+                      /* picker not allowed here: the input still takes focus */
+                    }
+                  }}
                   onChange={(e) => {
                     const v = e.target.value;
                     if (!v) return;
@@ -192,7 +198,7 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
                     window.clearTimeout(timeTimer.current);
                     timeTimer.current = window.setTimeout(() => void commit(changed), 700);
                   }}
-                  className="w-full bg-transparent text-center text-xl font-semibold tabular-nums [&::-webkit-date-and-time-value]:text-center text-white outline-none [color-scheme:dark] focus-visible:text-amber-200"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0 [color-scheme:dark]"
                 />
               </label>
               <Toggle
@@ -237,18 +243,6 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
       )}
       {askHint && !error && <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">{t(lang, "Turning a reminder on asks you to allow notifications.")}</p>}
 
-      {granted && times.some((r) => r.on) && (
-        <button
-          type="button"
-          onClick={async () => {
-            const m = REMINDER_MESSAGES[lang] ?? REMINDER_MESSAGES.en;
-            setTested(await showTestNotification(m.title, m.body));
-          }}
-          className="w-full rounded-full border border-white/15 px-4 py-2.5 text-sm text-sand-100 hover:bg-white/10"
-        >
-          {tested ? t(lang, "Test notification sent") : t(lang, "Send a test notification")}
-        </button>
-      )}
       {granted && times.some((r) => r.on) && /Android/i.test(navigator.userAgent) && (
         <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">
           {t(lang, "On Android, if the reminder appears only in the notification shade: open phone Settings → Apps → HuDa (or Chrome) → Notifications and turn on Pop on screen.")}
