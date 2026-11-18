@@ -12,7 +12,6 @@ import { qrMatrix } from "@/lib/qr";
 import {
   OPEN_SUPPORT_EVENT,
   SUPPORT_KOFI_URL,
-  SUPPORT_LAST_OPENED_KEY,
   SUPPORT_STAR_HIDDEN_KEY,
   SUPPORT_UPI_ID,
   SUPPORT_WAY_KEY,
@@ -111,7 +110,6 @@ export function SupportSheet() {
       setThanked(false);
       setOpen(true);
       setMounted(true);
-      store(SUPPORT_LAST_OPENED_KEY, String(Date.now()));
       window.dispatchEvent(new Event(SUPPORT_STAR_CHANGED_EVENT));
     };
     window.addEventListener(OPEN_SUPPORT_EVENT, onOpen);

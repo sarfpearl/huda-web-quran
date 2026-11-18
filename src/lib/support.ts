@@ -28,8 +28,6 @@ export const SUPPORT_WAY_KEY = "huda-support-way";
 export const SUPPORT_STAR_HIDDEN_KEY = "huda-support-star-hidden";
 /** localStorage: first day this browser opened HuDa (ms) — the star waits a few days. */
 export const SUPPORT_FIRST_SEEN_KEY = "huda-support-first-seen";
-/** localStorage: when the visitor last opened the sheet (ms) — the star rests after. */
-export const SUPPORT_LAST_OPENED_KEY = "huda-support-last-opened";
 
 export type SupportWay = "upi" | "kofi";
 

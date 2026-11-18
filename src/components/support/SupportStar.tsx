@@ -7,7 +7,6 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import {
   OPEN_SUPPORT_EVENT,
   SUPPORT_FIRST_SEEN_KEY,
-  SUPPORT_LAST_OPENED_KEY,
   SUPPORT_STAR_HIDDEN_KEY,
   supportEnabled,
 } from "@/lib/support";
@@ -18,14 +17,14 @@ import {
  * Tap → the "Help keep HuDa free" sheet. It never asks for attention:
  *   - only while nothing plays and the screen has been quiet a while — gone
  *     the moment a recitation starts, in reading mode, or while any sheet is open;
- *   - not in a visitor's first days (production), and it rests for a month
- *     after the sheet was opened; "Hide the star" in the sheet ends it for good;
+ *   - not in a visitor's first days (production); it comes back after each
+ *     visit to the sheet, so giving again is always one tap away;
+ *     "Hide the star" in the sheet ends it for good;
  *   - takes no room: a small overlay on the empty edge of the scene.
  */
 
 const QUIET_MS = 6000;
 const FIRST_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-const REST_MS = 30 * 24 * 60 * 60 * 1000;
 /** Fired when the star's storage changes (hidden / opened). */
 export const SUPPORT_STAR_CHANGED_EVENT = "huda:support-star-changed";
 
@@ -40,8 +39,6 @@ function read(key: string): string | null {
 function starAllowed(): boolean {
   if (!supportEnabled() || read(SUPPORT_STAR_HIDDEN_KEY) === "1") return false;
   const now = Date.now();
-  const lastOpened = Number(read(SUPPORT_LAST_OPENED_KEY) ?? 0);
-  if (lastOpened && now - lastOpened < REST_MS) return false;
   // Previews and local runs show it at once, so the owner can review it.
   if (process.env.NEXT_PUBLIC_VERCEL_ENV !== "production") return true;
   let first = Number(read(SUPPORT_FIRST_SEEN_KEY) ?? 0);
