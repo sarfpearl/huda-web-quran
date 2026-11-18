@@ -1022,12 +1022,13 @@ export function CompactBayanPlayer({
           <PrevIcon className="text-lg" />
         </button>
 
-        {/* Play: see-through centre over the scene, light rim, soft green halo */}
+        {/* Play: green light spreading out from the centre, a 50% white rim,
+            and a soft feathered halo (no hard ring) */}
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
           data-tour="play"
-          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-white/[0.04] backdrop-blur-sm text-emerald-400 shadow-[0_0_0_10px_rgba(16,185,129,0.10),0_0_26px_8px_rgba(16,185,129,0.12)] border-2 border-white/60 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.5)_0%,rgba(16,185,129,0.2)_55%,rgba(16,185,129,0.06)_100%)] backdrop-blur-sm text-emerald-400 shadow-[0_0_40px_14px_rgba(16,185,129,0.22)] border-2 border-white/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
