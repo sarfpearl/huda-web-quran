@@ -104,13 +104,13 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
         {/* Salam in the Uthmanic Hafs Mushaf face (U+06E1 sukun, as the
-            KFGQPC font expects), in the maker logo's gold with a light stroke
+            KFGQPC font expects), in the maker logo's gold with a hairline stroke
             (the Hafs face has one thin weight). No soft glow — it blurred the
             fine strokes; the About logo's shine sweeps across it instead. */}
         <p
           dir="rtl"
           lang="ar"
-          className="relative font-arabic text-[#E8C46E] leading-[1.5] text-[2.5rem] sm:text-[3.75rem] md:text-[4.5rem] [-webkit-text-stroke:0.03em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
+          className="relative font-arabic text-[#E8C46E] leading-[1.5] text-[2.75rem] sm:text-[4.25rem] md:text-[5.25rem] [-webkit-text-stroke:0.01em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
         >
           السَّلَامُ عَلَيۡكُمۡ
           <span aria-hidden="true" className="huda-text-shine pointer-events-none absolute inset-0">
