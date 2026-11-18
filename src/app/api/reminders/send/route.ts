@@ -59,7 +59,8 @@ export async function GET(req: Request) {
           await webpush.sendNotification(
             { endpoint: it.endpoint, keys: { p256dh: it.p256dh, auth: it.auth } },
             JSON.stringify(reminderPayload(it.lang)),
-            { TTL: 60 * 60, urgency: "normal", topic: "reading-reminder" },
+            // "high": delivered at once even when an Android phone is idle (Doze).
+            { TTL: 60 * 60, urgency: "high", topic: "reading-reminder" },
           );
           sent++;
         } catch (err) {
