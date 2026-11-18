@@ -104,19 +104,20 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
         {/* Salam in the Uthmanic Hafs Mushaf face (U+06E1 sukun, as the
-            KFGQPC font expects); a calm lead line above the UI-language
+            KFGQPC font expects), in soft gold with a light stroke — the Hafs
+            face has one thin weight; a calm lead line above the UI-language
             greeting, not a second headline. */}
         <p
           dir="rtl"
           lang="ar"
-          className="font-arabic text-white/95 leading-[1.5] text-[2rem] sm:text-5xl md:text-[3.5rem] [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]"
+          className="font-arabic text-amber-200 leading-[1.5] text-[2rem] sm:text-5xl md:text-[3.5rem] [-webkit-text-stroke:0.035em_currentColor] [paint-order:stroke_fill] [text-shadow:0_0_18px_rgba(251,191,36,0.35),0_1px_3px_rgba(0,0,0,0.9)]"
         >
           السَّلَامُ عَلَيۡكُمۡ
         </p>
         <h2
           lang={language}
           dir={dir}
-          className={`${face} font-medium text-white leading-tight text-2xl sm:text-4xl md:text-[2.75rem] tracking-wide quran-translation-shadow`}
+          className={`${face} font-medium text-white leading-tight text-xl sm:text-3xl md:text-4xl tracking-wide quran-translation-shadow`}
         >
           {t(language, "As-salamu alaykum")}
         </h2>
