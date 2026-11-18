@@ -1070,7 +1070,7 @@ export function PlayerStatsFrame({
       style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
+        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden", "phoneland:!hidden")}
         style={topInsets}
         ref={topStripRef}
       >
@@ -1139,7 +1139,9 @@ export function PlayerStatsFrame({
         className={cn(
           "grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
           show ? "" : "hidden",
-          withFooter ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
+          withFooter ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0",
+          // Phone landscape: the player is a side rail of play / prev / next only.
+          "phoneland:!hidden"
         )}
         aria-hidden={!withFooter}
         data-footer-wrap

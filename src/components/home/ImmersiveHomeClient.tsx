@@ -2058,7 +2058,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       </AnimatePresence>
       </div>
 
-      {/* Bottom Floating Player — the skip link's target (MainLayout) */}
+      {/* Bottom Floating Player — the skip link's target (MainLayout). Phone
+          landscape: a rail on the right edge, below the header. */}
       <div
         data-player-dock
         id="player"
@@ -2066,7 +2067,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         aria-label="Player"
         tabIndex={-1}
         aria-hidden={playerAway ? true : undefined}
-        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
+        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 phoneland:inset-x-auto phoneland:right-[max(env(safe-area-inset-right),0.75rem)] phoneland:bottom-auto phoneland:top-[calc(50%+1.75rem)] phoneland:-translate-y-1/2 phoneland:px-0 ${
           playerAway ? "invisible opacity-0" : ""
         }`}
       >

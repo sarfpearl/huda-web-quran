@@ -8,7 +8,7 @@ import {
   reciterIsUnavailable,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
-import { ActionSheet, PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
+import { ActionSheet, PLAYER_GLASS, useIsMobile, STICKY_SEARCH } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -148,8 +148,9 @@ export function ReciterPickerModal({
         </button>
       </div>
 
-      {/* Search Filter */}
-      <div className="relative mb-3">
+      {/* Search Filter — phones: stays at the top while the sheet scrolls */}
+      <div className={isMobile ? `${STICKY_SEARCH} mb-1` : "relative mb-3"}>
+        <div className="relative">
         <input
           type="search"
           enterKeyHint="search"
@@ -180,6 +181,7 @@ export function ReciterPickerModal({
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
+        </div>
       </div>
 
       {/* Sync Mode Segment Control */}
@@ -257,7 +259,7 @@ export function ReciterPickerModal({
       </div>
 
       {/* Reciter List */}
-      <div className={`${isMobile ? "min-h-0 flex-1" :"max-h-[55vh] pb-2"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
+      <div className={`${isMobile ? "" : "max-h-[55vh] pb-2 overflow-y-auto pr-1 custom-scrollbar"} space-y-1.5`}>
         {filteredReciters.length === 0 ? (
           <div className={`py-8 text-center text-xs text-sand-300/60`}>
             {searchQuery.trim()
@@ -356,8 +358,8 @@ export function ReciterPickerModal({
 
   if (isMobile) {
     return (
-      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")}>
-        <div ref={panelRef} className="flex min-h-0 flex-1 flex-col select-none">
+      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")} scrollAll>
+        <div ref={panelRef} className="flex flex-col select-none">
           {body}
         </div>
       </ActionSheet>

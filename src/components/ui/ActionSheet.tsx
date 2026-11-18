@@ -10,6 +10,10 @@ import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
 /** Same glass as the player card, so sheets read as part of it. */
+/** A search row that stays at the top while a scrollAll sheet scrolls under it. */
+export const STICKY_SEARCH =
+  "sticky top-0 z-20 -mx-4 px-4 py-2 bg-[rgba(14,16,15,0.92)] backdrop-blur-md";
+
 export const PLAYER_GLASS =
   "bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)]";
 
@@ -114,6 +118,7 @@ export function ActionSheet({
   label,
   keepAttr,
   noAutoClose = false,
+  scrollAll = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -126,6 +131,10 @@ export function ActionSheet({
   /** Keep the sheet open regardless of idle (a permission ask that must be
       answered, not dismissed by a timeout). */
   noAutoClose?: boolean;
+  /** The whole sheet scrolls as one (title, switches and list together), so a
+      short screen — a phone in landscape — still reaches every item; mark a
+      search row `sticky top-0` to keep it in view. */
+  scrollAll?: boolean;
 }) {
   const drag = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -207,6 +216,7 @@ export function ActionSheet({
             <div
               className={cn(
                 "flex min-h-0 flex-1 flex-col px-4",
+                scrollAll && "no-scrollbar overflow-y-auto overscroll-contain [&>*]:shrink-0",
                 // Every sheet keeps a gap at its bottom, above the home indicator
                 // (a scrolling list included: it ends above the gap).
                 kb.bottom > 0 ? "pb-3" : "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]",

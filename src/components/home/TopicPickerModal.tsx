@@ -12,7 +12,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PLAYER_GLASS, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, STICKY_SEARCH, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -187,6 +187,10 @@ export function TopicPickerModal({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  // Phones, browse list: the whole panel scrolls (header, tabs, topics, list),
+  // only the search row stays at the top — a landscape phone has no room for
+  // a fixed header above an inner list.
+  const wholeScroll = isMobile && !showAbout && !showSettings;
   // Phone sheet with a search box: sit on top of the on-screen keyboard.
   const kb = useKeyboardInset(isOpen && isMobile);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -776,7 +780,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${wholeScroll ? "no-scrollbar overflow-y-auto overscroll-contain [&>*]:shrink-0" : ""} ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -860,7 +864,8 @@ export function TopicPickerModal({
                 <>
                   {/* 3. Search Input Box — above the tabs. A chosen topic sits
                       inside it as a chip; the ✕ at its end clears both. */}
-                  <div className="mt-4 mb-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-3.5 pr-1.5 transition-all focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
+                  <div className={wholeScroll ? `${STICKY_SEARCH} mt-2 mb-1` : "mt-4 mb-3"}>
+                  <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-3.5 pr-1.5 transition-all focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
                     <SearchIcon className="shrink-0 text-base text-sand-200/50 pointer-events-none" />
                     {chosenTopic && (
                       <button
@@ -924,6 +929,7 @@ export function TopicPickerModal({
                         <CloseIcon className="h-3.5 w-3.5" />
                       </button>
                     )}
+                  </div>
                   </div>
 
                   {/* 2a. Favourites: Surah | Juz */}
@@ -997,7 +1003,7 @@ export function TopicPickerModal({
                   )}
 
                   {/* 4. Scrollable List Content using ContentListCard */}
-                  <div className="relative flex min-h-0 flex-1 flex-col">
+                  <div className={wholeScroll ? "relative flex flex-col" : "relative flex min-h-0 flex-1 flex-col"}>
                   <div
                     ref={listRef}
                     onTouchStart={() => {
@@ -1011,7 +1017,7 @@ export function TopicPickerModal({
                       }
                     }}
                     className={cn(
-                      "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1",
+                      wholeScroll ? "space-y-2 pt-1" : "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1",
                       !isFavourites && voiceSupported && "pb-20",
                     )}
                   >
@@ -1123,11 +1129,13 @@ export function TopicPickerModal({
 
                   </div>
 
-                  {/* Voice search: a floating gold button over the list. */}
+                  {/* Voice search: a floating gold button over the list (phones:
+                      held at the panel's bottom edge while the panel scrolls). */}
+                  <div className={wholeScroll ? "pointer-events-none sticky bottom-0 z-10 -mt-20 h-20" : "contents"}>
                   {!isFavourites && voiceSupported && dictationHint && (
                     <p
                       role="status"
-                      className="absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
+                      className="pointer-events-auto absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
                     >
                       {/* The keyboard's own mic, drawn where {mic} stands. */}
                       {t(lang, "Tap {mic} on the keyboard to search by voice.")
@@ -1142,7 +1150,7 @@ export function TopicPickerModal({
                       aria-label={listening ? t(lang, "Stop listening") : t(lang, "Search by voice")}
                       aria-pressed={listening}
                       className={cn(
-                        "absolute bottom-3 right-3 z-10 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-gold-300/60 transition-transform cursor-pointer hover:scale-105 active:scale-90",
+                        "pointer-events-auto absolute bottom-3 right-3 z-10 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-gold-300/60 transition-transform cursor-pointer hover:scale-105 active:scale-90",
                       )}
                     >
                       {listening ? (
@@ -1152,6 +1160,7 @@ export function TopicPickerModal({
                       )}
                     </button>
                   )}
+                  </div>
                   </div>
                 </>
               )}

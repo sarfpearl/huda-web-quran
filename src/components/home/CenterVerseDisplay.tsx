@@ -63,6 +63,9 @@ interface CenterVerseDisplayProps {
   meaningCurrentTime?: number;
 }
 
+/** Phone turned sideways (same as the `phoneland` Tailwind screen). */
+const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
+
 /** Live match of a media query (false on the server and before mount). */
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -325,6 +328,7 @@ export function CenterVerseDisplay({
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
   const [greetingTopInset, setGreetingTopInset] = useState<number | null>(null);
+  const [sideInset, setSideInset] = useState<number | null>(null);
   // Same as the `phonelandwide` Tailwind screen (pills beside the greeting).
   const pillsBeside = useMediaQuery("(orientation: landscape) and (max-height: 500px) and (min-width: 830px)");
   // Layout phase: measured before the first paint after hydration.
@@ -338,8 +342,16 @@ export function CenterVerseDisplay({
       // Measured against the full-screen scene (it can run under Safari's bars).
       if (dock) {
         const scene = dock.parentElement?.getBoundingClientRect();
-        const top = dock.getBoundingClientRect().top;
-        setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - top) + 4);
+        const rect = dock.getBoundingClientRect();
+        if (window.matchMedia(PHONE_LANDSCAPE).matches) {
+          // Side rail: the stage keeps the full height and clears the rail on
+          // both sides, so the text stays centred on the screen.
+          setBottomInset(16);
+          setSideInset(Math.max(0, (scene?.right ?? window.innerWidth) - rect.left) + 8);
+        } else {
+          setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - rect.top) + 4);
+          setSideInset(null);
+        }
       }
       if (header) {
         const scene = header.parentElement?.getBoundingClientRect();
@@ -375,6 +387,7 @@ export function CenterVerseDisplay({
   const stageInsets = {
     ...(bottomInset != null ? { paddingBottom: bottomInset } : {}),
     ...(topInset != null ? { paddingTop: topInset } : {}),
+    ...(sideInset != null ? { paddingLeft: sideInset, paddingRight: sideInset } : {}),
   };
 
   // Fit-to-stage: long ayahs (e.g. 2:102, 2:282) are shrunk until the Arabic

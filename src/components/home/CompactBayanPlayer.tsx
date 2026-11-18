@@ -245,6 +245,8 @@ export function CompactBayanPlayer({
 
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
+    // Phone landscape has only the side rail (no full player).
+    if (!next && window.matchMedia(PHONE_LANDSCAPE).matches) return;
     // A manual switch overrides any pending auto-restore (see below).
     if (remember) {
       autoCollapsedRef.current = false;
@@ -307,21 +309,25 @@ export function CompactBayanPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCompact]);
 
-  // Phone in landscape: the full player would fill the short screen and hide
-  // the greeting, so it opens (and turns into) the compact pill. Turning back
-  // to portrait restores the full player if only the rotation shrank it.
+  // Phone in landscape: the full player would fill the short screen, so it
+  // opens (and turns into) the compact view, drawn as a side rail. Turning
+  // back to portrait restores the full player if it was showing before.
   const landscapeCollapsedRef = useRef(false);
+  const landscapeRestoreRef = useRef(false);
   useEffect(() => {
     const mq = window.matchMedia(PHONE_LANDSCAPE);
     const apply = () => {
       if (mq.matches) {
-        if (!collapsedRef.current && !userExpandedRef.current) {
+        if (!collapsedRef.current) {
+          // Remember whether the listener had the full player open, so turning
+          // back to portrait gives it back.
+          landscapeRestoreRef.current = userExpandedRef.current || !isPlayingRef.current;
           toggleRef.current(true, false);
           landscapeCollapsedRef.current = true;
         }
       } else if (landscapeCollapsedRef.current) {
         landscapeCollapsedRef.current = false;
-        if (collapsedRef.current && !isPlayingRef.current) toggleRef.current(false, false);
+        if (collapsedRef.current && landscapeRestoreRef.current) toggleRef.current(false, false);
       }
     };
     apply();
@@ -688,9 +694,13 @@ export function CompactBayanPlayer({
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2 phoneland:flex-col phoneland:gap-2.5 phoneland:px-2 phoneland:py-3`}
       >
-        <VolumeControl buttonClassName={compactBtn} active={collapsed} />
+        {/* Phone landscape: a side rail of previous / play / next only — the
+            reciting stays the centre of the screen. */}
+        <div className="contents phoneland:hidden">
+          <VolumeControl buttonClassName={compactBtn} active={collapsed} />
+        </div>
 
         <button
           type="button"
@@ -811,7 +821,7 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => toggleCollapsed(false)}
-          className={compactBtn}
+          className={`${compactBtn} phoneland:hidden`}
           aria-label={t(language, "Expand player")}
           title={t(language, "Expand player")}
         >
