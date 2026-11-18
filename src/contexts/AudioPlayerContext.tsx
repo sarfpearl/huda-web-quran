@@ -409,6 +409,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // of each other (owner's log, 2026-10-29). When each was last seen.
   const sysPauseAtRef = useRef(0);
   const stateChangeAtRef = useRef(0);
+  // When the recitation last played on by itself after a "call" (0 = never).
+  // A lock-screen / Control Centre pause soon after that is the listener
+  // stopping it, never another call — otherwise pause → "call" → plays on
+  // again, and it could not be stopped (owner's iPhone, 2026-11-18).
+  const autoResumeAtRef = useRef(0);
+  // The page was closed (pagehide — the home-screen app swiped away): nothing
+  // may start the recitation again from here.
+  const pageClosedRef = useRef(false);
   // Measured length of each ayah clip of the Juz in play (index → seconds),
   // for the lock screen's whole-Juz progress bar (see juzPosition).
   const ayahDurRef = useRef<Map<number, number>>(new Map());
@@ -1163,7 +1171,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   // A call paused the recitation: play on once it is over (see the
   // audio-session effect), not left paused as if the listener had stopped it.
   const markCall = useCallback((why: string) => {
-    if (!currentRef.current) return;
+    if (!currentRef.current || pageClosedRef.current) return;
     callAtRef.current = Date.now();
     userPausedRef.current = false;
     alog(`call detected (${why}) → resumes after the call`);
@@ -1174,18 +1182,30 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const pause = useCallback((from?: "system") => {
     alog(`pause() ${from === "system" ? "system" : "button"}`);
     const wasCall = callAtRef.current;
+    const els = [meaningAudioRef.current, preludeAudioRef.current, audioARef.current, audioBRef.current];
+    const wasSounding = els.some((el) => el && !el.paused);
     userPausedRef.current = true;
     interruptedRef.current = 0;
     callAtRef.current = 0;
     if (from === "system") {
       sysPauseAtRef.current = Date.now();
-      if (Date.now() - stateChangeAtRef.current < 300) markCall("pause after statechange");
-      // Still in the same call (a second pause action): keep the marker.
-      else if (wasCall) markCall("pause during a call");
+      const session = (navigator as Navigator & { audioSession?: { state?: string } }).audioSession;
+      // Played on by itself a moment ago: this pause is the listener's.
+      const afterAutoResume = Date.now() - autoResumeAtRef.current < 5 * 60_000;
+      if (afterAutoResume) alog("pause() system: soon after an auto-resume → the listener's stop");
+      // The pause + statechange guess is only for iOS 18, whose session has no
+      // `state`; where it has one, a call shows as "interrupted" and a plain
+      // lock-screen pause changes the state too (it was taken for a call).
+      else if (session && session.state === undefined
+        && Date.now() - stateChangeAtRef.current < 300) markCall("pause after statechange");
+      // Still in the same call (a second pause action, iOS already silenced
+      // it): keep the marker. Sound still on means the call is over and the
+      // listener is stopping it.
+      else if (wasCall && !wasSounding) markCall("pause during a call");
     }
     // Pause silences every element, not only the one in use: one still
     // playing unseen would go on with the button on Play.
-    for (const el of [meaningAudioRef.current, preludeAudioRef.current, audioARef.current, audioBRef.current]) {
+    for (const el of els) {
       if (el && !el.paused) {
         alog(`pause() ${elInfo(el === meaningAudioRef.current ? "meaning" : el === preludeAudioRef.current ? "prelude" : el === audioRef.current ? "main" : "standby", el)}`);
         el.pause();
@@ -1248,7 +1268,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   const togglePlay = useCallback(() => {
     if (isPlaying) pause();
-    else resume();
+    else {
+      autoResumeAtRef.current = 0; // the listener's own play
+      resume();
+    }
   }, [isPlaying, pause, resume]);
 
   const seek = useCallback((seconds: number) => {
@@ -1424,6 +1447,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
       ["play", () => act().resume()],
       ["pause", () => act().pause("system")],
+      ["stop", () => act().pause()],
       ["previoustrack", () => act().previous()],
       ["nexttrack", () => act().next()],
       ["seekbackward", (d) => act().seek(Math.max(0, act().time - (d.seekOffset ?? 10)))],
@@ -1445,6 +1469,37 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           /* ignore */
         }
       }
+    };
+  }, []);
+  // The page is going away (the home-screen app swiped closed, a reload, or
+  // leaving the site): stop every element now. iOS could keep the sound on
+  // with the page gone — nothing left to pause it from, and Control Centre's
+  // pause did nothing (owner's iPhone, 2026-11-18). Hiding the app (home
+  // screen, lock) is visibilitychange, not pagehide: playing on there stays.
+  useEffect(() => {
+    const onPageHide = (e: PageTransitionEvent) => {
+      alog(`pagehide persisted=${e.persisted} → stop all audio`);
+      pageClosedRef.current = true;
+      callAtRef.current = 0;
+      interruptedRef.current = 0;
+      mediaActionsRef.current.pause();
+      if ("mediaSession" in navigator) {
+        try {
+          navigator.mediaSession.playbackState = "none";
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    // Back from the back-forward cache: the page is in use again.
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) pageClosedRef.current = false;
+    };
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
   // What the lock screen / Control Centre shows. iOS Safari drops metadata
@@ -1537,6 +1592,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const timers: ReturnType<typeof setTimeout>[] = [];
     const tryResume = (why: string) => {
       const at = callAtRef.current;
+      if (pageClosedRef.current) {
+        callAtRef.current = 0;
+        return;
+      }
       if (!at || session.state === "interrupted" || userPausedRef.current) {
         alog(`tryResume(${why}) skip: callAt=${at ? `${Math.round((Date.now() - at) / 1000)}s ago` : 0} state=${session.state} userPaused=${userPausedRef.current}`);
         return;
@@ -1547,6 +1606,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         return;
       }
       alog(`tryResume(${why}) → resume()`);
+      autoResumeAtRef.current = Date.now();
       mediaActionsRef.current.resume();
     };
     const onState = (why = "statechange") => {
@@ -1563,7 +1623,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       }
       // No `state` (iOS 18): a pause action just before this event is a call.
       if (why === "statechange" && session.state === undefined && !callAtRef.current
-        && Date.now() - sysPauseAtRef.current < 300) {
+        && Date.now() - sysPauseAtRef.current < 300
+        && Date.now() - autoResumeAtRef.current >= 5 * 60_000) {
         markCall("statechange after pause");
         return;
       }

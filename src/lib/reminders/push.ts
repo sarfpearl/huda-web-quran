@@ -163,15 +163,3 @@ export async function applyReminders(state: ReminderState, sub?: PushSubscriptio
   if (typeof next !== "string") storeReminders(next);
   return next;
 }
-
-/** A notification right now (the "Test" button), shown by the worker. */
-export async function showTestNotification(title: string, body: string): Promise<boolean> {
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (!reg || Notification.permission !== "granted") return false;
-    await reg.showNotification(title, { body, icon: "/icon-192.png", badge: "/notification-badge.png", tag: "huda-reading-reminder-test", renotify: true, data: { url: "/" } } as NotificationOptions);
-    return true;
-  } catch {
-    return false;
-  }
-}

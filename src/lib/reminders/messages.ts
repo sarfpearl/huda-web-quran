@@ -1,7 +1,6 @@
 /*
  * The reminder notification's own text, in each app language. Plain data (no
- * React), so the sender route (/api/reminders/send) and the service worker's
- * test notification use the same words.
+ * React), used by the sender route (/api/reminders/send).
  */
 
 export type ReminderLang = "en" | "ta" | "ur" | "ml" | "hi" | "id" | "bn" | "tr" | "fr" | "ms";
