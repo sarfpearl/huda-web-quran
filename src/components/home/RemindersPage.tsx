@@ -192,7 +192,7 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
                     window.clearTimeout(timeTimer.current);
                     timeTimer.current = window.setTimeout(() => void commit(changed), 700);
                   }}
-                  className="w-full bg-transparent text-xl font-semibold tabular-nums text-white outline-none [color-scheme:dark] focus-visible:text-amber-200"
+                  className="w-full bg-transparent text-center text-xl font-semibold tabular-nums [&::-webkit-date-and-time-value]:text-center text-white outline-none [color-scheme:dark] focus-visible:text-amber-200"
                 />
               </label>
               <Toggle
@@ -248,6 +248,11 @@ export function RemindersPage({ onLeave }: { onLeave: (event: string) => void })
         >
           {tested ? t(lang, "Test notification sent") : t(lang, "Send a test notification")}
         </button>
+      )}
+      {granted && times.some((r) => r.on) && /Android/i.test(navigator.userAgent) && (
+        <p className="px-1 text-[11px] leading-relaxed text-sand-200/60">
+          {t(lang, "On Android, if the reminder appears only in the notification shade: open phone Settings → Apps → HuDa (or Chrome) → Notifications and turn on Pop on screen.")}
+        </p>
       )}
     </div>
   );
