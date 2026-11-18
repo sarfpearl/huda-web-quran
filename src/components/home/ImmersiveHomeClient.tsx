@@ -1987,11 +1987,10 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           where the last Surah listened to was left — only while the
           recitation is stopped (a clean scene while it plays or buffers). */}
       {/* Always there (0 tall when empty): CenterVerseDisplay measures it to
-          keep the greeting / ayah below the pills. Wide phone landscape: stacked
-          under the time pill on the left, beside the greeting, not above it. */}
+          keep the greeting / ayah below the pills. */}
       <div
         data-home-pills
-        className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] phonelandwide:right-auto phonelandwide:top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+4.5rem)] z-30"
+        className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30"
       >
       <AnimatePresence>
         {!readingActive && (showBookmarkPill || showContinuePill || juzLink) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
@@ -2001,7 +2000,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-wrap justify-center gap-2 px-4 phonelandwide:flex-col phonelandwide:items-start phonelandwide:[&>button]:text-xs"
+            className="flex flex-wrap justify-center gap-2 px-4"
           >
             {juzLink && (
               <button
@@ -2059,7 +2058,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       </div>
 
       {/* Bottom Floating Player — the skip link's target (MainLayout). Phone
-          landscape: a rail on the right edge, below the header. */}
+          landscape: a rail on the left edge, below the header (the feedback
+          lantern hangs on the right). */}
       <div
         data-player-dock
         id="player"
@@ -2067,7 +2067,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         aria-label="Player"
         tabIndex={-1}
         aria-hidden={playerAway ? true : undefined}
-        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 phoneland:inset-x-auto phoneland:right-[max(env(safe-area-inset-right),0.75rem)] phoneland:bottom-auto phoneland:top-[calc(50%+1.75rem)] phoneland:-translate-y-1/2 phoneland:px-0 ${
+        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 phoneland:inset-x-auto phoneland:left-[max(env(safe-area-inset-left),0.75rem)] phoneland:bottom-auto phoneland:top-[calc(50%+1.75rem)] phoneland:-translate-y-1/2 phoneland:px-0 ${
           playerAway ? "invisible opacity-0" : ""
         }`}
       >

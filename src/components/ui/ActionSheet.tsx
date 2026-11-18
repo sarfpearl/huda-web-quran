@@ -10,9 +10,40 @@ import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
 /** Same glass as the player card, so sheets read as part of it. */
-/** A search row that stays at the top while a scrollAll sheet scrolls under it. */
-export const STICKY_SEARCH =
-  "sticky top-0 z-20 -mx-4 px-4 py-2 bg-[rgba(14,16,15,0.92)] backdrop-blur-md";
+/**
+ * A search row that stays at the top of a scrolling sheet. Until the list
+ * scrolls under it, it is just the sheet's glass; once it sticks, a dark
+ * backing fades in behind the row only, feathering out at its bottom edge so
+ * the list passes under it blurred.
+ */
+export function StickySearch({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    let scroller = el?.parentElement ?? null;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!el || !scroller) return;
+    const box = scroller;
+    const check = () =>
+      setStuck(box.scrollTop > 0 && el.getBoundingClientRect().top - box.getBoundingClientRect().top <= 1);
+    check();
+    box.addEventListener("scroll", check, { passive: true });
+    return () => box.removeEventListener("scroll", check);
+  }, []);
+  return (
+    <div ref={ref} data-stuck={stuck || undefined} className={cn("sticky top-0 z-20 -mx-4 px-4 py-2", className)}>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 -bottom-5 -z-10 bg-[rgba(14,16,15,0.86)] backdrop-blur-md transition-opacity duration-200 [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]",
+          stuck ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
 
 export const PLAYER_GLASS =
   "bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)]";
@@ -119,6 +150,7 @@ export function ActionSheet({
   keepAttr,
   noAutoClose = false,
   scrollAll = false,
+  header,
 }: {
   open: boolean;
   onClose: () => void;
@@ -133,8 +165,10 @@ export function ActionSheet({
   noAutoClose?: boolean;
   /** The whole sheet scrolls as one (title, switches and list together), so a
       short screen — a phone in landscape — still reaches every item; mark a
-      search row `sticky top-0` to keep it in view. */
+      search row with StickySearch to keep it in view. */
   scrollAll?: boolean;
+  /** Stays above the scrolling part (title and close button never scroll away). */
+  header?: ReactNode;
 }) {
   const drag = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -213,10 +247,13 @@ export function ActionSheet({
             >
               <span className="h-1 w-10 rounded-full bg-white/30" />
             </div>
+            {header && <div className="shrink-0 px-4">{header}</div>}
             <div
               className={cn(
-                "flex min-h-0 flex-1 flex-col px-4",
-                scrollAll && "no-scrollbar overflow-y-auto overscroll-contain [&>*]:shrink-0",
+                // Always able to scroll: content taller than the sheet (a phone
+                // in landscape) is still reachable; inner lists keep their own.
+                "no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4",
+                scrollAll && "[&>*]:shrink-0",
                 // Every sheet keeps a gap at its bottom, above the home indicator
                 // (a scrolling list included: it ends above the gap).
                 kb.bottom > 0 ? "pb-3" : "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]",

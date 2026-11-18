@@ -18,9 +18,6 @@ const config: Config = {
       screens: {
         // Phone turned sideways: short and wide (portrait and tablets untouched).
         phoneland: { raw: "(orientation: landscape) and (max-height: 500px)" },
-        // …and wide enough (≥ 830px) for the home pills to sit beside the
-        // greeting instead of above it (narrower phones keep them on top).
-        phonelandwide: { raw: "(orientation: landscape) and (max-height: 500px) and (min-width: 830px)" },
       },
       colors: {
         // Deep Islamic green scale

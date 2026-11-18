@@ -310,7 +310,7 @@ export function CompactBayanPlayer({
   }, [forceCompact]);
 
   // Phone in landscape: the full player would fill the short screen, so it
-  // opens (and turns into) the compact view, drawn as a side rail. Turning
+  // opens (and turns into) the compact view, drawn as a rail on the left. Turning
   // back to portrait restores the full player if it was showing before.
   const landscapeCollapsedRef = useRef(false);
   const landscapeRestoreRef = useRef(false);

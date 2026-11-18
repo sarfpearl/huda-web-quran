@@ -8,7 +8,7 @@ import {
   reciterIsUnavailable,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
-import { ActionSheet, PLAYER_GLASS, useIsMobile, STICKY_SEARCH } from "@/components/ui/ActionSheet";
+import { ActionSheet, PLAYER_GLASS, StickySearch, useIsMobile } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -120,9 +120,8 @@ export function ReciterPickerModal({
     );
   });
 
-  const body = (
+  const titleBar = (
     <>
-
       {/* Header with Title and Close Button */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
         <div className="flex items-center gap-2.5">
@@ -148,8 +147,16 @@ export function ReciterPickerModal({
         </button>
       </div>
 
+    </>
+  );
+
+  const body = (
+    <>
+      {!isMobile && titleBar}
+
       {/* Search Filter — phones: stays at the top while the sheet scrolls */}
-      <div className={isMobile ? `${STICKY_SEARCH} mb-1` : "relative mb-3"}>
+      {(() => {
+        const search = (
         <div className="relative">
         <input
           type="search"
@@ -182,7 +189,9 @@ export function ReciterPickerModal({
           />
         </svg>
         </div>
-      </div>
+        );
+        return isMobile ? <StickySearch className="mb-1">{search}</StickySearch> : <div className="mb-3">{search}</div>;
+      })()}
 
       {/* Sync Mode Segment Control */}
       <div className={`mb-3 ${TAB_TRACK}`}>
@@ -358,7 +367,7 @@ export function ReciterPickerModal({
 
   if (isMobile) {
     return (
-      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")} scrollAll>
+      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")} scrollAll header={titleBar}>
         <div ref={panelRef} className="flex flex-col select-none">
           {body}
         </div>

@@ -1062,6 +1062,8 @@ export function PlayerStatsFrame({
         "pointer-events-auto relative flex max-w-full flex-col transition-[border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
         show &&
           "rounded-[28px] border border-white/15 bg-black/[0.08] backdrop-blur-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.6)]",
+        // Phone landscape: the strips are gone, so the player card is the only box.
+        show && "phoneland:!border-0 phoneland:!bg-transparent phoneland:!shadow-none phoneland:!backdrop-blur-none",
         // Compact player (bottom strip open): phone-sized corners at every size.
         show && !withFooter && "sm:rounded-[40px]"
       )}

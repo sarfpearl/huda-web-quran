@@ -12,7 +12,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PLAYER_GLASS, STICKY_SEARCH, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, StickySearch, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -780,7 +780,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${wholeScroll ? "no-scrollbar overflow-y-auto overscroll-contain [&>*]:shrink-0" : ""} ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header */}
@@ -821,6 +821,19 @@ export function TopicPickerModal({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
+                {/* Phone landscape: « About HuDa » as the logo here, not the footer row */}
+                {!isFavourites && !showAbout && !showSettings && (
+                  <button
+                    type="button"
+                    onClick={() => setView("about")}
+                    className="tap-44 pointer-events-auto hidden h-10 w-10 place-items-center overflow-hidden rounded-full bg-white/10 transition-colors hover:bg-white/20 cursor-pointer active:scale-90 phoneland:grid"
+                    aria-label={t(lang, "About HuDa Web Quran")}
+                    data-tooltip={t(lang, "About HuDa Web Quran")}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 rounded-full object-contain" />
+                  </button>
+                )}
                 {!isFavourites && !showSettings && (
                   <button
                     type="button"
@@ -846,6 +859,9 @@ export function TopicPickerModal({
                 </div>
               </div>
 
+              {/* Phones, browse list: everything under the title scrolls as one;
+                  the search row sticks at the top of it. */}
+              <div className={wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]"}>
               {settingsPage === "language" ? (
                 <LanguageView />
               ) : settingsPage === "translation" ? (
@@ -864,7 +880,7 @@ export function TopicPickerModal({
                 <>
                   {/* 3. Search Input Box — above the tabs. A chosen topic sits
                       inside it as a chip; the ✕ at its end clears both. */}
-                  <div className={wholeScroll ? `${STICKY_SEARCH} mt-2 mb-1` : "mt-4 mb-3"}>
+                  <SearchRow sticky={wholeScroll}>
                   <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-3.5 pr-1.5 transition-all focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
                     <SearchIcon className="shrink-0 text-base text-sand-200/50 pointer-events-none" />
                     {chosenTopic && (
@@ -930,7 +946,7 @@ export function TopicPickerModal({
                       </button>
                     )}
                   </div>
-                  </div>
+                  </SearchRow>
 
                   {/* 2a. Favourites: Surah | Juz */}
                   {isFavourites && (
@@ -1171,7 +1187,7 @@ export function TopicPickerModal({
                 <button
                   type="button"
                   onClick={() => setView("about")}
-                  className={`mt-3 ${isMobile ? "mb-1.5" : ""} flex w-full shrink-0 items-center gap-3 rounded-full border border-white/10 bg-white/5 p-1.5 text-left hover:bg-white/10 transition-colors cursor-pointer`}
+                  className={`mt-3 ${isMobile ? "mb-1.5" : ""} flex w-full shrink-0 items-center gap-3 phoneland:hidden rounded-full border border-white/10 bg-white/5 p-1.5 text-left hover:bg-white/10 transition-colors cursor-pointer`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-contain" />
@@ -1188,6 +1204,7 @@ export function TopicPickerModal({
                   <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/60" />
                 </button>
               )}
+              </div>
             </motion.div>
           </>
         )}
@@ -1196,6 +1213,11 @@ export function TopicPickerModal({
       )}
     </>
   );
+}
+
+/** The search row: sticks at the top of the phone list, plain elsewhere. */
+function SearchRow({ sticky, children }: { sticky: boolean; children: React.ReactNode }) {
+  return sticky ? <StickySearch className="mt-2 mb-1">{children}</StickySearch> : <div className="mt-4 mb-3">{children}</div>;
 }
 
 /** « About HuDa »: what it is, the app, the maker, credits, feedback. */
