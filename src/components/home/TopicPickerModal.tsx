@@ -30,6 +30,7 @@ import { loadSearchIndex, parseVerseRef, searchVerses, type VerseHit } from "@/l
 import { VERSE_TOPICS } from "@/lib/data/verseTopics";
 import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
+import { RemindersPage } from "./RemindersPage";
 import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
 import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
@@ -160,6 +161,12 @@ export function TopicPickerModal({
   const showAbout = !isFavourites && view === "about";
   // A page under Settings (App language, Translation, …).
   const settingsPage = !isFavourites && SETTINGS_PAGES.includes(view as SettingsPage) ? (view as SettingsPage) : null;
+  // A Settings row that opens another sheet: closed first, and the sheet
+  // asked for once the closing Back entry is gone (that pop would close it too).
+  const leaveSettings = (event: string) => {
+    setIsOpen(false);
+    window.setTimeout(() => window.dispatchEvent(new Event(event)), 350);
+  };
   const showSettings = !isFavourites && (view === "settings" || settingsPage !== null);
   const [activeTab, setActiveTab] = useState<ModalTab>("surah");
   const [searchQuery, setSearchQuery] = useState("");
@@ -695,6 +702,7 @@ export function TopicPickerModal({
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
+        data-tour={isFavourites ? "favourites" : "browse"}
         className={
           triggerClassName ??
           "pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-sand-100 hover:text-white hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer"
@@ -842,16 +850,10 @@ export function TopicPickerModal({
                 <TextSizePage />
               ) : settingsPage === "quran" ? (
                 <QuranTextPage />
+              ) : settingsPage === "reminders" ? (
+                <RemindersPage onLeave={leaveSettings} />
               ) : showSettings ? (
-                <SettingsList
-                  onOpen={setView}
-                  onLeave={(event) => {
-                    // Closed first, and the sheet asked for once the closing
-                    // Back entry is gone: that history pop would close it too.
-                    setIsOpen(false);
-                    window.setTimeout(() => window.dispatchEvent(new Event(event)), 350);
-                  }}
-                />
+                <SettingsList onOpen={setView} onLeave={leaveSettings} />
               ) : showAbout ? (
                 <AboutView />
               ) : (

@@ -4,7 +4,7 @@ import { CategoryIcon } from "./Icon";
 /*
  * Generated abstract Islamic-style cover art. Deterministic per `seed` so a
  * given Bayan always renders the same artwork. Purely original geometry —
- * an eight-point star motif over a calm green gradient. Used as a placeholder
+ * the HuDa logo (faint) over a calm green gradient and guide circles. Used as a placeholder
  * until real cover images are provided via Supabase Storage.
  */
 
@@ -54,9 +54,8 @@ export function CoverArt({
   const [c1, c2] = PALETTES[h % PALETTES.length];
   const rotate = h % 90;
   const gid = `g-${h % 100000}`;
-  // Seed-derived geometry so each item looks distinct: star size, the two
-  // guide-circle radii, and the gradient angle all vary with the seed.
-  const half = 34 + ((h >>> 2) % 16); // 34–49 → square side 68–98
+  // Seed-derived geometry so each item looks distinct: the two guide-circle
+  // radii and the gradient angle vary with the seed.
   const rOuter = 52 + ((h >>> 4) % 24); // 52–75
   const rInner = 22 + ((h >>> 6) % 16); // 22–37
   const angle = (h >>> 8) % 2 === 0;
@@ -95,15 +94,6 @@ export function CoverArt({
           fill="none"
           strokeWidth="1"
         >
-          {/* Eight-point star (two overlaid squares), seed-scaled */}
-          <rect x={100 - half} y={100 - half} width={half * 2} height={half * 2} />
-          <rect
-            x={100 - half}
-            y={100 - half}
-            width={half * 2}
-            height={half * 2}
-            transform="rotate(45 100 100)"
-          />
           <circle cx="100" cy="100" r={rOuter} strokeOpacity="0.12" />
           <circle cx="100" cy="100" r={rInner} strokeOpacity="0.18" />
         </g>
@@ -119,7 +109,16 @@ export function CoverArt({
             strokeWidth={1.2}
           />
         </div>
-      ) : null}
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/huda-logo.webp?v=3"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[62%] w-[62%] -translate-x-1/2 -translate-y-1/2 object-contain opacity-80"
+        />
+      )}
     </div>
   );
 }

@@ -176,7 +176,52 @@ self.addEventListener("fetch", (event) => {
     }
   }
 
-  if (request.destination === "image" && (sameOrigin || url.hostname.endsWith(".r2.dev"))) {
+  if (request.destination === "image" && (sameOrigin || url.hostname === "media.hudaguidance.com")) {
     event.respondWith(cacheFirst(event, IMAGES, IMAGE_MAX));
   }
+});
+
+// ── Quran-reading reminders (Settings › Reminders) ──────────────────────────
+// The sender (/api/reminders/send) pushes { title, body, url, tag, lang }.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  const title = data.title || "Time to read the Quran";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: data.tag || "huda-reading-reminder",
+      // Yesterday's reminder may still sit in the Notification Center with
+      // the same tag: without this the new one replaces it silently.
+      renotify: true,
+      // A reminder, not news: stays on screen until tapped or closed (macOS
+      // shows it as an alert, not only in the Notification Center), and
+      // vibrates on Android so it is noticed.
+      requireInteraction: true,
+      vibrate: [200, 100, 200],
+      lang: data.lang || "en",
+      dir: data.lang === "ur" ? "rtl" : "auto",
+      data: { url: data.url || "/" },
+    }),
+  );
+});
+
+// Tap: focus an open HuDa window, else open one.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (open) return open.focus();
+      return self.clients.openWindow(url);
+    })(),
+  );
 });
