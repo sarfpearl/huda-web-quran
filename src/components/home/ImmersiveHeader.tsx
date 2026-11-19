@@ -216,6 +216,21 @@ export function ImmersiveHeader({
 
         {/* Ayah translation: opens a sheet to pick Off or a language
             (only when verse text is on screen) */}
+        {/* Text only (focus): reading mode where there's room, and a phone in
+            landscape — first in the row, before Translation. Text size is in
+            Settings and a pinch on the text. */}
+        {focus && (
+          <button
+            type="button"
+            onClick={focus.onToggle}
+            aria-label={t(language, "Show only the text")}
+            data-tooltip={t(language, "Show only the text")}
+            className={`max-[379px]:hidden ${FOCUS_BTN}`}
+          >
+            <ArrowExpandIcon className="h-5 w-5" />
+          </button>
+        )}
+
         {onToggleMeaning && showLanguageToggle && (
           <button
             type="button"
@@ -354,20 +369,6 @@ export function ImmersiveHeader({
           </>
           )}
         </ActionSheet>
-
-        {/* Reading mode: where there's room, text only (focus reading). Text size is
-            in Settings and a pinch on the text. */}
-        {focus && (
-          <button
-            type="button"
-            onClick={focus.onToggle}
-            aria-label={t(language, "Show only the text")}
-            data-tooltip={t(language, "Show only the text")}
-            className={`max-[379px]:hidden ${FOCUS_BTN}`}
-          >
-            <ArrowExpandIcon className="h-5 w-5" />
-          </button>
-        )}
 
         {/* Tajweed: opens a panel with the on/off switch and the colour legend
             (only when verse text is on screen). The panel is positioned against

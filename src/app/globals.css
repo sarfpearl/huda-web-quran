@@ -957,10 +957,13 @@ input[type="search"]::-webkit-search-results-decoration {
    self-hosted unmodified with QuranWBW's written permission (2026-10-11: the
    app stays free, no ads, credits on the About page). No local() first: an
    installed copy may be another version. */
+/* font-display: block (as Uthmanic Hafs): with swap the fallback faces drew
+   the text first, and they show some of this font's own marks as a dotted
+   circle in the middle of a word. */
 @font-face {
   font-family: 'IndoPak';
   src: url('/fonts/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2') format('woff2');
-  font-display: swap;
+  font-display: block;
 }
 .font-arabic.quran-indopak {
   font-family: 'IndoPak', var(--font-naskh), 'Uthmanic Hafs', serif;

@@ -100,7 +100,7 @@ import { SURAH_PRELUDE_TIMINGS } from "@/lib/data/surahPreludeTimings";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { isWebKit } from "@/lib/data/quranGlyphs";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
-import { useIsMobile } from "@/components/ui/ActionSheet";
+import { PHONE_LANDSCAPE, useIsMobile } from "@/components/ui/ActionSheet";
 import { useOnline } from "@/lib/useOnline";
 import {
   useQuranEngagement,
@@ -1229,7 +1229,77 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // Focus reading (header ⤢ next to Aa): the text alone — header and player
   // hidden, one ⤡ to bring them back. Ends with reading mode.
   const [readerFocus, setReaderFocus] = useState(false);
-  const focusOn = readingActive && readerFocus;
+  // Phone landscape, ayah view: a tap on the scene hides the header, the
+  // rail and the pills (the verse alone, with the room they took); another
+  // tap — or the header's ⤡ — brings them back.
+  const [phoneLandscape, setPhoneLandscape] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(PHONE_LANDSCAPE);
+    const update = () => setPhoneLandscape(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  const [landFocus, setLandFocus] = useState(false);
+  const landFocusOn = phoneLandscape && !readingActive && landFocus;
+  useEffect(() => {
+    if (!phoneLandscape || readingActive) setLandFocus(false);
+  }, [phoneLandscape, readingActive]);
+  useEffect(() => {
+    if (!phoneLandscape || readingActive) return;
+    const onClick = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (
+        !target ||
+        target.closest(
+          'button, a, input, textarea, select, label, [role="dialog"], [role="slider"], [data-action-sheet], [data-player-dock], [data-scene-header], [data-home-pills], .quran-word.cursor-pointer',
+        )
+      )
+        return;
+      // A sheet or popover is open: that tap closes it, nothing more.
+      if (document.querySelector('[data-action-sheet], [role="dialog"]')) return;
+      setLandFocus((v) => !v);
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [phoneLandscape, readingActive]);
+  // Playing in phone landscape: the chrome hides as playback starts, and
+  // after 10s without a touch once a tap has brought it back; a pause shows
+  // it again (and keeps it).
+  const landWasPlayingRef = useRef(player.isPlaying);
+  useEffect(() => {
+    const was = landWasPlayingRef.current;
+    landWasPlayingRef.current = player.isPlaying;
+    if (!phoneLandscape || readingActive || was === player.isPlaying) return;
+    setLandFocus(player.isPlaying);
+  }, [player.isPlaying, phoneLandscape, readingActive]);
+  useEffect(() => {
+    if (!phoneLandscape || readingActive || !player.isPlaying || landFocus) return;
+    const IDLE_MS = 10_000;
+    let timer = 0;
+    const arm = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        // A sheet or popover still open: wait for it.
+        if (document.querySelector('[data-action-sheet], [role="dialog"]')) return arm();
+        setLandFocus(true);
+      }, IDLE_MS);
+    };
+    arm();
+    window.addEventListener("pointerdown", arm, true);
+    window.addEventListener("keydown", arm, true);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", arm, true);
+      window.removeEventListener("keydown", arm, true);
+    };
+  }, [phoneLandscape, readingActive, player.isPlaying, landFocus]);
+  // The verse stage re-measures the room once the chrome has hidden / shown.
+  useEffect(() => {
+    const id = window.setTimeout(() => window.dispatchEvent(new Event(VISIBLE_AREA_EVENT)), 60);
+    return () => window.clearTimeout(id);
+  }, [landFocusOn]);
+  const focusOn = (readingActive && readerFocus) || landFocusOn;
   // Listening: focus reading hides only the header — the player stays (and
   // stays through a pause, so the button just tapped doesn't vanish).
   const [focusKeepsPlayer, setFocusKeepsPlayer] = useState(false);
@@ -1237,14 +1307,18 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     if (!focusOn) setFocusKeepsPlayer(false);
     else if (player.isPlaying) setFocusKeepsPlayer(true);
   }, [focusOn, player.isPlaying]);
-  const playerAway = focusOn && !focusKeepsPlayer && !player.isPlaying;
+  const playerAway = focusOn && (landFocusOn || (!focusKeepsPlayer && !player.isPlaying));
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
 
   useEffect(() => {
     if (!focusOn) return;
-    const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setReaderFocus(false);
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key !== "Escape") return;
+      setReaderFocus(false);
+      setLandFocus(false);
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [focusOn]);
@@ -1864,7 +1938,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
-        focus={readingActive ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) } : undefined}
+        focus={
+          readingActive
+            ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) }
+            : phoneLandscape
+              ? // Landscape: ⤢ in the header hides it all at once, ⤡ brings it back.
+                { on: landFocusOn, onToggle: () => setLandFocus((v) => !v) }
+              : undefined
+        }
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -1990,7 +2071,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           keep the greeting / ayah below the pills. */}
       <div
         data-home-pills
-        className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30"
+        className={`${landFocusOn ? "hidden " : ""}pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30`}
       >
       <AnimatePresence>
         {!readingActive && (showBookmarkPill || showContinuePill || juzLink) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
