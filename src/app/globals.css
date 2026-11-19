@@ -848,9 +848,9 @@ html:has([data-reading-page]) #huda-splash {
 .huda-splash-text {
   display: contents;
 }
-/* Phone landscape: too short for the stack — the name and tagline (centred
-   on each other) to the left of the logo, on its middle line; the pair
-   centred on the screen and the loader centred under both */
+/* Phone landscape: too short for the stack — the name, tagline and loader
+   (centred on each other) to the left of the logo, on its middle line; the
+   pair centred on the screen */
 @media (orientation: landscape) and (max-height: 500px) {
   .huda-splash-row {
     display: flex;
@@ -866,7 +866,7 @@ html:has([data-reading-page]) #huda-splash {
   }
   .huda-splash-logo { width: min(46vh, 180px); }
   .huda-splash-name { margin-top: 0; font-size: 3rem; line-height: 1.1; }
-  .huda-splash-mark { margin-top: 20px; font-size: 30px; }
+  .huda-splash-mark { margin-top: 18px; font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-splash-logo { animation: none; }

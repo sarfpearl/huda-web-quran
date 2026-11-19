@@ -401,12 +401,14 @@ export function ImmersiveHeader({
               <div
                 role="dialog"
                 aria-label={t(language, "Tajweed colours")}
-                className="pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-5.5rem)] overflow-y-auto overscroll-contain no-scrollbar rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150"
+                // Capped to the screen. IndoPak: the script tabs and the waqf
+                // chips stay put, only the signs scroll; otherwise all scrolls.
+                className={`pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-5.5rem)] ${script === "indopak" ? "flex flex-col" : "overflow-y-auto overscroll-contain no-scrollbar"} rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150`}
               >
                 {/* Mushaf script: Uthmani (Madani) or IndoPak */}
                 {onChooseScript && (
                   // The divider separates it from the Tajweed switch, which IndoPak doesn't have.
-                  <div className={`px-1 ${script === "indopak" ? "pb-1" : "mb-2 border-b border-white/10 pb-3"}`}>
+                  <div className={`px-1 ${script === "indopak" ? "flex min-h-0 flex-col pb-1" : "mb-2 border-b border-white/10 pb-3"}`}>
                     <p className={`mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-sand-300/70`}>{t(language, "Script")}</p>
                     <div role="radiogroup" aria-label={t(language, "Quran script")} className={TAB_TRACK}>
                       {SCRIPT_CHOICES.map((c) => (
@@ -423,7 +425,7 @@ export function ImmersiveHeader({
                       ))}
                     </div>
                     {/* IndoPak: a key to the waqf (stop) signs in the text. */}
-                    {script === "indopak" && <WaqfLegend lang={language} />}
+                    {script === "indopak" && <WaqfLegend lang={language} scrollList />}
                   </div>
                 )}
                 {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}

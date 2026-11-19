@@ -12,6 +12,28 @@ import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 /** A phone turned sideways (same as the `phoneland` Tailwind screen). */
 export const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
 
+/**
+ * Phone landscape: once a sheet has opened, nudge its list down a little and
+ * back, so the listener sees there is more below the fold. Only when it can
+ * scroll, is still at the top, and motion is allowed. Returns a cleanup.
+ */
+export function peekScroll(el: HTMLElement | null, delay = 650): () => void {
+  if (!el || !window.matchMedia(PHONE_LANDSCAPE).matches) return () => {};
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
+  let back: ReturnType<typeof setTimeout> | undefined;
+  const go = setTimeout(() => {
+    if (el.scrollTop > 0 || el.scrollHeight - el.clientHeight < 40) return;
+    el.scrollTo({ top: 56, behavior: "smooth" });
+    back = setTimeout(() => {
+      if (el.scrollTop <= 60) el.scrollTo({ top: 0, behavior: "smooth" });
+    }, 520);
+  }, delay);
+  return () => {
+    clearTimeout(go);
+    if (back) clearTimeout(back);
+  };
+}
+
 /** Same glass as the player card, so sheets read as part of it. */
 /** Tells the sheet whether its StickySearch is stuck (the title's backing
     then runs straight into the search row's, with no fade between them). */
@@ -222,6 +244,12 @@ export function ActionSheet({
   // The title's backing: shown once anything in the sheet scrolls.
   const [scrolled, setScrolled] = useState(false);
   const [searchStuck, setSearchStuck] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // Phone landscape, whole-sheet scroll: a little peek so the list below shows.
+  useEffect(() => {
+    if (!open || !scrollAll) return;
+    return peekScroll(contentRef.current);
+  }, [open, scrollAll]);
   useEffect(() => {
     if (!open) {
       setScrolled(false);
@@ -311,6 +339,7 @@ export function ActionSheet({
                 // (a scrolling list included: it ends above the gap).
                 kb.bottom > 0 ? "pb-3" : "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]",
               )}
+              ref={contentRef}
               onScrollCapture={(ev) => setScrolled((ev.target as HTMLElement).scrollTop > 0)}
             >
               <SearchStuckProvider value={setSearchStuck}>{children}</SearchStuckProvider>

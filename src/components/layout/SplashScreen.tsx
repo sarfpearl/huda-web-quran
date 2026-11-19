@@ -39,11 +39,11 @@ export function SplashScreen() {
           <div className="huda-splash-text">
             <p className="huda-splash-name">HuDa</p>
             <p className="huda-splash-tagline">Guidance for every moment</p>
+            {/* Loading mark: four dots rearranging, pure CSS so it paints with
+                the server HTML before any script (landscape: under the tagline) */}
+            <DotLoader className="huda-splash-mark" />
           </div>
         </div>
-        {/* Loading mark: four dots rearranging, pure CSS so it paints with
-            the server HTML before any script */}
-        <DotLoader className="huda-splash-mark" />
       </div>
       <script dangerouslySetInnerHTML={{ __html: hideScript }} />
     </>

@@ -12,7 +12,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PHONE_LANDSCAPE, PLAYER_GLASS, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PHONE_LANDSCAPE, PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -192,6 +192,12 @@ export function TopicPickerModal({
   // a fixed header above an inner list.
   const wholeScroll = isMobile && !showAbout && !showSettings;
   const [panelScrolled, setPanelScrolled] = useState(false);
+  const scrollWrapRef = useRef<HTMLDivElement>(null);
+  // Phone landscape: a little peek on open, so the Surah list below shows.
+  useEffect(() => {
+    if (!isOpen || !wholeScroll) return;
+    return peekScroll(scrollWrapRef.current, 800);
+  }, [isOpen, wholeScroll]);
   const [searchStuck, setSearchStuck] = useState(false);
   useEffect(() => {
     setPanelScrolled(false);
@@ -872,6 +878,7 @@ export function TopicPickerModal({
                   the search row sticks at the top of it. */}
               <SearchStuckProvider value={setSearchStuck}>
               <div
+                ref={scrollWrapRef}
                 className={wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]"}
                 onScrollCapture={(ev) => setPanelScrolled((ev.target as HTMLElement).scrollTop > 0)}
               >
