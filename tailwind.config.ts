@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 /**
  * Huda Bayan design tokens.
@@ -15,10 +16,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      screens: {
-        // Phone turned sideways: short and wide (portrait and tablets untouched).
-        phoneland: { raw: "(orientation: landscape) and (max-height: 500px)" },
-      },
       colors: {
         // Deep Islamic green scale
         primary: {
@@ -108,7 +105,14 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `phoneland:` — a phone turned sideways (short and wide; portrait and
+    // tablets untouched). A variant, not a `raw` screen: any raw screen turns
+    // off every `max-*` breakpoint variant (max-sm:, max-md:) site-wide.
+    plugin(({ addVariant }) => {
+      addVariant("phoneland", "@media (orientation: landscape) and (max-height: 500px)");
+    }),
+  ],
 };
 
 export default config;
