@@ -8,7 +8,7 @@ import {
   reciterIsUnavailable,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
-import { ActionSheet, PLAYER_GLASS, useIsMobile } from "@/components/ui/ActionSheet";
+import { ActionSheet, PHONE_LANDSCAPE, PLAYER_GLASS, StickySearch, useIsMobile } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -63,6 +63,9 @@ export function ReciterPickerModal({
       wasOpenRef.current = true;
       setSearchQuery("");
       setSyncFilter(reciterHasWordTiming(selectedReciter) ? "word" : "verse");
+      // Phone landscape: open at the top (title, sync tabs and note first);
+      // the listener scrolls to the list themself.
+      if (window.matchMedia(PHONE_LANDSCAPE).matches) return;
       const id = requestAnimationFrame(() => {
         selectedItemRef.current?.scrollIntoView({ block: "nearest" });
       });
@@ -120,9 +123,8 @@ export function ReciterPickerModal({
     );
   });
 
-  const body = (
+  const titleBar = (
     <>
-
       {/* Header with Title and Close Button */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
         <div className="flex items-center gap-2.5">
@@ -148,8 +150,17 @@ export function ReciterPickerModal({
         </button>
       </div>
 
-      {/* Search Filter */}
-      <div className="relative mb-3">
+    </>
+  );
+
+  const body = (
+    <>
+      {!isMobile && titleBar}
+
+      {/* Search Filter — phones: stays at the top while the sheet scrolls */}
+      {(() => {
+        const search = (
+        <div className="relative">
         <input
           type="search"
           enterKeyHint="search"
@@ -180,7 +191,10 @@ export function ReciterPickerModal({
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
-      </div>
+        </div>
+        );
+        return isMobile ? <StickySearch className="mb-1">{search}</StickySearch> : <div className="mb-3">{search}</div>;
+      })()}
 
       {/* Sync Mode Segment Control */}
       <div className={`mb-3 ${TAB_TRACK}`}>
@@ -257,7 +271,7 @@ export function ReciterPickerModal({
       </div>
 
       {/* Reciter List */}
-      <div className={`${isMobile ? "min-h-0 flex-1" :"max-h-[55vh] pb-2"} overflow-y-auto space-y-1.5 pr-1 custom-scrollbar`}>
+      <div className={`${isMobile ? "" : "max-h-[55vh] pb-2 overflow-y-auto pr-1 custom-scrollbar"} space-y-1.5`}>
         {filteredReciters.length === 0 ? (
           <div className={`py-8 text-center text-xs text-sand-300/60`}>
             {searchQuery.trim()
@@ -356,8 +370,8 @@ export function ReciterPickerModal({
 
   if (isMobile) {
     return (
-      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")}>
-        <div ref={panelRef} className="flex min-h-0 flex-1 flex-col select-none">
+      <ActionSheet open={isOpen} onClose={onClose} label={t(lang, "Quran Reciter Selection")} scrollAll header={titleBar}>
+        <div ref={panelRef} className="flex flex-col select-none">
           {body}
         </div>
       </ActionSheet>

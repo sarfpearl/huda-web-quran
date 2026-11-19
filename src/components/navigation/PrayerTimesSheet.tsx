@@ -82,48 +82,57 @@ export function PrayerTimesSheet({
   const regional = !prefs.method && !prefs.asr;
 
   return (
-    <ActionSheet open={open} onClose={onClose} label={t(lang, "Prayer times")}>
-      <div className="px-5 pt-1 pb-2">
-        <h2 className="text-base font-bold text-sand-50">
-          {t(lang, "Prayer times")}
-          {place ? ` · ${place}` : ""}
-        </h2>
-        <p className="text-xs text-sand-200/70">{date}</p>
-        {/* Figma 679:19923: one pill, its icon and text following the state. */}
-        <button
-          type="button"
-          onClick={onLocate}
-          disabled={locating === "busy"}
-          aria-live="polite"
-          className="tap-44 mt-2 inline-flex items-center gap-2.5 rounded-full border border-white px-3 py-2 text-xs text-white transition-colors hover:bg-white/10 disabled:cursor-default disabled:hover:bg-transparent"
-        >
-          {locating === "busy" ? (
-            <HourglassIcon className="shrink-0" />
-          ) : locating === "done" ? (
-            <CheckCircleIcon className="shrink-0" />
-          ) : (
-            <MosqueLocationIcon className="shrink-0" />
-          )}
-          {/* Other languages run longer: they may wrap rather than run off a phone. */}
-          <span className={lang === "en" ? "whitespace-nowrap" : "text-start"}>
-            {locating === "busy"
-              ? t(lang, "Finding your location...")
-              : locating === "done"
-                ? `${t(lang, "Location Updated")}${place ? ` - “${place}”` : ""}`
-                : t(lang, "Update location")}
-          </span>
-        </button>
-        {locating === "unnamed" && (
-          <p role="status" className="mt-1.5 text-[11px] text-sand-200/70">
-            {t(lang, "Couldn't look up the place name. Check your connection and try again.")}
-          </p>
-        )}
-        {locating === "failed" && (
-          <p role="status" className="mt-1.5 text-[11px] text-sand-200/70">
-            {t(lang, "Couldn't get your location. Check that Location is on for this browser in your device settings.")}
-          </p>
-        )}
-      </div>
+    // Title, date and the location button stay put; the times and settings
+    // scroll under them (a landscape phone shows only a few rows).
+    <ActionSheet
+      open={open}
+      onClose={onClose}
+      label={t(lang, "Prayer times")}
+      scrollAll
+      header={
+        <div className="px-5 pt-1 pb-2">
+            <h2 className="text-base font-bold text-sand-50">
+              {t(lang, "Prayer times")}
+              {place ? ` · ${place}` : ""}
+            </h2>
+            <p className="text-xs text-sand-200/70">{date}</p>
+            {/* Figma 679:19923: one pill, its icon and text following the state. */}
+            <button
+              type="button"
+              onClick={onLocate}
+              disabled={locating === "busy"}
+              aria-live="polite"
+              className="tap-44 mt-2 inline-flex items-center gap-2.5 rounded-full border border-white px-3 py-2 text-xs text-white transition-colors hover:bg-white/10 disabled:cursor-default disabled:hover:bg-transparent"
+            >
+              {locating === "busy" ? (
+                <HourglassIcon className="shrink-0" />
+              ) : locating === "done" ? (
+                <CheckCircleIcon className="shrink-0" />
+              ) : (
+                <MosqueLocationIcon className="shrink-0" />
+              )}
+              {/* Other languages run longer: they may wrap rather than run off a phone. */}
+              <span className={lang === "en" ? "whitespace-nowrap" : "text-start"}>
+                {locating === "busy"
+                  ? t(lang, "Finding your location...")
+                  : locating === "done"
+                    ? `${t(lang, "Location Updated")}${place ? ` - “${place}”` : ""}`
+                    : t(lang, "Update location")}
+              </span>
+            </button>
+            {locating === "unnamed" && (
+              <p role="status" className="mt-1.5 text-[11px] text-sand-200/70">
+                {t(lang, "Couldn't look up the place name. Check your connection and try again.")}
+              </p>
+            )}
+            {locating === "failed" && (
+              <p role="status" className="mt-1.5 text-[11px] text-sand-200/70">
+                {t(lang, "Couldn't get your location. Check that Location is on for this browser in your device settings.")}
+              </p>
+            )}
+          </div>
+      }
+    >
       <ul className="px-3 pb-2">
         {ROWS.map((k) => {
           const isNow = k === current.prayer && !current.upcoming;

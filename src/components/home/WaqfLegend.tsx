@@ -88,14 +88,16 @@ const GROUPS: { id: WaqfGroup; title: string; disc: string; dot: string; chip: s
   },
 ];
 
-export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
+/** `scrollList`: in a height-capped popover the chips stay put and only the
+ *  signs scroll under them. */
+export function WaqfLegend({ lang: langProp, scrollList = false }: { lang?: UiLang; scrollList?: boolean } = {}) {
   const uiLang = useUiLang();
   const lang = langProp ?? uiLang;
   const [sel, setSel] = useState<WaqfGroup>("stop");
   return (
-    <div className="mt-2 border-t border-white/10 pt-3">
+    <div className={cn("mt-2 border-t border-white/10 pt-3", scrollList && "flex min-h-0 flex-col")}>
       {/* Group filter chips */}
-      <div className="no-scrollbar -mx-1 mb-3 flex gap-2 overflow-x-auto px-1">
+      <div className="no-scrollbar -mx-1 mb-3 flex shrink-0 gap-2 overflow-x-auto px-1">
         {GROUPS.map((g) => (
           <button
             key={g.id}
@@ -114,7 +116,13 @@ export function WaqfLegend({ lang: langProp }: { lang?: UiLang } = {}) {
       </div>
 
       {/* The selected group's signs */}
-      <ul className="grid gap-2">
+      <ul
+        className={cn(
+          "grid gap-2",
+          scrollList &&
+            "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] pb-3",
+        )}
+      >
         {WAQF_LEGEND.filter((r) => r.group === sel).map((r) => {
           const g = GROUPS.find((x) => x.id === sel)!;
           return (

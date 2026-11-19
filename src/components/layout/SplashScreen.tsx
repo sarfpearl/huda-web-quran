@@ -31,13 +31,19 @@ export function SplashScreen() {
   return (
     <>
       <div id="huda-splash" role="status" aria-label="Loading HuDa">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/huda-logo.webp?v=3" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
-        <p className="huda-splash-name">HuDa</p>
-        <p className="huda-splash-tagline">Guidance for every moment</p>
-        {/* Loading mark: four dots rearranging, pure CSS so it paints with
-            the server HTML before any script */}
-        <DotLoader className="huda-splash-mark" />
+        {/* Wrappers are display: contents (a plain stack) except on a phone in
+            landscape: then the name and tagline sit beside the logo. */}
+        <div className="huda-splash-row">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/huda-logo.webp?v=3" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
+          <div className="huda-splash-text">
+            <p className="huda-splash-name">HuDa</p>
+            <p className="huda-splash-tagline">Guidance for every moment</p>
+            {/* Loading mark: four dots rearranging, pure CSS so it paints with
+                the server HTML before any script (landscape: under the tagline) */}
+            <DotLoader className="huda-splash-mark" />
+          </div>
+        </div>
       </div>
       <script dangerouslySetInnerHTML={{ __html: hideScript }} />
     </>

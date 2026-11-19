@@ -199,6 +199,10 @@ export function CompactBayanPlayer({
   // The listener opened the full player themself: it stays full — playback,
   // a new track or the translation no longer shrink it, until they minimize.
   const userExpandedRef = useRef(false);
+  const collapsedRef = useRef(collapsed);
+  collapsedRef.current = collapsed;
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
   // Told in the layout phase, so the frame's bottom strip opens in the same
   // first paint as the pill (a passive effect painted the frame shut first).
   useLayoutEffect(() => {
@@ -241,6 +245,8 @@ export function CompactBayanPlayer({
 
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
+    // Phone landscape has only the side rail (no full player).
+    if (!next && window.matchMedia(PHONE_LANDSCAPE).matches) return;
     // A manual switch overrides any pending auto-restore (see below).
     if (remember) {
       autoCollapsedRef.current = false;
@@ -271,6 +277,10 @@ export function CompactBayanPlayer({
     setCollapsed(next);
   };
 
+  // Latest toggle for long-lived listeners (its `collapsed` check would go stale).
+  const toggleRef = useRef(toggleCollapsed);
+  toggleRef.current = toggleCollapsed;
+
   // Small screens: turning the translation on shrinks the full player to the
   // compact pill so the meaning has room; turning it off brings it back (only
   // if it was the auto-collapse). Not when the listener opened it themself.
@@ -298,6 +308,33 @@ export function CompactBayanPlayer({
     if (forceCompact && !collapsed) toggleCollapsed(true, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCompact]);
+
+  // Phone in landscape: the full player would fill the short screen, so it
+  // opens (and turns into) the compact view, drawn as a rail on the left. Turning
+  // back to portrait restores the full player if it was showing before.
+  const landscapeCollapsedRef = useRef(false);
+  const landscapeRestoreRef = useRef(false);
+  useEffect(() => {
+    const mq = window.matchMedia(PHONE_LANDSCAPE);
+    const apply = () => {
+      if (mq.matches) {
+        if (!collapsedRef.current) {
+          // Remember whether the listener had the full player open, so turning
+          // back to portrait gives it back.
+          landscapeRestoreRef.current = userExpandedRef.current || !isPlayingRef.current;
+          toggleRef.current(true, false);
+          landscapeCollapsedRef.current = true;
+        }
+      } else if (landscapeCollapsedRef.current) {
+        landscapeCollapsedRef.current = false;
+        if (collapsedRef.current && landscapeRestoreRef.current) toggleRef.current(false, false);
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Every screen size: the full player shows until playback starts, then it
   // shrinks to the compact pill so the ayah has the screen — unless the
@@ -657,9 +694,17 @@ export function CompactBayanPlayer({
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2 phoneland:flex-col phoneland:gap-2 phoneland:px-2 phoneland:py-2.5`}
       >
-        <VolumeControl buttonClassName={compactBtn} active={collapsed} />
+        {/* Phone landscape: a side rail of previous / play / next only — the
+            reciting stays the centre of the screen. */}
+        <div className="contents phoneland:hidden">
+          <VolumeControl buttonClassName={compactBtn} active={collapsed} />
+        </div>
+        {/* Phone landscape rail: the Surah name (English) on top */}
+        <span className="hidden max-w-[4.75rem] truncate text-center text-[10px] font-semibold leading-tight text-sand-100 phoneland:block" title={bayan.title}>
+          {bayan.title}
+        </span>
 
         <button
           type="button"
@@ -694,7 +739,7 @@ export function CompactBayanPlayer({
           onPointerMove={onRingPointerMove}
           onPointerUp={endScrub}
           onPointerCancel={endScrub}
-          className="group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+          className="group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 phoneland:h-14 phoneland:w-14 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
         >
           <div
             aria-hidden="true"
@@ -780,12 +825,13 @@ export function CompactBayanPlayer({
         <button
           type="button"
           onClick={() => toggleCollapsed(false)}
-          className={compactBtn}
+          className={`${compactBtn} phoneland:hidden`}
           aria-label={t(language, "Expand player")}
           title={t(language, "Expand player")}
         >
           <ChevronDownIcon className="text-xl rotate-180" />
         </button>
+
       </div>
   );
 
@@ -1373,6 +1419,8 @@ function CoverFlight({
 const LATIN_UI = new Set<UiLang>(["en", "id", "tr", "fr", "ms"]);
 
 const SMALL_SCREEN = "(max-width: 767px)";
+/** Same as the `phoneland` Tailwind screen. */
+const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
 const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition-none";
@@ -1384,7 +1432,7 @@ const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-i
 const NARROW_BTN = "max-[369px]:h-10 max-[369px]:w-10";
 
 const compactBtn =
-  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 phoneland:h-10 phoneland:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 // 32px wide (44px hit area via tap-44): with the cover shown, the pill

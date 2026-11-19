@@ -63,10 +63,26 @@ interface CenterVerseDisplayProps {
   meaningCurrentTime?: number;
 }
 
+/** Phone turned sideways (same as the `phoneland` Tailwind screen). */
+const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
+
+/** Live match of a media query (false on the server and before mount). */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatches(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return matches;
+}
+
 /** UI languages in Latin script: the greeting keeps the serif face on phones. */
 const LATIN_UI: readonly UiLang[] = ["en", "id", "tr", "fr", "ms"];
 
-function Greeting({ language, style }: { language: UiLang; style: React.CSSProperties }) {
+function Greeting({ language, style, tagline = true }: { language: UiLang; style: React.CSSProperties; tagline?: boolean }) {
   const face = LATIN_UI.includes(language) ? "font-serif sm:font-sans" : "font-sans";
   const dir = isRtl(language) ? "rtl" : undefined;
   // Fit: shrink the whole greeting to the room between the header and the
@@ -100,7 +116,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
     >
       <div
         ref={bodyRef}
-        className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 select-none animate-in fade-in duration-500"
+        className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 phoneland:gap-1 phoneland:pb-3 select-none animate-in fade-in duration-500"
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
         {/* Salam in the Uthmanic Hafs Mushaf face (U+06E1 sukun, as the
@@ -110,7 +126,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
         <p
           dir="rtl"
           lang="ar"
-          className="relative font-arabic text-[#E8C46E] leading-[1.5] text-[2.75rem] sm:text-[4.25rem] md:text-[5.25rem] [-webkit-text-stroke:0.01em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
+          className="relative font-arabic text-[#E8C46E] leading-[1.5] phoneland:leading-[1.3] text-[2.75rem] sm:text-[4.25rem] md:text-[5.25rem] [-webkit-text-stroke:0.01em_currentColor] [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]"
         >
           السَّلَامُ عَلَيۡكُمۡ
           <span aria-hidden="true" className="huda-text-shine pointer-events-none absolute inset-0">
@@ -125,6 +141,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           {t(language, "As-salamu alaykum")}
         </h2>
         {/* Tapered green rules: thick beside the words, fading to a point. */}
+        {tagline && (
         <div className="mt-1 flex items-center gap-3 sm:gap-5">
           <GreenRule />
           <p
@@ -136,6 +153,7 @@ function Greeting({ language, style }: { language: UiLang; style: React.CSSPrope
           </p>
           <GreenRule flip />
         </div>
+        )}
       </div>
     </div>
   );
@@ -310,6 +328,9 @@ export function CenterVerseDisplay({
   // player 343 / 371px) so the server-rendered ayah doesn't jump on hydration.
   const [bottomInset, setBottomInset] = useState<number | null>(null);
   const [topInset, setTopInset] = useState<number | null>(null);
+  const [hasPills, setHasPills] = useState(false);
+  const [sideInset, setSideInset] = useState<number | null>(null);
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE);
   // Layout phase: measured before the first paint after hydration.
   useLayoutEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
@@ -321,16 +342,26 @@ export function CenterVerseDisplay({
       // Measured against the full-screen scene (it can run under Safari's bars).
       if (dock) {
         const scene = dock.parentElement?.getBoundingClientRect();
-        const top = dock.getBoundingClientRect().top;
-        setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - top) + 4);
+        const rect = dock.getBoundingClientRect();
+        if (window.matchMedia(PHONE_LANDSCAPE).matches) {
+          // Side rail: the stage keeps the full height and clears the rail on
+          // both sides, so the text stays centred on the screen.
+          setBottomInset(16);
+          setSideInset(Math.max(0, rect.right - (scene?.left ?? 0)) + 8);
+        } else {
+          setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - rect.top) + 4);
+          setSideInset(null);
+        }
       }
       if (header) {
         const scene = header.parentElement?.getBoundingClientRect();
         // The header's own pb-4 (16px) is the gap below its pills.
         let bottom = header.getBoundingClientRect().bottom;
         // Clear of the pills too (they sit over the stage's top otherwise).
-        if (pills && pills.offsetHeight > 0) bottom = Math.max(bottom, pills.getBoundingClientRect().bottom + 12);
+        const pillsOn = Boolean(pills && pills.offsetHeight > 0);
+        if (pills && pillsOn) bottom = Math.max(bottom, pills.getBoundingClientRect().bottom + 12);
         setTopInset(Math.max(0, bottom - (scene?.top ?? 0)));
+        setHasPills(pillsOn);
       }
     };
     measure();
@@ -354,6 +385,7 @@ export function CenterVerseDisplay({
   const stageInsets = {
     ...(bottomInset != null ? { paddingBottom: bottomInset } : {}),
     ...(topInset != null ? { paddingTop: topInset } : {}),
+    ...(sideInset != null ? { paddingLeft: sideInset, paddingRight: sideInset } : {}),
   };
 
   // Fit-to-stage: long ayahs (e.g. 2:102, 2:282) are shrunk until the Arabic
@@ -672,7 +704,9 @@ export function CenterVerseDisplay({
   // NOTE: a Juz recited per-ayah in a chosen reciter's voice DOES pass a verse
   // here (its current ayah) — so we no longer blanket-hide on isJuz; we render
   // whenever there's an active verse. Maher's full-Juz file passes none.
-  if (showGreeting) return <Greeting language={language} style={stageInsets} />;
+  // Phone landscape with Continue / Bookmark pills above: the greeting moves
+  // down under them and drops its tagline to keep the salam large.
+  if (showGreeting) return <Greeting language={language} style={stageInsets} tagline={!(phoneLandscape && hasPills)} />;
 
   const activeItem = currentSegment ?? currentVerse;
   if (!activeItem) return null;

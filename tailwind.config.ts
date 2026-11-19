@@ -15,6 +15,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        // Phone turned sideways: short and wide (portrait and tablets untouched).
+        phoneland: { raw: "(orientation: landscape) and (max-height: 500px)" },
+      },
       colors: {
         // Deep Islamic green scale
         primary: {

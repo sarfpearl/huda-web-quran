@@ -496,7 +496,8 @@ export function InstallGuide() {
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 320 }}
           >
-            <div className={`rounded-[28px] ${PLAYER_GLASS} p-4 text-sand-50`}>
+            {/* Capped to the screen (a phone in landscape): the card scrolls. */}
+            <div className={`no-scrollbar max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-max(env(safe-area-inset-bottom),var(--vv-bottom,0px))-1.5rem)] overflow-y-auto overscroll-contain rounded-[28px] ${PLAYER_GLASS} p-4 text-sand-50`}>
               <div className="flex items-start gap-3">
                 <img src="/icon-192.png" alt="" className="h-12 w-12 shrink-0 rounded-2xl" />
                 <div className="min-w-0 flex-1">

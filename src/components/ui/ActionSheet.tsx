@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,103 @@ import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
+/** A phone turned sideways (same as the `phoneland` Tailwind screen). */
+export const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
+
+/**
+ * Phone landscape: once a sheet has opened, nudge its list down a little and
+ * back, so the listener sees there is more below the fold. Only when it can
+ * scroll, is still at the top, and motion is allowed. Returns a cleanup.
+ */
+export function peekScroll(el: HTMLElement | null, delay = 650): () => void {
+  if (!el || !window.matchMedia(PHONE_LANDSCAPE).matches) return () => {};
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
+  let back: ReturnType<typeof setTimeout> | undefined;
+  const go = setTimeout(() => {
+    if (el.scrollTop > 0 || el.scrollHeight - el.clientHeight < 40) return;
+    el.scrollTo({ top: 56, behavior: "smooth" });
+    back = setTimeout(() => {
+      if (el.scrollTop <= 60) el.scrollTo({ top: 0, behavior: "smooth" });
+    }, 520);
+  }, delay);
+  return () => {
+    clearTimeout(go);
+    if (back) clearTimeout(back);
+  };
+}
+
 /** Same glass as the player card, so sheets read as part of it. */
+/** Tells the sheet whether its StickySearch is stuck (the title's backing
+    then runs straight into the search row's, with no fade between them). */
+const SearchStuckContext = createContext<((stuck: boolean) => void) | null>(null);
+export const SearchStuckProvider = SearchStuckContext.Provider;
+
+const BACKING = "bg-[rgba(14,16,15,0.86)] backdrop-blur-md";
+const FADE_MASK = "[mask-image:linear-gradient(to_bottom,#000_62%,transparent)]";
+
+/**
+ * Dark backing behind a sheet's fixed title once its content scrolls: solid
+ * when a stuck search row continues it, otherwise feathered at the bottom.
+ * Put it first inside a `relative isolate` title block.
+ */
+export function TitleBacking({ show, joined, className }: { show: boolean; joined: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        // Phone landscape only; portrait keeps the plain glass.
+        "pointer-events-none absolute -z-10 hidden transition-opacity duration-200 phoneland:block",
+        BACKING,
+        !joined && FADE_MASK,
+        show ? "opacity-100" : "opacity-0",
+        className ?? "inset-0",
+      )}
+    />
+  );
+}
+
+/**
+ * A search row that stays at the top of a scrolling sheet. Until the list
+ * scrolls under it, it is just the sheet's glass; once it sticks (phone
+ * landscape only), the dark backing of the title above runs on behind it,
+ * feathering out at its bottom edge so the list passes under it blurred.
+ */
+export function StickySearch({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  const report = useContext(SearchStuckContext);
+  useEffect(() => {
+    const el = ref.current;
+    let scroller = el?.parentElement ?? null;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!el || !scroller) return;
+    const box = scroller;
+    const check = () =>
+      setStuck(box.scrollTop > 0 && el.getBoundingClientRect().top - box.getBoundingClientRect().top <= 1);
+    check();
+    box.addEventListener("scroll", check, { passive: true });
+    return () => box.removeEventListener("scroll", check);
+  }, []);
+  useEffect(() => {
+    report?.(stuck);
+    return () => report?.(false);
+  }, [stuck, report]);
+  return (
+    <div ref={ref} data-stuck={stuck || undefined} className={cn("sticky top-0 z-20 -mx-4 px-4 py-2", className)}>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 -bottom-5 -z-10 hidden transition-opacity duration-200 phoneland:block",
+          BACKING,
+          FADE_MASK,
+          stuck ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
 export const PLAYER_GLASS =
   "bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8)]";
 
@@ -114,6 +210,8 @@ export function ActionSheet({
   label,
   keepAttr,
   noAutoClose = false,
+  scrollAll = false,
+  header,
 }: {
   open: boolean;
   onClose: () => void;
@@ -126,6 +224,12 @@ export function ActionSheet({
   /** Keep the sheet open regardless of idle (a permission ask that must be
       answered, not dismissed by a timeout). */
   noAutoClose?: boolean;
+  /** The whole sheet scrolls as one (title, switches and list together), so a
+      short screen — a phone in landscape — still reaches every item; mark a
+      search row with StickySearch to keep it in view. */
+  scrollAll?: boolean;
+  /** Stays above the scrolling part (title and close button never scroll away). */
+  header?: ReactNode;
 }) {
   const drag = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -137,6 +241,21 @@ export function ActionSheet({
   useSheetTouchLock(open, sheetRef);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // The title's backing: shown once anything in the sheet scrolls.
+  const [scrolled, setScrolled] = useState(false);
+  const [searchStuck, setSearchStuck] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // Phone landscape, whole-sheet scroll: a little peek so the list below shows.
+  useEffect(() => {
+    if (!open || !scrollAll) return;
+    return peekScroll(contentRef.current);
+  }, [open, scrollAll]);
+  useEffect(() => {
+    if (!open) {
+      setScrolled(false);
+      setSearchStuck(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -198,21 +317,32 @@ export function ActionSheet({
           >
             {/* Handle: drag down to close */}
             <div
-              className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+              className="relative z-10 flex h-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
               onPointerDown={(ev) => drag.start(ev)}
               aria-hidden="true"
             >
               <span className="h-1 w-10 rounded-full bg-white/30" />
             </div>
+            {header && (
+              <div className="relative isolate flow-root shrink-0 px-4">
+                <TitleBacking show={scrolled} joined={searchStuck} className="inset-x-0 -top-6 bottom-0" />
+                {header}
+              </div>
+            )}
             <div
               className={cn(
-                "flex min-h-0 flex-1 flex-col px-4",
+                // Always able to scroll: content taller than the sheet (a phone
+                // in landscape) is still reachable; inner lists keep their own.
+                "no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4",
+                scrollAll && "[&>*]:shrink-0",
                 // Every sheet keeps a gap at its bottom, above the home indicator
                 // (a scrolling list included: it ends above the gap).
                 kb.bottom > 0 ? "pb-3" : "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]",
               )}
+              ref={contentRef}
+              onScrollCapture={(ev) => setScrolled((ev.target as HTMLElement).scrollTop > 0)}
             >
-              {children}
+              <SearchStuckProvider value={setSearchStuck}>{children}</SearchStuckProvider>
             </div>
           </motion.div>
         </>

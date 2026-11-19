@@ -2057,7 +2057,27 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       </AnimatePresence>
       </div>
 
-      {/* Bottom Floating Player — the skip link's target (MainLayout) */}
+      {/* Phone landscape: the notice (e.g. « Reading mode on ») at the bottom
+          centre — the player there is a rail on the left. */}
+      {notice && !keyboardOpen && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] z-40 hidden justify-center px-4 phoneland:flex">
+          <div
+            key={`land-${notice.id}`}
+            role="status"
+            aria-live="polite"
+            className="flex max-w-[680px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
+          >
+            <svg className="h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v5h5" />
+            </svg>
+            <span>{notice.text}</span>
+          </div>
+        </div>
+      )}
+      {/* Bottom Floating Player — the skip link's target (MainLayout). Phone
+          landscape: a rail on the left edge, centred but never under the header
+          (the feedback lantern hangs on the right). */}
       <div
         data-player-dock
         id="player"
@@ -2065,7 +2085,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         aria-label="Player"
         tabIndex={-1}
         aria-hidden={playerAway ? true : undefined}
-        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 ${
+        className={`outline-none absolute bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+1.5rem)] inset-x-0 z-40 flex flex-col items-center px-4 pointer-events-none transition-opacity duration-300 phoneland:inset-x-auto phoneland:left-[max(env(safe-area-inset-left),0.75rem)] phoneland:bottom-auto phoneland:top-[max(calc(max(env(safe-area-inset-top),var(--vv-top,0px))+4.75rem),calc(50%-5.5rem))] phoneland:px-0 ${
           playerAway ? "invisible opacity-0" : ""
         }`}
       >
@@ -2074,7 +2094,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             key={notice.id}
             role="status"
             aria-live="polite"
-            className="mb-3 max-w-[680px] w-auto flex items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
+            className="mb-3 phoneland:hidden max-w-[680px] w-auto flex items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
             <svg className="h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M3 12a9 9 0 1 0 3-6.7" />

@@ -30,7 +30,7 @@ import { WaqfLegend } from "./WaqfLegend";
 
 /** How long the Tajweed panel stays open untouched before hiding itself. */
 const TAJWEED_AUTO_HIDE_MS = 4000;
-import { ActionSheet } from "@/components/ui/ActionSheet";
+import { ActionSheet, StickySearch } from "@/components/ui/ActionSheet";
 import { ArrowExpandIcon, ArrowShrinkIcon, CheckIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
@@ -246,7 +246,9 @@ export function ImmersiveHeader({
           open={translationSheetOpen}
           onClose={() => setTranslationSheetOpen(false)}
           label={t(language, "Choose the translation language")}
-        >
+          scrollAll
+          header={
+            <>
           {/* Laid out like the reciter picker: title bar, search, list of cards */}
           <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
             <div>
@@ -266,6 +268,9 @@ export function ImmersiveHeader({
             </button>
             </div>
           </div>
+            </>
+          }
+        >
           {/* The same switches as Settings › Translation. Off = Arabic only:
               the meaning voice shows, greyed out; the languages once it's on. */}
           <div className="mb-3 space-y-2.5">
@@ -276,7 +281,8 @@ export function ImmersiveHeader({
           </div>
           {showMeaning && (
           <>
-          <div className="relative mb-3">
+          <StickySearch className="mb-1">
+          <div className="relative">
             <input
               type="text"
               value={langQuery}
@@ -289,7 +295,8 @@ export function ImmersiveHeader({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <div className="min-h-0 space-y-1.5 overflow-y-auto no-scrollbar" role="radiogroup" aria-label={t(language, "Translation language")}>
+          </StickySearch>
+          <div className="space-y-1.5" role="radiogroup" aria-label={t(language, "Translation language")}>
             {langChoices.length === 0 && (
               <p className={`py-6 text-center text-xs text-sand-300/60`}>
                 {t(language, "No language found for “{q}”", { q: langQuery.trim() })}
@@ -394,12 +401,14 @@ export function ImmersiveHeader({
               <div
                 role="dialog"
                 aria-label={t(language, "Tajweed colours")}
-                className="pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150"
+                // Capped to the screen. IndoPak: the script tabs and the waqf
+                // chips stay put, only the signs scroll; otherwise all scrolls.
+                className={`pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-5.5rem)] ${script === "indopak" ? "flex flex-col" : "overflow-y-auto overscroll-contain no-scrollbar"} rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150`}
               >
                 {/* Mushaf script: Uthmani (Madani) or IndoPak */}
                 {onChooseScript && (
                   // The divider separates it from the Tajweed switch, which IndoPak doesn't have.
-                  <div className={`px-1 ${script === "indopak" ? "pb-1" : "mb-2 border-b border-white/10 pb-3"}`}>
+                  <div className={`px-1 ${script === "indopak" ? "flex min-h-0 flex-col pb-1" : "mb-2 border-b border-white/10 pb-3"}`}>
                     <p className={`mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-sand-300/70`}>{t(language, "Script")}</p>
                     <div role="radiogroup" aria-label={t(language, "Quran script")} className={TAB_TRACK}>
                       {SCRIPT_CHOICES.map((c) => (
@@ -416,7 +425,7 @@ export function ImmersiveHeader({
                       ))}
                     </div>
                     {/* IndoPak: a key to the waqf (stop) signs in the text. */}
-                    {script === "indopak" && <WaqfLegend lang={language} />}
+                    {script === "indopak" && <WaqfLegend lang={language} scrollList />}
                   </div>
                 )}
                 {/* Tajweed colours exist for the Uthmani script only: no switch in IndoPak */}

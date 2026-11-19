@@ -1062,6 +1062,8 @@ export function PlayerStatsFrame({
         "pointer-events-auto relative flex max-w-full flex-col transition-[border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
         show &&
           "rounded-[28px] border border-white/15 bg-black/[0.08] backdrop-blur-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.6)]",
+        // Phone landscape: the strips are gone, so the player card is the only box.
+        show && "phoneland:!border-0 phoneland:!bg-transparent phoneland:!shadow-none phoneland:!backdrop-blur-none",
         // Compact player (bottom strip open): phone-sized corners at every size.
         show && !withFooter && "sm:rounded-[40px]"
       )}
@@ -1070,7 +1072,7 @@ export function PlayerStatsFrame({
       style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden")}
+        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden", "phoneland:!hidden")}
         style={topInsets}
         ref={topStripRef}
       >
@@ -1139,7 +1141,9 @@ export function PlayerStatsFrame({
         className={cn(
           "grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
           show ? "" : "hidden",
-          withFooter ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
+          withFooter ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0",
+          // Phone landscape: the player is a side rail of play / prev / next only.
+          "phoneland:!hidden"
         )}
         aria-hidden={!withFooter}
         data-footer-wrap

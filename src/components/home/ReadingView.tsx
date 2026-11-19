@@ -746,6 +746,9 @@ export function ReadingView({
     const fit = () => {
       // Player hidden: down to the bottom edge.
       if (!playerShown) return void (el.style.bottom = "max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))");
+      // Phone landscape: the player is a rail at the side, not below — the
+      // class's bottom applies (measuring the rail left the text 24px tall).
+      if (window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches) return el.style.removeProperty("bottom");
       const f = frame.getBoundingClientRect();
       if (!f.height) return el.style.removeProperty("bottom");
       el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;
@@ -1106,11 +1109,13 @@ export function ReadingView({
       aria-label={t(lang, "Reading {label}", { label })}
       className="absolute inset-0 z-20 pointer-events-none"
     >
-      {/* Scrolls between the header and the compact player; edges fade out */}
+      {/* Scrolls between the header and the compact player; edges fade out.
+          Phone landscape: the player is a rail on the left, so the text runs to
+          the bottom and clears the rail on both sides (stays centred). */}
       <div
         ref={scrollRef}
         style={{ "--reader-scale": textScale } as React.CSSProperties}
-        className={`no-scrollbar pointer-events-auto absolute inset-x-0 ${focus ? "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+0.5rem)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)]"} bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+9.5rem)] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]`}
+        className={`no-scrollbar pointer-events-auto absolute inset-x-0 ${focus ? "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+0.5rem)]" : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.5rem)]"} bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+9.5rem)] phoneland:bottom-[calc(max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))+0.5rem)] phoneland:inset-x-[6.75rem] overflow-y-auto overscroll-contain scroll-py-12 [mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0/0.35)_1.5rem,black_4rem,black_calc(100%-2rem),transparent)]`}
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-8 pt-8 pb-12 min-h-full flex flex-col justify-center">
           {failed ? (
