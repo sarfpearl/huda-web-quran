@@ -337,6 +337,7 @@ export function CenterVerseDisplay({
   const [topInset, setTopInset] = useState<number | null>(null);
   const [hasPills, setHasPills] = useState(false);
   const [sideInset, setSideInset] = useState<number | null>(null);
+  const [sceneHeight, setSceneHeight] = useState<number | null>(null);
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE);
   // Layout phase: measured before the first paint after hydration.
   useLayoutEffect(() => {
@@ -370,6 +371,7 @@ export function CenterVerseDisplay({
         const pillsOn = Boolean(pills && pills.offsetHeight > 0);
         if (pills && pillsOn) bottom = Math.max(bottom, pills.getBoundingClientRect().bottom + 12);
         setTopInset(Math.max(0, bottom - (scene?.top ?? 0)));
+        setSceneHeight(scene?.height ?? window.innerHeight);
         setHasPills(pillsOn);
       }
     };
@@ -391,8 +393,16 @@ export function CenterVerseDisplay({
     };
   }, []);
 
+  // Phone landscape: the stage is padded the same top and bottom, so the ayah
+  // sits in the middle of the screen (not pushed down by the header above);
+  // a short screen keeps at least LAND_MIN_STAGE px of room for the text.
+  const LAND_MIN_STAGE = 180;
+  const landBottom =
+    phoneLandscape && topInset != null && bottomInset != null && sceneHeight != null
+      ? Math.max(bottomInset, Math.min(topInset, sceneHeight - topInset - LAND_MIN_STAGE))
+      : null;
   const stageInsets = {
-    ...(bottomInset != null ? { paddingBottom: bottomInset } : {}),
+    ...(landBottom != null ? { paddingBottom: landBottom } : bottomInset != null ? { paddingBottom: bottomInset } : {}),
     ...(topInset != null ? { paddingTop: topInset } : {}),
     ...(sideInset != null ? { paddingLeft: sideInset, paddingRight: sideInset } : {}),
   };
@@ -469,6 +479,12 @@ export function CenterVerseDisplay({
         // Phone landscape: a higher floor (data-fit-min-land) — a long ayah
         // stays large and its pane scrolls (and follows the recitation).
         const land = window.matchMedia(PHONE_LANDSCAPE).matches;
+        // Phone landscape: one fixed size (data-fit-land, px) for every ayah,
+        // short or long — a long one keeps it and its pane scrolls.
+        if (land && texts.every((t) => t.dataset.fitLand)) {
+          texts.forEach((t) => (t.style.fontSize = `${Number(t.dataset.fitLand)}px`));
+          return;
+        }
         const mins = texts.map(
           (t, j) => Number((land ? t.dataset.fitMinLand : undefined) ?? t.dataset.fitMin) || bases[j]
         );
@@ -611,7 +627,10 @@ export function CenterVerseDisplay({
         const along = alongLine(el, ar.querySelectorAll<HTMLElement>("[data-word-idx]"));
         followScroll(ar, () => {
           const s = ar.getBoundingClientRect();
-          return ar.scrollTop + el.getBoundingClientRect().top - s.top + along - s.height * 0.3;
+          const r = el.getBoundingClientRect();
+          // Phone landscape: the recited line stays in the middle of the screen.
+          const anchor = window.matchMedia(PHONE_LANDSCAPE).matches ? s.height / 2 - r.height / 2 : s.height * 0.3;
+          return ar.scrollTop + r.top - s.top + along - anchor;
         });
       }
     }
@@ -885,6 +904,7 @@ export function CenterVerseDisplay({
             data-fit-text
             data-fit-min={22}
             data-fit-min-land={34}
+            data-fit-land={56}
             data-fit-max={84}
             data-fit-max-tablet={56}
             data-fit-max-mobile={44}
