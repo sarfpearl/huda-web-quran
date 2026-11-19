@@ -345,9 +345,11 @@ export function CenterVerseDisplay({
         const rect = dock.getBoundingClientRect();
         if (window.matchMedia(PHONE_LANDSCAPE).matches) {
           // Side rail: the stage keeps the full height and clears the rail on
-          // both sides, so the text stays centred on the screen.
+          // both sides, so the text stays centred on the screen (a hidden
+          // rail — tap-to-focus — leaves just the edge gap).
           setBottomInset(16);
-          setSideInset(Math.max(0, rect.right - (scene?.left ?? 0)) + 8);
+          const railHidden = getComputedStyle(dock).visibility === "hidden";
+          setSideInset(railHidden ? 16 : Math.max(0, rect.right - (scene?.left ?? 0)) + 8);
         } else {
           setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - rect.top) + 4);
           setSideInset(null);
