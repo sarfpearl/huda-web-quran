@@ -12,7 +12,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PLAYER_GLASS, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PHONE_LANDSCAPE, PLAYER_GLASS, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -281,7 +281,9 @@ export function TopicPickerModal({
   // (once the panel has slid in and the list has rendered).
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!isOpen) return;
+    // Phone landscape: open at the top (tabs and topics first); the
+    // listener scrolls to the list themself.
+    if (!isOpen || window.matchMedia(PHONE_LANDSCAPE).matches) return;
     const timer = setTimeout(() => {
       listRef.current
         ?.querySelector<HTMLElement>('[aria-current="true"]')

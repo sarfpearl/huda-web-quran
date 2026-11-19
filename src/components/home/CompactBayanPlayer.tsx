@@ -486,6 +486,29 @@ export function CompactBayanPlayer({
       </button>
     </>
   );
+  // Rail (phone landscape): one Ayah step, no label.
+  const ayahStepButton = (dir: "prev" | "next") => {
+    const prev = dir === "prev";
+    const go = prev ? onPrevVerse : onNextVerse;
+    if (!go) return <span className="h-8 w-8" />;
+    const label = prev ? "Previous Ayah" : "Next Ayah";
+    return (
+      <button
+        type="button"
+        onClick={() => { haptic(); go(); }}
+        disabled={prev ? atFirstAyah : atLastAyah}
+        className="tap-44 grid h-8 w-8 place-items-center rounded-full text-sand-100 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-35 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
+        aria-label={label}
+        title={t(language, label)}
+        data-tooltip={t(language, label)}
+      >
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <path d={prev ? "M11 17l-5-5 5-5M18 17l-5-5 5-5" : "M13 17l5-5-5-5M6 17l5-5-5-5"} />
+        </svg>
+      </button>
+    );
+  };
+
   const ayahSteps = (btnClass: string, iconClass: string) => pageNav ? pageSteps(pageNav, btnClass, iconClass) : (
     <>
       {onPrevVerse ? (
@@ -701,6 +724,10 @@ export function CompactBayanPlayer({
         <div className="contents phoneland:hidden">
           <VolumeControl buttonClassName={compactBtn} active={collapsed} />
         </div>
+        {/* Phone landscape rail: the Surah name (English) on top */}
+        <span className="hidden max-w-[4.75rem] truncate text-center text-[10px] font-semibold leading-tight text-sand-100 phoneland:block" title={bayan.title}>
+          {bayan.title}
+        </span>
 
         <button
           type="button"
@@ -827,6 +854,14 @@ export function CompactBayanPlayer({
         >
           <ChevronDownIcon className="text-xl rotate-180" />
         </button>
+
+        {/* Phone landscape rail: previous / next Ayah at the bottom */}
+        {(onPrevVerse || onNextVerse) && (
+          <div className="hidden items-center gap-1 border-t border-white/10 pt-2 phoneland:flex">
+            {ayahStepButton("prev")}
+            {ayahStepButton("next")}
+          </div>
+        )}
       </div>
   );
 

@@ -9,6 +9,9 @@ import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
+/** A phone turned sideways (same as the `phoneland` Tailwind screen). */
+export const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
+
 /** Same glass as the player card, so sheets read as part of it. */
 /** Tells the sheet whether its StickySearch is stuck (the title's backing
     then runs straight into the search row's, with no fade between them). */

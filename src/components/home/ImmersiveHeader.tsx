@@ -401,7 +401,7 @@ export function ImmersiveHeader({
               <div
                 role="dialog"
                 aria-label={t(language, "Tajweed colours")}
-                className="pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150"
+                className="pointer-events-auto absolute right-2 sm:right-8 top-[calc(100%-0.5rem)] z-50 w-[min(18rem,calc(100vw-1rem))] max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-5.5rem)] overflow-y-auto overscroll-contain no-scrollbar rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl p-3 text-sand-50 animate-in fade-in duration-150"
               >
                 {/* Mushaf script: Uthmani (Madani) or IndoPak */}
                 {onChooseScript && (
