@@ -486,29 +486,6 @@ export function CompactBayanPlayer({
       </button>
     </>
   );
-  // Rail (phone landscape): one Ayah step, no label.
-  const ayahStepButton = (dir: "prev" | "next") => {
-    const prev = dir === "prev";
-    const go = prev ? onPrevVerse : onNextVerse;
-    if (!go) return <span className="h-8 w-8" />;
-    const label = prev ? "Previous Ayah" : "Next Ayah";
-    return (
-      <button
-        type="button"
-        onClick={() => { haptic(); go(); }}
-        disabled={prev ? atFirstAyah : atLastAyah}
-        className="tap-44 grid h-8 w-8 place-items-center rounded-full text-sand-100 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-35 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
-        aria-label={label}
-        title={t(language, label)}
-        data-tooltip={t(language, label)}
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-          <path d={prev ? "M11 17l-5-5 5-5M18 17l-5-5 5-5" : "M13 17l5-5-5-5M6 17l5-5-5-5"} />
-        </svg>
-      </button>
-    );
-  };
-
   const ayahSteps = (btnClass: string, iconClass: string) => pageNav ? pageSteps(pageNav, btnClass, iconClass) : (
     <>
       {onPrevVerse ? (
@@ -717,7 +694,7 @@ export function CompactBayanPlayer({
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2 phoneland:flex-col phoneland:gap-2.5 phoneland:px-2 phoneland:py-3`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-w-[calc(100vw-2rem)] justify-center items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2 phoneland:flex-col phoneland:gap-2 phoneland:px-2 phoneland:py-2.5`}
       >
         {/* Phone landscape: a side rail of previous / play / next only — the
             reciting stays the centre of the screen. */}
@@ -762,7 +739,7 @@ export function CompactBayanPlayer({
           onPointerMove={onRingPointerMove}
           onPointerUp={endScrub}
           onPointerCancel={endScrub}
-          className="group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+          className="group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 phoneland:h-14 phoneland:w-14 shrink-0 rounded-full touch-none cursor-grab active:cursor-grabbing shadow-[0_0_24px_rgba(16,185,129,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
         >
           <div
             aria-hidden="true"
@@ -855,13 +832,6 @@ export function CompactBayanPlayer({
           <ChevronDownIcon className="text-xl rotate-180" />
         </button>
 
-        {/* Phone landscape rail: previous / next Ayah at the bottom */}
-        {(onPrevVerse || onNextVerse) && (
-          <div className="hidden items-center gap-1 border-t border-white/10 pt-2 phoneland:flex">
-            {ayahStepButton("prev")}
-            {ayahStepButton("next")}
-          </div>
-        )}
       </div>
   );
 
@@ -1462,7 +1432,7 @@ const viewHidden = "pointer-events-none opacity-0 blur-[2px] duration-200 ease-i
 const NARROW_BTN = "max-[369px]:h-10 max-[369px]:w-10";
 
 const compactBtn =
-  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+  "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 phoneland:h-10 phoneland:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 // 32px wide (44px hit area via tap-44): with the cover shown, the pill
