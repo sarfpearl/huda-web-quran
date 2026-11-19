@@ -1941,8 +1941,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         focus={
           readingActive
             ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) }
-            : landFocusOn
-              ? { on: true, onToggle: () => setLandFocus(false) }
+            : phoneLandscape
+              ? // Landscape: ⤢ in the header hides it all at once, ⤡ brings it back.
+                { on: landFocusOn, onToggle: () => setLandFocus((v) => !v) }
               : undefined
         }
         showTajweed={tajweedShown}

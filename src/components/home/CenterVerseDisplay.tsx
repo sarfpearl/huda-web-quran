@@ -292,6 +292,13 @@ function AyahOrnament({ n, indoPak = false, inRow = false }: { n: number; indoPa
   );
 }
 
+/** Verses already fetched (glyphs with their page fonts loaded / QPC text),
+ *  keyed `${script}:${surah}:${ayah}`: a segment seen before (the Bismillah
+ *  prelude of every Surah) draws in its final form on its first frame, not
+ *  the fallback text first and then the glyphs (a visible flicker). */
+const glyphCache = new Map<string, GlyphVerse>();
+const qpcCache = new Map<string, GlyphVerse>();
+
 /** Fired on window when the visible area (and so the player dock) moves. */
 export const VISIBLE_AREA_EVENT = "huda:visible-area";
 
@@ -645,6 +652,7 @@ export function CenterVerseDisplay({
     if (!tjRef) return;
     let cancelled = false;
     findVerse((n) => fetchSurahWords(n, script)).then((verse) => {
+      if (verse) qpcCache.set(tjKey, verse);
       if (verse && !cancelled) setQpcVerse({ key: tjKey, verse });
     });
     return () => {
@@ -659,6 +667,7 @@ export function CenterVerseDisplay({
       if (!verse || cancelled) return;
       const pages = [...new Set([...verse.w.map((w) => w[1]), ...(verse.e ? [verse.e[1]] : [])])];
       const ok = await Promise.all(pages.map((p) => loadPageFont(p)));
+      if (ok.every(Boolean)) glyphCache.set(tjKey, verse);
       if (!cancelled && ok.every(Boolean)) setGlyphVerse({ key: tjKey, verse });
       // Warm the next page's font: recitation runs forward.
       loadPageFont(Math.min(604, Math.max(...pages) + 1));
@@ -667,14 +676,32 @@ export function CenterVerseDisplay({
       cancelled = true;
     };
   }, [tjKey, tajweed]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Warm the Bismillah prelude (1:1) — its glyphs, page font and QPC text —
+  // so it draws final on its first frame each time a Surah starts.
+  useEffect(() => {
+    const key = `${script}:1:1`;
+    if (!qpcCache.has(key))
+      fetchSurahWords(1, script).then((vs) => {
+        const v = vs?.find((x) => x.a === 1);
+        if (v) qpcCache.set(key, v);
+      });
+    if (indoPak || !glyphFontsFor(tajweed) || glyphCache.has(key)) return;
+    fetchSurahGlyphs(1).then(async (vs) => {
+      const v = vs?.find((x) => x.a === 1);
+      if (!v) return;
+      const pages = [...new Set([...v.w.map((w) => w[1]), ...(v.e ? [v.e[1]] : [])])];
+      if ((await Promise.all(pages.map((p) => loadPageFont(p)))).every(Boolean)) glyphCache.set(key, v);
+    });
+  }, [script, tajweed, indoPak]);
+  const glyphSource = glyphVerse?.key === tjKey ? glyphVerse.verse : tjKey ? glyphCache.get(tjKey) ?? null : null;
   const glyphs =
     tjRef &&
-    glyphVerse?.key === tjKey &&
+    glyphSource &&
     !indoPak &&
     glyphFontsFor(tajweed) &&
-    glyphVerse.verse.w.every((w) => pageFontReady(w[1])) &&
-    (!glyphVerse.verse.e || pageFontReady(glyphVerse.verse.e[1]))
-      ? glyphVerse.verse
+    glyphSource.w.every((w) => pageFontReady(w[1])) &&
+    (!glyphSource.e || pageFontReady(glyphSource.e[1]))
+      ? glyphSource
       : null;
 
   // A tapped word shows as current straight away (before the seek lands, or on
@@ -734,14 +761,16 @@ export function CenterVerseDisplay({
 
   // Adaptive font sizing based on Arabic length for perfect screen balance
   const arabicLength = activeItem.textArabic?.length || 0;
+  // Phone landscape: a step up (the rail and header leave the full height,
+  // and fit-to-stage still shrinks a long ayah).
   const arabicSizeClass =
     arabicLength < 45
-      ? "text-3xl sm:text-4xl md:text-5xl lg:text-6xl"
+      ? "text-3xl sm:text-4xl md:text-5xl lg:text-6xl phoneland:text-6xl"
       : arabicLength < 95
-      ? "text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+      ? "text-2xl sm:text-3xl md:text-4xl lg:text-5xl phoneland:text-5xl"
       : arabicLength < 170
-      ? "text-xl sm:text-2xl md:text-3xl lg:text-4xl"
-      : "text-lg sm:text-xl md:text-2xl lg:text-3xl";
+      ? "text-xl sm:text-2xl md:text-3xl lg:text-4xl phoneland:text-4xl"
+      : "text-lg sm:text-xl md:text-2xl lg:text-3xl phoneland:text-3xl";
 
   const translationSizeClass =
     arabicLength < 70
@@ -773,10 +802,11 @@ export function CenterVerseDisplay({
   // Tajweed mode renders the Mushaf glyph words (same word positions as the
   // timings); otherwise the text words. Timing (endTime) always comes from the
   // timed words at the same position.
+  const qpcSource = qpcVerse?.key === tjKey ? qpcVerse.verse : tjKey ? qpcCache.get(tjKey) ?? null : null;
   const displayWords: { word: string; endTime?: number; glyph?: [string, number] }[] = glyphs
     ? glyphs.w.map(([code, page, text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime, glyph: [code, page] }))
-    : tjRef && qpcVerse?.key === tjKey && qpcVerse.verse.w.length
-    ? qpcVerse.verse.w.map(([, , text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime }))
+    : tjRef && qpcSource?.w.length
+    ? qpcSource.w.map(([, , text], i) => ({ word: text, endTime: wordsToRender[i]?.endTime }))
     : wordsToRender;
   // Neither the glyphs nor the QPC text yet (glyph data still loading, or
   // offline for a Surah not opened before): the Tanzil-encoded text, which
