@@ -466,7 +466,12 @@ export function CenterVerseDisplay({
         // The readable floor holds even when the length class starts smaller
         // (a long ayah's text-lg = 18px on phones): 2:282 shrank to 18px and
         // still scrolled — too small for the Tajweed marks.
-        const mins = texts.map((t, j) => Number(t.dataset.fitMin) || bases[j]);
+        // Phone landscape: a higher floor (data-fit-min-land) — a long ayah
+        // stays large and its pane scrolls (and follows the recitation).
+        const land = window.matchMedia(PHONE_LANDSCAPE).matches;
+        const mins = texts.map(
+          (t, j) => Number((land ? t.dataset.fitMinLand : undefined) ?? t.dataset.fitMin) || bases[j]
+        );
         // Growth cap depends on screen size: medium on phones, larger on
         // tablets, full on desktop (data-fit-max-mobile / -tablet / -max).
         const vw = window.innerWidth;
@@ -879,6 +884,7 @@ export function CenterVerseDisplay({
           <h2
             data-fit-text
             data-fit-min={22}
+            data-fit-min-land={34}
             data-fit-max={84}
             data-fit-max-tablet={56}
             data-fit-max-mobile={44}
@@ -968,6 +974,7 @@ export function CenterVerseDisplay({
             <p
               data-fit-text
               data-fit-min={13}
+              data-fit-min-land={17}
               data-fit-max={30}
               data-fit-max-tablet={26}
               data-fit-max-mobile={24}
