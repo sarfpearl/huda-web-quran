@@ -1263,6 +1263,37 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
   }, [phoneLandscape, readingActive]);
+  // Playing in phone landscape: the chrome hides as playback starts, and
+  // after 10s without a touch once a tap has brought it back; a pause shows
+  // it again (and keeps it).
+  const landWasPlayingRef = useRef(player.isPlaying);
+  useEffect(() => {
+    const was = landWasPlayingRef.current;
+    landWasPlayingRef.current = player.isPlaying;
+    if (!phoneLandscape || readingActive || was === player.isPlaying) return;
+    setLandFocus(player.isPlaying);
+  }, [player.isPlaying, phoneLandscape, readingActive]);
+  useEffect(() => {
+    if (!phoneLandscape || readingActive || !player.isPlaying || landFocus) return;
+    const IDLE_MS = 10_000;
+    let timer = 0;
+    const arm = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        // A sheet or popover still open: wait for it.
+        if (document.querySelector('[data-action-sheet], [role="dialog"]')) return arm();
+        setLandFocus(true);
+      }, IDLE_MS);
+    };
+    arm();
+    window.addEventListener("pointerdown", arm, true);
+    window.addEventListener("keydown", arm, true);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", arm, true);
+      window.removeEventListener("keydown", arm, true);
+    };
+  }, [phoneLandscape, readingActive, player.isPlaying, landFocus]);
   // The verse stage re-measures the room once the chrome has hidden / shown.
   useEffect(() => {
     const id = window.setTimeout(() => window.dispatchEvent(new Event(VISIBLE_AREA_EVENT)), 60);
