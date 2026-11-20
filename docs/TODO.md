@@ -27,17 +27,19 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       verified (DNS TXT on Cloudflare, keep it), home page "Request
       indexing" done, sitemap submitted.
 - [ ] **Check Search Console on 2026-11-20.** Sitemaps → `sitemap.xml`
-      should read **Success** with 145 discovered pages (it read "Couldn't
+      should read **Success** with 259 discovered pages (it read "Couldn't
       fetch" right after submitting — normal at first). Also search
       `hudaguidance` on Google: the result should show the HuDa logo, not a
       globe. Still "Couldn't fetch" or a globe → check again with Claude.
-- [ ] **Search titles, descriptions and an `<h1>` for every Surah / Juz page**
-      (`feat/seo-surah-pages`): "Surah Ya-Sin (يس) · Tamil & English
+- [x] **Search titles, descriptions and an `<h1>` for every Surah / Juz page**
+      (PR #264, live 2026-11-18): "Surah Ya-Sin (يس) · Tamil & English
       Translation, Audio", Tamil name and meaning in the description.
-- [ ] **Readable Surah pages for Google** (owner chose option A,
+- [x] **Readable Surah pages for Google** (owner chose option A,
       2026-11-18): `/surah/<n>/read` — Arabic, Tamil and English text, a
       "Listen" link per ayah into the app, in the sitemap (259 URLs). Same PR
-      as the titles. Later: a visible "Read" button inside the app.
+      as the titles (PR #264, live 2026-11-18).
+- [ ] **Later: a visible "Read · படிக்க" button inside the app** linking to
+      `/surah/<n>/read` — owner to decide where it goes.
 - [ ] **Owner, outside the code:** Bing Webmaster Tools (import from Search
       Console), Google Business-style profiles (Instagram / YouTube / X with
       the site link), and listings on Islamic app directories — see
