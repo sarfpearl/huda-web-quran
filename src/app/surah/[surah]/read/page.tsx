@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ChevronRightIcon } from "@/components/ui/Icon";
+import { famousAyatStartingAt } from "@/lib/data/famousAyat";
 import { QURAN_SURAHS } from "@/lib/data/quran";
 import { SURAH_NAMES } from "@/lib/data/surahNames";
 import { parseSurahLink } from "@/lib/deepLink";
@@ -127,6 +128,15 @@ export default async function SurahReadPage({ params }: Props) {
                   <span className="inline-flex items-center gap-0.5">Listen <ChevronRightIcon className="h-3.5 w-3.5" /></span>
                 </Link>
               </div>
+              {famousAyatStartingAt(n, a.ayah).map((f) => (
+                <Link
+                  key={f.slug}
+                  href={`/ayah/${f.slug}`}
+                  className="mb-3 mr-2 inline-flex items-center gap-0.5 rounded-full bg-gold-500/15 px-3 py-1 text-sm font-semibold text-gold-600 hover:underline dark:text-gold-300"
+                >
+                  {f.name} <ChevronRightIcon className="h-3.5 w-3.5" />
+                </Link>
+              ))}
               <p dir="rtl" lang="ar" className="font-arabic text-right text-2xl leading-[2.2] sm:text-3xl">
                 {a.arabic}
               </p>

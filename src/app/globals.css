@@ -548,7 +548,7 @@
   color: #e9e2d3;
   transition: opacity 0.5s ease, visibility 0s linear 0.5s;
 }
-/* The 404 and Surah reading pages have nothing to load: no splash. */
+/* The 404 and reading pages (/surah/<n>/read, /ayah/<slug>) have nothing to load: no splash. */
 html:has([data-not-found]) #huda-splash,
 html:has([data-reading-page]) #huda-splash {
   display: none;

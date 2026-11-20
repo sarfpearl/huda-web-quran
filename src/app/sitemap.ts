@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteConfig, absoluteUrl } from "@/lib/site";
+import { FAMOUS_AYAT } from "@/lib/data/famousAyat";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -23,6 +24,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "monthly" as const,
       priority: 0.6,
+    })),
+    // Well-known ayat and passages searched by name (Ayat al-Kursi…).
+    ...FAMOUS_AYAT.map((a) => ({
+      url: absoluteUrl(`/ayah/${a.slug}`),
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
     })),
   ];
 }
