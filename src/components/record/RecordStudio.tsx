@@ -22,20 +22,7 @@ import { coolBackground, warmBackground } from "@/lib/record/frameComposer";
 import { ActionSheet, PLAYER_GLASS } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE } from "@/components/ui/selection";
 import { SURAH_NAMES } from "@/lib/data/surahNames";
-import {
-  ClockIcon,
-  DownloadIcon,
-  ExitFullscreenIcon,
-  FullscreenIcon,
-  LayersIcon,
-  MuteIcon,
-  PauseIcon,
-  QuranStandIcon,
-  PlayIcon,
-  ShareIcon,
-  StopIcon,
-  VolumeIcon,
-} from "@/components/ui/Icon";
+import { ClockIcon, DownloadIcon, ExitFullscreenIcon, FullscreenIcon, LayersIcon, MuteIcon, PauseIcon, QuranStandIcon, PlayIcon, ShareIcon, StopIcon, VolumeIcon, CloseIcon, ArrowRightIcon } from "@/components/ui/Icon";
 import { ArchHeader, GOLD, MosqueFooter, PATTERN_BG } from "./PreviewArt";
 import { extFor, prepareSession, VIDEO_BPS, webmOnly, type Quality, type Session, type Shape } from "@/lib/record/recorder";
 
@@ -112,7 +99,7 @@ const OUTLINE = `${BTN} border border-white/15 bg-white/[0.06] text-sand-50 hove
 const CARD = "rounded-2xl border border-white/10 bg-white/5 px-4 py-3";
 const BAR = "bg-black/60 backdrop-blur-[8px] border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.5)]";
 const CHEVRON =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f3eee4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f3eee4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 9.00005C18 9.00005 13.5811 15 12 15C10.4188 15 6 9 6 9'/%3E%3C/svg%3E\")";
 const SELECT =
   "h-11 w-full appearance-none rounded-full border border-white/15 bg-black/40 bg-[length:16px] bg-[position:right_1rem_center] bg-no-repeat pl-4 pr-10 text-sm text-sand-50 cursor-pointer";
 const SELECT_SM =
@@ -467,7 +454,7 @@ export default function RecordStudio(props: RecordStudioProps) {
                   ))}
                 </select>
               </label>
-              <span className="pb-3 text-sand-300/60" aria-hidden>→</span>
+              <ArrowRightIcon className="mb-3 h-4 w-4 shrink-0 text-sand-300/60" />
               <label className="flex-1 text-xs text-sand-200/80">
                 <span className="mb-1 block">{L("To ayah")}</span>
                 {/* Only ayahs that end within 10 minutes can be picked. */}
@@ -681,9 +668,7 @@ function CloseButton({ onClick, label }: { onClick: () => void; label: string })
       aria-label={label}
       className="tap-44 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
     >
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
+      <CloseIcon className="h-4 w-4" />
     </button>
   );
 }
@@ -1040,9 +1025,7 @@ function Preview({
                 aria-label={L("Close")}
                 className="absolute right-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-sand-200 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <CloseIcon className="h-4 w-4" />
               </button>
               <div className="relative flex flex-col items-center">
                 {/* Hugeicons Quran01: the open Quran on its stand, in the app's gold */}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ChevronRightIcon } from "@/components/ui/Icon";
 import { QURAN_SURAHS } from "@/lib/data/quran";
 import { SURAH_NAMES } from "@/lib/data/surahNames";
 import { parseSurahLink } from "@/lib/deepLink";
@@ -123,7 +124,7 @@ export default async function SurahReadPage({ params }: Props) {
                   className="text-muted hover:text-[rgb(var(--foreground))] hover:underline"
                   aria-label={`Listen from verse ${n}:${a.ayah}`}
                 >
-                  Listen ▸
+                  <span className="inline-flex items-center gap-0.5">Listen <ChevronRightIcon className="h-3.5 w-3.5" /></span>
                 </Link>
               </div>
               <p dir="rtl" lang="ar" className="font-arabic text-right text-2xl leading-[2.2] sm:text-3xl">

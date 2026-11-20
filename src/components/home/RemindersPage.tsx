@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PlusIcon, TrashIcon } from "@/components/ui/Icon";
+import { PlusIcon, TrashIcon, ReminderIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { t, uiLocale, useUiLang, type UiLang } from "@/lib/uiLang";
 import { OPEN_INSTALL_GUIDE_EVENT } from "@/lib/settingsEvents";
@@ -34,10 +34,7 @@ const ERROR_TEXT: Record<ReminderError, string> = {
 };
 
 export const BellIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
-    <path d="M6 9.5a6 6 0 0 1 12 0c0 3.6 1 5.6 2 6.8H4c1-1.2 2-3.2 2-6.8Z" />
-    <path d="M10 19.5a2 2 0 0 0 4 0" />
-  </svg>
+  <ReminderIcon className={className} />
 );
 
 /** The Settings row's value: "Off", "6:30 AM" or "2 on". */

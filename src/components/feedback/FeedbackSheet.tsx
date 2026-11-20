@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ActionSheet } from "@/components/ui/ActionSheet";
-import { CloseIcon, ImageIcon } from "@/components/ui/Icon";
+import { CloseIcon, ImageIcon, LanternIcon, SmartPhoneIcon } from "@/components/ui/Icon";
 import { t, isRtl, useUiLang } from "@/lib/uiLang";
 import { cn } from "@/lib/utils";
 import {
@@ -113,7 +113,7 @@ export default function FeedbackSheet({
         <div dir={isRtl(lang) ? "rtl" : undefined} className="px-1 pb-2">
         <div className="flex items-center justify-between gap-3 pb-1">
           <h2 className="flex items-center gap-2 text-base font-bold text-white">
-            <span aria-hidden="true" className="text-amber-200">✦</span>
+            <LanternIcon className="h-5 w-5 text-amber-200" />
             {t(lang, "Send feedback")}
           </h2>
           <button
@@ -230,9 +230,6 @@ export default function FeedbackSheet({
 
 function ScreenIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
-      <path d="M10 18.5h4" />
-    </svg>
+    <SmartPhoneIcon width="16" height="16" />
   );
 }
