@@ -5,7 +5,7 @@ import { CheckIcon, ChevronRightIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
-import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
+import { TRANSLATIONS, matchesTranslation, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isMeaningLang } from "@/lib/data/meaningAudio";
 import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
@@ -193,7 +193,11 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
 export function TranslationPage() {
   const lang = useUiLang();
   const s = useHomeSettings();
+  // The language search (the list is long).
+  const [langQuery, setLangQuery] = useState("");
   if (!s) return null;
+  const q = langQuery.trim().toLowerCase();
+  const langChoices = q ? TRANSLATIONS.filter((c) => matchesTranslation(c, q)) : TRANSLATIONS;
   // Picking a language shows the meaning in it (as the header's sheet does).
   const choose = (id: TranslationLang) => {
     if (s.translationLang !== id) s.onChooseTranslation(id);
@@ -207,8 +211,20 @@ export function TranslationPage() {
       {/* Off = Arabic only: the meaning voice shows, greyed out; the languages once it's on. */}
       {s.meaningAudio && <MeaningAudioGroup {...s.meaningAudio} supported={isMeaningLang(s.translationLang)} disabled={!s.showMeaning} />}
       {s.showMeaning && (
+      <>
+      <input
+        type="search"
+        value={langQuery}
+        onChange={(e) => setLangQuery(e.target.value)}
+        placeholder={t(lang, "Search languages...")}
+        aria-label={t(lang, "Search languages")}
+        className="mb-2 w-full rounded-full border border-white/10 bg-black/40 px-4 py-2 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+      />
       <div role="radiogroup" aria-label={t(lang, "Translation language")} className="space-y-1.5">
-        {TRANSLATIONS.map((c) => {
+        {langChoices.length === 0 && (
+          <p className="py-6 text-center text-xs text-sand-300/60">{t(lang, "No language found for “{q}”", { q: langQuery.trim() })}</p>
+        )}
+        {langChoices.map((c) => {
           const selected = c.id === s.translationLang;
           return (
             <button
@@ -254,6 +270,7 @@ export function TranslationPage() {
           );
         })}
       </div>
+      </>
       )}
     </div>
   );

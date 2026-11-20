@@ -158,6 +158,105 @@ export const notoNaskhArabic = localFont({
   adjustFontFallback: "Times New Roman",
 });
 
+// Meanings in Kannada, Telugu, Gujarati, Sinhala, Divehi (Thaana) and Amharic
+// (Ethiopic): system fonts for these vary a lot between phones.
+export const notoSansKannada = localFont({
+  src: [
+    { path: "./fonts/noto-sans-kannada-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/noto-sans-kannada-500.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-kannada",
+  preload: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+0951-0952, U+0964-0965, U+0B83, U+0C80-0CF3, U+1CD0, U+1CD2-1CD3, U+1CDA, U+1CF2, U+1CF4, U+200C-200D, U+20B9, U+25CC, U+A830-A835, U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+    },
+  ],
+});
+export const notoSansTelugu = localFont({
+  src: [
+    { path: "./fonts/noto-sans-telugu-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/noto-sans-telugu-500.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-telugu",
+  preload: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+0951-0952, U+0964-0965, U+0B83, U+0C00-0C7F, U+1CD5-1CD6, U+1CD8, U+1CDA, U+1CF2, U+200C-200D, U+25CC, U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+    },
+  ],
+});
+export const notoSansGujarati = localFont({
+  src: [
+    { path: "./fonts/noto-sans-gujarati-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/noto-sans-gujarati-500.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-gujarati",
+  preload: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+0951-0952, U+0964-0965, U+0A80-0AFF, U+200C-200D, U+20B9, U+25CC, U+A830-A839, U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+    },
+  ],
+});
+export const notoSansSinhala = localFont({
+  src: [
+    { path: "./fonts/noto-sans-sinhala-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/noto-sans-sinhala-500.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-sinhala",
+  preload: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+0964-0965, U+0D81-0DF4, U+1CF2, U+200C-200D, U+25CC, U+111E1-111F4, U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+    },
+  ],
+});
+export const notoSansThaana = localFont({
+  src: [
+    { path: "./fonts/noto-sans-thaana-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/noto-sans-thaana-500.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-thaana",
+  preload: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+060C, U+061B-061C, U+061F, U+0660-066C, U+0780-07B1, U+200C-200F, U+20C2, U+25CC, U+FDF2, U+FDFD, U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+    },
+  ],
+});
+export const notoSansEthiopic = localFont({
+  src: [
+    { path: "./fonts/noto-sans-ethiopic-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/noto-sans-ethiopic-500.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-ethiopic",
+  preload: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+030E, U+1200-1399, U+2D80-2DDE, U+AB01-AB2E, U+1E7E0-1E7E6, U+1E7E8-1E7EB, U+1E7ED-1E7EE, U+1E7F0-1E7FE, U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+    },
+  ],
+});
+
 export const fontVariables = [
   poppins,
   notoSerifTamil,
@@ -167,6 +266,12 @@ export const fontVariables = [
   notoSansDevanagari,
   notoSansBengali,
   notoNaskhArabic,
+  notoSansKannada,
+  notoSansTelugu,
+  notoSansGujarati,
+  notoSansSinhala,
+  notoSansThaana,
+  notoSansEthiopic,
 ]
   .map((f) => f.variable)
   .join(" ");

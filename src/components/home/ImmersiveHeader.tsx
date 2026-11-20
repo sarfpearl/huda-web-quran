@@ -20,7 +20,7 @@ import {
 import { t, type UiLang } from "@/lib/uiLang";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
-import { TRANSLATIONS, translationInfo, type TranslationLang } from "@/lib/data/translations";
+import { TRANSLATIONS, matchesTranslation, translationInfo, type TranslationLang } from "@/lib/data/translations";
 import { ReciterPickerModal } from "./ReciterPickerModal";
 import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
 import { isMeaningLang } from "@/lib/data/meaningAudio";
@@ -143,7 +143,7 @@ export function ImmersiveHeader({
     if (!translationSheetOpen) setLangQuery("");
   }, [translationSheetOpen]);
   const q = langQuery.trim().toLowerCase();
-  const langChoices = q ? TRANSLATIONS.filter((c) => `${c.label} ${c.hint}`.toLowerCase().includes(q)) : TRANSLATIONS;
+  const langChoices = q ? TRANSLATIONS.filter((c) => matchesTranslation(c, q)) : TRANSLATIONS;
   // Picking a language shows the meaning in it (the title bar switch turns it off).
   const chooseTranslation = (id: TranslationLang) => {
     if (translationLang !== id) onChooseTranslation?.(id);
