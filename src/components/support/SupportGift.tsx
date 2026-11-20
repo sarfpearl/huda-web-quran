@@ -19,7 +19,8 @@ import { OPEN_SUPPORT_EVENT, SUPPORT_PEEKED_KEY, supportEnabled } from "@/lib/su
  *     second tap opens the sheet. Untouched for 12 s it goes back.
  *   - Only on the very first visit it swings out once by itself, then never
  *     again. It doesn't move while a recitation plays.
- *   - Hidden in reading mode, under an open sheet, and in focus mode (no pill).
+ *   - Stays in place over open menus and panels, like the lantern; hidden
+ *     only in reading mode and focus mode (no pill).
  */
 
 /** What it hangs from: the time pill at the top left. */
@@ -154,7 +155,6 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
   const reduce = useReducedMotion();
   const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [geo, setGeo] = useState<Geometry | null>(null);
   const [out, setOut] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -181,14 +181,12 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
     outTimer.current = setTimeout(() => setOut(false), forMs);
   }, []);
 
-  // Follow the time pill (it moves with the safe area and hides in focus mode),
-  // and keep an eye on open sheets.
+  // Follow the time pill (it moves with the safe area and hides in focus mode).
   useEffect(() => {
     if (!ready || !enabled) return;
     const scene = rootRef.current?.parentElement;
     if (!scene) return;
     const measure = () => {
-      setSheetOpen(dialogOpen());
       const a = findAnchor();
       const s = scene.getBoundingClientRect();
       const r = a?.getBoundingClientRect();
@@ -209,13 +207,29 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
     };
   }, [ready, enabled]);
 
+  // A menu's dimmed backdrop can sit over the gift (the Surah panel on a
+  // computer). A tap on the gift's spot then closes the menu as usual and
+  // also lets the gift out, so it never seems dead.
+  useEffect(() => {
+    if (!geo) return;
+    const onDown = (e: PointerEvent) => {
+      const el = giftRef.current;
+      if (!el || el.contains(e.target as Node)) return;
+      const r = el.getBoundingClientRect();
+      const inside = e.clientX >= Math.max(0, r.left) - 6 && e.clientX <= r.right + 12 && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (inside) comeOut();
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    return () => window.removeEventListener("pointerdown", onDown, true);
+  }, [geo, comeOut]);
+
   // Back to its place when something else takes the screen.
   useEffect(() => {
-    if (playing || suppressed || sheetOpen) {
+    if (playing || suppressed) {
       clearTimeout(outTimer.current);
       setOut(false);
     }
-  }, [playing, suppressed, sheetOpen]);
+  }, [playing, suppressed]);
 
   // The very first visit: one swing out by itself, never again.
   useEffect(() => {
@@ -289,7 +303,9 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
   }, [geo, out, reduce]);
 
   if (!ready || !enabled) return null;
-  const shown = Boolean(geo) && !suppressed && !sheetOpen;
+  // Like the lantern it stays in place over open menus and panels; a tap
+  // lets it out, and its sheet closes whatever else is open.
+  const shown = Boolean(geo) && !suppressed;
 
   const onClick = (e: React.MouseEvent) => {
     haptic();
