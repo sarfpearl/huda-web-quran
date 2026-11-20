@@ -1,39 +1,50 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { isRtl, t, useUiLang } from "@/lib/uiLang";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { haptic } from "@/lib/haptics";
-import { OPEN_SUPPORT_EVENT, supportEnabled } from "@/lib/support";
+import { swingAngle, threadPath } from "@/lib/feedbackSwing";
+import { OPEN_SUPPORT_EVENT, SUPPORT_PEEKED_KEY, supportEnabled } from "@/lib/support";
 
 /*
- * The support entry: a small wrapped gift — emerald box, gold ribbon and bow,
- * HuDa's eight-point star stamped on it — tucked half behind the left edge,
- * just under the header. The feedback lantern's quiet partner on the other side.
- *   - At rest only half of it shows, floating a little.
- *   - A tap lets it out: it slides in with a sway, the lid lifts, a warm light
- *     and a few sparks rise, and "Support HuDa" appears beside it. A second tap
- *     opens the sheet. Untouched for 12 s it tucks itself back.
- *   - Once a visit, after a quiet spell with nothing playing, it comes out by
- *     itself for a few seconds and goes back. Never while a recitation plays.
- *   - Always in the same place (also after someone has given). Hidden only in
- *     reading mode and under an open sheet.
+ * The support entry, the feedback lantern's quiet partner on the left: a
+ * small wrapped gift (emerald box, gold ribbon and bow, HuDa's eight-point
+ * star on its sides) hanging on a gold thread from the time pill, tucked half
+ * behind the left edge.
+ *   - It always rests there, also after someone has given.
+ *   - A tap lets it go: it drops and swings like the lantern, the lid lifts
+ *     and lets out a little light, and "Support HuDa" shows beside it. A
+ *     second tap opens the sheet. Untouched for 12 s it goes back.
+ *   - Only on the very first visit it swings out once by itself, then never
+ *     again. It doesn't move while a recitation plays.
+ *   - Hidden in reading mode, under an open sheet, and in focus mode (no pill).
  */
 
+/** What it hangs from: the time pill at the top left. */
+function findAnchor(): HTMLElement | null {
+  const el = document.querySelector<HTMLElement>('[data-scene-header] [data-tour="prayer"] > *');
+  return el && el.getBoundingClientRect().width > 0 ? el : null;
+}
+
+/** How far below the anchor the gift's bow hangs. */
+const DROP_PX = 58;
+/** Tucked: its centre this far past the left edge, so about half of it shows. */
+const HIDDEN_PAST_PX = 2;
+const BACK_MS = 900;
+const LEAN = 0.5;
 /** Out and untouched this long → back to its place. */
 const OUT_MS = 12000;
-/** Its own peek: after this much quiet (nothing playing, no sheet) in a visit… */
-const PEEK_AFTER_MS = 25000;
-/** …it stays out this long, then tucks back. */
+/** First visit: how long after the first-open steps before its one swing out… */
+const PEEK_AFTER_MS = 4000;
+/** …and how long it stays out. */
 const PEEK_MS = 6000;
 const W = 40;
-/** Tucked: this much of it sits past the left edge. */
-const TUCK_X = -W / 2 - 2;
-/** Out: where it rests, clear of the edge. */
-const OUT_X = 10;
 
-const dialogOpen = () => Boolean(document.querySelector('[role="dialog"], [aria-modal="true"], [data-action-sheet]'));
+type Geometry = { ax: number; ay: number };
+
+const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-modal="true"], [data-action-sheet]'));
 
 /** The gift as a plain icon (sheet buttons, Settings row). */
 export function GiftMark({ className, strokeWidth = 1.8 }: { className?: string; strokeWidth?: number }) {
@@ -144,10 +155,15 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
   const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [geo, setGeo] = useState<Geometry | null>(null);
   const [out, setOut] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const outTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const peeked = useRef(false);
-  const sway = useAnimationControls();
+  const threadRef = useRef<SVGPathElement>(null);
+  const giftRef = useRef<HTMLButtonElement>(null);
+  const artRef = useRef<HTMLSpanElement>(null);
+  const theta = useRef(Number.NaN);
+  const lean = useRef(0);
 
   useEffect(() => {
     let alive = true;
@@ -159,20 +175,39 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
     };
   }, []);
 
-  // An open sheet or dialog hides it (and sends it back to its place).
-  useEffect(() => {
-    if (!ready || !enabled) return;
-    const check = () => setSheetOpen(dialogOpen());
-    check();
-    const id = window.setInterval(check, 600);
-    return () => window.clearInterval(id);
-  }, [ready, enabled]);
-
   const comeOut = useCallback((forMs = OUT_MS) => {
     setOut(true);
     clearTimeout(outTimer.current);
     outTimer.current = setTimeout(() => setOut(false), forMs);
   }, []);
+
+  // Follow the time pill (it moves with the safe area and hides in focus mode),
+  // and keep an eye on open sheets.
+  useEffect(() => {
+    if (!ready || !enabled) return;
+    const scene = rootRef.current?.parentElement;
+    if (!scene) return;
+    const measure = () => {
+      setSheetOpen(dialogOpen());
+      const a = findAnchor();
+      const s = scene.getBoundingClientRect();
+      const r = a?.getBoundingClientRect();
+      const shown = a && r && Number(getComputedStyle(a).opacity) > 0.2;
+      setGeo((g) => {
+        if (!shown || !r) return null;
+        const next = { ax: Math.round(r.left - s.left + Math.min(26, r.width / 2)), ay: Math.round(r.bottom - s.top) };
+        return g && g.ax === next.ax && g.ay === next.ay ? g : next;
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(scene);
+    const tick = setInterval(measure, 700);
+    return () => {
+      ro.disconnect();
+      clearInterval(tick);
+    };
+  }, [ready, enabled]);
 
   // Back to its place when something else takes the screen.
   useEffect(() => {
@@ -182,27 +217,79 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
     }
   }, [playing, suppressed, sheetOpen]);
 
-  // Its one peek a visit, after a quiet spell.
+  // The very first visit: one swing out by itself, never again.
   useEffect(() => {
-    if (!ready || !enabled || playing || suppressed || sheetOpen || peeked.current || reduce) return;
+    if (!ready || !enabled || !geo || playing || suppressed) return;
+    try {
+      if (localStorage.getItem(SUPPORT_PEEKED_KEY)) return;
+    } catch {
+      return;
+    }
     const id = setTimeout(() => {
       if (dialogOpen() || document.hidden) return;
-      peeked.current = true;
+      try {
+        localStorage.setItem(SUPPORT_PEEKED_KEY, "1");
+      } catch {}
       comeOut(PEEK_MS);
     }, PEEK_AFTER_MS);
     return () => clearTimeout(id);
-  }, [ready, enabled, playing, suppressed, sheetOpen, reduce, comeOut]);
+  }, [ready, enabled, geo, playing, suppressed, comeOut]);
 
-  // The sway as it comes out: a few swings that die away, like a lantern let go.
+  // The swing, drawn straight to the DOM each frame — the lantern's maths,
+  // mirrored: tucked, its hook sits half past the left edge.
   useEffect(() => {
-    if (reduce) return;
-    if (out) void sway.start({ rotate: [0, 14, -9, 5, -2.5, 0], transition: { duration: 1.8, ease: "easeOut" } });
-    else void sway.start({ rotate: [0, -6, 0], transition: { duration: 0.7, ease: "easeOut" } });
-  }, [out, reduce, sway]);
+    if (!geo) return;
+    const dx = -HIDDEN_PAST_PX - geo.ax;
+    const len = Math.hypot(dx, DROP_PX);
+    const hidden = Math.atan2(dx, DROP_PX);
+    let speed = 0;
+    const place = (a: number) => {
+      const hx = geo.ax + len * Math.sin(a);
+      const hy = geo.ay + len * Math.cos(a);
+      threadRef.current?.setAttribute("d", threadPath(geo.ax, geo.ay, hx, hy, 1 - lean.current, speed));
+      if (giftRef.current) giftRef.current.style.transform = `translate(${hx - W / 2}px, ${hy - 4}px)`;
+      if (artRef.current) artRef.current.style.transform = `rotate(${-a * LEAN * lean.current}rad)`;
+    };
+    if (Number.isNaN(theta.current)) theta.current = hidden;
+    if (reduce) {
+      theta.current = out ? 0 : hidden;
+      lean.current = 0;
+      place(theta.current);
+      return;
+    }
+    const from = theta.current;
+    const leanFrom = lean.current;
+    place(from);
+    const start = performance.now();
+    let frame = 0;
+    let last = start;
+    const step = (now: number) => {
+      const sec = (now - start) / 1000;
+      const dt = Math.max(1 / 240, (now - last) / 1000);
+      last = now;
+      const before = theta.current;
+      lean.current = out ? Math.min(1, leanFrom + sec / 0.6) : Math.max(0, leanFrom - (sec * 1000) / BACK_MS);
+      if (out) {
+        theta.current = swingAngle(sec, from);
+      } else {
+        const k = Math.min(1, (sec * 1000) / BACK_MS);
+        const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+        theta.current = from + (hidden - from) * ease;
+        if (k >= 1) {
+          speed = 0;
+          return place(theta.current);
+        }
+      }
+      speed += ((theta.current - before) / dt - speed) * Math.min(1, dt * 12);
+      place(theta.current);
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [geo, out, reduce]);
 
   if (!ready || !enabled) return null;
-  const shown = !suppressed && !sheetOpen;
-  const still = !!reduce || playing;
+  const shown = Boolean(geo) && !suppressed && !sheetOpen;
 
   const onClick = (e: React.MouseEvent) => {
     haptic();
@@ -215,45 +302,51 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
   };
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      aria-label={t(lang, "Support HuDa")}
-      aria-hidden={shown ? undefined : true}
-      tabIndex={shown ? 0 : -1}
-      className="absolute left-0 z-30 block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.25rem)] after:absolute after:-left-2 after:inset-y-0 after:w-6 after:content-['']"
-      style={{ width: W, pointerEvents: shown ? "auto" : "none" }}
-      initial={{ opacity: 0, x: TUCK_X - 14 }}
-      animate={{ opacity: shown ? (out ? 1 : playing ? 0.55 : 0.85) : 0, x: out ? OUT_X : TUCK_X }}
-      transition={out ? { type: "spring", stiffness: 140, damping: 14 } : { duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-    >
-      {/* At rest: a slow float, so it feels placed in the scene, not stuck on it */}
-      <motion.span
-        className="block"
-        animate={still || out ? { y: 0 } : { y: [0, -2.5, 0] }}
-        transition={{ duration: 5.5, repeat: still || out ? 0 : Infinity, ease: "easeInOut" }}
-      >
-        <motion.span className="block" animate={sway} style={{ transformOrigin: "50% 15%" }}>
-          <GiftArt open={out} still={still} />
-        </motion.span>
-      </motion.span>
-
-      <AnimatePresence>
-        {out && (
-          <motion.span
-            key="bubble"
-            dir={isRtl(lang) ? "rtl" : undefined}
-            initial={{ opacity: 0, scale: 0.85, x: -4 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.85, x: -4 }}
-            transition={{ duration: 0.22, delay: reduce ? 0 : 0.45 }}
-            style={{ transformOrigin: "left center" }}
-            className="pointer-events-none absolute left-full top-[18px] ml-2 whitespace-nowrap rounded-2xl rounded-bl-md border border-amber-200/30 bg-black/65 px-3 py-1.5 text-xs font-semibold text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.5)] backdrop-blur-md"
-          >
-            {t(lang, "Support HuDa")}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </motion.button>
+    <div ref={rootRef} className="pointer-events-none absolute inset-0 z-40">
+      {geo && (
+        <motion.svg
+          className="absolute inset-0 h-full w-full overflow-visible"
+          aria-hidden="true"
+          initial={false}
+          animate={{ opacity: shown ? (out ? 0.9 : 0.5) : 0 }}
+        >
+          <path ref={threadRef} d={`M ${geo.ax} ${geo.ay} L ${geo.ax} ${geo.ay + DROP_PX}`} fill="none" stroke="#e3c06d" strokeWidth={1} strokeLinecap="round" />
+        </motion.svg>
+      )}
+      {geo && (
+        <button
+          ref={giftRef}
+          type="button"
+          onClick={onClick}
+          aria-label={t(lang, "Support HuDa")}
+          aria-hidden={!shown || undefined}
+          tabIndex={shown ? 0 : -1}
+          // Placed by its hook each frame; the strip on the right keeps the
+          // half-hidden gift easy to tap.
+          className="absolute left-0 top-0 block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 after:absolute after:-right-3 after:inset-y-0 after:w-3 after:content-['']"
+          style={{ width: W, pointerEvents: shown ? "auto" : "none", opacity: shown ? (out ? 1 : 0.8) : 0, transition: "opacity 0.25s" }}
+        >
+          <AnimatePresence>
+            {out && (
+              <motion.span
+                key="bubble"
+                dir={isRtl(lang) ? "rtl" : undefined}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                transition={{ duration: 0.2, delay: reduce ? 0 : 0.25 }}
+                style={{ transformOrigin: "left center" }}
+                className="pointer-events-none absolute left-full top-5 ml-2 whitespace-nowrap rounded-2xl rounded-bl-md border border-amber-200/30 bg-black/65 px-3 py-1.5 text-xs font-semibold text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.5)] backdrop-blur-md"
+              >
+                {t(lang, "Support HuDa")}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <span ref={artRef} className="block" style={{ transformOrigin: "50% 0%" }}>
+            <GiftArt open={out} still={!!reduce || playing} />
+          </span>
+        </button>
+      )}
+    </div>
   );
 }

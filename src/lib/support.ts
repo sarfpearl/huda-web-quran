@@ -24,6 +24,8 @@ export const OPEN_SUPPORT_EVENT = "huda:open-support";
 
 /** localStorage: the visitor's pick of payment way ("upi" | "kofi"). */
 export const SUPPORT_WAY_KEY = "huda-support-way";
+/** localStorage: the gift has had its one swing out on the first visit ("1"). */
+export const SUPPORT_PEEKED_KEY = "huda-support-peeked";
 
 export type SupportWay = "upi" | "kofi";
 

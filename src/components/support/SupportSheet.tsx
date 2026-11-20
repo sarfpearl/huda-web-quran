@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronRightIcon } from "@/components/ui/Icon";
+import { ActionSheet } from "@/components/ui/ActionSheet";
+import { ChevronRightIcon, CloseIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { isRtl, t, useUiLang } from "@/lib/uiLang";
-import { useDialogFocus } from "@/lib/useDialogFocus";
-import { useBackToClose } from "@/lib/useBackToClose";
-import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { qrMatrix } from "@/lib/qr";
 import {
   OPEN_SUPPORT_EVENT,
@@ -25,8 +23,7 @@ import {
 import { GiftMark } from "./SupportGift";
 
 /*
- * "Help keep HuDa free": a small night sky. A gold gift draws itself
- * in gold over a field of faint stars, then two ways to give — UPI for India
+ * "Help keep HuDa free": the app's own action sheet, then two ways to give — UPI for India
  * (QR on a computer, the UPI app on a phone) and Ko-fi for everyone else.
  * HuDa only builds the link; the money goes straight from the visitor's app
  * or Ko-fi to the owner. Opens from Settings or the gift tab, never by itself.
@@ -45,12 +42,6 @@ function isHandheld(): boolean {
   const ua = navigator.userAgent;
   return /Android|iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
 }
-
-/** Faint stars scattered over the sheet's sky — fixed, so they don't jump between opens. */
-const SKY = [
-  [8, 12, 1], [21, 5, 0.6], [34, 18, 0.8], [47, 7, 0.5], [62, 14, 1], [76, 4, 0.7], [90, 16, 0.9],
-  [5, 34, 0.6], [94, 38, 0.6], [14, 52, 0.5], [86, 58, 0.8], [3, 74, 0.7], [97, 82, 0.5], [12, 92, 0.6], [82, 95, 0.7],
-] as const;
 
 function QrCode({ text }: { text: string }) {
   const path = useMemo(() => {
@@ -78,16 +69,12 @@ export function SupportSheet() {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [open, setOpen] = useState(false);
-  // Kept mounted while it slides out; unmounted on a timer rather than by
-  // AnimatePresence, whose exit never finished here (the dialog stayed in the DOM).
-  const [mounted, setMounted] = useState(false);
   const [way, setWay] = useState<SupportWay>("upi");
   const [amount, setAmount] = useState<number | null>(null);
   const [handheld, setHandheld] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
   const [thanked, setThanked] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onOpen = () => {
@@ -106,27 +93,12 @@ export function SupportSheet() {
       setCopied(false);
       setThanked(false);
       setOpen(true);
-      setMounted(true);
     };
     window.addEventListener(OPEN_SUPPORT_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_SUPPORT_EVENT, onOpen);
   }, []);
 
-  const close = () => setOpen(false);
-  useEffect(() => {
-    if (open || !mounted) return;
-    const id = window.setTimeout(() => setMounted(false), 450);
-    return () => window.clearTimeout(id);
-  }, [open, mounted]);
-  useDialogFocus(open, sheetRef);
-  useBackToClose(open, close);
-  useOnlyOneSheet(open, close);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
 
   const chooseWay = (w: SupportWay) => {
     setWay(w);
@@ -148,109 +120,35 @@ export function SupportSheet() {
   const single = onlyWay();
   const link = upiReady ? upiLink(amount ?? undefined) : "";
   const rtl = isRtl(lang);
-  // The star's two squares draw in, one after the other.
-  const draw = (delay: number) =>
-    reduce
-      ? {}
-      : {
-          initial: { pathLength: 0, opacity: 0 },
-          animate: { pathLength: 1, opacity: 1 },
-          transition: { pathLength: { duration: 1.6, delay, ease: [0.65, 0, 0.35, 1] }, opacity: { duration: 0.2, delay } },
-        };
-
-  if (!mounted) return null;
   return (
-    <>
-      <motion.div
-        key="support-scrim"
-        className={cn("absolute inset-0 z-[60] bg-black/60", !open && "pointer-events-none")}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: open ? 1 : 0 }}
-        onClick={close}
-        aria-hidden="true"
-      />
-      <motion.div
-        key="support-sheet"
-        ref={sheetRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="support-title"
-        dir={rtl ? "rtl" : undefined}
-        className="absolute inset-x-0 bottom-0 z-[61] mx-auto w-full max-w-[440px] px-3 outline-none pb-[calc(max(env(safe-area-inset-bottom),var(--vv-bottom,0px))+0.75rem)] md:inset-y-0 md:flex md:items-center md:pb-0"
-        initial={reduce ? { opacity: 0 } : { y: "100%", opacity: 1 }}
-        animate={open ? { y: 0, opacity: 1 } : reduce ? { opacity: 0 } : { y: "110%", opacity: 1 }}
-        transition={open ? { type: "spring", damping: 30, stiffness: 300 } : { duration: 0.35, ease: [0.4, 0, 1, 1] }}
-      >
-        <div className="relative max-h-[calc(var(--vv-height,100dvh)-1.5rem)] w-full overflow-y-auto overscroll-contain no-scrollbar rounded-[30px] border border-amber-200/15 bg-[radial-gradient(120%_70%_at_50%_0%,#123b30_0%,#0a1f19_45%,#060c0a_100%)] text-sand-50 shadow-[0_30px_80px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(252,211,77,0.12)]">
-          {/* The sky */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-56 overflow-hidden" aria-hidden="true">
-            {SKY.map(([x, y, o], i) => (
-              <motion.span
-                key={i}
-                className="absolute h-[2px] w-[2px] rounded-full bg-amber-100"
-                style={{ left: `${x}%`, top: `${y}%` }}
-                initial={{ opacity: 0 }}
-                animate={reduce ? { opacity: o * 0.6 } : { opacity: [o * 0.25, o * 0.8, o * 0.25] }}
-                transition={reduce ? { duration: 0.6 } : { duration: 3 + (i % 4), repeat: Infinity, delay: (i % 5) * 0.4 }}
-              />
-            ))}
-            <div className="absolute left-1/2 top-6 h-40 w-40 -translate-x-1/2 rounded-full bg-amber-300/10 blur-3xl" />
-          </div>
-
+    <ActionSheet open={open} onClose={close} labelledBy="support-title">
+      <div dir={rtl ? "rtl" : undefined} className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-1">
+        <div className="flex items-center justify-between gap-3 pb-1">
+          <h2 id="support-title" className="flex items-center gap-2 text-base font-bold text-white">
+            <GiftMark className="h-[18px] w-[18px] text-amber-200" strokeWidth={2} />
+            {t(lang, "Help keep HuDa free")}
+          </h2>
           <button
             type="button"
             onClick={close}
             aria-label={t(lang, "Close")}
-            className="absolute end-2 top-2 z-10 grid h-11 w-11 place-items-center rounded-full text-sand-300 transition-colors hover:bg-white/10"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <CloseIcon className="text-sm" />
           </button>
-
-          <div className="relative px-5 pb-5 pt-7">
-            {/* The gift, drawn: box, lid, ribbon, then the bow — and a spark rises */}
-            <svg viewBox="0 0 32 32" className="mx-auto h-16 w-16 overflow-visible text-amber-300 drop-shadow-[0_0_14px_rgba(252,211,77,0.45)]" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <motion.rect x="6.5" y="14.5" width="19" height="13" rx="2" {...draw(0.1)} />
-              <motion.rect x="4.5" y="10" width="23" height="4.5" rx="1.5" {...draw(0.4)} />
-              <motion.path d="M16 10v17.5" {...draw(0.8)} />
-              <motion.path d="M16 10c-1.6-3.6-6.6-5-7.4-2.4C8 9.6 12.4 10 16 10z" {...draw(1.05)} />
-              <motion.path d="M16 10c1.6-3.6 6.6-5 7.4-2.4C24 9.6 19.6 10 16 10z" {...draw(1.05)} />
-              <motion.circle
-                cx="16"
-                cy="4"
-                r="0.9"
-                fill="currentColor"
-                stroke="none"
-                initial={{ opacity: 0, y: reduce ? 0 : 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduce ? 0 : 2.2, duration: 0.7 }}
-              />
-            </svg>
-
-            <motion.div
-              initial={{ opacity: 0, y: reduce ? 0 : 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduce ? 0 : 0.35, duration: 0.6 }}
-              className="mt-3 text-center"
-            >
-              <h2 id="support-title" className="text-[21px] font-semibold leading-tight tracking-[-0.01em] text-amber-50">
-                {t(lang, "Help keep HuDa free")}
-              </h2>
-              <p className="mx-auto mt-2.5 max-w-[34ch] text-[13.5px] leading-relaxed text-sand-200/85">
-                {t(lang, "HuDa is free for everyone — no ads, no sign-up, nothing locked. If it has been a companion to you, you can help pay for its servers, recitations and videos.")}
-              </p>
-              <p className="mx-auto mt-2 max-w-[36ch] text-[11.5px] italic leading-snug text-amber-200/60">
-                {t(lang, "A gift, not a purchase: nothing extra is unlocked in return.")}
-              </p>
-            </motion.div>
-
+        </div>
+        <p className="mt-1.5 text-sm leading-relaxed text-sand-200/85">
+          {t(lang, "HuDa is free for everyone — no ads, no sign-up, nothing locked. If it has been a companion to you, you can help pay for its servers, recitations and videos.")}
+        </p>
+        <p className="mt-1.5 text-xs italic leading-snug text-amber-200/60">
+          {t(lang, "A gift, not a purchase: nothing extra is unlocked in return.")}
+        </p>
             {/* Way to give — only when both ways are set up */}
             {!single && (
               <div
                 role="radiogroup"
                 aria-label={t(lang, "Way to give")}
-                className="relative mt-5 grid grid-cols-2 rounded-full border border-white/10 bg-black/30 p-1"
+                className="relative mt-4 grid grid-cols-2 rounded-full bg-white/[0.06] p-1"
               >
                 {(["upi", "kofi"] as const).map((w) => (
                   <button
@@ -266,7 +164,7 @@ export function SupportSheet() {
                   >
                     <span
                       className={cn(
-                        "absolute inset-0 -z-[1] rounded-full bg-gradient-to-b from-amber-200 to-amber-400 shadow-[0_0_18px_rgba(252,211,77,0.35)] transition-opacity duration-300",
+                        "absolute inset-0 -z-[1] rounded-full bg-amber-200/90 transition-opacity duration-300",
                         way === w ? "opacity-100" : "opacity-0",
                       )}
                       aria-hidden="true"
@@ -316,9 +214,9 @@ export function SupportSheet() {
                         aria-disabled={!upiReady}
                         onClick={() => upiReady && setThanked(true)}
                         className={cn(
-                          "mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold transition-transform",
+                          "mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold transition",
                           upiReady
-                            ? "bg-gradient-to-b from-amber-200 to-amber-400 text-charcoal-950 shadow-[0_8px_24px_rgba(252,211,77,0.25)] active:scale-[0.98]"
+                            ? "bg-amber-200/90 text-black hover:bg-amber-200 active:scale-[0.99]"
                             : "cursor-not-allowed bg-white/10 text-sand-200/50",
                         )}
                       >
@@ -372,9 +270,9 @@ export function SupportSheet() {
                       aria-disabled={!kofiReady}
                       onClick={() => kofiReady && setThanked(true)}
                       className={cn(
-                        "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold transition-transform",
+                        "flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold transition",
                         kofiReady
-                          ? "bg-gradient-to-b from-amber-200 to-amber-400 text-charcoal-950 shadow-[0_8px_24px_rgba(252,211,77,0.25)] active:scale-[0.98]"
+                          ? "bg-amber-200/90 text-black hover:bg-amber-200 active:scale-[0.99]"
                           : "cursor-not-allowed bg-white/10 text-sand-200/50",
                       )}
                     >
@@ -410,10 +308,8 @@ export function SupportSheet() {
             <div className="mt-5 border-t border-white/10 pt-3 text-center">
               <p className="text-[11px] text-sand-200/50">{t(lang, "HuDa never sees your payment details.")}</p>
             </div>
-          </div>
-        </div>
-      </motion.div>
-    </>
+      </div>
+    </ActionSheet>
   );
 }
 
