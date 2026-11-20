@@ -66,16 +66,23 @@ const fixture = () => ({
       moderation_pending: "unavailable",
     },
   }),
+  support: ok({
+    stats: {
+      kinds: { upi_app: { h24: 2, d7: 9, total: 40 }, upi_qr: { h24: 1, d7: 5, total: 12 }, upi_copy: { h24: 0, d7: 1, total: 3 } },
+      upi_people_7d: 7,
+      upi_people_total: 30,
+    },
+  }),
 });
 
 const byId = (m, id) => m.cards.find((c) => c.id === id);
 const label = (k, id) => `${k}#${id}`;
 
-test("twelve cards in the asked order, numbers first", () => {
+test("thirteen cards in the asked order, numbers first", () => {
   const m = buildDashboard(fixture(), { now: NOW, label });
   assert.deepEqual(
     m.cards.map((c) => c.id),
-    ["issues", "uncommitted", "todo", "inprogress", "notlive", "checks", "security", "traffic", "live", "listeners", "top", "engagement"],
+    ["issues", "uncommitted", "todo", "inprogress", "notlive", "checks", "security", "traffic", "live", "listeners", "top", "engagement", "support"],
   );
   assert.equal(byId(m, "issues").value, "0");
   assert.equal(byId(m, "uncommitted").value, "1");
@@ -86,6 +93,7 @@ test("twelve cards in the asked order, numbers first", () => {
   assert.equal(byId(m, "live").value, "3");
   assert.equal(byId(m, "listeners").value, "1,500");
   assert.equal(byId(m, "engagement").value, "6");
+  assert.equal(byId(m, "support").value, "9");
   assert.ok(m.cards.every((c) => c.status === "ok"));
 });
 
@@ -174,7 +182,7 @@ test("a missing section, a missing payload and a fatal snapshot never throw", ()
   assert.equal(byId(buildDashboard(p, { now: NOW }), "security").status, "unavailable");
   assert.equal(byId(buildDashboard(p, { now: NOW }), "uncommitted").status, "unavailable");
   const empty = buildDashboard(null, { now: NOW });
-  assert.equal(empty.cards.length, 12);
+  assert.equal(empty.cards.length, 13);
   assert.ok(empty.cards.every((c) => c.status === "unavailable"));
   assert.equal(empty.stale, false);
   assert.equal(buildDashboard({ generatedAt: "2026-10-31T02:00:00Z", fatal: "crashed" }, { now: NOW }).fatal, "crashed");
@@ -186,4 +194,16 @@ test("compact numbers", () => {
   assert.equal(compact(12_300), "12.3k");
   assert.equal(compact(250_000), "250k");
   assert.equal(compact(null), "—");
+});
+
+test("support card: tries only; missing kinds show a dash; no section → unavailable", () => {
+  const m = buildDashboard(fixture(), { now: NOW, label });
+  const c = byId(m, "support");
+  assert.match(c.lines[0], /QR காட்டியவை: 5 · ID copy: 1/);
+  assert.match(c.lines[1], /7$/);
+  const kofi = c.detail[0].items.find((i) => i.label.startsWith("Ko-fi"));
+  assert.equal(kofi.value, "— · — · —");
+  const none = fixture();
+  delete none.support;
+  assert.equal(byId(buildDashboard(none, { now: NOW, label }), "support").status, "unavailable");
 });

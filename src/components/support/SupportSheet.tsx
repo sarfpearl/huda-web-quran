@@ -20,6 +20,7 @@ import {
   upiLink,
   type SupportWay,
 } from "@/lib/support";
+import { recordSupportTap } from "@/lib/supportTaps";
 import { GiftMark } from "./SupportGift";
 
 /*
@@ -109,6 +110,7 @@ export function SupportSheet() {
     try {
       await navigator.clipboard.writeText(SUPPORT_UPI_ID);
       setCopied(true);
+      recordSupportTap("upi_copy");
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
       /* clipboard blocked: the ID is on screen to copy by hand */
@@ -116,6 +118,11 @@ export function SupportSheet() {
   };
 
   const upiReady = upiConfigured();
+  // Counted once each time the QR comes on screen (admin dashboard).
+  const qrShown = open && way === "upi" && upiReady && (!handheld || showQr);
+  useEffect(() => {
+    if (qrShown) recordSupportTap("upi_qr");
+  }, [qrShown]);
   const kofiReady = kofiConfigured();
   const single = onlyWay();
   const link = upiReady ? upiLink(amount ?? undefined) : "";
@@ -212,7 +219,11 @@ export function SupportSheet() {
                       <a
                         href={upiReady ? link : undefined}
                         aria-disabled={!upiReady}
-                        onClick={() => upiReady && setThanked(true)}
+                        onClick={() => {
+                          if (!upiReady) return;
+                          setThanked(true);
+                          recordSupportTap("upi_app");
+                        }}
                         className={cn(
                           "mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold transition",
                           upiReady
@@ -268,7 +279,11 @@ export function SupportSheet() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-disabled={!kofiReady}
-                      onClick={() => kofiReady && setThanked(true)}
+                      onClick={() => {
+                        if (!kofiReady) return;
+                        setThanked(true);
+                        recordSupportTap("kofi");
+                      }}
                       className={cn(
                         "flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold transition",
                         kofiReady
