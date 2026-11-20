@@ -24,10 +24,6 @@ export const OPEN_SUPPORT_EVENT = "huda:open-support";
 
 /** localStorage: the visitor's pick of payment way ("upi" | "kofi"). */
 export const SUPPORT_WAY_KEY = "huda-support-way";
-/** localStorage: the edge star is hidden for good ("1"). */
-export const SUPPORT_STAR_HIDDEN_KEY = "huda-support-star-hidden";
-/** localStorage: first day this browser opened HuDa (ms) — the star waits a few days. */
-export const SUPPORT_FIRST_SEEN_KEY = "huda-support-first-seen";
 
 export type SupportWay = "upi" | "kofi";
 

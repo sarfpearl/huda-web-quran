@@ -12,7 +12,6 @@ import { qrMatrix } from "@/lib/qr";
 import {
   OPEN_SUPPORT_EVENT,
   SUPPORT_KOFI_URL,
-  SUPPORT_STAR_HIDDEN_KEY,
   SUPPORT_UPI_ID,
   SUPPORT_WAY_KEY,
   UPI_AMOUNTS,
@@ -23,14 +22,14 @@ import {
   upiLink,
   type SupportWay,
 } from "@/lib/support";
-import { StarMark, SUPPORT_STAR_CHANGED_EVENT } from "./SupportStar";
+import { GiftMark } from "./SupportGift";
 
 /*
- * "Help keep HuDa free": a small night sky. The eight-point star draws itself
+ * "Help keep HuDa free": a small night sky. A gold gift draws itself
  * in gold over a field of faint stars, then two ways to give — UPI for India
  * (QR on a computer, the UPI app on a phone) and Ko-fi for everyone else.
  * HuDa only builds the link; the money goes straight from the visitor's app
- * or Ko-fi to the owner. Opens from Settings or the edge star, never by itself.
+ * or Ko-fi to the owner. Opens from Settings or the gift tab, never by itself.
  */
 
 function store(key: string, value: string) {
@@ -88,7 +87,6 @@ export function SupportSheet() {
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
   const [thanked, setThanked] = useState(false);
-  const [starHidden, setStarHidden] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,7 +95,6 @@ export function SupportSheet() {
       let saved: string | null = null;
       try {
         saved = localStorage.getItem(SUPPORT_WAY_KEY);
-        setStarHidden(localStorage.getItem(SUPPORT_STAR_HIDDEN_KEY) === "1");
       } catch {
         /* private mode */
       }
@@ -110,7 +107,6 @@ export function SupportSheet() {
       setThanked(false);
       setOpen(true);
       setMounted(true);
-      window.dispatchEvent(new Event(SUPPORT_STAR_CHANGED_EVENT));
     };
     window.addEventListener(OPEN_SUPPORT_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_SUPPORT_EVENT, onOpen);
@@ -136,11 +132,6 @@ export function SupportSheet() {
     setWay(w);
     setThanked(false);
     store(SUPPORT_WAY_KEY, w);
-  };
-  const hideStar = () => {
-    store(SUPPORT_STAR_HIDDEN_KEY, "1");
-    setStarHidden(true);
-    window.dispatchEvent(new Event(SUPPORT_STAR_CHANGED_EVENT));
   };
   const copyUpi = async () => {
     try {
@@ -218,19 +209,22 @@ export function SupportSheet() {
           </button>
 
           <div className="relative px-5 pb-5 pt-7">
-            {/* The star, drawn */}
-            <svg viewBox="0 0 64 64" className="mx-auto h-16 w-16 text-amber-300 drop-shadow-[0_0_14px_rgba(252,211,77,0.45)]" fill="none" aria-hidden="true">
-              <motion.rect x="15" y="15" width="34" height="34" rx="3.5" stroke="currentColor" strokeWidth="1.6" {...draw(0.15)} />
-              <motion.rect x="15" y="15" width="34" height="34" rx="3.5" stroke="currentColor" strokeWidth="1.6" transform="rotate(45 32 32)" strokeOpacity={0.6} {...draw(0.7)} />
+            {/* The gift, drawn: box, lid, ribbon, then the bow — and a spark rises */}
+            <svg viewBox="0 0 32 32" className="mx-auto h-16 w-16 overflow-visible text-amber-300 drop-shadow-[0_0_14px_rgba(252,211,77,0.45)]" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <motion.rect x="6.5" y="14.5" width="19" height="13" rx="2" {...draw(0.1)} />
+              <motion.rect x="4.5" y="10" width="23" height="4.5" rx="1.5" {...draw(0.4)} />
+              <motion.path d="M16 10v17.5" {...draw(0.8)} />
+              <motion.path d="M16 10c-1.6-3.6-6.6-5-7.4-2.4C8 9.6 12.4 10 16 10z" {...draw(1.05)} />
+              <motion.path d="M16 10c1.6-3.6 6.6-5 7.4-2.4C24 9.6 19.6 10 16 10z" {...draw(1.05)} />
               <motion.circle
-                cx="32"
-                cy="32"
-                r="3.5"
+                cx="16"
+                cy="4"
+                r="0.9"
                 fill="currentColor"
-                initial={reduce ? { opacity: 0 } : { scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: reduce ? 0 : 1.9, duration: 0.5 }}
-                style={{ transformOrigin: "32px 32px" }}
+                stroke="none"
+                initial={{ opacity: 0, y: reduce ? 0 : 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: reduce ? 0 : 2.2, duration: 0.7 }}
               />
             </svg>
 
@@ -328,7 +322,7 @@ export function SupportSheet() {
                             : "cursor-not-allowed bg-white/10 text-sand-200/50",
                         )}
                       >
-                        <StarMark className="h-4 w-4" strokeWidth={4} />
+                        <GiftMark className="h-[18px] w-[18px]" strokeWidth={2.4} />
                         {t(lang, "Pay with a UPI app")}
                       </a>
                     )}
@@ -384,7 +378,7 @@ export function SupportSheet() {
                           : "cursor-not-allowed bg-white/10 text-sand-200/50",
                       )}
                     >
-                      <StarMark className="h-4 w-4" strokeWidth={4} />
+                      <GiftMark className="h-[18px] w-[18px]" strokeWidth={2.4} />
                       {kofiReady ? t(lang, "Open Ko-fi") : t(lang, "Not set up yet")}
                       {kofiReady && (
                         <svg className="h-4 w-4 rtl:-scale-x-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -415,19 +409,6 @@ export function SupportSheet() {
 
             <div className="mt-5 border-t border-white/10 pt-3 text-center">
               <p className="text-[11px] text-sand-200/50">{t(lang, "HuDa never sees your payment details.")}</p>
-              {starHidden ? (
-                <p className="mt-1.5 text-[11.5px] text-sand-200/50">{t(lang, "Star hidden")}</p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={hideStar}
-                  title={t(lang, "The star at the screen's edge won't show again. Support stays in Settings.")}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11.5px] text-sand-200/60 transition-colors hover:bg-white/5 hover:text-sand-100"
-                >
-                  <StarMark className="h-3 w-3" strokeWidth={4} />
-                  {t(lang, "Hide the star")}
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -449,7 +430,7 @@ export function SupportSettingsRow({ onLeave }: { onLeave: (event: string) => vo
       className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-300/25 bg-[radial-gradient(140%_120%_at_0%_50%,rgba(252,211,77,0.12),transparent_60%)] px-4 py-3.5 text-left transition-colors hover:bg-amber-300/10 cursor-pointer active:scale-[0.99]"
     >
       <span className="flex items-center gap-2.5 text-sm font-semibold text-amber-100">
-        <StarMark className="h-[18px] w-[18px] text-amber-300" />
+        <GiftMark className="h-5 w-5 text-amber-300" />
         {t(lang, "Support HuDa")}
       </span>
       <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/80 rtl:-scale-x-100" />

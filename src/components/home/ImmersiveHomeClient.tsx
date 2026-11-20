@@ -17,7 +17,7 @@ import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/
 import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { SupportSheet } from "@/components/support/SupportSheet";
-import { SupportStar } from "@/components/support/SupportStar";
+import { SupportGift } from "@/components/support/SupportGift";
 import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FeedbackLantern } from "@/components/feedback/FeedbackLantern";
 import { FirstVisitTour } from "./FirstVisitTour";
@@ -2258,8 +2258,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       <FeedbackLantern playing={player.isPlaying} />
       {/* First visit: a lantern shows what each control does */}
       <FirstVisitTour />
-      {/* Help keep HuDa free: the quiet edge star + its sheet (components/support) */}
-      <SupportStar playing={player.isPlaying} suppressed={readingActive} />
+      {/* Help keep HuDa free: the gift tab at the left edge + its sheet (components/support) */}
+      <SupportGift playing={player.isPlaying} suppressed={readingActive} />
       <SupportSheet />
     </div>
     </SetUiLangContext.Provider>
