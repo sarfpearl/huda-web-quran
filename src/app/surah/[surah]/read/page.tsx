@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ChevronRightIcon } from "@/components/ui/Icon";
+import { ReadLanguageNav } from "@/components/seo/ReadLanguageNav";
 import { QURAN_SURAHS } from "@/lib/data/quran";
 import { SURAH_NAMES } from "@/lib/data/surahNames";
 import { parseSurahLink } from "@/lib/deepLink";
+import { readAlternateLanguages } from "@/lib/readLanguages";
 import { readSurahText } from "@/lib/surahText";
 import { absoluteUrl, notFoundMetadata, shareMetadata, siteConfig } from "@/lib/site";
 
@@ -42,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: readAlternateLanguages(link.surah, absoluteUrl) },
     ...shareMetadata({ title: `Surah ${s.name} (${s.arabicName}) · Read`, description, url }),
   };
 }
@@ -152,6 +154,8 @@ export default async function SurahReadPage({ params }: Props) {
             </Link>
           ) : <span />}
         </nav>
+
+        <ReadLanguageNav surah={n} />
 
         <p className="mt-10 text-center text-xs text-muted">
           Tamil: Jan Trust Foundation · English: Saheeh International
