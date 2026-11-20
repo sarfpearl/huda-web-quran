@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import type { TranslationLang } from "./translations";
 import manifest from "./meaningAudioManifest.json";
-import stops from "./meaningStops.json";
 
 /*
  * Meaning audio: after each ayah, a voice reads its meaning — the translation
@@ -68,7 +67,55 @@ export function istiadhahMeaningUrl(voice: MeaningVoice, lang: TranslationLang):
  * scripts/generation/build-meaning-stops.mjs — or null (not measured).
  */
 export function meaningStopsFor(reciterId: string, surah: number): number[] | null {
-  return (stops as Record<string, Record<string, number[]>>)[reciterId]?.[String(surah)] ?? null;
+  return STOPS?.[reciterId]?.[String(surah)] ?? null;
+}
+
+// meaningStops.json is ~390 KB (≈170 KB gzipped), over half of the player's
+// main script when it was a static import, and only needed while meaning
+// audio plays. It loads as its own chunk instead: at once when meaning audio
+// is on, otherwise once the page is idle after loading. Until then
+// meaningStopsFor() returns null, the same as an unmeasured Surah (the cue
+// falls back to just after the last timed word).
+type Stops = Record<string, Record<string, number[]>>;
+let STOPS: Stops | null = null;
+let stopsLoad: Promise<void> | null = null;
+function loadMeaningStops(): Promise<void> {
+  stopsLoad ??= import("./meaningStops.json").then(
+    (m) => {
+      STOPS = m.default as Stops;
+    },
+    () => {
+      stopsLoad = null; // offline / failed chunk: try again next time
+    },
+  );
+  return stopsLoad;
+}
+
+/** True once meaningStops.json is loaded; `now` loads it straight away. */
+export function useMeaningStopsReady(now: boolean): boolean {
+  const [ready, setReady] = useState(STOPS !== null);
+  useEffect(() => {
+    if (ready) return;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const go = () => {
+      void loadMeaningStops().then(() => {
+        if (alive && STOPS) setReady(true);
+      });
+    };
+    const later = () => {
+      timer = setTimeout(go, 1500);
+    };
+    if (now) go();
+    else if (document.readyState === "complete") later();
+    else window.addEventListener("load", later, { once: true });
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      window.removeEventListener("load", later);
+    };
+  }, [now, ready]);
+  return ready;
 }
 
 // ── The listener's choice ──────────────────────────────────────────────────
