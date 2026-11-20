@@ -995,6 +995,7 @@ export function CenterVerseDisplay({
               data-fit-text
               data-fit-min={13}
               data-fit-min-land={17}
+              data-fit-land={22}
               data-fit-max={30}
               data-fit-max-tablet={26}
               data-fit-max-mobile={24}
