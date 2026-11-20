@@ -13,6 +13,7 @@ import { WaqfLegend } from "./WaqfLegend";
 import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 import { SCENE_DIM_DEFAULTS, type SceneDim } from "./SceneOverlay";
+import { SupportSettingsRow } from "@/components/support/SupportSheet";
 import { tourT } from "@/lib/i18n/tour";
 import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
 import { useReminderSummary } from "./RemindersPage";
@@ -185,6 +186,7 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
           <Row label={tourT(lang, "App tour")} value={tourT(lang, "Show again")} onClick={() => onLeave(OPEN_TOUR_EVENT)} />
         </>
       )}
+      <SupportSettingsRow onLeave={onLeave} />
     </div>
   );
 }
