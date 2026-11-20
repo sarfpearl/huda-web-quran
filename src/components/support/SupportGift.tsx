@@ -16,7 +16,8 @@ import { OPEN_SUPPORT_EVENT, SUPPORT_PEEKED_KEY, supportEnabled } from "@/lib/su
  *   - It always rests there, also after someone has given.
  *   - A tap lets it go: it drops and swings like the lantern, the lid lifts
  *     and lets out a little light, and "Support HuDa" shows beside it. A
- *     second tap opens the sheet. Untouched for 12 s it goes back.
+ *     second tap opens the sheet. A tap anywhere else, or 12 s untouched,
+ *     sends it back.
  *   - Only on the very first visit it swings out once by itself, then never
  *     again. It doesn't move while a recitation plays.
  *   - Stays in place over open menus and panels, like the lantern; hidden
@@ -207,9 +208,12 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
     };
   }, [ready, enabled]);
 
-  // A menu's dimmed backdrop can sit over the gift (the Surah panel on a
-  // computer). A tap on the gift's spot then closes the menu as usual and
-  // also lets the gift out, so it never seems dead.
+  // Out and the visitor taps anything else (play, search, a menu…): it goes
+  // straight back to its place. A menu's dimmed backdrop can also sit over
+  // the gift (the Surah panel on a computer): a tap on the gift's spot then
+  // closes the menu as usual and lets the gift out, so it never seems dead.
+  const outRef = useRef(false);
+  outRef.current = out;
   useEffect(() => {
     if (!geo) return;
     const onDown = (e: PointerEvent) => {
@@ -218,6 +222,10 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
       const r = el.getBoundingClientRect();
       const inside = e.clientX >= Math.max(0, r.left) - 6 && e.clientX <= r.right + 12 && e.clientY >= r.top && e.clientY <= r.bottom;
       if (inside) comeOut();
+      else if (outRef.current) {
+        clearTimeout(outTimer.current);
+        setOut(false);
+      }
     };
     window.addEventListener("pointerdown", onDown, true);
     return () => window.removeEventListener("pointerdown", onDown, true);
