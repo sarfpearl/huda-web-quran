@@ -754,3 +754,31 @@ export const InstallIcon = (p: IconProps) => (
     <path d="M9 12.5C9 12.5 11.2095 15.5 12 15.5C12.7906 15.5 15 12.5 15 12.5M12 15V8.5" />
   </Base>
 );
+/** Check passed (admin dashboard). */
+export const CheckmarkCircleIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z" />
+    <path d="M8 12.5L10.5 15L16 9" />
+  </Base>
+);
+/** Check failed (admin dashboard). */
+export const CancelCircleIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z" />
+    <path d="M14.9994 15L12 12.0003M12 12.0003L9 9M12 12.0003L9.00064 15M12 12.0003L15 9" />
+  </Base>
+);
+/** Check skipped (admin dashboard). */
+export const SkipForwardIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M19.9351 12.6258C19.6807 13.8374 18.327 14.7077 15.6198 16.4481C12.6753 18.3411 11.203 19.2876 10.0105 18.9229C9.60662 18.7994 9.23463 18.5823 8.92227 18.2876C8 17.4178 8 15.6118 8 12C8 8.38816 8 6.58224 8.92227 5.71235C9.23463 5.41773 9.60662 5.20057 10.0105 5.07707C11.203 4.71243 12.6753 5.6589 15.6198 7.55186C18.327 9.29233 19.6807 10.1626 19.9351 11.3742C20.0216 11.7865 20.0216 12.2135 19.9351 12.6258Z" />
+    <path d="M4 5L4 19" />
+  </Base>
+);
+/** No data (admin dashboard). */
+export const MinusCircleIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M16 12H8" />
+    <circle cx="12" cy="12" r="10" />
+  </Base>
+);

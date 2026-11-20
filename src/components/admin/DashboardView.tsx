@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { contentLabel } from "@/components/home/QuranEngagement";
 import { DashboardCards } from "@/components/admin/DashboardCards";
 import { buildDashboard, type DashboardPayload, type TrendRow } from "@/lib/dashboard";
+import { AlertIcon } from "@/components/ui/Icon";
 
 /*
  * /admin/dashboard — the morning snapshot, numbers first. Signs in like
@@ -208,8 +209,9 @@ export function DashboardView() {
           ) : model ? (
             <>
               {model.stale && (
-                <p className="rounded-xl border border-gold-400/50 bg-gold-400/10 px-4 py-2.5 text-sm text-gold-600 dark:text-gold-300" role="alert">
-                  ⚠ தரவு 26 மணி நேரத்துக்கு மேல் பழையது. Morning dashboard workflow ஓடவில்லையா என்று பாருங்கள்.
+                <p className="rounded-xl border border-gold-400/50 bg-gold-400/10 px-4 py-2.5 text-sm flex items-start gap-2 text-gold-600 dark:text-gold-300" role="alert">
+                  <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  தரவு 26 மணி நேரத்துக்கு மேல் பழையது. Morning dashboard workflow ஓடவில்லையா என்று பாருங்கள்.
                 </p>
               )}
               {model.fatal && (

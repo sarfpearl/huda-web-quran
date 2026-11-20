@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { cn } from "@/lib/utils";
+import { CancelCircleIcon, CheckmarkCircleIcon, MinusCircleIcon, SkipForwardIcon } from "@/components/ui/Icon";
 import type { Block, Card, CheckState, DashboardModel } from "@/lib/dashboard";
 
 /*
@@ -16,7 +17,14 @@ const TONE: Record<NonNullable<Card["tone"]>, string> = {
   bad: "text-red-600 dark:text-red-400",
 };
 
-const STATE_ICON: Record<CheckState, string> = { pass: "✅", fail: "❌", skipped: "⏭", na: "—" };
+/** Hugeicons per check state, coloured by meaning. */
+function StateIcon({ state, className }: { state: CheckState; className?: string }) {
+  const cls = cn("h-[1.15em] w-[1.15em] shrink-0", className);
+  if (state === "pass") return <CheckmarkCircleIcon className={cn(cls, "text-emerald-600 dark:text-emerald-400")} />;
+  if (state === "fail") return <CancelCircleIcon className={cn(cls, "text-red-600 dark:text-red-400")} />;
+  if (state === "skipped") return <SkipForwardIcon className={cn(cls, "text-muted")} />;
+  return <MinusCircleIcon className={cn(cls, "text-muted")} />;
+}
 
 /** Cards two to a row; a wide card (the chart) takes a row of its own. */
 function toRows(cards: Card[]): Card[][] {
@@ -92,7 +100,7 @@ function BlockView({ block }: { block: Block }) {
           {block.items.map((s) => (
             <div key={s.label}>
               <dt className="text-muted text-[11px]">{s.label}</dt>
-              <dd className="break-words text-base font-semibold">{s.value}</dd>
+              <dd className="flex items-center gap-1.5 break-words text-base font-semibold">{s.state && <StateIcon state={s.state} />}{s.value}</dd>
             </div>
           ))}
         </dl>
@@ -162,7 +170,7 @@ function CardFace({ card }: { card: Card }) {
           {card.checks.map((c) => (
             <li key={c.label} className="flex items-center justify-between text-sm">
               <span>{c.label}</span>
-              <span aria-label={c.state}>{STATE_ICON[c.state]}</span>
+              <span role="img" aria-label={c.state} className="inline-flex"><StateIcon state={c.state} /></span>
             </li>
           ))}
         </ul>
