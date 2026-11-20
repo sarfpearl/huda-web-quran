@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { AyahVerse, QuranWordTiming, RecitationSegment } from "@/lib/data/quranVerses";
 import type { QuranSurah } from "@/lib/data/quran";
+import { ActivityIcon, CloseIcon } from "@/components/ui/Icon";
 
 interface SyncQADebugHUDProps {
   currentTime: number;
@@ -74,9 +75,7 @@ export function SyncQADebugHUD({
         className="pointer-events-auto flex items-center gap-1 justify-center h-11 sm:h-12 px-3 sm:px-3.5 shrink-0 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-90 cursor-pointer text-amber-300 hover:text-white hover:bg-black/20 hover:border-white/30"
       >
         {/* Activity / pulse-line icon (QA monitor) */}
-        <svg className="h-[1.15rem] w-[1.15rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 12h3l2.5-7 5 14 2.5-7H21" />
-        </svg>
+        <ActivityIcon className="h-[1.15rem] w-[1.15rem]" />
         <span>QA</span>
       </button>
 
@@ -95,9 +94,7 @@ export function SyncQADebugHUD({
               aria-label="Close QA monitor"
               className="sm:hidden grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="h-4 w-4" />
             </button>
           </div>
 

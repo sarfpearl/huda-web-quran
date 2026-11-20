@@ -41,7 +41,7 @@ const ROWS: PrayerName[] = ["fajr", "sunrise", "noon", "dhuhr", "asr", "sunset",
 
 // The select's own arrow, drawn so it sits inside the pill's rounded end.
 const CHEVRON =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f3eee4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f3eee4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 9.00005C18 9.00005 13.5811 15 12 15C10.4188 15 6 9 6 9'/%3E%3C/svg%3E\")";
 
 /** Today's prayer times where the device is, with the method and Asr madhab. */
 export function PrayerTimesSheet({

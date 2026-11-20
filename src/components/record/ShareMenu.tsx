@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { ActionSheet } from "@/components/ui/ActionSheet";
-import { RecordIcon, ShareIcon } from "@/components/ui/Icon";
+import { RecordIcon, ShareIcon, CloseIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import { t, type UiLang } from "@/lib/uiLang";
 import type { RecordStudioProps } from "./RecordStudio";
@@ -82,9 +82,7 @@ export function ShareMenu({
               aria-label={L("Close")}
               className="tap-44 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="h-4 w-4" />
             </button>
           </div>
           <div className="space-y-1.5">

@@ -11,12 +11,7 @@ import {
   reciterHasWordTiming,
   reciterHasWordTimingFor,
 } from "@/lib/data/service";
-import {
-  ImamQuranIcon,
-  VideoCameraIcon,
-  ImageIcon,
-  TranslateIcon,
-} from "@/components/ui/Icon";
+import { ImamQuranIcon, VideoCameraIcon, ImageIcon, TranslateIcon, CloseIcon, SearchIcon } from "@/components/ui/Icon";
 import { t, type UiLang } from "@/lib/uiLang";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
@@ -277,9 +272,7 @@ export function ImmersiveHeader({
               aria-label={t(language, "Close translation languages")}
               className="tap-44 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 transition-all hover:bg-white/20 hover:text-white active:scale-95 cursor-pointer"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="h-4 w-4" />
             </button>
             </div>
           </div>
@@ -306,9 +299,7 @@ export function ImmersiveHeader({
               aria-label={t(language, "Search languages")}
               className={`w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50`}
             />
-            <svg className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sand-300/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sand-300/50" />
           </div>
           </StickySearch>
           <div className="space-y-1.5" role="radiogroup" aria-label={t(language, "Translation language")}>

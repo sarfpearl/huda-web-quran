@@ -2,6 +2,7 @@
 
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { t, useUiLang } from "@/lib/uiLang";
+import { LocationIcon } from "@/components/ui/Icon";
 
 /**
  * Shown before the browser's own location prompt, which only names the site:
@@ -69,9 +70,6 @@ export function LocationAskSheet({
 
 function PinIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11Z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
+    <LocationIcon className="h-5 w-5" />
   );
 }

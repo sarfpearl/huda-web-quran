@@ -12,7 +12,7 @@ import {
   isSurahTrackId,
   SURAH_TRACK_ID_PREFIX,
 } from "@/lib/data/quran";
-import { CheckIcon, CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon } from "@/components/ui/Icon";
+import { CheckIcon, CloseIcon, CommentIcon, FavouriteIcon, ViewCountIcon, SentIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { ActionSheet, useIsMobile } from "@/components/ui/ActionSheet";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
@@ -328,9 +328,7 @@ export type QuranEngagement = ReturnType<typeof useQuranEngagement>;
 
 
 const SendIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 19V5M5 12l7-7 7 7" />
-  </svg>
+  <SentIcon className={className} />
 );
 
 const LiveDot = ({ on }: { on: boolean }) => (

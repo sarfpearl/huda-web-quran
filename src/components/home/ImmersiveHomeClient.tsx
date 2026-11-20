@@ -36,7 +36,7 @@ import {
 } from "@/lib/data/meaningAudio";
 import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
 import { ShareMenu } from "@/components/record/ShareMenu";
-import { BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon } from "@/components/ui/Icon";
+import { BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, RotateLeftIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -2150,10 +2150,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-live="polite"
             className="flex max-w-[680px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
-            <svg className="h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <path d="M3 4v5h5" />
-            </svg>
+            <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
             <span>{notice.text}</span>
           </div>
         </div>
@@ -2179,10 +2176,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-live="polite"
             className="mb-3 phoneland:hidden max-w-[680px] w-auto flex items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
-            <svg className="h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <path d="M3 4v5h5" />
-            </svg>
+            <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
             <span>{notice.text}</span>
           </div>
         )}
