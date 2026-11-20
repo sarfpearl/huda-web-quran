@@ -40,7 +40,7 @@ export const ABOUT = {
     {
       label: "Translations",
       value:
-        "Saheeh International (English) · Jan Trust (Tamil) · Jalandhry (Urdu) · Abdul Hameed & Parappoor (Malayalam) · Azizul Haque al-Umari (Hindi, via Quran.com) · Indonesian Ministry of Religious Affairs · Muhiuddin Khan (Bengali) · Diyanet (Turkish) · Hamidullah (French) · Basmeih (Malay), via alquran.cloud",
+        "Saheeh International (English) · Jan Trust (Tamil) · Jalandhry (Urdu) · Abdul Hameed & Parappoor (Malayalam) · Azizul Haque al-Umari (Hindi, via Quran.com) · Indonesian Ministry of Religious Affairs · Muhiuddin Khan (Bengali) · Diyanet (Turkish) · Hamidullah (French) · Basmeih (Malay), via alquran.cloud · The other languages: each translator is named in the language list; texts from QuranEnc.com (King Fahd Complex, Rowwad Translation Center), Quran.com and Tanzil.net (tanzil.net/trans), via alquran.cloud",
     },
   ],
 } as const;
