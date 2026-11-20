@@ -69,7 +69,7 @@ export interface TrendRow {
 
 export type Block =
   | { kind: "list"; title?: string; items: { primary: string; secondary?: string; href?: string }[]; empty?: string }
-  | { kind: "stats"; items: { label: string; value: string }[] }
+  | { kind: "stats"; items: { label: string; value: string; state?: CheckState }[] }
   | { kind: "bars"; title?: string; items: { label: string; value: number }[] }
   | { kind: "trend"; title: string; points: { label: string; value: number }[] }
   | { kind: "text"; text: string }
@@ -326,7 +326,7 @@ export function buildDashboard(payload: DashboardPayload | null | undefined, opt
         detail.push({
           kind: "stats",
           items: [
-            { label: name, value: state(k) === "pass" ? "✅ pass" : state(k) === "fail" ? "❌ fail" : state(k) === "skipped" ? "⏭ skipped" : "—" },
+            { label: name, value: state(k) === "na" ? "—" : state(k), state: state(k) },
             ...(num(k?.seconds) !== null ? [{ label: "நேரம்", value: `${k?.seconds}s` }] : []),
             ...(k?.reason ? [{ label: "காரணம்", value: k.reason }] : []),
           ],
