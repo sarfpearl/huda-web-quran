@@ -32,6 +32,7 @@ import { VERSE_TOPICS } from "@/lib/data/verseTopics";
 import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
 import { RemindersPage } from "./RemindersPage";
+import { AccountPage } from "./AccountPage";
 import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
 import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
@@ -893,6 +894,8 @@ export function TopicPickerModal({
                 <QuranTextPage />
               ) : settingsPage === "reminders" ? (
                 <RemindersPage onLeave={leaveSettings} />
+              ) : settingsPage === "account" ? (
+                <AccountPage />
               ) : showSettings ? (
                 <SettingsList onOpen={setView} onLeave={leaveSettings} />
               ) : showAbout ? (

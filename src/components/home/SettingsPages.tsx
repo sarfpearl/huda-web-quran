@@ -17,6 +17,8 @@ import { SupportSettingsRow } from "@/components/support/SupportSheet";
 import { tourT } from "@/lib/i18n/tour";
 import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
 import { useReminderSummary } from "./RemindersPage";
+import { AccountRow } from "./AccountPage";
+import { loginEnabled } from "@/lib/auth/account";
 
 /*
  * Settings (⚙ in the content browser): every preference in one place. The
@@ -53,14 +55,15 @@ export function HomeSettingsProvider({ value, children }: { value: HomeSettings;
 export const useHomeSettings = () => useContext(HomeSettingsContext);
 
 /** The Settings pages besides the list itself. */
-export type SettingsPage = "language" | "translation" | "textSize" | "quran" | "reminders";
-export const SETTINGS_PAGES: SettingsPage[] = ["language", "translation", "textSize", "quran", "reminders"];
+export type SettingsPage = "language" | "translation" | "textSize" | "quran" | "reminders" | "account";
+export const SETTINGS_PAGES: SettingsPage[] = ["language", "translation", "textSize", "quran", "reminders", "account"];
 export const SETTINGS_PAGE_TITLE: Record<SettingsPage, string> = {
   language: "App language",
   translation: "Translation",
   textSize: "Text size",
   quran: "Quran script",
   reminders: "Reminders",
+  account: "Account",
 };
 
 const ROW =
@@ -106,6 +109,8 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
   const scriptLabel = s ? t(lang, SCRIPT_CHOICES.find((c) => c.id === s.script)?.label ?? "Uthmani") : "";
   return (
     <div className={SCROLL}>
+      {/* Optional login (lib/auth/account): previews now, production once switched on. */}
+      {loginEnabled() && <AccountRow onOpen={() => onOpen("account")} />}
       <Row label={t(lang, "App language")} value={ui?.label} valueLang={ui?.id} onClick={() => onOpen("language")} />
       {s && (
         <>
