@@ -1044,7 +1044,7 @@ export function CompactBayanPlayer({
           <PrevIcon className="text-lg" />
         </button>
 
-        {/* Play: a golden "sunrise" disc. A thin ring around it fills with the
+        {/* Play: a golden "sunrise" disc. A thin gold ring around it fills with the
             track's progress; while playing, soft light waves ripple outward. */}
         <button
           type="button"
@@ -1065,19 +1065,13 @@ export function CompactBayanPlayer({
               cy="32"
               r="30"
               fill="none"
-              stroke="url(#huda-play-ring)"
+              stroke="#fbbf24"
               strokeWidth="2"
               strokeLinecap="round"
               pathLength={100}
               strokeDasharray={`${barPct} 100`}
               className="transition-[stroke-dasharray] duration-150 ease-linear"
             />
-            <defs>
-              <linearGradient id="huda-play-ring" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#fde68a" />
-                <stop offset="100%" stopColor="#34d399" />
-              </linearGradient>
-            </defs>
           </svg>
           {/* the sun disc */}
           <span className="huda-play-disc relative grid h-[46px] w-[46px] max-[369px]:h-10 max-[369px]:w-10 place-items-center rounded-full text-[#2a1a04]">
