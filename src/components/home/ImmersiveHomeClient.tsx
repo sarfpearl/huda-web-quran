@@ -32,6 +32,7 @@ import {
   meaningAudioUrl,
   meaningStopsFor,
   useMeaningAudioPrefs,
+  useMeaningStopsReady,
   type MeaningVoice,
 } from "@/lib/data/meaningAudio";
 import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
@@ -983,6 +984,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // only the Arabic Mushaf text (the Translate button is hidden there), so the
   // meaning is never read aloud while reading.
   const meaningOn = MEANING_AUDIO_PUBLISHED && showTranslation && meaningPrefs.on && isMeaningLang(translationLang) && !readingMode;
+  // meaningStops.json is a lazy chunk: re-run the cues below once it arrives.
+  const meaningStopsReady = useMeaningStopsReady(meaningOn);
   // Its switch and voice: in Settings › Translation and the header's sheet.
   const meaningAudioSettings = MEANING_AUDIO_PUBLISHED
     ? {
@@ -1042,7 +1045,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     return cues;
     // meaningFor reads meaningOn, the voice and the language.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cueSurah, segments, selectedReciter.id, meaningPrefs.voice, translationLang]);
+  }, [cueSurah, segments, selectedReciter.id, meaningPrefs.voice, translationLang, meaningStopsReady]);
   // (Meaning only skips the recitation: nothing to hold the screen over.)
   meaningHoldRef.current = meaningPrefs.only ? null : meaningCues;
   useEffect(() => {
