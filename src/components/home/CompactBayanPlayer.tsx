@@ -1044,45 +1044,70 @@ export function CompactBayanPlayer({
           <PrevIcon className="text-lg" />
         </button>
 
-        {/* Play: a golden "sunrise" disc. A thin gold ring around it fills with the
-            track's progress; while playing, soft light waves ripple outward. */}
+        {/* Play: the cover inside a round, like the collapsed player — a gold
+            ring around it fills with the track's progress (dot at its tip);
+            while playing, soft light waves ripple outward. */}
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
           data-tour="play"
-          className={`huda-play-sun group relative grid h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 place-items-center rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 ${isPlaying ? "is-playing" : ""}`}
+          className={`huda-play-sun group relative h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 ${isPlaying ? "is-playing" : ""}`}
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
-          {/* light waves (only animate while playing) */}
           <span className="huda-play-wave" aria-hidden="true" />
           <span className="huda-play-wave huda-play-wave-2" aria-hidden="true" />
-          {/* progress ring */}
-          <svg className="pointer-events-none absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 64 64" aria-hidden="true">
-            <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+          <span
+            aria-hidden="true"
+            className="absolute inset-[5px] overflow-hidden rounded-full [clip-path:circle(50%)] bg-gradient-to-br from-emerald-950 to-slate-900"
+          >
+            {coverSrc ? (
+              <Image
+                src={coverSrc}
+                alt=""
+                fill
+                unoptimized={true}
+                draggable={false}
+                className="object-cover pointer-events-none"
+                onError={() => setCoverSrc(mediaUrl("/assets/images/bayan/quran.jpg"))}
+              />
+            ) : (
+              <CoverArt seed={bayan.slug} icon={bayan.category.icon} rounded="rounded-full" className="h-full w-full" />
+            )}
+            <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-emerald-400 [&>*]:[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))]">
+              {isLoading ? (
+                <DotLoader className="text-base" />
+              ) : isPlaying ? (
+                <PauseIcon className="text-2xl" fill="currentColor" />
+              ) : (
+                <PlayIcon className="text-2xl ml-0.5" fill="currentColor" />
+              )}
+            </span>
+          </span>
+          <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="16.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.4" />
             <circle
-              cx="32"
-              cy="32"
-              r="30"
+              cx="18"
+              cy="18"
+              r="16.5"
               fill="none"
-              stroke="#fbbf24"
-              strokeWidth="2"
+              stroke={isQuran ? "#fbbf24" : "#f5f5f4"}
+              strokeWidth="2.2"
               strokeLinecap="round"
               pathLength={100}
               strokeDasharray={`${barPct} 100`}
+              transform="rotate(-90 18 18)"
               className="transition-[stroke-dasharray] duration-150 ease-linear"
             />
+            <circle
+              cx={18 + 16.5 * Math.sin((barPct / 100) * 2 * Math.PI)}
+              cy={18 - 16.5 * Math.cos((barPct / 100) * 2 * Math.PI)}
+              r={2.2}
+              fill={isQuran ? "#fde68a" : "#ffffff"}
+              stroke="#ffffff"
+              strokeWidth="0.6"
+            />
           </svg>
-          {/* the sun disc */}
-          <span className="huda-play-disc relative grid h-[46px] w-[46px] max-[369px]:h-10 max-[369px]:w-10 place-items-center rounded-full text-[#2a1a04]">
-            {isLoading ? (
-              <DotLoader className="text-lg" />
-            ) : isPlaying ? (
-              <PauseIcon className="text-[22px]" fill="currentColor" />
-            ) : (
-              <PlayIcon className="text-[22px] ml-0.5" fill="currentColor" />
-            )}
-          </span>
         </button>
 
         <button

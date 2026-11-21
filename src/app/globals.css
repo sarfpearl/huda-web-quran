@@ -989,27 +989,12 @@ input[type="search"]::-webkit-search-results-decoration {
   }
 }
 
-/* Player: golden "sunrise" play button (CompactBayanPlayer). */
-.huda-play-disc {
-  /* one clean gold, same tone as the progress knob (#fbbf24), with only a
-     gentle top-to-bottom shade — no glossy highlight */
-  background: linear-gradient(180deg, #fcd34d 0%, #fbbf24 60%, #f59e0b 100%);
-  box-shadow:
-    0 0 0 1px rgba(255, 236, 190, 0.3),
-    0 4px 14px rgba(251, 191, 36, 0.3);
-  transition: box-shadow 300ms ease;
-}
-.huda-play-sun:hover .huda-play-disc,
-.huda-play-sun.is-playing .huda-play-disc {
-  box-shadow:
-    0 0 0 1px rgba(255, 236, 190, 0.4),
-    0 0 26px 6px rgba(251, 191, 36, 0.32);
-}
+/* Player: expanded play button light waves (CompactBayanPlayer). */
 .huda-play-wave {
   position: absolute;
-  inset: 9px;
+  inset: 0;
   border-radius: 9999px;
-  border: 1.5px solid rgba(253, 230, 138, 0.55);
+  border: 1.5px solid rgba(253, 230, 138, 0.5);
   opacity: 0;
   pointer-events: none;
 }
@@ -1020,8 +1005,8 @@ input[type="search"]::-webkit-search-results-decoration {
   animation-delay: 1.2s;
 }
 @keyframes huda-play-wave {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  100% { transform: scale(1.75); opacity: 0; }
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .huda-play-sun.is-playing .huda-play-wave { animation: none; }
