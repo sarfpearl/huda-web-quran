@@ -22,6 +22,7 @@ export interface DashboardPayload {
   localOnly?: { stashes?: boolean; note?: string };
   analytics?: Section;
   supabase?: { status?: string; reason?: string; stats?: SupabaseStats };
+  support?: { status?: string; reason?: string; stats?: SupportStats };
 }
 
 export interface Check {
@@ -45,6 +46,13 @@ export interface SupabaseStats {
   moderation_pending?: number | string;
 }
 
+/** Support-sheet taps (support_stats RPC). Tries only — HuDa never sees a payment. */
+export interface SupportStats {
+  kinds?: Partial<Record<"upi_app" | "upi_qr" | "upi_copy" | "kofi", { h24?: number; d7?: number; total?: number }>>;
+  upi_people_7d?: number;
+  upi_people_total?: number;
+}
+
 interface TopRow {
   id: number;
   listeners: number;
@@ -61,7 +69,7 @@ export interface TrendRow {
 
 export type Block =
   | { kind: "list"; title?: string; items: { primary: string; secondary?: string; href?: string }[]; empty?: string }
-  | { kind: "stats"; items: { label: string; value: string }[] }
+  | { kind: "stats"; items: { label: string; value: string; state?: CheckState }[] }
   | { kind: "bars"; title?: string; items: { label: string; value: number }[] }
   | { kind: "trend"; title: string; points: { label: string; value: number }[] }
   | { kind: "text"; text: string }
@@ -318,7 +326,7 @@ export function buildDashboard(payload: DashboardPayload | null | undefined, opt
         detail.push({
           kind: "stats",
           items: [
-            { label: name, value: state(k) === "pass" ? "✅ pass" : state(k) === "fail" ? "❌ fail" : state(k) === "skipped" ? "⏭ skipped" : "—" },
+            { label: name, value: state(k) === "na" ? "—" : state(k), state: state(k) },
             ...(num(k?.seconds) !== null ? [{ label: "நேரம்", value: `${k?.seconds}s` }] : []),
             ...(k?.reason ? [{ label: "காரணம்", value: k.reason }] : []),
           ],
@@ -537,6 +545,46 @@ export function buildDashboard(payload: DashboardPayload | null | undefined, opt
           ],
         },
         { kind: "text", text: "மறைக்கப்பட்டவை: spam guard பிடித்தவையும் admin மறைத்தவையும் சேர்ந்த எண்ணிக்கை." },
+      ],
+    });
+  }
+
+  // 13 · Support (UPI): how often people tried to give. Not payments.
+  const sp = p.support;
+  if (!isOk(sp) || !sp?.stats) {
+    cards.push(unavailable("support", "Support · UPI", isOk(sp) ? NO_DATA : reasonOf(sp)));
+  } else {
+    const k = sp.stats.kinds ?? {};
+    const n = (kind: keyof NonNullable<SupportStats["kinds"]>, f: "h24" | "d7" | "total") => num(k[kind]?.[f]);
+    const row = (labelText: string, kind: keyof NonNullable<SupportStats["kinds"]>) => ({
+      label: labelText,
+      value: `${compact(n(kind, "h24"))} · ${compact(n(kind, "d7"))} · ${compact(n(kind, "total"))}`,
+    });
+    cards.push({
+      id: "support",
+      title: "Support · UPI",
+      status: "ok",
+      value: compact(n("upi_app", "d7")),
+      caption: "“Pay with UPI” தட்டியவை · 7 நாள்",
+      lines: [
+        `QR காட்டியவை: ${compact(n("upi_qr", "d7"))} · ID copy: ${compact(n("upi_copy", "d7"))}`,
+        `முயன்றவர்கள் (browsers): ${compact(num(sp.stats.upi_people_7d))}`,
+      ],
+      detail: [
+        {
+          kind: "stats",
+          items: [
+            row("“Pay with a UPI app” (24 மணி · 7 நாள் · மொத்தம்)", "upi_app"),
+            row("QR காட்டியவை", "upi_qr"),
+            row("UPI ID copy", "upi_copy"),
+            row("Ko-fi திறந்தவை", "kofi"),
+            { label: "UPI முயன்ற browsers (7 நாள் · மொத்தம்)", value: `${compact(num(sp.stats.upi_people_7d))} · ${compact(num(sp.stats.upi_people_total))}` },
+          ],
+        },
+        {
+          kind: "text",
+          text: "இவை பணம் அனுப்ப முயன்ற எண்ணிக்கை மட்டும் — உண்மையில் பணம் வந்ததா என்பது HuDa-வுக்குத் தெரியாது (UPI பணம் நேரடியாக வங்கிக்குப் போகிறது). வந்த பணத்தை GPay / வங்கி app-ல் பாருங்கள். ஒரே browser ஒரே வகையை 30 நிமிடத்துக்குள் மீண்டும் தட்டினால் ஒரு முறையே எண்ணப்படும்.",
+        },
       ],
     });
   }

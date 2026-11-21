@@ -527,6 +527,16 @@ const supabaseStats = () =>
     return { stats };
   });
 
+// Support-sheet tap counts (supabase/migrations/20261120120000_support_taps.sql).
+// Until that migration is run the RPC is missing and only this card says so.
+const supportStats = () =>
+  section(async () => {
+    const res = await supabaseRpc("support_stats", {});
+    if (res?.ok !== true) throw new Error(`support_stats refused: ${res?.error || "ok:false"}`);
+    const { ok, ...stats } = res;
+    return { stats };
+  });
+
 // The Postgres check is on payload::text (jsonb adds a space after ':' and ',');
 // stay well under its 200 KB limit and cut the biggest log tails first.
 const SAVE_LIMIT_BYTES = 170_000;
@@ -581,6 +591,7 @@ try {
   const notLiveR = await notLive();
   const analyticsR = await analytics(now.getTime());
   const supabaseR = await supabaseStats();
+  const supportR = await supportStats();
 
   const out = {
     generatedAt: now.toISOString(),
@@ -599,6 +610,7 @@ try {
     },
     analytics: analyticsR,
     supabase: supabaseR,
+    support: supportR,
   };
 
   out.saved = await saveSnapshot(out);
@@ -615,6 +627,7 @@ try {
   }
   console.log(line("analytics", analyticsR));
   console.log(line("supabase", supabaseR));
+  console.log(line("support", supportR));
   console.log(`saved            ${out.saved.ok ? `ok (id ${out.saved.id})` : `no — ${out.saved.reason}`}`);
 } catch (e) {
   // Never fail the workflow: leave a JSON that says what happened.

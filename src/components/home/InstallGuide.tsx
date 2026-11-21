@@ -8,6 +8,7 @@ import { OPEN_INSTALL_GUIDE_EVENT } from "@/lib/settingsEvents";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
+import { CloseIcon, ReminderIcon, InstallIcon } from "@/components/ui/Icon";
 
 const DISMISSED_KEY = "huda-install-dismissed";
 // After "Not now", ask again in two weeks.
@@ -518,18 +519,13 @@ export function InstallGuide() {
                   aria-label="Close"
                   className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sand-300 hover:bg-white/10"
                 >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
-                    <path d="M6 6l12 12M18 6L6 18" />
-                  </svg>
+                  <CloseIcon className="h-5 w-5" />
                 </button>
               </div>
 
               {/* What installing adds: reminders (Settings › Reminders). */}
               <div className="mt-3 flex items-start gap-2.5 rounded-2xl border border-amber-300/20 bg-amber-300/[0.07] px-3 py-2">
-                <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M6 9.5a6 6 0 0 1 12 0c0 3.6 1 5.6 2 6.8H4c1-1.2 2-3.2 2-6.8Z" />
-                  <path d="M10 19.5a2 2 0 0 0 4 0" />
-                </svg>
+                <ReminderIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />
                 <div className="min-w-0">
                   <p className="text-[13px] leading-snug text-sand-100">Installing gives you notifications — set a reminder for your Quran reading time.</p>
                   <p className="font-tamil mt-0.5 text-xs leading-snug text-sand-300/85">நிறுவினால் அறிவிப்புகள் வரும் — குர்ஆன் ஓதும் நேரத்திற்கு நினைவூட்டல் அமைக்கலாம்.</p>
@@ -659,14 +655,7 @@ export function InstallGuideButton({ className = "" }: { className?: string }) {
       data-tour="install"
       className={className}
     >
-      <svg className="h-[1.1em] w-[1.1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M3 11C3 7.25 3 5.375 3.955 4.061a4.5 4.5 0 0 1 1.106-1.106C6.375 2 8.25 2 12 2s5.625 0 6.939.955a4.5 4.5 0 0 1 1.106 1.106C21 5.375 21 7.25 21 11v2c0 3.75 0 5.625-.955 6.939a4.5 4.5 0 0 1-1.106 1.106C17.625 22 15.75 22 12 22s-5.625 0-6.939-.955a4.5 4.5 0 0 1-1.106-1.106C3 18.625 3 16.75 3 13v-2Z" />
-        <path
-          fill="currentColor"
-          stroke="none"
-          d="M12.25 15.6c.21 0 .45 0 .65.03.22.03.5.1.73.34.24.23.31.52.34.73.03.2.03.44.03.65v.5c0 .21 0 .45-.03.65-.03.22-.1.5-.34.73-.23.24-.51.31-.73.34-.2.03-.44.03-.65.03h-.5c-.21 0-.45 0-.65-.03-.22-.03-.5-.1-.73-.34-.24-.23-.31-.51-.34-.73-.03-.2-.03-.44-.03-.65v-.5c0-.21 0-.45.03-.65.03-.22.1-.5.34-.73.23-.24.51-.31.73-.34.2-.03.44-.03.65-.03h.5ZM12 5c.41 0 .75.34.75.75v5.21l1.72-1.69a.75.75 0 0 1 1.06 1.07l-3 2.95a.75.75 0 0 1-1.05 0l-3-2.95a.75.75 0 0 1 1.05-1.07l1.72 1.69V5.75c0-.41.34-.75.75-.75Z"
-        />
-      </svg>
+      <InstallIcon className="h-[1.1em] w-[1.1em]" />
     </button>
   );
 }

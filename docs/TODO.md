@@ -20,6 +20,10 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
       (~50 GB) stay only on the Mac in `../huda-media/4-unused/unused-items/`.
       Don't upload them to R2; don't delete them without the owner's OK.
 
+### Added 2026-11-20 (Support HuDa — after Ko-fi verification)
+- [ ] Ko-fi live: once the PayPal behind ko-fi.com/sarfpearl is verified and the page shows a Donate box, set `NEXT_PUBLIC_SUPPORT_KOFI_URL=https://ko-fi.com/sarfpearl` in Vercel (Production + Preview) and redeploy — the India / Other countries switch then appears with no code change.
+- [ ] Ko-fi gifts on the admin dashboard: Ko-fi webhook → a small `/api/kofi` route (checks Ko-fi's verification token, kept only in Vercel env) → Supabase table → list of real gifts (name given, amount, time, message) on /admin/dashboard. UPI stays tries-only (support_taps); UPI payments themselves are only in GPay / the bank app.
+
 ### Added 2026-11-18 (Google Search — plan in `docs/SEO_PLAN.md`)
 
 - [x] **HuDa logo in Google results and notifications** (PR #258, live

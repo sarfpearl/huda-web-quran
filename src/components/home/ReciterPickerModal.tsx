@@ -15,6 +15,7 @@ import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 import { t, useUiLang, word } from "@/lib/uiLang";
+import { CloseIcon, VoiceWaveIcon, VolumeIcon, BookmarkIcon, RotateLeftIcon, CheckIcon, SearchIcon } from "@/components/ui/Icon";
 
 interface ReciterPickerModalProps {
   isOpen: boolean;
@@ -144,9 +145,7 @@ export function ReciterPickerModal({
           className="tap-44 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sand-300 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
           aria-label={t(lang, "Close reciter selection")}
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseIcon className="h-4 w-4" />
         </button>
       </div>
 
@@ -178,19 +177,7 @@ export function ReciterPickerModal({
           placeholder={t(lang, "Search Reciters...")}
           className={`w-full rounded-full bg-black/40 border border-white/10 px-3 py-2 pl-9 text-xs text-white placeholder:text-sand-300/40 focus:border-emerald-400/50 focus:outline-none focus:ring-1 focus:ring-emerald-400/50`}
         />
-        <svg
-          className="absolute left-3 top-2.5 h-3.5 w-3.5 text-sand-300/50"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
+        <SearchIcon className="absolute left-3 top-2.5 h-3.5 w-3.5 text-sand-300/50" />
         </div>
         );
         return isMobile ? <StickySearch className="mb-1">{search}</StickySearch> : <div className="mb-3">{search}</div>;
@@ -212,14 +199,9 @@ export function ReciterPickerModal({
               className={`${TAB} ${active ? SELECTED_TAB : UNSELECTED_TAB}`}
             >
               {seg.key === "word" ? (
-                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
-                  <path d="M4 12h2M9 6v12M14 3v18M19 9v6" />
-                </svg>
+                <VoiceWaveIcon className="h-3 w-3" />
               ) : (
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-                  <path d="M15.5 9a3.5 3.5 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11" />
-                </svg>
+                <VolumeIcon className="h-3.5 w-3.5" />
               )}
               {seg.label}
             </button>
@@ -243,15 +225,10 @@ export function ReciterPickerModal({
         >
           {syncFilter === "word" ? (
             // bookmark: keeps your place
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 3h12v18l-6-4-6 4V3Z" />
-            </svg>
+            <BookmarkIcon className="h-4 w-4" />
           ) : (
             // restart: plays from the beginning
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <path d="M3 4v5h5" />
-            </svg>
+            <RotateLeftIcon className="h-4 w-4" />
           )}
         </span>
         <div className="min-w-0">
@@ -354,9 +331,7 @@ export function ReciterPickerModal({
                 {/* Selected Checkmark Badge */}
                 {isSelected && (
                   <div className={`shrink-0 h-6 w-6 rounded-full grid place-items-center ${SELECTED_BADGE}`}>
-                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <CheckIcon className="h-3.5 w-3.5" />
                   </div>
                 )}
               </button>

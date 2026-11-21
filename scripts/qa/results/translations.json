@@ -72,6 +72,278 @@
       "sourceDiffs": 0,
       "alignmentChecked": 6236,
       "weak": 0
+    },
+    "kn": {
+      "edition": "quranenc:kannada_hamza",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0,
+      "reviewed": 6
+    },
+    "te": {
+      "edition": "quranenc:telugu_muhammad",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 8,
+      "reviewed": 14
+    },
+    "gu": {
+      "edition": "quranenc:gujarati_omari",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 156,
+      "reviewed": 4
+    },
+    "mr": {
+      "edition": "qurancom:226",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "as": {
+      "edition": "quranenc:assamese_rafeeq",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 4,
+      "reviewed": 1
+    },
+    "ne": {
+      "edition": "qurancom:108",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "sd": {
+      "edition": "sd.amroti",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "es": {
+      "edition": "quranenc:spanish_garcia",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 10
+    },
+    "zh": {
+      "edition": "qurancom:56",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ru": {
+      "edition": "ru.kuliev",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "pt": {
+      "edition": "quranenc:portuguese_nasr",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "de": {
+      "edition": "quranenc:german_bubenheim",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "fa": {
+      "edition": "fa.fooladvand",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0,
+      "reviewed": 6
+    },
+    "ja": {
+      "edition": "quranenc:japanese_saeedsato",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 105,
+      "reviewed": 6
+    },
+    "ko": {
+      "edition": "qurancom:219",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "it": {
+      "edition": "it.piccardo",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 95,
+      "reviewed": 2
+    },
+    "nl": {
+      "edition": "nl.siregar",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "sw": {
+      "edition": "sw.barwani",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ha": {
+      "edition": "ha.gumi",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0,
+      "reviewed": 7
+    },
+    "so": {
+      "edition": "so.abduh",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1
+    },
+    "yo": {
+      "edition": "quranenc:yoruba_mikail",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1
+    },
+    "am": {
+      "edition": "quranenc:amharic_sadiq",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1
+    },
+    "ps": {
+      "edition": "qurancom:118",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ku": {
+      "edition": "quranenc:kurdish_bamoki",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1
+    },
+    "uz": {
+      "edition": "qurancom:55",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "kk": {
+      "edition": "qurancom:222",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "tg": {
+      "edition": "quranenc:tajik_arifi",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "az": {
+      "edition": "az.musayev",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 95,
+      "reviewed": 4
+    },
+    "bs": {
+      "edition": "bs.korkut",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 4,
+      "reviewed": 1
+    },
+    "sq": {
+      "edition": "sq.ahmeti",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "tt": {
+      "edition": "tt.nugman",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "ug": {
+      "edition": "ug.saleh",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 3,
+      "reviewed": 35
+    },
+    "dv": {
+      "edition": "qurancom:86",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "si": {
+      "edition": "quranenc:sinhalese_mahir",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 31,
+      "reviewed": 1
+    },
+    "th": {
+      "edition": "th.thai",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 0
+    },
+    "vi": {
+      "edition": "quranenc:vietnamese_rwwad",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1
+    },
+    "tl": {
+      "edition": "quranenc:tagalog_rwwad",
+      "ayahs": 6236,
+      "sourceDiffs": 0,
+      "alignmentChecked": 6236,
+      "weak": 1,
+      "reviewed": 2
     }
   },
   "failuresByCategory": {},
@@ -193,6 +465,3164 @@
       "key": "2:27",
       "note": "low similarity to Quran.com 0.09",
       "shipped": "Onlar, Allah'a verdikleri sözü, pekiştirilmesinden sonra bozan, Allah'ın korunmasını emrettiği bağları (iman, akrabalık, beşeri ve ahlâki bütün ilişkileri) koparan ve yeryüzünde bozgunculuk yapan kimselerdir. İşte onlar ziyana uğrayanların ta kendileridir."
+    },
+    {
+      "lang": "te",
+      "key": "37:162",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "ఎవ్వడిని కూడా, ఆయన (అల్లాహ్) నుండి మరలించి మోసగించలేరు;"
+    },
+    {
+      "lang": "te",
+      "key": "37:168",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "\"ఒకవేళ పూర్వపు జాతుల వారికి వచ్చినటువంటి హితబోధ (గ్రంథం) మా వద్ద కూడా ఉండి ఉంటే!\""
+    },
+    {
+      "lang": "te",
+      "key": "38:11",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "అక్కడ ఉన్న వీరు (పూర్వం ఓడించబడిన) వర్గాలలోని, ఓడించబడబోయే ఒక అల్పమైన సైన్యం మాత్రమే!"
+    },
+    {
+      "lang": "te",
+      "key": "51:42",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "దానిని కుళ్ళిపోయిన ఎముకల వలే శిథిలం చేయకుండా వదలలేదు."
+    },
+    {
+      "lang": "te",
+      "key": "74:19",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "కావున అతడు నాశనమగు గాక! అతడు ఎలాంటి ప్రణాళిక వేశాడు!"
+    },
+    {
+      "lang": "te",
+      "key": "74:20",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "మళ్ళీ, అతడు నాశనమగు గాక! అతడు ఎలాంటి ప్రణాళిక వేశాడు!"
+    },
+    {
+      "lang": "te",
+      "key": "76:6",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "అల్లాహ్ దాసులు త్రాగే ఒక ఊట; వారు దానిని (తాము కోరిన చోటికి) ధారాళంగా ప్రవహింపజేసుకుంటారు."
+    },
+    {
+      "lang": "te",
+      "key": "88:3",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "(ప్రపంచంలో వృథాగా) శ్రమించి, (పరలోకంలో) అలసి సొలసి ఉంటాయి,"
+    },
+    {
+      "lang": "gu",
+      "key": "2:53",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "(આ સમય દરમિયાન) અમે મૂસાને કિતાબ અને ફુરકાન (સત્ય અને અસત્યની ઓળખ માટેનું માપદંડ) આપ્યું, જેથી તમે હિદાયત મેળવી શકો."
+    },
+    {
+      "lang": "gu",
+      "key": "2:78",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "અને તે (યહૂદી) માંથી એક જૂથ અજ્ઞાની લોકોનું છે, જેઓ કિતાબ (તૌરાત)નું જ્ઞાન ધરાવતા નથી, પરંતુ તેઓ કેટલીક આશાઓ રાખી બેઠા છે, અને તેમનું કામ ફક્ત એ જ છે કે તેઓ ખોટા અનુમાન કરતા રહે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "2:108",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "શું તમે એવું ઈચ્છો છો કે પોતાના પયગંબર સામે એવા જ સવાલો કરતા જાઓ, જેવું કે પહેલા મૂસાને પુછવામાં આવ્યા હતા, જે વ્યક્તિ ઇમાનના માર્ગને કૂફરથી બદલી નાખે, તો ખરેખર તે સત્ય માર્ગથી ભટકી ગયો,"
+    },
+    {
+      "lang": "gu",
+      "key": "3:5",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "અલ્લાહ તે છે, જેનાથી કંઈ પણ વસ્તુ, ભલેને તે ધરતીમાં હોય કે આકાશમાં, છૂપી નથી રહી શકતી."
+    },
+    {
+      "lang": "gu",
+      "key": "4:72",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "તમારા માંથી કોઈ એવો વ્યક્તિ પણ છે, જો (જાણી જોઈને) પાછળ રહી જાય છે, પછી જો તમને કોઈ મુસીબત પહોંચે તો કહે છે કે મારા પર અલ્લાહએ ખૂબ જ ઉપકાર કર્યો કે હું તેમની સાથે ન હતો."
+    },
+    {
+      "lang": "gu",
+      "key": "4:156",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "અને એટલા માટે પણ (અલ્લાહ તઆલાએ તેમના દિલો પર મહોર લગાવી દીધી) કે સત્ય વાતનો ઇન્કાર કર્યો અને મરયમ પર મોટો આરોપ લગાવ્યો."
+    },
+    {
+      "lang": "gu",
+      "key": "5:93",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "જે લોકો ઈમાન લાવ્યા અને નેક અમલ કર્યા તેમને એ વાત પર કઈ ગુનોહ નથી થાય, જે તેઓ (શરાબ પીવા પર રોક આવવા પહેલા) પી લીધું છે, જો કે હવેથી અળગા રહો અને ઈમાન લાવો, અને નેક અમલ કરો અને પરહેજગારી અપનાવો અને ઈમાન લાવો, પછી (જેનાથી રોકવામાં આવે) તેનાથી બચીને રહો, અહેસાન કરો અને અલ્લાહ એહસાન કરવાવાળાઓ ને પસંદ કરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "6:4",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "અને (આ કાફિરો) પાસે તેમના પાલનહાર તરફથી કોઇ પણ નિશાની આવી તો તેઓ તેનાથી અળગા જ રહે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "6:5",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "તેઓ પાસે સત્ય આવી ગઈ તો તેઓએ તેને જુઠલાવી દીધું અને જે કંઈ બાબતો વિશે તેઓ મજાક કરી રહ્યા છે, નજીકમાં જ તેઓ તેમને પહોંચીને રહેશે."
+    },
+    {
+      "lang": "gu",
+      "key": "6:42",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "તમારા પહેલા અમે ઘણી કોમ તરફ પયગંબર મોકલી ચુક્યા છે, પછી (જ્યારે લોકોએ નાફરમાની કરી તો) અમે તેમને સખતી અને તકલીફમાં નાખી દીધા, જેથી તેઓ આજીજી સાથે દુઆ કરે."
+    },
+    {
+      "lang": "gu",
+      "key": "6:45",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "આવી રીતે જાલિમ લોકોની જડ કાપી નાખી અને દરેક પ્રકારની પ્રસંશા અલ્લાહ માટે જ છે."
+    },
+    {
+      "lang": "gu",
+      "key": "6:62",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "પછી તે પ્રાણ અલ્લાહ તરફ જ ફેરવામાં આવે છે, જે તેમનો સાચો માલિક છે, સાંભળો! નિર્ણય કરવાનો અધિકાર તેની જ પાસે છે અને તેને હિસાબ લેવામાં થોડીક પણ વાર લાગતી નથી."
+    },
+    {
+      "lang": "gu",
+      "key": "6:69",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "આ જાલિમ લોકોના હિસાબમાં કઈ પણ વસ્તુની જવાબદારી તે લોકોની નથી, જેઓ અલ્લાહથી ડરે છે, પરંતુ નસીહત કરવી તેમના જરૂરી છે, જેથી ખોટા કાર્યોથી બચીને રહે."
+    },
+    {
+      "lang": "gu",
+      "key": "7:7",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "પછી અમે પોતાના ઇલ્મથી સંપૂર્ણ સત્યતા તેમની સામે લાવી દઈશું, છેવટે તે સમયે અમે ગાયબ ન હતા."
+    },
+    {
+      "lang": "gu",
+      "key": "7:94",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "અમે જ્યારે પણ કોઈ વસ્તીમાં અમારા પયગંબર મોકલ્યા, તો ત્યાં રહેવાવાળાઓને સખતી અને તકલીફ આપી, જેથી તેઓ આજીજ બની રહે."
+    },
+    {
+      "lang": "gu",
+      "key": "7:162",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "પરંતુ તેમના માંથી જે અત્યાચારી લોકો હતા, તેઓએ તે વાત જ બદલી નાખી, જે તેમને કહેવામાં આવી હતી, પછી (તેના પરિણામરૂપે) અમે તેમના પર આકાશ માંથી અઝાબ મોકલી દીધો કારણકે તેઓ અત્યાચાર કરતા હતા."
+    },
+    {
+      "lang": "gu",
+      "key": "8:33",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "જો કે આવું કરવું બરોબર નથી કે અલ્લાહ તેઓને અઝાબ આપે અને તમે તેમની વચ્ચે હાજર હોય, અને ન તો એવું કરવું ઠીક હતું કે એવા લોકોને અઝાબ આપે જેઓ ઇસ્તિગ્ફાર કરી રહ્યા હોય."
+    },
+    {
+      "lang": "gu",
+      "key": "8:57",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "આવા વચનભંગ કરનારાઓને યુદ્ધના મેદાનમાં જોઈ લો તો તેઓને ભયાનક સજા આપો, જેથી તેમના પાછળના લોકો શીખ પ્રાપ્ત કરે."
+    },
+    {
+      "lang": "gu",
+      "key": "9:10",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "આ લોકો તો મોમિનની કોઈ બાબતમાં ન તો કોઈ સબંધનો ખ્યાલ કરતા હોય છે અને ન તો કરારનો ખ્યાલ રાખતા હોય છે, અને આ લોકો જ હદ વટાવવામાં ખૂબ આગળ વધી રહ્યા છે."
+    },
+    {
+      "lang": "gu",
+      "key": "9:27",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "ત્યારબાદ જેને ઇચ્છશે તેને તૌબા કરવાની તૌફીક આપી દેશે, અને તે દરગુજર કરવાવાળો અને રહેમ કરવાવાળો છે."
+    },
+    {
+      "lang": "gu",
+      "key": "9:77",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "બસ! જેના પરિણામરૂપે અલ્લાહએ તેમના હૃદયમાં તે દિવસ સુધી મુનાફિકપણું ભરી દીધું, જે દિવસે તેઓ તેની પાસે મુલાકાત કરશે, જેનું કારણ એ હતું કે જે વચન તે લોકોએ અલ્લાહને આપ્યું હતું તેમ વચનભંગ કર્યો, અને એટલા માટે પણ કે તેઓ જૂઠું બોલતા હતા."
+    },
+    {
+      "lang": "gu",
+      "key": "11:88",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "શુઐબે જવાબ આપ્યો કે હે મારી કોમના લોકો! જુઓ! જો હું મારા પાલનહાર તરફથી એક સ્પષ્ટ દલીલ પર હોય, અને અલ્લાહએ મને સારી રોજી પણ આપી હોય, (તો હું કઈ રીતે તમારો સાથ આપી શકું છું?) મારી ઈચ્છા નથી કે જે વાતથી હું તમને રોકી રહ્યો છું, હું પોતે જ તેની વિરુદ્ધ કોઈ કાર્ય કરું, હું તો જ્યાં સુધી બની શકે, ઈસ્લાહ કરવાની ઈચ્છા ધરાવું છું, અને મને તોફિક મળવી પણ અલ્લાહ તરફથી જ છે, હું તેના પર જ ભરોસો કરું છું અને તેની તરફ જ મારો ઝુકાવ છે."
+    },
+    {
+      "lang": "gu",
+      "key": "15:2",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "એક સમય આવશે, જ્યારે કાફિરો એવી આશા કરશે કે કદાચ તેઓ મુસલમાન બની ગયા હોત."
+    },
+    {
+      "lang": "gu",
+      "key": "15:43",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "અને જહન્નમ જ તટે જગ્યા છે, જેનું વચન આવા લોકોને આપવામાં આવ્યું છે."
+    },
+    {
+      "lang": "gu",
+      "key": "15:60",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "જો કે લૂતની પત્ની માટે (અલ્લાહના આદેશ પ્રમાણે) અમે નક્કી કર્યું છે કે તેઓ પાછળ રહી જનારા લોકો માંથી થઇ જશે."
+    },
+    {
+      "lang": "gu",
+      "key": "15:84",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "અને જે કઈ (પથ્થરના ઘરો વગેરે) બનાવતા હતા, સહેજ પણ તેમના કામમાં ના આવ્યા."
+    },
+    {
+      "lang": "gu",
+      "key": "16:48",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "શું તે લોકોએ અલ્લાહએ પેદા કરેલી વસ્તુઓ માંથી કોઈ વસ્તુ નથી જોઈ? કે તેમનો પડછાયો કેવી રીતે ડાબેથી જમણે અને જમણે થી (ડાબે) અલ્લાહની સામે સિજદો કરતા આથમે છે અને આ બધી વસ્તુઓ અત્યંત આજીજી જાહેર કરી રહી છે."
+    },
+    {
+      "lang": "gu",
+      "key": "16:55",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "જેથી અલ્લાહએ તેમને જે કંઈ પણ આપી રાખ્યું છે (તેનો શુકર કરવાના બદલામાં) તેની નાશુકરી જ કરે, સારું (થોડોક સમય) ફાયદો ઉઠાવી લો, નજીક માંજ (સત્યતા) ની જાણ તમને થઈ જશે."
+    },
+    {
+      "lang": "gu",
+      "key": "16:70",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "અલ્લાહએ તમને પેદા કર્યા અને તે જ તમને મુત્યુ આપે છે, અને તમારા માંથી કેટલાક લોકોને આધેડ વય સુધી પહોચાડી દઈએ છીએ, જેથી તે લોકો બધું જાણી લીધા પછી પણ કઈ પણ ન જાણી શકે, ખરેખર અલ્લાહ બધું જ જાણવાવાળો છે અને સપૂર્ણ કુદરત ધરાવે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "17:82",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "અને અમે કુરઆનમાં જે કઈ પણ ઉતારીએ છીએ તે તો મોમિનો માટે શિફા અને રહેમત છે, પરંતુ જાલિમ લોકોના નુકસાનમાં વધારો કરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "18:92",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "પછી તેઓ એક બીજા માર્ગ (મિશન) પર નીકળ્યા."
+    },
+    {
+      "lang": "gu",
+      "key": "19:13",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "અમે તેમને પોતાની મહેરબાનીથી વિનમ્ર અને પાક વ્યક્તિત્વ બનાવ્યું, અને તે ડરવાવાળા હતા."
+    },
+    {
+      "lang": "gu",
+      "key": "19:88",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "કેટલાક લોકો કહે છે કે અલ્લાહની સંતાન છે."
+    },
+    {
+      "lang": "gu",
+      "key": "20:3",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "આ તો તે દરેક લોકો માટે નસિંહત છે, જે (અલ્લાહથી) ડરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "20:6",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "જે કઈ આકાશોમાં છે અને જે કઈ ધરતીમાં છે અને જે કઈ પણ તે બન્નેની વચ્ચે છે અને જ કઈ ધરતીની નીચે છે, તે બધી જ વસ્તુઓનો માલિક છે."
+    },
+    {
+      "lang": "gu",
+      "key": "20:9",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "અને શું તમારા સુધી મૂસાની ખબર પહોચી છે?"
+    },
+    {
+      "lang": "gu",
+      "key": "20:92",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "(જ્યારે મૂસા પાછા આવ્યા તો હારૂનને કહ્યું) હે હારૂન! જ્યારે તમે આ લોકોને ગુમરાહ થતા જોઈ રહ્યા હતા, તો તેમની (ઈસ્લાહ માટે) તમને કઈ વસ્તુએ રોકી રાખ્યા?"
+    },
+    {
+      "lang": "gu",
+      "key": "20:126",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "અલ્લાહ તઆલા કહેશે, જેવી રીતે અમારી આયતો તમારી પાસે આવી તો તે તેને ભુલાવી દીધી હતી, એવી જ રીતે તું આજે ભુલાવી દેવામાં આવશે."
+    },
+    {
+      "lang": "gu",
+      "key": "21:61",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "તેઓ કહેવા લાગ્યા કે તેને સૌની સમક્ષ લઈને આવો, જેથી તે જોઈ લે (કે અમે તેની સાથે શું કરીએ છીએ)?"
+    },
+    {
+      "lang": "gu",
+      "key": "22:43",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "અને એવી જ રીતે ઇબ્રાહીમની કોમ અને લૂતની કોમ પણ (જુઠલાવી ચુકી છે.)"
+    },
+    {
+      "lang": "gu",
+      "key": "23:25",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "એ તો એક એવો વ્યક્તિ છે, જેને પાગલપણું છે, એટલા માટે થોડોક સમય હજુ રાહ જુઓ.(કદાચ તે ઠીક થઇ જાય.)"
+    },
+    {
+      "lang": "gu",
+      "key": "23:95",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "અને જે અઝાબની ધમકી તેમને આપવામાં આવે રહી છે, તે અઝાબ તમને બતાવવા પર સપૂર્ણ સક્ષમ છે."
+    },
+    {
+      "lang": "gu",
+      "key": "24:36",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "(આ તખ્તિઓ) એવા ઘરોમાં હોય છે, જેના વિશે અલ્લાહ તઆલએ આદેશ આપ્યો છે કે તેના ઘરોમાં અલ્લાહનું નામ બુલંદ કરવામાં આવે અને તેનો ઝિકર કરવામાં આવે, આ (મસ્જિદો)માં સવાર સાંજ આવા લોકો અલ્લાહના નામની તસ્બીહ કરતા હોય છે."
+    },
+    {
+      "lang": "gu",
+      "key": "25:4",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "કાફિર લોકો તો એવું કહે છે, કે આ (કુરઆન) તો એક જુઠ છે, જેને તેણે પોતે ઘડી કાઢ્યું છે, અને કેટલાક લોકોએ આ કામમાં તેની મદદ કરી છે, (આવી વાત કરી) તેઓ જુલમ કરવા પર અને સ્પષ્ટ જુઠ કહેવા લાગ્યા છે."
+    },
+    {
+      "lang": "gu",
+      "key": "26:3",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "(હે નબી) જો આ લોકો ઈમાન નથી લાવતા તો આ દુ:ખમાં કદાચ તમે પોતાને જ હલાક કરી નાખો."
+    },
+    {
+      "lang": "gu",
+      "key": "26:96",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "ત્યાં અંદરો અંદર ઝઘડો કરી (પોતાના ઇલાહોને) કહેશે."
+    },
+    {
+      "lang": "gu",
+      "key": "26:193",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "આને રૂહુલ અમીન દ્વારા ઉતારવામાં આવ્યું."
+    },
+    {
+      "lang": "gu",
+      "key": "26:205",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "સારું, જો અમે તેમને ઘણા વર્ષો સુધી ઠાઠમાઠ જીવન આપી દઈએ."
+    },
+    {
+      "lang": "gu",
+      "key": "26:206",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "પછી તેમના પર તે અઝાબ આવી જાય, જેનું વચન તે લોકોને આપવામાં આવતું હતું."
+    },
+    {
+      "lang": "gu",
+      "key": "29:11",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "અલ્લાહ તઆલા જરૂર જોઈ રહ્યો છે કે ઈમાનવાળા કોણ છે અને મુનાફિક કોણ છે?"
+    },
+    {
+      "lang": "gu",
+      "key": "30:44",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "જેણે કુફ્ર કર્યું, તેની સજા તેના પર જ છે,અને જેણે સત્કાર્યો કર્યા તો તે પોતાનો જ (સફળતાનો) માર્ગ અપનાવી રહ્યા છે."
+    },
+    {
+      "lang": "gu",
+      "key": "32:21",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "નિ:શંક અમે તેમને (કયામતના) મોટા અઝાબ પહેલા નાના નાના અઝાબનો સ્વાદ ચાખાડીશું, કદાચ તેઓ (પોતાની આદત) છોડી દે."
+    },
+    {
+      "lang": "gu",
+      "key": "36:32",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "(અને આ દરેક) એક દિવસે અમારી સમક્ષ હાજર કરવામાં આવશે."
+    },
+    {
+      "lang": "gu",
+      "key": "37:3",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "પછી તેમની જે ઝિકર (કુરઆન)ની તિલાવત કરવાવાળા છે."
+    },
+    {
+      "lang": "gu",
+      "key": "37:38",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "(ફરી તેમને કહેવામાં આવશે) કે આજે તમારે દુ:ખદાયી અઝાબનો સ્વાદ ચાખવો પડશે."
+    },
+    {
+      "lang": "gu",
+      "key": "37:59",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "અમારે પ્રથમ વખત જ મૃત્યુ પામવાના હતા, હવે અમને અઝાબ પણ નહીં થાય."
+    },
+    {
+      "lang": "gu",
+      "key": "37:74",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "(તે લોકો માંથી) ફક્ત નિખાલસ બંદાઓ જ સુરક્ષિત રહ્યા."
+    },
+    {
+      "lang": "gu",
+      "key": "37:94",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "(પાછા આવીને કોમે જ્યારે આ સ્થિતિ જોઈ) દોડતા દોડતા ઈબ્રાહીમ પાસે આવ્યા."
+    },
+    {
+      "lang": "gu",
+      "key": "37:162",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "આ (નિખાલસ બંદાઓને) અલ્લાહ વિરૂદ્વ ફિતનામા નાખી શકતા નથી."
+    },
+    {
+      "lang": "gu",
+      "key": "37:167",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "અને આ (કાફિર લોકો) પહેલા તો આવું કહેતા હતા,"
+    },
+    {
+      "lang": "gu",
+      "key": "37:171",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "અને અમારું વચન, જે પયગંબર છે, તેમના હકમાં પહેલાથીજ આદેશ મળી ગયો છે."
+    },
+    {
+      "lang": "gu",
+      "key": "38:14",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "તે સૌએ પયગંબરોને જુઠલાવ્યા, તો તેમના પર મારો આઝાબ નક્કી થઇ ગયો."
+    },
+    {
+      "lang": "gu",
+      "key": "38:64",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "આ વાત સાચી છે કે જહન્નમી લોકો અંદરો-અંદર આવી રીતે ઝઘડતા હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "38:88",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "થોડાક જ સમય પછી તમને (પોતે જ) આ વાતની (સત્યતા) ખબર પડી જશે."
+    },
+    {
+      "lang": "gu",
+      "key": "40:45",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "તે લોકોએ જે યુક્તિઓ આ ઈમાનવાળા વ્યક્તિ વિરુદ્ધ કરી હતી, અલ્લાહએ તેને તેનાથી બચાવી લીધો, અને ફિરઔનવાળાઓ જ સખત અઝાબમાં પડી ગયા."
+    },
+    {
+      "lang": "gu",
+      "key": "40:53",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "અમે મૂસાને હિદાયત આપી, અને બની ઇસ્રાઇલને કિતાબ (તોરાત) ના વારસદાર બનાવ્યા."
+    },
+    {
+      "lang": "gu",
+      "key": "43:39",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "અને (તેમને કહેવામા આવશે) જ્યારે તમે જુલમ કરી ચુક્યા છો તો તો આજના દિવસે (આવી વાત) કઈ ફાયદો નહીં પહોચાડી શકે. તમે સૌ અઝાબમાં સરખા છો."
+    },
+    {
+      "lang": "gu",
+      "key": "44:2",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "તે કિતાબની કસમ! જે સત્યને સ્પષ્ટ કરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "50:1",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "કૉફ કસમ છે, તે કુરઆનની, જે ભવ્ય શાનવાળું છે."
+    },
+    {
+      "lang": "gu",
+      "key": "50:8",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "(તે વસ્તુઓમાં) દરેક ઝૂક્નાર બંદાઓ શિખામણ અને (નસીહત પ્રાપ્ત કરવાનો સામાન) છે ."
+    },
+    {
+      "lang": "gu",
+      "key": "50:24",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "(હાંકનાર અને સાક્ષી આપનાર બન્ને ફરિશ્તાઓને આદેશ આપવામાં આવશે) કે દરેક ગુમરાહ અને વિદ્રોહી લોકોને જહન્નમમાં ધકેલી દો."
+    },
+    {
+      "lang": "gu",
+      "key": "51:2",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "પછી તેની (કસમ) જે (વાદળોનો) ભાર ઉઠાવી રાખે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "51:3",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "પછી તેની (કસમ) જે ધીમે ધીમે ચાલે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "51:4",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "પછી તેમની (કસમ) જે વસ્તુઓને વિભાજીત કરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "51:9",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "(આખિરતની સત્યતાથી) તે જ મોઢું ફેરવે છે, જેને સત્યથી ફેરવી દેવામાં આવ્યો છે."
+    },
+    {
+      "lang": "gu",
+      "key": "51:13",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "જે દિવસે આ લોકોને આગમાં તપવવામાં આવશે,"
+    },
+    {
+      "lang": "gu",
+      "key": "52:2",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "અને તે કિતાબની, જે લખેલી છે."
+    },
+    {
+      "lang": "gu",
+      "key": "53:1",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "સિતારાઓની કસમ! જ્યારે તે આથમવા લાગે."
+    },
+    {
+      "lang": "gu",
+      "key": "53:5",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "તેમને એક મજબુત શક્તિશાળી (ફરિશ્તા)એ શિક્ષા આપી છે."
+    },
+    {
+      "lang": "gu",
+      "key": "53:11",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "જે કંઇ તેણે આંખો વડે જોયું હતું, દિલે તેને જુઠ્ઠું ન સમજ્યું."
+    },
+    {
+      "lang": "gu",
+      "key": "53:54",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "પછી તેમના પર (નષ્ટતા) છવાઈ ગઈ, જેણે તે વસ્તીના લોકોને સપૂર્ણ ઢાંકી લીધા."
+    },
+    {
+      "lang": "gu",
+      "key": "53:58",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "અલ્લાહ સિવાય તેને હટાવી શકે તેઓ કોઈ નથી."
+    },
+    {
+      "lang": "gu",
+      "key": "56:17",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "હંમેશા જવાન રહેનાર સેવકો તેમની આજુબાજુ હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "56:37",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "જે પોતાના પતિને મુહબ્બત કરવાવાળી અને સરખી ઉંમરની હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "56:52",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "તમારે એક એવું વ્રુક્ષ ખાવું પડશે, જેનું નામ ઝક્કૂમ છે."
+    },
+    {
+      "lang": "gu",
+      "key": "56:55",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "જેને તમે તરસ્યા ઊંટ જેવું પીશો, જે બીમાર હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "56:67",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "પરંતુ અમારું નસીબ જ ફૂટી ગયું."
+    },
+    {
+      "lang": "gu",
+      "key": "56:86",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "જો તમારો હિસાબ થવાનો જ નથી, તો આવું કેમ ન થયું?"
+    },
+    {
+      "lang": "gu",
+      "key": "56:88",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "હા, (મૃત્યુ પામનાર) અલ્લાહના નિકટ બંદાઓ માંથી હોય."
+    },
+    {
+      "lang": "gu",
+      "key": "56:96",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "બસ (હે પયગંબર)! તમે પોતાના પાલનહારનાં નામની તસ્બીહ કરતા રહો, જે ખૂબ જ મહાનતા વાળો છે."
+    },
+    {
+      "lang": "gu",
+      "key": "68:18",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "અને કોઈ (ફળ) બાકી નહીં રાખીએ."
+    },
+    {
+      "lang": "gu",
+      "key": "70:14",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "અને જે કઈ જમીનમાં છે તે બધું જ આપી પોતાને બચાવી લે."
+    },
+    {
+      "lang": "gu",
+      "key": "72:28",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "જેથી તે જાણી લે કે તેઓએ પોતાના પાલનહારનાં આદેશો પહોચાડી દીધા છે, અને તે તેમની દરેક સ્થિતિને ઘેરી રાખી છે, અને તેણે દરેક વસ્તુની સંપૂર્ણ રીતે ગણતરી કરી રાખી છે."
+    },
+    {
+      "lang": "gu",
+      "key": "73:2",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "રાતના થોડો ભાગ છોડી બાકીની રાત (નમાઝ માટે) ઉભા રહો."
+    },
+    {
+      "lang": "gu",
+      "key": "73:3",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "રાતનો અડધો ભાગ અથવા તેનાથી સહેજ ઓછો ભાગ."
+    },
+    {
+      "lang": "gu",
+      "key": "74:2",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "ઉઠો અને (લોકોને ખરાબ પરિણામથી) ડરાવો."
+    },
+    {
+      "lang": "gu",
+      "key": "74:3",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "અને પોતાના પાલનહારની મહાનતા બયાન કરો"
+    },
+    {
+      "lang": "gu",
+      "key": "74:4",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "અને પોતાના કપડા પાક સાફ રાખો."
+    },
+    {
+      "lang": "gu",
+      "key": "74:6",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "અને વધુ પ્રાપ્તિ માટે એહસાન ન કરશો."
+    },
+    {
+      "lang": "gu",
+      "key": "74:7",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "અને પોતાના પાલનહાર માટે સબર કરો."
+    },
+    {
+      "lang": "gu",
+      "key": "74:8",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "ફરી જ્યારે સૂરમાં ફૂંક મારવામાં આવશે."
+    },
+    {
+      "lang": "gu",
+      "key": "74:9",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "તો તે દિવસ ખૂબ જ ભારે હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "74:11",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "તે વ્યક્તિની બાબત મારા પર છોડી દો, જેને મેં એકલો પેદા કર્યો છે."
+    },
+    {
+      "lang": "gu",
+      "key": "74:13",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "અને દરેક સમયે હાજર રહેવાવાળા બાળકો આપ્યા."
+    },
+    {
+      "lang": "gu",
+      "key": "74:14",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "અને દરેક રીતે તેના માટે માર્ગ સરળ બનાવ્યો."
+    },
+    {
+      "lang": "gu",
+      "key": "74:15",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "પછી પણ લાલચ રાખે છે કે હું તેને હજુ વધારે આપું."
+    },
+    {
+      "lang": "gu",
+      "key": "74:16",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "આવું ક્યારેય નહીં થાય કેમકે તે અમારી આયતોથી દુશ્મની રાખે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "74:17",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "હું નજીક માંજ તેને સખત ચઢાવીશ."
+    },
+    {
+      "lang": "gu",
+      "key": "74:18",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "તેણે વિચાર કર્યો અને વાતો બનાવવાનો પ્રયત્ન કર્યો."
+    },
+    {
+      "lang": "gu",
+      "key": "74:19",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "બસ તેને નષ્ટ કરી દેવામાં આવે, તેણે કેવી વાત બનાવી?"
+    },
+    {
+      "lang": "gu",
+      "key": "74:20",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "પછી તેને નષ્ટ કરી દેવામાં આવે, તેણે કેવી વાત બનાવી?"
+    },
+    {
+      "lang": "gu",
+      "key": "74:25",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "આ તો માનવીની જ વાત છે."
+    },
+    {
+      "lang": "gu",
+      "key": "74:32",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "(પરંતુ આ લોકો ક્યારેય શિખામણ પ્રાપ્ત નહી કરે) ચંદ્રની કસમ."
+    },
+    {
+      "lang": "gu",
+      "key": "74:36",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "તે માનવીઓ માટે ભયનું કારણ છે."
+    },
+    {
+      "lang": "gu",
+      "key": "74:53",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "ક્યારેય નહિ, સાચી વાત એ કે આ લોકો આખિરતથી નથી ડરતા."
+    },
+    {
+      "lang": "gu",
+      "key": "77:1",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "તે હવાઓની કસમ! જે ધીમી ધીમે ચાલે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "77:32",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "તે એટલા મોટા મોટા આગના ગોળા ફેંકશે, જે મહેલ જેવા હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "77:48",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "તેમને જ્યારે તેમને (અલ્લાહ સામે) ઝૂકવાનું કહેવામાં આવતું તો તેઓ ઝુકતા ન હતા."
+    },
+    {
+      "lang": "gu",
+      "key": "78:24",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "કે ન તો તેઓ ત્યાં કોઈ ઠંડકનો સ્વાદ ચાખશે અને ન તો પીવા માટે પીણુંનો સ્વાદ ચાખી શકશે."
+    },
+    {
+      "lang": "gu",
+      "key": "78:30",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "(અને તેમને કહેવામાં આવશે) કે હવે સ્વાદ ચાખો, અમે તમારા માટે અઝાબ સિવાય બીજી કોઈ વસ્તુમાં વધારો નહીં કરીએ."
+    },
+    {
+      "lang": "gu",
+      "key": "79:1",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "કસમ છે તે (ફરિશ્તાઓની) જેઓ (કાફિરોની રૂહ) સખતી સાથે ખેંચે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "79:2",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "અને તે (ફરિશ્તાની) કસમ! જે (મોમિનોની રૂહ) નરમી સાથે ખોલી નાખે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "79:3",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "અને તેમની કસમ! જે સૃષ્ટિમાં ઝડપથી તરે-ફરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "79:5",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "પછી તેમની કસમ! જેઓ આદેશ મળ્યા પછી તેને (પૂરો કરવાની) વ્યવસ્થા કરે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "79:13",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "સત્ય વાત એ છે કે તે એક સખત અવાજ હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "79:14",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "તેના પછી તેઓ એક સપાટ મેદાનમાં હશે."
+    },
+    {
+      "lang": "gu",
+      "key": "79:26",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "આ કિસ્સામાં નસીહત છે, તે વ્યક્તિ માટે જે (અલ્લાહની પકડથી) ડરતો હોય."
+    },
+    {
+      "lang": "gu",
+      "key": "79:27",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "શું તમને પેદા કરવું વધારે મુશ્કેલ છે કે આકાશનું? જેને તેણે બનાવ્યું."
+    },
+    {
+      "lang": "gu",
+      "key": "80:12",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "જે ઈચ્છે તેને યાદ કરી લે."
+    },
+    {
+      "lang": "gu",
+      "key": "80:18",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "અલ્લાહએ તેને કઈ વસ્તુ વડે પેદા કર્યો?"
+    },
+    {
+      "lang": "gu",
+      "key": "80:23",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "કદાપિ નહી, જે વાતનો તેને આદેશ આપવામાં આવ્યો હતો, તે આદેશનું પાલન નથી કર્યું."
+    },
+    {
+      "lang": "gu",
+      "key": "80:37",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "તે દિવસે દરેક વ્યક્તિની એવી પરિસ્થિતિ હશે, જે તેને (બીજાથી) અળગો કરી દેશે."
+    },
+    {
+      "lang": "gu",
+      "key": "81:16",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "જે સીધા ચાલતા ચાલતા ગાયબ થઇ જાય છે."
+    },
+    {
+      "lang": "gu",
+      "key": "83:36",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "કાફિરોને તેમના કર્મોનો જરૂર બદલો આપવામાં આવશે."
+    },
+    {
+      "lang": "gu",
+      "key": "84:17",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "અને રાતની અને જે કઈ તે સમેટે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "84:25",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "હા, જેઓ ઈમાન લાવ્યા અને નેક અમલ કર્યા તેમના માટે એવો બદલો છે, જે ક્યારેય ખતમ નહી થાય."
+    },
+    {
+      "lang": "gu",
+      "key": "85:2",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "અને તે દિવસની, જેનું વચન આપવામાં આવ્યું છે."
+    },
+    {
+      "lang": "gu",
+      "key": "85:4",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "અલ્લાહની લઅનત છે, તે ખાડા (ખોદનાર) લોકો પર."
+    },
+    {
+      "lang": "gu",
+      "key": "86:11",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "કસમ છે આકાશની જે વારંવાર પાણી વરસાવે છે."
+    },
+    {
+      "lang": "gu",
+      "key": "86:12",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "અને ધરતીની જે ફાટી જાય છે."
+    },
+    {
+      "lang": "gu",
+      "key": "86:17",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "બસ! તમે થોડીક વાર માટે તે કાફીરોને તેમની હાલત પર છોડી દો."
+    },
+    {
+      "lang": "gu",
+      "key": "89:5",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "એક બુધ્ધિશાળી વ્યક્તિને (યકીન અપાવવા) માટે આટલી કસમો પુરતી નથી?"
+    },
+    {
+      "lang": "gu",
+      "key": "89:11",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "આ તે લોકો હતા, જે લોકોએ શહેરોમાં વિદ્રોહ કર્યો હતો."
+    },
+    {
+      "lang": "gu",
+      "key": "89:26",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "અને જે રીતે પકડી શકે છે, તેના જેવી પકડ કોઈ નથી કરી શકતું."
+    },
+    {
+      "lang": "gu",
+      "key": "90:13",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "તે છે, કોઈ ગુલામને મુક્ત કરાવવું."
+    },
+    {
+      "lang": "gu",
+      "key": "90:20",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "તેમના માટે આગ હશે. જે ચારેય બાજુથી બંધ કરી દેવામાં આવી છે."
+    },
+    {
+      "lang": "gu",
+      "key": "91:5",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "કસમ છે આકાશની અને તે હસ્તીની જેણે તેને બનાવ્યું."
+    },
+    {
+      "lang": "gu",
+      "key": "91:6",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "અને ધરતીની કસમ, અને તે હસ્તીની જેણે તેને પાથરી દીધી."
+    },
+    {
+      "lang": "gu",
+      "key": "91:8",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "પછી તેના દિલમાં તે વાતો પણ નાખી દીધી, જે તેના માટે ખરાબ હોય અને તે વાતો પણ, જે તેના માટે ડરવાવાળી હોય."
+    },
+    {
+      "lang": "gu",
+      "key": "92:5",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "પછી જે વ્યક્તિએ (અલ્લાહના માર્ગમાં) માલ આપ્યો અને ડરવા પણ લાગ્યો."
+    },
+    {
+      "lang": "gu",
+      "key": "92:19",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "તેના અપર કોઈનો કઈ અહેસાન ન હતો, જેનો તે બદલો ચૂકવતો."
+    },
+    {
+      "lang": "gu",
+      "key": "96:11",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "થોડુંક વિચારો! જો તે બંદો હિદાયત પર હોય,"
+    },
+    {
+      "lang": "gu",
+      "key": "100:1",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "કસમ છે, તે ઘોડાઓની જે દોડતી વખતે હાંફતા હોય."
+    },
+    {
+      "lang": "gu",
+      "key": "102:6",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "યકીન રાખો તમે જહન્નમને જરૂર જોશો."
+    },
+    {
+      "lang": "gu",
+      "key": "104:2",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "જેણે ધન ભેગું કર્યું, અને ગણી-ગણીને રાખ્યું."
+    },
+    {
+      "lang": "gu",
+      "key": "114:4",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "તે વસ્વસો નાખનારની બુરાઈથી, હે (વસ્વસો નાખી) પાછળ હટી જાય છે."
+    },
+    {
+      "lang": "as",
+      "key": "3:56",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "এতেকে যিসকলে কুফৰী কৰিছে মই সিহঁতক পৃথিৱী আৰু আখিৰাতত কঠোৰ শাস্তি প্ৰদান কৰিম আৰু সিহঁতৰ কোনো সহায়কাৰীও নাথাকিব।"
+    },
+    {
+      "lang": "as",
+      "key": "43:74",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "নিশ্চয় অপৰাধীবিলাকে স্থায়ীভাৱে জাহান্নামৰ শাস্তি ভোগ কৰিব;"
+    },
+    {
+      "lang": "as",
+      "key": "89:5",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "বিবেকৱান ব্যক্তিৰ বাবে এইখিনি শপত যথেষ্ট নহয়নে?"
+    },
+    {
+      "lang": "as",
+      "key": "102:5",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "হায়! তোমালোকৰ নিশ্চিত জ্ঞান থাকিলে, নিশ্চিতভাৱে তোমালোকে জানিব পাৰিলাহেঁতেন (এই প্ৰতিযোগিতাৰ পৰিণাম কি)।"
+    },
+    {
+      "lang": "es",
+      "key": "7:183",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "[Solo] les doy un plazo de tiempo, pero mi plan es firme."
+    },
+    {
+      "lang": "es",
+      "key": "15:41",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Dijo [Dios]: “Este es el camino que conduce directamente hacia Mí."
+    },
+    {
+      "lang": "es",
+      "key": "16:46",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "¿O de que los sorprenda ocupados en sus quehaceres sin que puedan evitarlo?"
+    },
+    {
+      "lang": "es",
+      "key": "18:91",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "¡Así fue! Tengo conocimiento completo sobre él."
+    },
+    {
+      "lang": "es",
+      "key": "26:55",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "pero nos causan un profundo enojo."
+    },
+    {
+      "lang": "es",
+      "key": "37:83",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "Abraham era de los que lo siguieron [a Noé en su fe monoteísta],"
+    },
+    {
+      "lang": "es",
+      "key": "41:54",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Ellos realmente dudan del encuentro con su Señor. Pero Él lo abarca todo."
+    },
+    {
+      "lang": "es",
+      "key": "47:5",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "[Dios] los guiará, mejorará su estado"
+    },
+    {
+      "lang": "es",
+      "key": "70:22",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "excepto quienes realizan la oración con entusiasmo"
+    },
+    {
+      "lang": "es",
+      "key": "81:9",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "qué crimen cometieron para ser asesinadas,"
+    },
+    {
+      "lang": "ja",
+      "key": "2:62",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "本当に、信仰する者たち、ユダヤ教徒である者たち、キリスト教徒たち、サービア教徒たちで、アッラーと最後の日を信じて正しい行いを行う者、彼らには、その主の御許に褒美がある。そして彼らには怖れもなければ、悲しむこともない。"
+    },
+    {
+      "lang": "ja",
+      "key": "2:89",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "彼らは、——かつて、不信仰だった者たちに対する勝利を求めていたにも関わらず——アッラーの御許から彼らに、彼らのもとにあるものを確証する啓典がもたらされた時、そして彼らが知っていたものが彼らのもとに到来した時、それを否定したのだ。ならばアッラーの呪いは、（使徒ムハンマドとクルアーンを否定する全ての）不信仰者たちの上にある。"
+    },
+    {
+      "lang": "ja",
+      "key": "2:105",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "啓典の民やシルクの徒という不信仰に陥った者たちは、あなた方の主からあなた方のもとに、いかなる善きものが下されることも望まない。アッラーは、かれがお望みになる者に、そのご慈悲を特別にお授けになる。そしてアッラーは、偉大な恩寵の主であられる。"
+    },
+    {
+      "lang": "ja",
+      "key": "2:158",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "本当にサファーとマルワは、アッラーの聖徴の一つである。誰でも館（カァバ神殿）へのハッジに詣でたり、ウムラを行ったりする者は、その間をタワーフしても支障はない。そして自ら進んで善行を行う者があれば、実にアッラーはよく労われるお方、全知者なのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "2:218",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "本当に、信仰する者たちと、移住し、アッラーの道において奮闘する者たち、それらの者たちが、アッラーのご慈悲を熱望しているのである。アッラーは赦し深いお方、慈愛深いお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "2:277",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "本当に、信仰して正しい行いに励み、礼拝を遵守し、浄財を支払う者たち、彼らには、その主の御許に彼らの褒美がある。そして彼らには怖れもなければ、悲しむこともないのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "3:19",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "本当にアッラーの御許における（真の）宗教はイスラームである。そして啓典を授けられた人々が意見を異にしたのは、彼らのもとに知識が到来した後のこと、彼らの間の侵犯ゆえ以外の何ものでもなかった。誰だろうとアッラーの御徴を否定する者があっても（、アッラーは彼にその応報を与えられるのであり）、本当にアッラーは即座に計算されるお方なのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "3:43",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "マルヤムよ、あなたの主に謹んで仕えよ。そして（かれに）サジダし、ルクーゥする者たちと共にルクーゥをするのだ」。"
+    },
+    {
+      "lang": "ja",
+      "key": "3:62",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "本当にこれこそは、まさしく真実の物語であり、アッラーの外に崇拝に値するものなどはない。そして本当にアッラーこそは、まさに偉力ならびないお方、英知あふれるお方であられる。"
+    },
+    {
+      "lang": "ja",
+      "key": "3:86",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "信仰に入り、使徒は真実であると証言した後、自分たちのもとに明証が訪れたにも関わらず不信仰に陥った民を、アッラーがどうしてお導きになろうか？アッラーは、不正者である民をお導きにはならない。"
+    },
+    {
+      "lang": "ja",
+      "key": "3:108",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "それは（使徒よ）、われらがあなたに真理と共に誦み聞かせるアッラーの御徴（アーヤ）。アッラーはいかなる創造物に対しても、不正をお望みにはならない。"
+    },
+    {
+      "lang": "ja",
+      "key": "4:17",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "アッラーが悔悟をお受け入れになるのは、無知ゆえに悪事を犯しても、その後すぐに悔い改める者だけである。そしてそれらの者たちこそ、アッラーが悔悟をお受け入れになる者たちなのだ。アッラーはもとより、全知者、英知あふれるお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "4:27",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "アッラーは、あなた方の悔悟をお受け入れになることをお望みになる。そして欲望に従う者たちは、あなたがたが（正しい宗教から）大きく逸脱(いつだつ)することを望むのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "4:54",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "いや、彼らはアッラーがお授けになった恩寵に対して、人々を妬んでいるのか？われらは確かに、イブラーヒームの一族に啓典と英知を授けたのであり、彼らに偉大なる王権を与えたのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "4:64",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "われらが使徒を遣わしたのは、彼がアッラーのお許しのもと、（人々に）従われるために外ならなかった。（使徒よ、）もし彼らが自らに不正を働いた時に、あなたのもとにやって来てアッラーのお赦しを乞い、そして使徒が彼らのために（アッラーの）お赦しを乞うたならば、彼らはアッラーがよく悔悟をお受け入れになるお方、慈愛深いお方であることを見出したであろうに。"
+    },
+    {
+      "lang": "ja",
+      "key": "4:76",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "信仰するものたちはアッラーの道において戦い、不信仰に陥った者たちはターグートの道のために戦う。ならば、シャイターンの盟友と戦え。本当にシャイターンの策謀は、そもそも脆いものであるから。"
+    },
+    {
+      "lang": "ja",
+      "key": "4:87",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "アッラーは、かれ以外に崇拝すべきものがないお方。かれは必ずやあなた方を、疑惑の余地のない復活の日に召集される。一体、アッラーよりも真実を語るものがあろうか？"
+    },
+    {
+      "lang": "ja",
+      "key": "4:164",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "また、われらが以前、あなたに語って聞かせた使徒たちと、まだあなたに語って聞かせてはいない使徒たちを（遣わした）。そしてアッラーはムーサーに、直々に語りかけられたのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "5:38",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "（イスラーム法によって統治する者よ、）男女の窃盗犯は、彼らが（不当に）稼いだことの応報、アッラーからの懲罰ゆえに、その手を切断するのだ。アッラーは、偉力ならびないお方、英知あふれるお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "5:67",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "（使徒よ、）あなたの主からあなたに下されたものを伝えよ。もしそうしなければ、あなたはかれのお言伝を伝えなかったことになる。そしてアッラーが、あなたを人々から守って下さるのだ。本当にアッラーは、不信仰者である民をお導きにはならない。"
+    },
+    {
+      "lang": "ja",
+      "key": "5:93",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "信仰して正しい行いを行った者たちには、彼らが食べたものに関して罪はない。彼らが（アッラーを）畏れ、信仰して正しい行いを行い、更に畏れて信仰し、それからまた畏れて善を尽くしたのならば。アッラーは、善を尽くす者たちをお好みになる。"
+    },
+    {
+      "lang": "ja",
+      "key": "6:1",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "諸天と大地を創造され、闇と光をお創りになったアッラーに、称賛あれ。その後に及んで不信仰に陥った者たちは、自分たちの主に対して（かれ以外のものを）並べている。"
+    },
+    {
+      "lang": "ja",
+      "key": "6:106",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "（使徒よ、）あなたの主からあなたに啓示されたものに、従えーーかれの外に、崇拝すべきものはないーー。そして、シルクの徒から遠ざかれ。"
+    },
+    {
+      "lang": "ja",
+      "key": "7:105",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "私はアッラーに対し、真実以外は喋らないことが相応しいのです。私はあなた方に対して確かに、あなた方の主からの明証を携えて来ました。ならばイスラーイールの子らを、私と共に自由にして下さい」。"
+    },
+    {
+      "lang": "ja",
+      "key": "7:137",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "われらは抑圧されていた民（イスラーイールの子ら）に、われらが祝福したその土地の東方と西方を引き継がせた。イスラーイールの子らに対するあなたの主のよき御言葉が、彼らが忍耐したことゆえに完遂されたのだ。そして、われらはフィルアウンとその民が作り上げていたものと、築き上げていたものを破壊したのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "7:201",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "本当に（アッラーを）畏れる者たちとは、シャイターンの内の徘徊者が自分たちに触れた時、（アッラーへの服従と悔悟の義務を）思い出すのである。するとどうであろう、彼らは開眼した者となるのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "8:1",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "（預言者よ、）彼らは戦利品について、あなたに尋ねる。言うのだ。「戦利品はアッラーと使徒のもの。ならばアッラーを畏れ、あなた方の間の状態を正し、アッラーとその使徒に従うのだ。もし、あなた方が信仰者であるというならば」。"
+    },
+    {
+      "lang": "ja",
+      "key": "8:67",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "地上で徹底的に痛めつけるまで、いかなる預言者にも、捕虜を取ることは許されなかった。あなた方は現世のつまらぬ利益を望み、アッラーは来世をお望みになる。アッラーは偉力ならびないお方、英知あふれるお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "8:69",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "ならば、あなた方が戦利品としたものから、合法で善きものを享受するがよい。そしてアッラーを畏れよ。本当にアッラーは赦し深いお方、慈愛深いお方なのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:18",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "アッラーのマスジドを管理するのは、アッラーと最後の日を信じ、礼拝を遵守して浄財を支払い、アッラー以外の何も怖れない者のみ。そしてそれらの者たちは恐らく、導かれた者の類いとなろう。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:26",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "それからアッラーは、その使徒と信仰者たちに（彼らを堅固にすべく、）かれの静寂をお下しになり、あなた方の目には見えなかった軍勢を下され、不信仰だった者たちを罰された。それが不信仰者たちへの報いなのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:29",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "（ムスリムたちよ、）啓典を授けられた者たちの内、アッラーと最後の日を信仰せず、アッラーとその使徒が禁じた物事を禁じもせず、真理の宗教に従わない者たちと、彼らが、すごすごとシズヤを手渡しで払うまで戦うのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:67",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "偽信者の男たちと偽信者の女たちは、同じ穴のむじなである。彼らは悪事を命じて善事を禁じ、（アッラーの道ゆえの施しから）その手を引っ込める。彼らがアッラーを忘れたゆえに、かれも彼らのことをお忘れになったのだ。本当に偽信者たちこそは、（アッラーとその使徒への信仰から逸脱した、）放逸な者たちなのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:71",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "また、信仰者の男たちと信仰者の女たちは、互いに盟友である。彼らは善事を命じて悪事を禁じ、礼拝を遵守し、浄財を施し、アッラーとその使徒に従う。それらの者たち、アッラーは彼らに、ご慈悲をおかけになるのだ。本当にアッラーは偉力ならびないお方、英知あふれるお方なのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:97",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "ベドウィンたちは不信仰と偽信において（町の民）よりひどく、アッラーがその使徒に下された決まりについて無知なのも、より当然なのだ。アッラーは全知者、英知あふれるお方である。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:102",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "また（マディーナの周りのベドウィンと、マディーナの住民の中には、）自分たちの罪を認めた、別の者たちがいる。彼らは正しい行いと、別の悪（い行い）を混在させた。恐らくアッラーは、彼らの悔悟を受け入れて下さるであろう。本当にアッラーは赦し深いお方、慈愛深いお方なのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "9:112",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "（彼ら信仰者たちとは、）悔悟する者たち、崇拝行為に専念する者たち、（アッラーを）称賛する者たち、斎戒する者たち、ルクーゥする者たち、サジダする者たち、善事を命じる者たち、悪事を禁じる者たち、アッラーの決まりを守る者たち。（預言者よ、これらの）信仰者たちに吉報を伝えよ。"
+    },
+    {
+      "lang": "ja",
+      "key": "11:56",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "本当に私は、我が主であり、あなた方の主であるアッラーに、全てを委ねたのだから。地を歩く生きもので、かれがその前髪をお掴みになっていないものはない。本当に我が主は、まっすぐな道におられるお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "11:58",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "（アードを滅ぼすという）われらの命令が到来した時、われらはわれらの御許からの慈悲によって、フードと、彼と共に信仰した者たちを救い出した。われらは彼らを、荒々しい懲罰から救ったのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "11:60",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "また彼らは、この現世において、呪いに付きまとわれた。そして、復活の日においても。まさしくアードは自分たちの主に対して不信仰だったのではないか。フードの民アードに滅亡あれ。"
+    },
+    {
+      "lang": "ja",
+      "key": "11:76",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "（天使たちは言った。）「イブラーヒームよ、これから身を引くのだ。本当にあなたの主のご命令は確かに到来したのであり、彼らにはまさしく、防ぐことの出来ない懲罰が襲いかかるのだから」。"
+    },
+    {
+      "lang": "ja",
+      "key": "11:83",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "主の御許で、印がつけられた（石を）。それは（クライシュ族の不信仰者という）不正者たちから、遠いわけではない。"
+    },
+    {
+      "lang": "ja",
+      "key": "12:22",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "彼（ユースフ）が成熟した時、われらは彼に英知と知識を授けた。そのようにわれらは、善を尽くす者たちに報いるのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "13:38",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "（使徒よ、）われらは確かに、あなた以前にも使徒たちを遣わし、彼らに妻と子孫を授けた。そしてアッラーのお許しなしには、いかなる使徒も御徴をもたらすことはない。全ての期限には、（定められた）書があるのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "14:19",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "一体あなたは、アッラーが真理ゆえに、諸天と大地をお創りになったことを知らなかったのか？かれがお望みなら、あなた方を滅ぼされ、新たな創造物をもたらされるのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "14:47",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "だから（使徒よ）、アッラーが、かれの使徒たちに対するそのお約束をお破りになるなどと、あなたは断じて考えてはならない。本当にアッラーは偉力ならびないお方であり、報復の主なのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "15:12",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "（それらの者たちと）同様に、われらは（アッラーを否定し、その使徒を嘘つき呼ばわりした）罪悪者たちの心にも、それを差し込むのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "16:47",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "あるいは、（アッラーが）彼らを減退させつつ滅ぼされることはないと（、安心しているのか）？本当にあなた方の主は、まさしく哀れみ深いお方、慈愛深いお方なのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "16:118",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "（使徒よ、）われらはユダヤ教徒である者たちに対し、あなたに以前話して聞かせたものを禁じた。そして、われらが彼らに不正を働いたのではない。だが、彼らが自分自身に不正を働いていたのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "17:55",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "また（使徒よ）、あなたの主は諸天と大地にある者を最もよくご存知のお方。そしてわれらは確かに、ある預言者たちを、別の預言者たちよりも引き立てた。また、ダーウードには書巻を授けたのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "17:77",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "（それは、）われらの使徒たちの内、われらが確かに、あなた以前に遣わした者たちの摂理。そして（使徒よ、）あなたはわれらの摂理に、いかなる変更も見出すことがない。"
+    },
+    {
+      "lang": "ja",
+      "key": "17:95",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "（使徒よ、）言ってやれ。「（アッラーはこう仰せられる）。もし地上に安住して（そこを）歩く天使たちがいたならば、われらは天から彼らのもとに、天使の使徒を遣わしたであろう」。"
+    },
+    {
+      "lang": "ja",
+      "key": "17:106",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "また（使徒よ、われらは）クルアーンを（、あなたに下した）。われらはそれを、あなたが人々に対してゆっくり誦むように明確に分け、徐々に下したのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "19:7",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "（アッラーは、天使を通じて仰せられた。）「ザカリーヤーよ、本当にわれらはあなたに、ヤヒヤーという名の男の子についての吉報を伝えよう。われらは（彼）以前、誰もその名で名付けたことはなかった」。"
+    },
+    {
+      "lang": "ja",
+      "key": "19:93",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "諸天と大地にあるいかなる者も、（復活の日に）僕として、慈悲あまねきお方（アッラー）の御許へと馳せ参じない者はいない。"
+    },
+    {
+      "lang": "ja",
+      "key": "22:17",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "本当に、信仰する者たち、ユダヤ教徒である者たち、サービア教徒たち、キリスト教徒たち、マジュース教徒たち、シルクを犯す者たち、実にアッラーは復活の日、彼らの間に裁きをお下しになる。本当にアッラーは、全てのことの証人であられるのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "22:35",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "（彼らは、）アッラーについて言及されれば、その心が慄く者たち。そして自分たちに降りかかったことに対して忍耐し、礼拝を遵守し、われらが彼らに捧げたものの中から費やす者たちである。"
+    },
+    {
+      "lang": "ja",
+      "key": "22:41",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "（われらが援助を約束した者たちとは、）われらが彼らに地上で力を授ければ、礼拝を遵守し、浄財を払い、善事を命じて悪事を禁じる者たち。そしてアッラーにこそ、全ての物事の結末は属する。"
+    },
+    {
+      "lang": "ja",
+      "key": "22:52",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "（使徒よ、）われらがあなた以前に使徒や預言者を遣わせば、（その使徒や預言者が啓典を）読誦した時には、決まってシャイターンがその読誦に（悪い囁きを）放り込んだものなのだ。それからアッラーは、シャイターンの放り込むものを消去され、かれのアーヤを確固としたものとされる。アッラーは全知者、英知あふれるお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "22:62",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "それはアッラーこそが（、崇拝されるべき唯一の）真理であり、彼ら（シルクの徒）が、かれをよそに祈っているものこそが虚妄であるため。そしてアッラーこそが、至高のお方、大いなるお方であるためなのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "22:74",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "彼ら（シルクの徒）はアッラーを、真に敬わなかった。本当にアッラーはまさしく、強力なお方、偉力ならびないお方であられる。"
+    },
+    {
+      "lang": "ja",
+      "key": "23:17",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "われらは確かに、あなた方の上に七つの重なったもの（天）を創り上げた。そしてわれらはもとより、創造に関して迂闊だったわけではない。"
+    },
+    {
+      "lang": "ja",
+      "key": "23:62",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "また、われらはいかなる者にも、その能力以上のものを課したりはしない。そしてわれらの御許には、真理を語る書があるのであり、彼らが不正を被ることもない。"
+    },
+    {
+      "lang": "ja",
+      "key": "24:19",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "本当に、（ムフサンである）信仰する者たちの中に醜行が広まることを好む者たち、彼らには現世と来世において痛ましい懲罰がある。アッラーがご存知なのであり、あなた方は知らないのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "25:32",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "不信仰に陥った者たちは、言った。「どうしてクルアーンは（トーラーや福音のように）、彼（預言者ムハンマド）に一編に下されないのか？」われらはそれによってあなたの心を堅固にすべく、（クルアーンを）そのように（徐々に下）し、またそれを明瞭に区切ったのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "25:55",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "彼ら（不信仰者ら）はアッラーをよそに、（それを崇拝しても）自分たちを益もしなければ（、崇拝しなくても）自分たちを害もしないものを崇めている。不信仰者はそもそも、その主に対する（シャイターンの）援助者なのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "26:83",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "（イブラーヒームは、主に祈って言った。）「我が主よ、私に英知を授けて下さい。そして私に、正しい者たちの仲間入りをさせて下さい。"
+    },
+    {
+      "lang": "ja",
+      "key": "26:227",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "但し、信仰して正しい行いを行い、アッラーをよく唱念し、（イスラームが不信仰者の詩人らの風刺によって）不正を受けた後、（イスラームの勝利を）援助した者たちは別である。そして不正を働いた者たちは、彼らがいかなる戻り場所に戻ることになるか、やがて知ることになろう。"
+    },
+    {
+      "lang": "ja",
+      "key": "28:45",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "しかしわれらは（ムーサーの後）数々の世代を設け、彼らに長い年月が流れ去って（、彼らはアッラーとの約束を忘れて）しまった。またあなたは、マドゥヤンの民のもとに滞在していた者でもなければ、彼らにわれらの御徴を誦み聞かせていたわけでもない。だがわれらはもとより、（使徒を）遣わす者だったのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "28:59",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "また（使徒よ）、あなたの主はもとより、町々を滅ぼされるお方ではないーー町々の母（の民）のもとに、われらの御徴を彼らに誦んで聞かせる使徒を遣わすまではーー。そしてわれらは、その民が不正者でありもしないのに、町々を滅ぼす者ではない。"
+    },
+    {
+      "lang": "ja",
+      "key": "29:14",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "われらは確かにヌーフをその民に遣わし、彼はその中で（アッラーの教えへと招きつつ、）千年から五十年差し引いた年月を過ごした。そして（彼らが信じなかったので、）不正者であった彼らを、洪水が捕らえた。"
+    },
+    {
+      "lang": "ja",
+      "key": "29:42",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "本当にアッラーは、彼らがかれをよそに祈っているいかなるものも、ご存知なのだ。かれは、偉力ならびないお方、英知あふれるお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "29:45",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "あなたに啓典の内から啓示されたものを読誦し、礼拝を遵守せよ。実に礼拝は、醜行と悪事を禁じるのだから。そして、アッラーの唱念こそは（何）より偉大であり、アッラーはあなた方の成すことをご存知なのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "30:5",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "（ビサンチンに授けられた）アッラーの勝利に。アッラーは、かれがお望みになる者をお助けになる。かれは偉力ならびないお方、慈愛深いお方であられる。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:1",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "預言者よ、アッラーを畏れよ。そして不信仰者たちと偽信者たちに従ってはならない。本当にアッラーはもとより、全知者、英知あふれるお方なのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:9",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "信仰する者たちよ、あなた方に対するアッラーの恩恵を思い起こすのだ。あなた方のもとに軍勢が到来し、われらが彼らに風と、あなた方には見えなかった軍勢を遣わした時のことを。アッラーはもとより、あなた方が行うことをご覧になっていたのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:25",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "またアッラーは、不信仰者だった者たちをその憤りと共に、善いことなく（マディーナから）退却させられた。そしてアッラーは信仰者たちを、戦いなしで済ませて下さった。アッラーはもとより強力なお方、偉力ならびないお方であられる。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:29",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "そして、もしあなた方がアッラーとその使徒、来世の住まいを望む（がゆえに忍耐して使徒に従う）のなら、本当にアッラーはあなた方の内、善を尽くす者たちに偉大な褒美を用意されている。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:31",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "あなた方の内、アッラーとその使徒に謹んで仕え、正しい行いを行う者があれば、われらはその者に褒美を二度与えよう。そしてわれらは彼女のために、貴い糧を用意しておいたのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:34",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "そして（預言者の妻たちよ）、あなた方の家で読誦されるアッラーの御徴と英知を唱念するのだ。本当にアッラーはもとより、霊妙なお方、通暁されたお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:39",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "（彼ら預言者たちは、）アッラーのお言伝を伝達し、かれ（のみ）を恐れ、アッラー以外のいかなるものも恐れることのない者たち。そしてアッラーだけで、清算者は十分である。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:40",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "ムハンマドはそもそも、あなた方の男性の内の、誰の父親でもない。しかしアッラーの使徒、預言者たちの封印なのだ。そしてアッラーはもとより、全てのことをご存知のお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:48",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "また、不信仰者たちや偽信者たちには従わず、彼らの害は放っておき、アッラーのみに全てを委ねるのだ。アッラーだけで、委任者は十分なのである。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:56",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "本当にアッラーとその天使たちは、預言者のために（善きことを）念じる。信仰する者たちよ、彼のために（善きことを）念じ、平安を祈るのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:69",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "信仰する者たちよ、ムーサーを害した者たちのようになってはならない。アッラーはムーサーを、彼らが言ったことから潔白として下さったのだ。彼はアッラーの御許で、栄誉ある者だった。"
+    },
+    {
+      "lang": "ja",
+      "key": "33:73",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "（人間がそれを請け負ったのは）アッラーが偽信者の男たちと偽信者の女たち、シルクの徒の男たちとシルクの徒の女たちに罰され、またアッラーが信仰者の男たちと信仰者の女たちの悔悟をお受入れになるため。アッラーはもとより、赦し深いお方、慈愛深いお方である。"
+    },
+    {
+      "lang": "ja",
+      "key": "35:29",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "本当にアッラーの啓典（クルアーン）を読誦し、礼拝を遵守し、われらが彼らに授けたものから（施しのために）密に、露わに、費やす者たちは、決してご破算になることのない取引を望む者たち。"
+    },
+    {
+      "lang": "ja",
+      "key": "38:27",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "ーーわれらは天と大地とその間にあるものを、無意味に創ったのではない。それは不信仰に陥った者たちの思い込みである。そして不信仰に陥った者たちには、（地獄の）業火の災いあれ。"
+    },
+    {
+      "lang": "ja",
+      "key": "38:28",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "いや、一体われらが、信仰して正しい行いを行う者たちを、大地で腐敗を働く者たちと同様にするとでも？いや、一体われらが敬虔な者たちを、放逸な者たちと同様にするというのか？"
+    },
+    {
+      "lang": "ja",
+      "key": "38:41",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "われらの僕、アイユーブを思い出せ。彼がその主に、「シャイターンは疲労と罰で、私を襲いました」と呼びかけた時のこと。"
+    },
+    {
+      "lang": "ja",
+      "key": "38:65",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "（使徒よ、）言え。「本当に私は一人の警告者である。そして唯一のお方、君臨し給うお方であるアッラーの外に、崇拝すべきいかなるものもない。"
+    },
+    {
+      "lang": "ja",
+      "key": "39:69",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "また、大地はその主の御光によって輝き、帳簿が置かれ、預言者たちと証人たちが連れて来られる。そして不正を受けることなく、彼らの間が真理によって裁かれるのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "39:75",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "また（預言者よ、）あなたは天使たちが、その主の称賛と共に（かれを）称えながら、御座のまわりを囲むのを見る。そして彼らの間は真理によって裁かれ、（こう）言われるのだ。「全創造物の主アッラーに、全ての称賛あれ」。"
+    },
+    {
+      "lang": "ja",
+      "key": "41:14",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "使徒たちが、彼らの前と後ろから彼ら（アードとサムード）のもとに到来し、アッラー以外は崇拝してはならない、と言った時のこと。彼らは言った。「もし我らが主がお望みになったなら、天使たちを（使徒として）下したであろう。ゆえに私たちは、あなた方が携えて遣わされたものを否定する」。"
+    },
+    {
+      "lang": "ja",
+      "key": "42:49",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "アッラーにこそ、諸天と大地の王権は属する。かれはお望みのものを創られる。お望みの者には女（子のみ）を授けられ、お望みになる者には男（子のみ）を授けられるのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "43:76",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "われらが（懲罰によって）彼らに不正を働いたのではない。しかし彼らこそが、（シルクと預言者への不服従を犯す）不正者だったのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "49:1",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "信仰する者たちよ、アッラーとその使徒の前で、出しゃばってはならない。そしてアッラーを畏れよ。本当にアッラーは、よくお聞きになるお方、全知者であられる。"
+    },
+    {
+      "lang": "ja",
+      "key": "50:45",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "われらは、彼ら（シルクの徒）が言うことを最もよく知っており、（使徒よ、）あなたは彼らに対する圧制者ではない。ならば、わが警告を怖れる者に、クルアーンで戒めるのだ。"
+    },
+    {
+      "lang": "ja",
+      "key": "52:29",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "ならば（使徒よ、クルアーンで）戒めよ。あなたはあなたの主の恩恵ゆえ、占い師でも憑かれた者でもないのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "52:48",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "（使徒よ、）あなたの主のお決めになったことゆえに、忍耐せよ。本当にあなたは、われらの眼差しのもとにあるのだから。そして立つ時に、あなたの主の称賛と共に（かれを）称えよ。"
+    },
+    {
+      "lang": "ja",
+      "key": "58:19",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "シャイターンが彼らを（、彼らがシャイターンに服従したゆえに）制圧し、彼らにアッラーの唱念を忘れさせたのである。それらの者たちは、シャイターンの党派。本当にシャイターンの党派こそは、損失者なのではないか。"
+    },
+    {
+      "lang": "ja",
+      "key": "59:18",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "信仰する者たちよ、アッラーを畏れ、自分自身が明日のために成したことをよく考えよ。そしてアッラーを畏れるのだ。本当にアッラーは、あなた方が行うことに通暁されるお方なのだから。"
+    },
+    {
+      "lang": "ja",
+      "key": "59:23",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "かれはアッラー。その外に、（真に）崇拝すべきいかなるものもないお方。（真の）王、聖なるお方、平安なお方、保障されるお方、統制させられるお方、偉力ならびないお方、制圧されるお方、威風堂々たるお方。彼らがシルクを犯しているものから（無縁な）、アッラーに称えあれ。"
+    },
+    {
+      "lang": "ja",
+      "key": "64:8",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "ならば（シルクの徒よ）、アッラーとその使徒、われらが（彼に）下した光を信じよ。アッラーは、あなた方が行うことに通暁されているお方。"
+    },
+    {
+      "lang": "ja",
+      "key": "67:20",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "いや（、不信仰者たちよ）、慈悲あまねきお方を差しおいてあなた方を援助する、あなた方の軍勢であるこの者とは、誰なのか？不信仰者たちは外ならぬ、（シャイターンの）欺きの中にある。"
+    },
+    {
+      "lang": "it",
+      "key": "2:286",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "Allah non impone a nessun'anima al di là delle sue capacità. Quello che ognuno avrà guadagnato sarà a suo favore e ciò che avrà demeritato sarà a suo danno. “Signore, non ci punire per le nostre dimenticanze e i nostri sbagli. Signore, non caricarci di un peso grave come quello che imponesti a coloro che furono prima di noi. Signore, non imporci ciò per cui non abbiamo la forza. Assolvici, perdonaci, abbi misericordia di noi. Tu sei il nostro patrono, dacci la vittoria sui miscredenti.”"
+    },
+    {
+      "lang": "it",
+      "key": "3:200",
+      "note": "low similarity to Quran.com 0.01",
+      "shipped": "O voi che credete, perseverate! Incitatevi alla perseveranza, lottate e temete Allah, sì che possiate prosperare."
+    },
+    {
+      "lang": "it",
+      "key": "4:176",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Ti chiederanno un parere. Di': “A proposito del defunto che non lascia eredi, [né ascendenti, né discendenti] Allah vi dice: Se qualcuno muore senza lasciare figli ma ha una sorella, ad essa toccherà la metà dell'eredità, mentre egli erediterebbe da lei tutto quanto se ella non avesse figli; se ci sono due sorelle, avranno i due terzi di quello che lascia; se ci sono due fratelli - maschi o femmine - al maschio la parte di due femmine”. Allah vi illumina affinché non erriate. Allah è l'Onnisciente."
+    },
+    {
+      "lang": "it",
+      "key": "5:120",
+      "note": "low similarity to Quran.com 0.01",
+      "shipped": "Appartiene ad Allah la sovranità dei cieli e della terra e di ciò che racchiudono, ed Egli è l'Onnipotente."
+    },
+    {
+      "lang": "it",
+      "key": "6:165",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "Egli è Colui Che vi ha costituiti eredi della terra e vi ha elevato di livello, gli uni sugli altri, per provarvi in quel che vi ha dato. In verità il tuo Signore è rapido al castigo, in verità è perdonatore, misericordioso."
+    },
+    {
+      "lang": "it",
+      "key": "7:206",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "Certamente coloro che sono presso il tuo Signore non disdegnano di adorarLo: Lo lodano e si prosternano davanti a Lui.."
+    },
+    {
+      "lang": "it",
+      "key": "8:75",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Coloro che in seguito hanno creduto e sono emigrati e hanno lottato insieme con voi, sono anch'essi dei vostri, ma nel Libro di Allah, i parenti hanno legami prioritari gli uni verso gli altri. In verità Allah è onnisciente!"
+    },
+    {
+      "lang": "it",
+      "key": "9:129",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "Se poi volgono le spalle, di': “Mi basta Allah. Non c'è altro dio all'infuori di Lui. A Lui mi affido. Egli è il Signore del Trono immenso”.."
+    },
+    {
+      "lang": "it",
+      "key": "10:109",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "Segui ciò che ti è stato rivelato e sopporta con pazienza, finché Allah giudichi. Egli è il migliore dei giudici."
+    },
+    {
+      "lang": "it",
+      "key": "11:123",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Appartiene ad Allah l'invisibile dei cieli e della terra, a Lui si riconduce l'ordine totale. AdoraLo dunque e confida in Lui. Il tuo Signore non è disattento a quello che fate."
+    },
+    {
+      "lang": "it",
+      "key": "12:111",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Nelle loro storie c'è una lezione per coloro che hanno intelletto. Questo [Corano] non è certo un discorso inventato, ma è la conferma di ciò che lo precede, una spiegazione dettagliata di ogni cosa, una guida e una misericordia per coloro che credono."
+    },
+    {
+      "lang": "it",
+      "key": "13:43",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Dicono i miscredenti: “Tu non sei un inviato”. Rispondi: “Mi basta Allah, testimone tra me e voi, Colui Che possiede la Scienza del Libro”."
+    },
+    {
+      "lang": "it",
+      "key": "14:52",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Questo è un messaggio per gli uomini, affinché siano avvertiti e sappiano che Egli è il Dio Unico e perché rammentino, i dotati di intelletto."
+    },
+    {
+      "lang": "it",
+      "key": "15:99",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "e adora il tuo Signore fin che non ti giunga l'ultima certezza."
+    },
+    {
+      "lang": "it",
+      "key": "16:128",
+      "note": "low similarity to Quran.com 0.01",
+      "shipped": "In verità Allah è con coloro che Lo temono e con coloro che fanno il bene."
+    },
+    {
+      "lang": "it",
+      "key": "17:111",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "E di': “La lode appartiene ad Allah, Che non ha figlio alcuno, Che non ha associati nella Sua sovranità e non ha bisogno di protettori contro l'umiliazione”. Magnifica la sua grandezza."
+    },
+    {
+      "lang": "it",
+      "key": "18:110",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Di': “Non sono altro che un uomo come voi. Mi è stato rivelato che il vostro Dio è un Dio Unico. Chi spera di incontrare il suo Signore compia il bene e nell'adorazione non associ alcuno al suo Signore”."
+    },
+    {
+      "lang": "it",
+      "key": "19:98",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Quante generazioni facemmo perire prima di loro! Ne puoi ritrovare anche uno solo o sentire il minimo bisbiglio?"
+    },
+    {
+      "lang": "it",
+      "key": "20:135",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "Di': “Tutti aspettano, aspettate allora, e ben presto saprete chi sono i compagni della retta via e chi sono i ben guidati”."
+    },
+    {
+      "lang": "it",
+      "key": "21:68",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Dissero: “Bruciatelo e andate in aiuto dei vostri dèi, se siete [in grado] di farlo”."
+    },
+    {
+      "lang": "it",
+      "key": "21:112",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Di': “Mio Signore, giudica secondo verità! Il nostro Signore è il Compassionevole, da Lui invochiamo aiuto contro ciò che affermate”."
+    },
+    {
+      "lang": "it",
+      "key": "22:78",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "Lottate per Allah come Egli ha diritto [che si lotti]. Egli vi ha scelti e non ha posto nulla di gravoso nella religione, quella del vostro padre Abramo che vi ha chiamati “musulmani”. Già allora e qui ancora, sì che il Messaggero testimoni nei vostri confronti e voi testimoniate nei confronti delle genti. Assolvete all'orazione e versate la decima e aggrappatevi ad Allah: Egli è il vostro patrono. Qual miglior patrono, qual miglior alleato!."
+    },
+    {
+      "lang": "it",
+      "key": "23:118",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "E di': “Signore, perdona e usaci misericordia, Tu sei il Migliore dei misericordiosi”."
+    },
+    {
+      "lang": "it",
+      "key": "24:64",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "In verità, ad Allah appartiene] tutto ciò che è nei cieli e sulla terra. Egli conosce le vostre condizioni e nel Giorno in cui li ricondurrà a Sé li informerà a proposito del loro agire. Allah conosce ogni cosa."
+    },
+    {
+      "lang": "it",
+      "key": "25:77",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Di': “Il mio Signore non si curerà affatto di voi se non Lo invocherete. [Ma] già tacciaste di menzogna [la Sua Rivelazione] e presto [ne subirete] le inevitabili [conseguenze]”."
+    },
+    {
+      "lang": "it",
+      "key": "26:227",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Eccetto coloro che credono, compiono il bene e spesso ricordano Allah, e che si difendono quando sono vittime di un'ingiustizia. Gli ingiusti vedranno, ben presto, il destino verso il quale si avviano."
+    },
+    {
+      "lang": "it",
+      "key": "27:93",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Di': “La lode appartiene ad Allah! Presto vi farà vedere i Suoi segni e li riconoscerete”. Il tuo Signore non è incurante di quello che fate."
+    },
+    {
+      "lang": "it",
+      "key": "28:88",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Non invocare nessun altro dio insieme con Allah. Non c'è dio all'infuori di Lui. Tutto perirà, eccetto il Suo Volto. A lui appartiene il giudizio e a Lui sarete ricondotti."
+    },
+    {
+      "lang": "it",
+      "key": "29:69",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Quanto a coloro che fanno uno sforzo per Noi, li guideremo sulle Nostre vie. In verità Allah è con coloro che fanno il bene."
+    },
+    {
+      "lang": "it",
+      "key": "30:60",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Sopporta dunque con pazienza [o Muhammad]. La promessa di Allah è veritiera e non ti rendano leggero, coloro che non hanno certezza."
+    },
+    {
+      "lang": "it",
+      "key": "31:34",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "In verità la scienza dell'Ora è presso Allah, Colui Che fa scendere la pioggia e conosce quello che c'è negli uteri. Nessuno conosce ciò che guadagnerà l'indomani e nessuno conosce la terra in cui morrà. In verità Allah è il Sapiente, il Ben informato."
+    },
+    {
+      "lang": "it",
+      "key": "32:30",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Allontanati dunque da loro, e aspetta. Anche loro aspetteranno!"
+    },
+    {
+      "lang": "it",
+      "key": "33:73",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "[Ed è così affinché] Allah castighi gli ipocriti e le ipocrite, gli associatori e le associatrici e accolga Allah il pentimento dei credenti e delle credenti. Allah è perdonatore, misericordioso."
+    },
+    {
+      "lang": "it",
+      "key": "34:54",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Si porrà [un ostacolo] tra loro e quel che desiderano, come già avvenne per i loro emuli, che rimasero in preda al dubbio e all'incertezza."
+    },
+    {
+      "lang": "it",
+      "key": "35:45",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "Se Allah punisse gli uomini per ciò che si meritano, non lascerebbe alcun essere vivente sulla terra. Ma Egli li rinvia fino ad un termine stabilito. Poi, quando giungerà il termine loro... [sapranno che] Allah osserva attentamente i Suoi servi."
+    },
+    {
+      "lang": "it",
+      "key": "36:83",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "Gloria a Colui nella Cui mano c'è la sovranità su ogni cosa, Colui al Quale sarete ricondotti."
+    },
+    {
+      "lang": "it",
+      "key": "37:182",
+      "note": "low similarity to Quran.com 0.01",
+      "shipped": "e lode ad Allah, Signore dei mondi."
+    },
+    {
+      "lang": "it",
+      "key": "38:88",
+      "note": "low similarity to Quran.com 0.01",
+      "shipped": "E tra qualche tempo ne avrete certamente notizia”."
+    },
+    {
+      "lang": "it",
+      "key": "39:75",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "In quel Giorno] vedrai gli angeli circondare il Trono e rendere gloria e lode al loro Signore. Sarà giudicato tra loro con equità e sarà detto: “La lode appartiene ad Allah, Signore dei mondi”."
+    },
+    {
+      "lang": "it",
+      "key": "40:85",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "Ma la loro [tardiva] fede non fu loro di nessuna utilità, dopo che ebbero visto la Nostra severità. Questa è la consuetudine di Allah nei confronti dei Suoi servi. Saranno perduti i miscredenti!"
+    },
+    {
+      "lang": "it",
+      "key": "41:54",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "Non è forse vero che dubitano dell'incontro con il loro Signore, mentre in verità Egli abbraccia ogni cosa [nella Sua Scienza]?"
+    },
+    {
+      "lang": "it",
+      "key": "42:53",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "la via di Allah, Colui Cui appartiene tutto quel che è nei cieli e sulla terra. Sì, ritornano ad Allah tutte le cose."
+    },
+    {
+      "lang": "it",
+      "key": "43:89",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "[risponderà Allah]: “Allontanati da loro [o Muhammad] e di': \"Pace\". Presto sapranno”."
+    },
+    {
+      "lang": "it",
+      "key": "44:59",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Aspetta dunque, ché anche loro aspettano."
+    },
+    {
+      "lang": "it",
+      "key": "46:35",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "Sopporta con pazienza, come sopportarono i messaggeri risoluti. Non cercare di affrettare alcunché per loro. Il Giorno in cui vedranno quel che è stato promesso loro, sarà come se fossero rimasti solo un'ora del giorno. [Questo è solo un] annuncio: chi altri sarà annientato se non i perversi?"
+    },
+    {
+      "lang": "it",
+      "key": "47:38",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "Ecco, siete invitati ad essere generosi per la causa di Allah, ma qualcuno di voi è avaro. Chi si mostrerà avaro lo sarà nei confronti di se stesso. Allah è Colui Che basta a Se Stesso, mentre siete voi ad essere poveri. Se volgerete le spalle vi sostituirà con un altro popolo e costoro non saranno uguali a voi."
+    },
+    {
+      "lang": "it",
+      "key": "48:29",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "Muhammad è il Messaggero di Allah e quanti sono con lui sono duri con i miscredenti e compassionevoli fra loro. Li vedrai inchinarsi e prosternarsi, bramando la grazia di Allah e il Suo compiacimento. Il loro segno è, sui loro volti, la traccia della prosternazione: ecco l'immagine che ne dà di loro la Torâh. L'immagine che invece ne dà il Vangelo è quella di un seme che fa uscire il suo germoglio, poi lo rafforza e lo ingrossa, ed esso si erge sul suo stelo nell'ammirazione dei seminatori. Tramite loro Allah fa corrucciare i miscredenti. Allah promette perdono e immensa ricompensa a coloro che credono e compiono il bene."
+    },
+    {
+      "lang": "it",
+      "key": "49:18",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Allah conosce l'invisibile dei cieli e della terra e Allah ben osserva quel che fate”."
+    },
+    {
+      "lang": "it",
+      "key": "50:45",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "Ben conosciamo quello che dicono: tu non sei tiranno nei loro confronti! Ammonisci dunque con il Corano chi non teme la Mia minaccia."
+    },
+    {
+      "lang": "it",
+      "key": "51:60",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Guai a coloro che non credono, per via del Giorno di cui sono stati minacciati."
+    },
+    {
+      "lang": "it",
+      "key": "52:49",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "e glorificaLo durante la notte e al declinare delle stelle."
+    },
+    {
+      "lang": "it",
+      "key": "53:62",
+      "note": "low similarity to Quran.com 0.02",
+      "shipped": "Dunque prosternatevi davanti ad Allah e adorate!"
+    },
+    {
+      "lang": "it",
+      "key": "54:55",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "in un luogo di verità, presso un Re onnipotente."
+    },
+    {
+      "lang": "it",
+      "key": "55:78",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Sia benedetto il Nome del tuo Signore, colmo di Maestà e di Magnificenza."
+    },
+    {
+      "lang": "it",
+      "key": "56:96",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Rendi dunque gloria al Nome del tuo Signore, il Supremo!"
+    },
+    {
+      "lang": "it",
+      "key": "57:29",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "La gente della Scrittura sappia che non ha alcun potere sulla Grazia di Allah. In verità la Grazia è nella mano di Allah ed Egli la concede a chi vuole. Allah possiede immensa Grazia."
+    },
+    {
+      "lang": "it",
+      "key": "59:24",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "Egli è Allah, il Creatore, Colui Che dà inizio a tutte le cose, Colui Che dà forma a tutte le cose. A Lui [appartengono] i nomi più belli. Tutto ciò che è nei cieli e sulla terra rende gloria a Lui. Egli è l'Eccelso, il Saggio."
+    },
+    {
+      "lang": "it",
+      "key": "60:13",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "O credenti, non prendetevi per alleati gente contro la quale Allah è adirato e che non hanno la speranza dell'altra vita, come i miscredenti che disperano [di rivedere] la gente delle tombe."
+    },
+    {
+      "lang": "it",
+      "key": "62:11",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Quando vedono un commercio o un divertimento, si precipitano e ti lasciano ritto. Di': “Quel che è presso Allah, è migliore del divertimento e del commercio e Allah è il Migliore dei sostentatori”."
+    },
+    {
+      "lang": "it",
+      "key": "63:11",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "Ma Allah non concede dilazioni a nessuno che sia giunto al termine. Allah è ben informato a proposito di quello che fate."
+    },
+    {
+      "lang": "it",
+      "key": "64:18",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "Conoscitore dell'invisibile e del palese, l'Eccelso, il Saggio."
+    },
+    {
+      "lang": "it",
+      "key": "66:12",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "E Maria, figlia di Imrân, che conservò la sua verginità; insufflammo in lei del Nostro Spirito. Attestò la veridicità delle Parole del suo Signore e dei Suoi Libri e fu una delle devote."
+    },
+    {
+      "lang": "it",
+      "key": "68:52",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "Ma questo [Corano] non è che un Monito per il Creato."
+    },
+    {
+      "lang": "it",
+      "key": "69:52",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "Allora glorifica il Nome del tuo Signore, il Supremo."
+    },
+    {
+      "lang": "it",
+      "key": "70:44",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "con gli sguardi umili, coperti di vergogna: questo è il Giorno che è stato loro promesso."
+    },
+    {
+      "lang": "it",
+      "key": "71:28",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "Signore, perdona a me, ai miei genitori, a chi entra nella mia casa come credente, ai credenti e alle credenti; non accrescere gli ingiusti altro che nella rovina”."
+    },
+    {
+      "lang": "it",
+      "key": "72:28",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "per sapere se [i profeti] hanno trasmesso i messaggi del loro Signore. Gli è ben noto tutto ciò che li concerne e tiene il conto di tutte le cose”."
+    },
+    {
+      "lang": "it",
+      "key": "74:56",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "Ma non se ne ricorderanno altrimenti che se Allah vuole. Egli è il più Degno di essere temuto, è il Detentore del perdono."
+    },
+    {
+      "lang": "it",
+      "key": "75:40",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "Colui [che ha fatto tutto questo] non sarebbe dunque capace di far risorgere i morti?"
+    },
+    {
+      "lang": "it",
+      "key": "76:31",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "Introduce chi vuole nella Sua misericordia, mentre per gli ingiusti ha preparato un doloroso castigo."
+    },
+    {
+      "lang": "it",
+      "key": "77:50",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "A quale discorso mai crederanno, dopo di ciò?"
+    },
+    {
+      "lang": "it",
+      "key": "79:1",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Per gli strappanti violenti! [La maggior parte degli esegeti ritiene che i soggetti dell'invocazione espressa nei primi cinque versetti siano gli angeli incaricati di prendere le anime dei moribondi. In base a questa ipotesi sarà possibile formulare la traduzione interpretativa con parole molto diverse da quelle del testo coranico. Lo faremo nelle note per proporre al lettore il significato comunemente accettato dall'esegesi islamica] [“Per gli angeli che strappano le anime degli empi con violenza!”]"
+    },
+    {
+      "lang": "it",
+      "key": "79:46",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "Il Giorno in cui la vedranno, sarà come se fossero rimasti [sulla terra] una sera o un mattino."
+    },
+    {
+      "lang": "it",
+      "key": "81:29",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Ma voi lo vorrete solo se lo vorrà Allah, il Signore dei mondi."
+    },
+    {
+      "lang": "it",
+      "key": "83:36",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "I miscredenti non sono forse compensati per quello che hanno fatto?"
+    },
+    {
+      "lang": "it",
+      "key": "84:25",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "eccetto che per coloro che credono e compiono il bene: essi avranno ricompensa inesauribile."
+    },
+    {
+      "lang": "it",
+      "key": "85:22",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "[impresso] su di una Tavola protetta."
+    },
+    {
+      "lang": "it",
+      "key": "86:17",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "Concedi una dilazione ai miscredenti, da' loro un po' di tempo."
+    },
+    {
+      "lang": "it",
+      "key": "87:19",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "i Fogli di Abramo e di Mosè."
+    },
+    {
+      "lang": "it",
+      "key": "88:26",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "e allora spetterà a Noi chieder loro conto [delle loro azioni]."
+    },
+    {
+      "lang": "it",
+      "key": "90:20",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Il Fuoco si chiuderà su di loro."
+    },
+    {
+      "lang": "it",
+      "key": "91:15",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "senza temere [di ciò] alcuna conseguenza."
+    },
+    {
+      "lang": "it",
+      "key": "93:11",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "e proclama la grazia del tuo Signore."
+    },
+    {
+      "lang": "it",
+      "key": "95:8",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "Non è forse Allah il più Saggio dei giudici?"
+    },
+    {
+      "lang": "it",
+      "key": "96:19",
+      "note": "low similarity to Quran.com 0.04",
+      "shipped": "No, non gli obbedire, ma prosternati e avvicinati."
+    },
+    {
+      "lang": "it",
+      "key": "97:5",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "È pace, fino al levarsi dell'alba."
+    },
+    {
+      "lang": "it",
+      "key": "100:11",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "il loro Signore, in quel Giorno, sarà ben informato su di loro?"
+    },
+    {
+      "lang": "it",
+      "key": "102:8",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "quindi in quel Giorno, sarete interrogati sulla delizia."
+    },
+    {
+      "lang": "it",
+      "key": "106:4",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "Colui Che li ha preservati dalla fame e li ha messi al riparo da [ogni] timore."
+    },
+    {
+      "lang": "it",
+      "key": "107:7",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "e rifiutano di dare ciò che è utile."
+    },
+    {
+      "lang": "it",
+      "key": "108:3",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "In verità sarà colui che ti odia a non avere seguito."
+    },
+    {
+      "lang": "it",
+      "key": "109:6",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "a voi la vostra religione, a me la mia”."
+    },
+    {
+      "lang": "it",
+      "key": "110:3",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "glorifica il tuo Signore lodandoLo e chiediGli perdono: in verità Egli è Colui che accetta il pentimento."
+    },
+    {
+      "lang": "it",
+      "key": "111:5",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "che avrà al collo una corda di fibre di palma."
+    },
+    {
+      "lang": "it",
+      "key": "112:4",
+      "note": "low similarity to Quran.com 0.08",
+      "shipped": "e nessuno è eguale a Lui”."
+    },
+    {
+      "lang": "ha",
+      "key": "27:48",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Kuma waɗansu jama'a tara sun kasance a cikin birnin, sunã yin ɓarna, kuma bã su kyautatãwa.",
+      "source": "Kuma waɗansu jama'a tara sun kasance a cikin birnin, sunã yin ɓarna, kuma bã su kyautatãwa. Suka ce: \"Ku yi rantsuwa da Allah, lalle zã mu kwãnan masa, shi da mutãnensa sa'an nan mu ce wa waliyyinsa. 'Ba mu halarci halakar mutãnensa ba kuma mũ, haƙĩ ƙa, mãsu gaskiya ne'.\""
+    },
+    {
+      "lang": "ha",
+      "key": "27:49",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Suka ce: \"Ku yi rantsuwa da Allah, lalle zã mu kwãnan masa, shi da mutãnensa sa'an nan mu ce wa waliyyinsa. 'Ba mu halarci halakar mutãnensa ba kuma mũ, haƙĩ ƙa, mãsu gaskiya ne'.\"",
+      "source": "Kuma suka ƙulla mãkirci, kuma Muka ƙulla sakamakon mãkirci, alhãli sũ ba su sani ba."
+    },
+    {
+      "lang": "ha",
+      "key": "27:50",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Kuma suka ƙulla mãkirci, kuma Muka ƙulla sakamakon mãkirci, alhãli sũ ba su sani ba.",
+      "source": "Ka dũba yadda ãƙibar mãkircinsu ta kasance lalle Mũ Mun darkãke su da mutãnensu, gabã ɗaya."
+    },
+    {
+      "lang": "ha",
+      "key": "27:51",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Ka dũba yadda ãƙibar mãkircinsu ta kasance lalle Mũ Mun darkãke su da mutãnensu, gabã ɗaya.",
+      "source": "Waɗancan, gidãjensu ne, wõfintattu sabõda zãluncin da suka yi, lalle ne a wancan akwai ãyã ga mutãne waɗanda suke sani."
+    },
+    {
+      "lang": "ha",
+      "key": "27:52",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Waɗancan, gidãjensu ne, wõfintattu sabõda zãluncin da suka yi, lalle ne a wancan akwai ãyã ga mutãne waɗanda suke sani.",
+      "source": "Muka tsĩrar da waɗanda suka yi ĩmãni, kuma sun kasance sunã taƙawa."
+    },
+    {
+      "lang": "ha",
+      "key": "27:53",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Muka tsĩrar da waɗanda suka yi ĩmãni, kuma sun kasance sunã taƙawa.",
+      "source": "Da Lũdu, a lõkacin da ya ce wa mutãnensa, \"Shin kunã jẽ wa alfasha ne, alhãli, kuwa kunã gani?\""
+    },
+    {
+      "lang": "ha",
+      "key": "27:54",
+      "note": "moved back into place (FIXES)",
+      "shipped": "Da Lũdu, a lõkacin da ya ce wa mutãnensa, \"Shin kunã jẽ wa alfasha ne, alhãli, kuwa kunã gani?\"",
+      "source": "\"Shin lalle kũ haƙĩƙa kunã je wa maza da sha'awa baicin mãtã? Ã'a, kũ wasu irin mutãne ne kuna aikin jãhilci.\""
+    },
+    {
+      "lang": "ha",
+      "key": "27:55",
+      "note": "moved back into place (FIXES)",
+      "shipped": "\"Shin lalle kũ haƙĩƙa kunã je wa maza da sha'awa baicin mãtã? Ã'a, kũ wasu irin mutãne ne kuna aikin jãhilci.\"",
+      "source": "49."
+    },
+    {
+      "lang": "so",
+      "key": "29:43",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "taasina waa tusaale aannu u yeelayno Dadka'wax kasi oon ahayn kuwa wax yaqaanna ma jiro."
+    },
+    {
+      "lang": "yo",
+      "key": "75:34",
+      "note": "low similarity to Quran.com 0.05",
+      "shipped": "(Ìparun nílé ayé) ló tọ́ sí ọ jùlọ (lórí àwọn ẹ̀ṣẹ̀ rẹ wọ̀nyẹn). (Ìyẹn) ló sì tọ́ sí ọ jùlọ."
+    },
+    {
+      "lang": "am",
+      "key": "26:27",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "(ፈርዖን) \"ያ ወደናንተ የተላከው መልእክተኛችሁ በእርግጥ እብድ ነው\" አለ።"
+    },
+    {
+      "lang": "ku",
+      "key": "7:20",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "وشەیتان لە دەرەوەى بەهەشت بوو و وەسوەسەی بۆ کردن تا ئەوەى کە عەورەتی خۆیانیان پێ داپۆشیبوو ویستی عەورەتیان دەربخات و پێی ووتن خواى گەورە قەدەغەى لەئێوە نەکردووە لە ئەم دارە نەخۆن تەنها بۆ ئەوە نەبێ ئەگەر لەو دارە بخۆن دەبن بە دوو فریشتە و بەهەمیشەیی لە بەهەشتدا دەمێننەوە ونامرن."
+    },
+    {
+      "lang": "az",
+      "key": "2:12",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "Sözsüz ki, onlar fəsad törədənlərdir, amma bunu başa düşmürlər."
+    },
+    {
+      "lang": "az",
+      "key": "2:19",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Yaxud onların məsəli zülmət içində göy gurultusu və şimşəklə yağan leysana düşənlərin məsəlinə bənzəyir ki, ildırımdan ölmək qorxusu ilə barmaqlarını qulaqlarına tıxayırlar. Şübhəsiz ki, Allah kafirləri hər tərəfdən əhatəyə almışdır."
+    },
+    {
+      "lang": "az",
+      "key": "2:44",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Siz Kitab oxuyub insanlara xeyirxahlığı əmr etdiyiniz halda, özünüzü unudursunuz? Məgər anlamırsınız?"
+    },
+    {
+      "lang": "az",
+      "key": "2:83",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Bir zaman Biz İsrail oğulları ilə: “Allahdan qeyrisinə ibadət etməyəcək, valideynlərə, qohum-əqrəbaya, yetimlərə və kasıblara xeyirxahlıq edəcək, insanlara xoş söz deyəcək, namaz qılacaq və zəkat verəcəksiniz!”– deyə əhd bağladıq. Sonra az bir qisminiz istisna olmaqla, haqdan üz çevirib döndünüz."
+    },
+    {
+      "lang": "az",
+      "key": "2:86",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Onlar axirəti verib dünya həyatını satın aldılar. Ona görə də onların nə əzabı yüngülləşdiriləcək, nə də onlara kömək göstəriləcəkdir."
+    },
+    {
+      "lang": "az",
+      "key": "2:109",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Kitab əhlindən bir çoxu həqiqəti bildikdən sonra da, paxıllıqları üzündən sizi, siz iman gətirdikdən sonra kafirliyə qaytarmaq istəyərlər. Allah Öz əmri ilə gəlincəyə qədər onları bağışlayın və onlara baş qoşmayın! Həqiqətən, Allah hər şeyə qadirdir."
+    },
+    {
+      "lang": "az",
+      "key": "2:113",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Yəhudilər: “Xaçpərəstlər heç bir şeyə əsaslanmırlar!”– deyir, xaçpərəstlər isə: “Yəhudilər heç bir şeyə əsaslanmırlar!”– deyirlər. Halbuki onlar Kitab oxuyandırlar. Cahillər də onların danışdığı kimi danışırlar. Allah ixtilafa düşdükləri şey barəsində Qiyamət günü onların arasında hökm verəcəkdir."
+    },
+    {
+      "lang": "az",
+      "key": "2:118",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Cahillər dedilər: “Bəs nə üçün Allah bizi danışdırmır, yaxud bizə bir ayə gəlmir?” Onların əcdadları da elə onlar kimi danışırdılar. Onların qəlbləri bir-birinə oxşayır. Biz, yəqinliklə inanan bir xalqa dəlillərimizi bəyan etmişik."
+    },
+    {
+      "lang": "az",
+      "key": "2:125",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "Biz evi (Kəbəni) insanlar üçün ziyarət və əmin-amanlıq yeri etdik. “İbrahimin dayandığı yeri namazgah edin!” Biz İbrahimə və İsmailə: “Evimi təvaf edənlər, etikafa girənlər, rüku və səcdə edənlər üçün təmizləyin!”– dedik."
+    },
+    {
+      "lang": "az",
+      "key": "2:136",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Deyin: “Biz Allaha, bizə nazil olana, İbrahimə, İsmailə, İshaqa, Yaquba və onun nəslinə nazil olana, Musa və İsaya verilənlərə, özlərinin Rəbbi tərəfindən peyğəmbərlərə verilənlərə iman gətirdik. Biz onların arasında fərq qoymuruq. Biz yalnız Ona təslim olanlarıq!”"
+    },
+    {
+      "lang": "az",
+      "key": "2:138",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "De: “Budur Allahın dini! Kimin dini Allahın dinindən daha doğru ola bilər? Biz yalnız Ona ibadət edənlərik!”"
+    },
+    {
+      "lang": "az",
+      "key": "2:146",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Kitab verdiyimiz şəxslər onu (Peyğəmbəri və yaxud Kəbənin qiblə olduğunu) öz oğullarını tanıdıqları kimi tanıyırlar. Həqiqətən də, onlardan bir dəstə haqqı bilə-bilə gizlədir."
+    },
+    {
+      "lang": "az",
+      "key": "2:210",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Yoxsa onlar ancaq onu gözləyirlər ki, Allah bulud kölgəsində mələklərlə birlikdə gəlsin və iş bitmiş olsun? Bütün işlər Allaha qaytarılacaqdır."
+    },
+    {
+      "lang": "az",
+      "key": "2:246",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Musadan sonra İsrail oğullarından olan əyanların başına gələnləri bilmirsənmi? O zaman onlar öz peyğəmbərlərinə dedilər: “Bizə bir hökmdar təyin et ki, Allah yolunda vuruşaq!” O dedi: “Sizə vuruşma vacib edilsə, ola bilsin ki, vuruşmayasınız?” Onlar dedilər: “Madam ki, biz yurdumuzdan çıxarılmışıq və övladlarımızdan ayrılmışıq, onda nə üçün Allah yolunda vuruşmayaq?” Vuruşmaq onlara vacib edildikdə isə onlardan az bir qismi istisna olmaqla hamısı döyüşdən üz çevirdilər. Allah zalımları tanıyır."
+    },
+    {
+      "lang": "az",
+      "key": "2:255",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Allah, Ondan başqa ibadətə layiq olan məbud yoxdur, əbədi Yaşayandır, bütün yaratdıqlarının Qəyyumudur. Onu nə mürgü, nə də yuxu tutar. Göylərdə və yerdə nə varsa, Ona məxsusdur. Onun izni olmadan Onun yanında kim havadarlıq edə bilər? O, məxluqatın gələcəyini və keçmişini bilir. Onlar Onun elmindən, Onun istədiyindən başqa heç bir şey qavraya bilməzlər. Onun Kürsüsü göyləri və yeri əhatə edir. Bunları qoruyub saxlamaq Ona ağır gəlmir. O, Ucadır, Uludur."
+    },
+    {
+      "lang": "az",
+      "key": "2:280",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Əgər borclu olan adam ağır şərait içindədirsə, onun vəziyyəti düzələnə qədər ona möhlət verin. Bilin ki, borcu bağışlamaq sizin üçün daha xeyirlidir."
+    },
+    {
+      "lang": "az",
+      "key": "2:285",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Peyğəmbər öz Rəbbindən ona nazil edilənə iman gətirdi, möminlər də iman gətirdilər. Hamısı Allaha, Onun mələklərinə, kitablarına və elçilərinə iman gətirdilər. Onlar dedilər: “Biz Onun elçiləri arasında fərq qoymuruq!” Onlar dedilər: “Eşitdik və itaət etdik! Ey Rəbbimiz! Səndən bağışlanma diləyirik, dönüş də yalnız Sənədir!”"
+    },
+    {
+      "lang": "az",
+      "key": "3:2",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "Allah. Ondan başqa ibadətə layiq olan məbud yoxdur, əbədi Yaşayandır, bütün yaradılanların Qəyyumudur."
+    },
+    {
+      "lang": "az",
+      "key": "3:56",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Kafirlərə isə bu dünyada və axirətdə şiddətli əzab verəcəyəm. Onların köməkçiləri də olmayacaqdır”."
+    },
+    {
+      "lang": "az",
+      "key": "3:83",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Yoxsa onlar Allahın dinindən başqa bir din axtarırlar? Halbuki göylərdə və yerdə olan hər bir məxluq istər-istəməz Ona təslim olmuş və Ona da qaytarılacaqdır."
+    },
+    {
+      "lang": "az",
+      "key": "3:87",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Onların cəzası, şübhəsiz ki, Allahın, mələklərin və bütün insanların onları lənətləməsidir."
+    },
+    {
+      "lang": "az",
+      "key": "3:139",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "Acizlik göstərməyin və kədərlənməyin. Möminsinizsə, üstün olacaqsınız."
+    },
+    {
+      "lang": "az",
+      "key": "3:143",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "Siz ölümlə qarşılaşmamışdan öncə onu arzulayırdınız. İndi isə siz onu öz gözlərinizlə gördünüz."
+    },
+    {
+      "lang": "az",
+      "key": "3:154",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Sonra O, bu qəm-qüssənin ardınca sizə bir təskinlik – bir qisminizi bürüyən mürgü nazil etdi. O biri qisminiz isə öz canlarının hayına qaldı. Onlar: “Bu işdə bizim üçün bir xeyir varmı?”– deyə Allah barəsində haqsız olaraq, cahiliyyə dövründəkinə bənzər düşüncələrə qapıldılar. De: “Bütün işlər Allaha aiddir!” Onlar sənə bildirmədiklərini öz içərilərində gizlədir: “Əgər bu işdə bizim üçün bir xeyir olsaydı, elə buradaca öldürülməzdik”– deyirlər. De: “Əgər siz evlərinizdə olsaydınız belə, öldürülməsi qabaqcadan müəyyən edilmiş kimsələr yenə çıxıb öləcəkləri yerlərə gedərdilər. Allah sizin kökslərinizdə olanları sınamaq, qəlblərinizdə olanları təmizləmək üçün belə etdi. Allah kökslərdə olanları bilir”."
+    },
+    {
+      "lang": "az",
+      "key": "3:158",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Ölsəniz də, öldürülsəniz də, mütləq Allahın hüzuruna gətirilib cəm olunacaqsınız."
+    },
+    {
+      "lang": "az",
+      "key": "3:164",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Allah möminlərə, öz aralarından onlara Allahın ayələrini oxuyan, onları günahlardan təmizləyən, onlara Kitabı və Hikməti (Sünnəni) öyrədən bir Elçi göndərməklə mərhəmət göstərmişdir. Halbuki əvvəllər onlar açıq-aydın azğınlıqda idilər."
+    },
+    {
+      "lang": "az",
+      "key": "3:168",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Evlərində oturub öz qardaşları barəsində: “Əgər onlar bizə qulaq asmış olsaydılar, öldürülməzdilər”– söyləyənlərə de: “Əgər doğru danışırsınızsa, onda ölümü özünüzdən uzaqlaşdırın!”"
+    },
+    {
+      "lang": "az",
+      "key": "3:171",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "Onlar Allahın nemətinə, lütfkarlığına, həm də Allahın möminlərin mükafatını heçə çıxarmayacağına sevinirlər."
+    },
+    {
+      "lang": "az",
+      "key": "3:198",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Öz Rəbbindən qorxanları ağacları altından çaylar axan Cənnət bağları gözləyir ki, onlar orada əbədi qalacaqlar. Bu, Allahdan bir ziyafətdir. Allahın yanında olan nemətlər möminlər üçün daha xeyirlidir."
+    },
+    {
+      "lang": "az",
+      "key": "4:5",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "Dolanışığınız üçün Allahın sizə vasitə etdiyi mallarınızı ağılsızlara verməyin. Onlara o maldan yedirdib geyindirin və onlara yaxşı nəsihətlər verin."
+    },
+    {
+      "lang": "az",
+      "key": "4:11",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Allah övladlarınız haqqında sizə belə tövsiyə edir; kişiyə, iki qadının payı qədər pay düşür. Əgər övladların hamısı ikidən artıq sayda qadındırlarsa, vəfat edənin qoyub getdiyi malın üçdə iki hissəsi onlara çatır. Əgər təkcə bir qadındırsa, mirasın yarısı ona çatır. Əgər ölənin övladı varsa, onun valideynlərinin hər birinə qoyub getdiyi malının altıda bir hissəsi çatır. Əgər onun övladı yoxdursa, varisi də ancaq valideynləridirsə, onun anasına mirasının üçdə bir hissəsi düşür. Əgər ölənin qardaşları (və ya bacıları) varsa, onun anasına mirasının altıda bir hissəsi düşür. Bu bölgü ölənin vəsiyyəti yerinə yetirildikdən və ya borcu ödənildikdən sonra aparılır. Valideynlərinizdən və övladlarınızdan hansının fayda baxımından sizə daha yaxın olduğunu siz bilmirsiniz. Bunlar Allah tərəfindən buyurulmuş fərz əməllərdir. Həqiqətən, Allah Biləndir, Müdrikdir."
+    },
+    {
+      "lang": "az",
+      "key": "4:27",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "Allah sizin tövbələrinizi qəbul etmək istədiyi halda, ehtiraslara qapılanlar sizi çox kənara meyl etməyə (haqdan uzaqlaşmağa) yönəldərlər."
+    },
+    {
+      "lang": "az",
+      "key": "4:32",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Allahın birinizi digərinizdən üstün etdiyi şeyə tamah salmayın. Kişilərin qazandıqlarından öz nəsibi, qadınların da qazandıqlarından öz nəsibi vardır. Allahdan, Onun lütfünü diləyin. Həqiqətən, Allah hər şeyi Biləndir."
+    },
+    {
+      "lang": "az",
+      "key": "4:47",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Ey Kitab verilmişlər! Üzləri sıyırıb dümdüz edərək arxalarına çevirməmişdən, yaxud şənbə əhlini lənətlədiyimiz kimi onları da lənətləməmişdən öncə yanınızda olanı təsdiqləyici kimi nazil etdiyimizə (Qurana) iman gətirin! Allahın əmri mütləq yerinə yetəcəkdir."
+    },
+    {
+      "lang": "az",
+      "key": "4:61",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Onlara: “Allahın nazil etdiyinə və Elçisinə tərəf gəlin!”– deyildikdə, münafiqlərin səndən nifrətlə üz çevirdiklərini görürsən."
+    },
+    {
+      "lang": "az",
+      "key": "4:66",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Əgər Biz onlara: “Özünüzü (aranızdakı günahkarları) öldürün və yaxud yurdlarınızdan çıxın!”– deyə buyurmuş olsaydıq, içərilərindən çox azı bunu yerinə yetirərdi. Əgər onlar özlərinə verilən öyüd-nəsihətlərə əməl etsəydilər, əlbəttə, bu, onlar üçün daha xeyirli və daha mükəmməl olardı."
+    },
+    {
+      "lang": "az",
+      "key": "4:119",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Mən onları mütləq doğru yoldan azdıracaq və xülyalara salacağam; onlara mal-qaranın qulaqlarını kəsməyi buyuracaq və Allahın yaratdıqlarına dəyişiklik verməyi əmr edəcəyəm”. Allahı qoyub şeytanı özünə himayədar tutan şəxs açıq-aşkar ziyana uğramışdır."
+    },
+    {
+      "lang": "az",
+      "key": "4:125",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Yaxşı işlər görərək Allaha təslim olan və hənif olaraq İbrahim dininin ardınca gedən şəxsdən din baxımından daha gözəl kim ola bilər? Allah İbrahimi sevimli dost tutmuşdur."
+    },
+    {
+      "lang": "az",
+      "key": "4:139",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "Möminləri qoyub kafirləri özlərinə dost tutanlar gücü və əzəməti onlardamı axtarırlar? Halbuki qüvvət və əzəmət tamamilə Allaha məxsusdur."
+    },
+    {
+      "lang": "az",
+      "key": "4:141",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Onlar sizə göz qoyurlar (gözləyirlər ki sizə bir bəla gəlsin). Əgər Allahdan sizə bir qələbə gəlsə: “Məgər biz də sizinlə deyildikmi?”– deyərlər. Əgər kafirlərə bir qələbə nəsib olsa: “Məgər biz möminlərlə birlikdə sizə qalib gələ bilməzdikmi, sizi möminlərdən qorumadıqmı?”– söyləyərlər. Qiyamət günü Allah sizin aranızda hökm verəcəkdir. Allah kafirlərə möminləri məğlub etməyə yol verməyəcəkdir."
+    },
+    {
+      "lang": "az",
+      "key": "4:148",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Allah pis sözün ucadan deyilməsini sevmir. Ancaq zülm olunan kimsələr istisnadır. Allah Eşidəndir, Biləndir."
+    },
+    {
+      "lang": "az",
+      "key": "4:154",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "Biz onlarla bağladığımız əhdə görə dağı başları üzərinə qaldırdıq və onlara: “Qapıdan səcdə edərək daxil olun!”– dedik. Biz onlara: “Şənbə günü üçün qoyulmuş qadağanı pozmayın!”– dedik. Biz onlarla möhkəm bir əhd-peyman bağlamışdıq."
+    },
+    {
+      "lang": "az",
+      "key": "4:155",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "Onlar bağladıqları əhd-peymanı pozduqlarına, Allahın ayələrini inkar etdiklərinə, peyğəmbərləri haqsız yerə öldürdüklərinə və: “Qəlblərimiz qapalıdır!”– demələrinə görə lənətə düçar edildilər. Xeyr, küfrləri üzündən Allah onların qəlblərini möhürləmişdir. Onlar olduqca az inanırlar (yaxud onların yalnız az bir hissəsi iman gətirir)."
+    },
+    {
+      "lang": "az",
+      "key": "4:167",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "Kafir olub insanları Allah yolundan sapdıran kimsələr dərin bir azğınlığa düşmüşlər."
+    },
+    {
+      "lang": "az",
+      "key": "5:2",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Ey iman gətirənlər! Allahın nişanələrinə, haram aylara, qurbanlıq heyvana, boynuna nişan taxılmış qurbanlıq heyvanlara, Rəbbinin lütfünü və razılığını diləyərək Beytulharama gələnlərə qarşı hörmətsizlik etməyi halal saymayın. İhramdan çıxdığınız zaman ov edə bilərsiniz. Sizi Məscidulharama daxil olmağa qoymayan camaata qarşı olan kin-küdurət sizi təcavüz etməyə sövq etməsin. Yaxşılıq etməkdə və Allahdan qorxmaqda bir-birinizə yardım edin. Günah işlər görməkdə və düşmənçilikdə bir-birinizə köməkçi olmayın. Allahdan qorxun. Həqiqətən, Allah şiddətli cəza verəndir."
+    },
+    {
+      "lang": "az",
+      "key": "5:7",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Allahın sizə göstərdiyi lütfkarlığını və siz: “Eşidirik və itaət edirik!”– dediyiniz zaman sizinlə bağladığı əhdi xatırlayın. Allahdan qorxun! Şübhəsiz ki, O, kökslərdə olanları bilir."
+    },
+    {
+      "lang": "az",
+      "key": "5:10",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Kafir olub ayələrimizi yalan sayanlar isə Cəhənnəm sakinləridirlər."
+    },
+    {
+      "lang": "az",
+      "key": "5:33",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Allaha və Onun Elçisinə qarşı müharibə edənlərin və yer üzündə fitnə-fəsad törətməyə səy göstərənlərin cəzası ancaq öldürülmək, və ya çarmıxa çəkilmək, ya əlləri və ayaqlarını çarpazvari kəsmək və yaxud da yaşadıqları yerdən sürgün edilməkdir. Bu, onlar üçün dünyada bir rüsvayçılıqdır. Axirətdə isə onları böyük bir əzab gözləyir."
+    },
+    {
+      "lang": "az",
+      "key": "5:52",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Sən qəlbində xəstəlik olanların: “Qorxuruq ki, başımıza bir fəlakət gələ”– deyərək onların Kitab əhli arasında vurnuxduqlarını görürsən. Ola bilsin ki, Allah qələbə bəxş etsin və ya Öz tərəfindən bir əmr versin və onlar ürəklərində gizlətdiklərindən peşman olsunlar."
+    },
+    {
+      "lang": "az",
+      "key": "9:17",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "Müşriklər küfr etdiklərini bildikləri halda, onlara Allahın məscidlərini abadlaşdırmaq yaramaz. Onların əməlləri puça çıxmışdır. Onlar Odda əbədi qalacaqlar."
+    },
+    {
+      "lang": "az",
+      "key": "9:70",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Məgər onlara özlərindən əvvəlkilərin – Nuh qövmünün, Ad və Səmud tayfalarının, İbrahim qövmünün, Mədyən əhalisinin və alt-üst edilmiş kəndin (Lut tayfasının) xəbərləri gəlib çatmayıbdırmı? Elçiləri onlara açıq-aydın dəlillər gətirmişdilər. Allah onlara zülm etmədi, lakin onlar özləri özlərinə zülm edirdilər."
+    },
+    {
+      "lang": "az",
+      "key": "10:7",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "Şübhəsiz ki, Bizimlə qarşılaşacaqlarına ümid etməyənlər, dünya həyatından razı qalıb onunla rahatlıq tapanlar və ayələrimizdən xəbərsiz olanların –"
+    },
+    {
+      "lang": "az",
+      "key": "11:26",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Allahdan başqasına ibadət etməyin! Mən sizi yaxalayacaq məşəqqət gününün əzabından qorxuram”."
+    },
+    {
+      "lang": "az",
+      "key": "12:89",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "O dedi: “Sizin nadanlığınız dövründə Yusufa və qardaşına nələr etdiyiniz yadınızdadırmı?”"
+    },
+    {
+      "lang": "az",
+      "key": "14:42",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Zalımların etdikləri əməllərdən Allahın xəbərsiz olduğunu sanma. Allah sadəcə onları cəzalandırmağı gözlərin bərələ qalacağı günə saxlayır."
+    },
+    {
+      "lang": "az",
+      "key": "15:13",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Onlar hələ də ona (Qurana) inanmırlar. Halbuki əvvəlkilərin başına gələnlər onlara bəllidir."
+    },
+    {
+      "lang": "az",
+      "key": "16:7",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Onlar yüklərinizi, özünüzün çətinliklə apara biləcəyiniz bir ölkəyə daşıyırlar. Həqiqətən də, Rəbbiniz Şəfqətlidir, Rəhmlidir."
+    },
+    {
+      "lang": "az",
+      "key": "16:16",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Əlamətlər yaratdı. İnsanlar ulduzlar vasitəsilə də getdikləri yolu müəyyənləşdirirlər."
+    },
+    {
+      "lang": "az",
+      "key": "19:37",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Sonra firqələrin arasında ziddiyyət düşdü. Böyük günü görəcək kafirlərin vay halına!"
+    },
+    {
+      "lang": "az",
+      "key": "20:105",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Səndən dağlar haqqında soruşurlar. De: “Rəbbim onları dağıdıb havaya sovuracaq,"
+    },
+    {
+      "lang": "az",
+      "key": "21:93",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Lakin onlar özlərinə məxsus dini öz aralarında parçalayıb dəstələrə ayrıldılar. Onların hamısı Bizim hüzurumuza qayıdacaqlar."
+    },
+    {
+      "lang": "az",
+      "key": "22:2",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Onu görəcəyiniz gün hər bir əmzikli qadın əmizdirdiyini unudacaq, hər bir hamilə qadın bətnindəkini salacaqdır. İnsanları sərxoş görəcəksən, halbuki onlar sərxoş olmayacaqlar. Lakin Allahın əzabı hədsiz şiddətlidir."
+    },
+    {
+      "lang": "az",
+      "key": "23:60",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Rəbbinə qayıdacaqlar deyə yerinə yetirməli olduqlarını qəlbləri qorxa-qorxa yerinə yetirənlər –"
+    },
+    {
+      "lang": "az",
+      "key": "23:103",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Tərəziləri yüngül gələnlər isə özlərini ziyana uğradanlardır. Onlar Cəhənnəmdə əbədi qalacaqlar."
+    },
+    {
+      "lang": "az",
+      "key": "24:51",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Aralarında hökm vermək üçün Allahın və Onun Elçisinin yanına çağırıldıqda möminlərin sözü ancaq: “Eşidirik və itaət edirik!”– demələridir. Nicat tapanlar da məhz onlardır."
+    },
+    {
+      "lang": "az",
+      "key": "26:157",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Onlar dəvənin diz vətərini kəsdilər, sonra da peşman oldular."
+    },
+    {
+      "lang": "az",
+      "key": "26:187",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Əgər doğru danışanlardansansa, göyün bir parçasını üstümüzə endir”."
+    },
+    {
+      "lang": "az",
+      "key": "26:223",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Şeytanlar vəhydən eşitdiklərini kahinlərə təlqin edirlər. Halbuki onların əksəriyyəti yalançıdır!"
+    },
+    {
+      "lang": "az",
+      "key": "27:76",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Həqiqətən, bu Quran İsrail oğullarına ixtilafda olduqları şeylərin çoxunu anlatmaqdadır."
+    },
+    {
+      "lang": "az",
+      "key": "29:6",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Cihad edən məhz öz xeyri naminə cihad edər. Allahın aləmlərə qətiyyən ehtiyacı yoxdur."
+    },
+    {
+      "lang": "az",
+      "key": "29:47",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Beləcə, bu Kitabı sənə nazil etdik. Kitab verdiyimiz şəxslər də ona iman gətirirlər. Onların arasında ona (Qurana) iman gətirənlər vardır. Bizim ayələrimizi ancaq kafirlər inkar edirlər."
+    },
+    {
+      "lang": "az",
+      "key": "37:146",
+      "note": "low similarity to Quran.com 0.06",
+      "shipped": "Onun başı üstündə balqabaq tağı bitirdik."
+    },
+    {
+      "lang": "az",
+      "key": "38:15",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Onlar təkcə olaraq, qarşısıalınmaz bir tükürpədici səsi gözləyirlər."
+    },
+    {
+      "lang": "az",
+      "key": "38:52",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Onların yanında gözlərini ərindən çəkməyən həmyaşıdları olacaqdır."
+    },
+    {
+      "lang": "az",
+      "key": "39:24",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Qiyamət gününün dəhşətli əzabından üzü ilə qorunan kəs möminlə eynidirmi? Zalımlara: “Qazandığınızı dadın!”– deyilər."
+    },
+    {
+      "lang": "az",
+      "key": "39:53",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "Qullarıma mənim bu sözümü de: “Ey Mənim özlərinə qarşı həddi aşmış qullarım! Allahın rəhmindən ümidinizi üzməyin. Şübhəsiz ki, Allah bütün günahları bağışlayır. O, həqiqətən, Bağışlayandır, Rəhmlidir!”"
+    },
+    {
+      "lang": "az",
+      "key": "40:50",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Mələklər deyəcəklər: “Məgər elçiləriniz açıq-aydın dəlillər gətirməmişdilər?” Onlar: “Əlbəttə gətirmişdilər!”– deyəcəklər. Mələklər də: “Elə isə özünüz yalvarın!”– deyəcəklər. Kafirlərin yalvarması isə boş şeydir."
+    },
+    {
+      "lang": "az",
+      "key": "40:81",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "O sizə Öz möcüzələrini göstərir. Allahın hansı dəlillərini inkar edə bilərsiniz?"
+    },
+    {
+      "lang": "az",
+      "key": "41:20",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Nəhayət, onlar oraya gəldikləri zaman qulaqları, gözləri və dəriləri etdikləri əməllər barəsində onların əleyhinə şahidlik edəcəkdir."
+    },
+    {
+      "lang": "az",
+      "key": "43:45",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "Səndən əvvəl göndərdiyimiz elçilərdən (onların davamçılarından) soruş; Biz Mərhəmətli Allahdan başqa ibadət ediləsi məbudlarmı icad etmişik?"
+    },
+    {
+      "lang": "az",
+      "key": "50:31",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Cənnət müttəqilərə yaxınlaşdırılacaq, onlardan uzaqda olmayacaqdır."
+    },
+    {
+      "lang": "az",
+      "key": "52:19",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Onlara deyiləcək: “Xeyirxah əməllərinizin əvəzi olaraq nuşcanlıqla yeyin, için!”"
+    },
+    {
+      "lang": "az",
+      "key": "59:7",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Allahın Öz Peyğəmbərinə kəndlərin əhalisindən verdiyi qənimətlər Allaha, Peyğəmbərə, qohum-əqrəbaya, yetimlərə, yoxsullara və müsafirlərə məxsus edilmişdir ki, o, aranızdakı zənginlərin var-dövləti olub qalmasın. Peyğəmbər sizə nə verirsə, onu götürün, nəyi də qadağan edirsə, ondan çəkinin. Allahdan qorxun. Həqiqətən, Allah şiddətli cəza verəndir."
+    },
+    {
+      "lang": "az",
+      "key": "70:38",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "Deyəsən onların hamısı Nəim cənnətinə bir təhər girə biləcəklərini düşünürlər?"
+    },
+    {
+      "lang": "az",
+      "key": "73:17",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "Əgər küfr etsəniz, uşaqların saçlarının ağaracağı gündən necə yaxa qurtaracaqsınız?"
+    },
+    {
+      "lang": "az",
+      "key": "74:40",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Onlar Cənnət bağlarında bir-birlərindən soruşacaqlar –"
+    },
+    {
+      "lang": "az",
+      "key": "76:27",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "Əsl həqiqətdə, bunlar ötəri dünyanı üstün tutaraq qarşılarındakı ağır günü görməməzliyə vururlar."
+    },
+    {
+      "lang": "az",
+      "key": "78:27",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "Doğrusu, onlar haqq-hesab çəkiləcəklərinə ümid etmirdilər."
+    },
+    {
+      "lang": "az",
+      "key": "79:36",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "Cəhənnəm isə hər görmə qabiliyyətliyə göstəriləcəkdir."
+    },
+    {
+      "lang": "az",
+      "key": "81:24",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "O, qeybdən də xəsislik edən deyildir."
+    },
+    {
+      "lang": "az",
+      "key": "83:13",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Ayələrimiz ona oxunduğu zaman: “Bu, keçmişdəkilərin uydurduğu əfsanələrdir!”– deyir."
+    },
+    {
+      "lang": "az",
+      "key": "86:6",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "O, süzülüb tökülən bir mayedən yaradılmışdır."
+    },
+    {
+      "lang": "az",
+      "key": "87:6",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Biz sənə Quranı elə oxumaq imkanı verəcəyik ki, o, yadından çıxmayacaq."
+    },
+    {
+      "lang": "az",
+      "key": "87:7",
+      "note": "low similarity to Quran.com 0.14",
+      "shipped": "Əlbəttə, Allahın istədiyindən başqa. Həqiqətən, O, aşkardakından da, gizli qalandan da xəbərdardır."
+    },
+    {
+      "lang": "az",
+      "key": "98:6",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "Həqiqətən, Kitab əhlindən və müşriklərdən inkar edənlərin məskəni Cəhənnəm odu olacaq və orada əbədi qalacaqlar. Onlar məxluqatın ən pisləridir."
+    },
+    {
+      "lang": "bs",
+      "key": "18:91",
+      "note": "low similarity to Quran.com 0.09",
+      "shipped": "I on postupi s njima isto onako kako je s onima prije postupio."
+    },
+    {
+      "lang": "bs",
+      "key": "19:81",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "Oni kao zagovornike nekakva božanstva, a ne Allaha, uzimaju."
+    },
+    {
+      "lang": "bs",
+      "key": "19:92",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Nezamislivo je da Milostivi ima dijete –"
+    },
+    {
+      "lang": "bs",
+      "key": "55:27",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "ostaje samo Gospodar tvoj, Veličanstveni i Plemeniti –"
+    },
+    {
+      "lang": "ug",
+      "key": "37:58",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "تۇنجى ئۆلگىنىمىزدىن باشقا ئۆلمەمدۇق؟ ئازابقا دۇچار بولمامدۇق"
+    },
+    {
+      "lang": "ug",
+      "key": "37:59",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "تۇنجى ئۆلگىنىمىزدىن باشقا ئۆلمەمدۇق؟ ئازابقا دۇچار بولمامدۇق"
+    },
+    {
+      "lang": "ug",
+      "key": "83:30",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "(مۆمىنلەر) ئۇلارنىڭ ئالدىدىن ئۆتكەندە، ئۇلار ئۆزئارا كۆز قىسىشاتتى،"
+    },
+    {
+      "lang": "si",
+      "key": "7:16",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "‘නුඹ මා නොමඟ යන්නට ඉඩ හැරිය බැවින් නිසැකව ම මම ද නුඹගේ ඍජු මාර්ගය ඔවුනට හරස් කර වාඩි වෙමි’ යැයි ඔහු පැවසී ය."
+    },
+    {
+      "lang": "si",
+      "key": "7:120",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "තවද හූනියම්කරුවන් සිරස නමන්නන් ලෙස බිම ඇද දමන ලදි."
+    },
+    {
+      "lang": "si",
+      "key": "9:54",
+      "note": "low similarity to Quran.com 0.20",
+      "shipped": "ඔවුන්ගේ වියදම් ඔවුන්ගෙන් පිළිගනු ලැබීමෙන් ඔවුන්ව වැළක්වූයේ ඔවුන් අල්ලාහ් හා ඔහුගේ දූතයාණන්ව ප්‍රතික්ෂේප කිරීමේ හේතුව මිස වෙනකක් නො වීය. තවද ඔවුහු මැළිවූවන් ලෙසින් මිස සලාතයට නො පැමිණෙති. එමෙන් ම ඔවුන් පිළිකුල් කරන්නන්ව සිටියදී මිස වියදම් නො කරති."
+    },
+    {
+      "lang": "si",
+      "key": "10:96",
+      "note": "low similarity to Quran.com 0.12",
+      "shipped": "නියත වශයෙන් ම නුඹගේ පරමාධිපතිගේ ප්‍රකාශය කවුරුන්හට නියම වූයේ ද ඔවුන් වනාහි විශ්වාස නො කරති."
+    },
+    {
+      "lang": "si",
+      "key": "15:67",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "නගර වැසියෝ සතුටු විඳින්නට බලමින් පැමිණියෝ ය."
+    },
+    {
+      "lang": "si",
+      "key": "18:89",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "පසුව ඔහු හේතු මාර්ගයක් අනුගමනය කළේ ය."
+    },
+    {
+      "lang": "si",
+      "key": "18:92",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "පසුව ඔහු හේතු මාර්ගයක් අනුගමනය කළේ ය."
+    },
+    {
+      "lang": "si",
+      "key": "20:5",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "මහා කරුණාන්විතයාණෝ (ඔහුට ම ආවේනික අයුරින්) අර්ෂයට ඉහළින් සිටියේය."
+    },
+    {
+      "lang": "si",
+      "key": "21:100",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "එහි ඔවුනට විලාපයයි. තවද ඔවුහු එහි (වෙනත් කිසිවකට) සවන් නො දෙති."
+    },
+    {
+      "lang": "si",
+      "key": "23:1",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "දේවත්වය විශ්වාස කරන්නෝ සැබැවින් ම ජය ලැබුවෝ ය."
+    },
+    {
+      "lang": "si",
+      "key": "26:157",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "එහෙත් ඔවුහු ඌව මරා දැමුවෝ ය. එහෙයින් ඔවුහු පසුතැවිලි වන්නන් වූවෝ ය."
+    },
+    {
+      "lang": "si",
+      "key": "36:29",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "එය එක ම එක් හඬක් මිස නො වීය. එසැනින් ඔවුහු අළු බවට පත් වූවෝ වූවෝ ය."
+    },
+    {
+      "lang": "si",
+      "key": "37:41",
+      "note": "low similarity to Quran.com 0.15",
+      "shipped": "හඳුනා ගනු ලබන පෝෂණය ඇත්තෝ ඔවුහු ම ය."
+    },
+    {
+      "lang": "si",
+      "key": "37:108",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "තවද පසු පැමිණි පරපුර අතර ඔහු පැසසුම් ලබන්නට ඉඩ හැරියෙමු."
+    },
+    {
+      "lang": "si",
+      "key": "37:129",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "තවද පසු පැමිණි පරපුර අතර ඔහු පැසසුම් ලබන්නට ඉඩ හැරියෙමු."
+    },
+    {
+      "lang": "si",
+      "key": "43:18",
+      "note": "low similarity to Quran.com 0.03",
+      "shipped": "පැහැදිලිව කතා නො කරන ආභරණයන්ගෙන් වඩවනු ලැබූ අයව ද? (ඔවුන් ඔවුන්ගේ පරමාධිපති වෙත ආදේශ කරනුයේ?)"
+    },
+    {
+      "lang": "si",
+      "key": "52:9",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "එදින අහස දරුණු ලෙස කැරකෙමින් පවතී."
+    },
+    {
+      "lang": "si",
+      "key": "52:10",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "තවද කඳු දරුණු ලෙස විතැන් වෙමින් පවතී."
+    },
+    {
+      "lang": "si",
+      "key": "53:35",
+      "note": "low similarity to Quran.com 0.07",
+      "shipped": "ඔහුට ගුප්ත දෑ පිළිබඳ දැනුම තිබී ඔහු දකින්නේ ද?"
+    },
+    {
+      "lang": "si",
+      "key": "53:61",
+      "note": "low similarity to Quran.com 0.11",
+      "shipped": "නුඹලා ඒ ගැන නො සැලකිලිමත් වන්නෝ වෙති."
+    },
+    {
+      "lang": "si",
+      "key": "54:13",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "තවද ලෑලි හා ඇන සහිත දෑ (නැව) මත අපි ඔහු ඉසිලුවෙමු."
+    },
+    {
+      "lang": "si",
+      "key": "54:28",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "තවද නියත වශයෙන් ම ජලය ඔවුන් අතර බෙදී යා යුත්තකි. සෑම පාන වාරයක් ම පිළිපැදිය යුත්තකි යැයි (සාලිහ්!) නුඹ පවසනු."
+    },
+    {
+      "lang": "si",
+      "key": "67:16",
+      "note": "low similarity to Quran.com 0.16",
+      "shipped": "අහසේ සිටින්නා මහපොළොවේ නුඹලාව ගිල් වීම ගැන නුඹලා නිර්භියව සිටින්නෙහු ද? එවිට එය කම්පනය වෙමින් පවතී."
+    },
+    {
+      "lang": "si",
+      "key": "68:23",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "(ඔවුන්) එකිනෙකාට කොඳුරමින් ගමන් ගත්තෝ ය."
+    },
+    {
+      "lang": "si",
+      "key": "70:20",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "ඔහුට අයහපත වැළඳුණු විට වික්ෂිප්ත වේ."
+    },
+    {
+      "lang": "si",
+      "key": "82:7",
+      "note": "low similarity to Quran.com 0.19",
+      "shipped": "ඔහු නුඹව මවා පසුව නුඹව සකසා පසුව නුඹව සමානුපාතික කළේ ය."
+    },
+    {
+      "lang": "si",
+      "key": "89:7",
+      "note": "low similarity to Quran.com 0.00",
+      "shipped": "(ඔවුන්) කුලුනුවලින් යුක්ත ඉරම් නගරවාසීන් ය."
+    },
+    {
+      "lang": "si",
+      "key": "92:10",
+      "note": "low similarity to Quran.com 0.18",
+      "shipped": "අපි ඔහුට දුෂ්කරතාව වෙත පහසුකම් සලසන්නෙමු."
+    },
+    {
+      "lang": "si",
+      "key": "92:16",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "ඔහු වනාහි බොරු කරමින් පිටුපෑවේ ය."
+    },
+    {
+      "lang": "si",
+      "key": "92:19",
+      "note": "low similarity to Quran.com 0.10",
+      "shipped": "කිසිවකුට හෝ ප්‍රතිලාභ වශයෙන් පිරිනැමෙන කිසිදු සම්පතක් ඔහු සතුව නැත."
+    },
+    {
+      "lang": "si",
+      "key": "107:6",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "අන් අයට ප්‍රදර්ශනය කරන්නෝ වූවෝ ය."
+    },
+    {
+      "lang": "vi",
+      "key": "89:4",
+      "note": "low similarity to Quran.com 0.13",
+      "shipped": "Thề bởi ban đêm khi nó ra đi."
+    },
+    {
+      "lang": "tl",
+      "key": "25:20",
+      "note": "low similarity to Quran.com 0.17",
+      "shipped": "Hindi Kami nagsugo bago mo ng mga isinugo malibang tunay na sila ay talagang kumakain ng pagkain at lumalakad sa mga palengke. Gumawa Kami sa ilan sa inyo para sa iba pa bilang pagsubok. Makatitiis ba kayo? Laging ang Panginoon mo ay Nakakikita."
     }
   ]
 }

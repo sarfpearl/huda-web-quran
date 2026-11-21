@@ -7,23 +7,7 @@ import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
 import { CoverArt } from "@/components/ui/CoverArt";
 import { DotLoader } from "@/components/ui/DotLoader";
-import {
-  PlayIcon,
-  PauseIcon,
-  NextIcon,
-  PrevIcon,
-  PlaylistAddIcon,
-  ShareIcon,
-  ShuffleIcon,
-  RepeatOneIcon,
-  PlayNextIcon,
-  EqualizerIcon,
-  ChevronDownIcon,
-  VolumeIcon,
-  MuteIcon,
-  BookmarkIcon,
-  BookmarkAddIcon,
-} from "@/components/ui/Icon";
+import { PlayIcon, PauseIcon, NextIcon, PrevIcon, PlaylistAddIcon, ShareIcon, ShuffleIcon, RepeatOneIcon, PlayNextIcon, EqualizerIcon, ChevronDownIcon, VolumeIcon, MuteIcon, BookmarkIcon, BookmarkAddIcon, ArrowLeftDoubleIcon, ArrowRightDoubleIcon } from "@/components/ui/Icon";
 import { formatClock } from "@/lib/utils";
 import {
   isQuranTrack,
@@ -459,9 +443,7 @@ export function CompactBayanPlayer({
         aria-label={t(language, "Previous Page")}
         title={t(language, "Previous Page")}
       >
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
-        </svg>
+        <ArrowLeftDoubleIcon className={iconClass} />
       </button>
       <button
         type="button"
@@ -480,9 +462,7 @@ export function CompactBayanPlayer({
         aria-label={t(language, "Next Page")}
         title={t(language, "Next Page")}
       >
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-        </svg>
+        <ArrowRightDoubleIcon className={iconClass} />
       </button>
     </>
   );
@@ -498,9 +478,7 @@ export function CompactBayanPlayer({
           title={t(language, "Previous Ayah")}
           data-tooltip={t(language, "Previous Ayah")}
         >
-          <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
-          </svg>
+          <ArrowLeftDoubleIcon className={iconClass} />
         </button>
       ) : (
         <span className="w-3" />
@@ -536,9 +514,7 @@ export function CompactBayanPlayer({
           title={t(language, "Next Ayah")}
           data-tooltip={t(language, "Next Ayah")}
         >
-          <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-          </svg>
+          <ArrowRightDoubleIcon className={iconClass} />
         </button>
       ) : (
         <span className="w-3" />

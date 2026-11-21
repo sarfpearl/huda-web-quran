@@ -8,6 +8,7 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
 import { swingAngle, threadPath } from "@/lib/feedbackSwing";
+import { CheckIcon, MessageIcon } from "@/components/ui/Icon";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -311,7 +312,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
           >
             <p className="flex max-w-sm items-center gap-2.5 rounded-2xl border border-emerald-300/30 bg-black/75 px-4 py-2.5 text-sm font-medium text-sand-50 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-md">
               <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/25 text-emerald-300">
-                ✓
+                <CheckIcon className="h-4 w-4" />
               </span>
               {toast}
             </p>
@@ -333,12 +334,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
 
 function ChatDots() {
   return (
-    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" className="shrink-0">
-      <path d="M2.5 3.5h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7l-3 2.5v-2.5H2.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-      <circle cx="5.3" cy="7.5" r=".9" fill="currentColor" />
-      <circle cx="8" cy="7.5" r=".9" fill="currentColor" />
-      <circle cx="10.7" cy="7.5" r=".9" fill="currentColor" />
-    </svg>
+    <MessageIcon className="shrink-0" />
   );
 }
 

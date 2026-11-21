@@ -18,7 +18,8 @@ so a face downloads only when its script is on screen, as before.
 All families are SIL OFL 1.1; the licence texts sit next to the fonts.
 
 Setup (once):  pip install fonttools brotli
-Usage:         python3 scripts/generation/build-self-hosted-fonts.py
+Usage:         python3 scripts/generation/build-self-hosted-fonts.py [slug…]
+               (slugs, e.g. noto-sans-kannada: only those families)
 """
 import re
 import subprocess
@@ -40,6 +41,12 @@ FAMILIES = [
     ("Noto Sans Devanagari", "noto-sans-devanagari", "notosansdevanagari", [400, 500], ["devanagari", "latin"]),
     ("Noto Sans Bengali", "noto-sans-bengali", "notosansbengali", [400, 500], ["bengali", "latin"]),
     ("Noto Naskh Arabic", "noto-naskh-arabic", "notonaskharabic", [400, 500], ["arabic", "latin"]),
+    ("Noto Sans Kannada", "noto-sans-kannada", "notosanskannada", [400, 500], ["kannada", "latin"]),
+    ("Noto Sans Telugu", "noto-sans-telugu", "notosanstelugu", [400, 500], ["telugu", "latin"]),
+    ("Noto Sans Gujarati", "noto-sans-gujarati", "notosansgujarati", [400, 500], ["gujarati", "latin"]),
+    ("Noto Sans Sinhala", "noto-sans-sinhala", "notosanssinhala", [400, 500], ["sinhala", "latin"]),
+    ("Noto Sans Thaana", "noto-sans-thaana", "notosansthaana", [400, 500], ["thaana", "latin"]),
+    ("Noto Sans Ethiopic", "noto-sans-ethiopic", "notosansethiopic", [400, 500], ["ethiopic", "latin"]),
 ]
 
 # A woff2-capable browser gets per-subset files with unicode-range;
@@ -85,7 +92,10 @@ def full_ttfs(family, weights):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
+        only = set(sys.argv[1:])
         for family, slug, ofl_dir, weights, subsets in FAMILIES:
+            if only and slug not in only:
+                continue
             ranges = subset_ranges(family, subsets)
             for weight, url in sorted(full_ttfs(family, weights).items()):
                 ttf = Path(tmp) / ("%s-%d.ttf" % (slug, weight))
