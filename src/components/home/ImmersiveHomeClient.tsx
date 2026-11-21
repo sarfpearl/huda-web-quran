@@ -1,5 +1,6 @@
 "use client";
 
+import { landscapeQuery } from "@/lib/landscape";
 import { SetUiLangContext, UI_LANG_KEY, UiLangContext, isUiLang, surahNameIn, t, word, type UiLang } from "@/lib/uiLang";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
@@ -102,7 +103,7 @@ import { SURAH_PRELUDE_TIMINGS } from "@/lib/data/surahPreludeTimings";
 import { SURAH_DURATIONS } from "@/lib/data/surahDurations";
 import { isWebKit } from "@/lib/data/quranGlyphs";
 import { SyncQADebugHUD } from "./SyncQADebugHUD";
-import { PHONE_LANDSCAPE, useIsMobile } from "@/components/ui/ActionSheet";
+import { useIsMobile } from "@/components/ui/ActionSheet";
 import { useOnline } from "@/lib/useOnline";
 import {
   useQuranEngagement,
@@ -1236,7 +1237,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // tap — or the header's ⤡ — brings them back.
   const [phoneLandscape, setPhoneLandscape] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia(PHONE_LANDSCAPE);
+    const mq = window.matchMedia(landscapeQuery());
     const update = () => setPhoneLandscape(mq.matches);
     update();
     mq.addEventListener("change", update);

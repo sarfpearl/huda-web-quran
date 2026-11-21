@@ -9,9 +9,7 @@ import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
-/** Phone or tablet turned sideways (same as the `phoneland` Tailwind variant). */
-export { PHONE_LANDSCAPE } from "@/lib/landscape";
-import { PHONE_LANDSCAPE } from "@/lib/landscape";
+import { landscapeQuery } from "@/lib/landscape";
 
 /**
  * Phone landscape: once a sheet has opened, nudge its list down a little and
@@ -19,7 +17,7 @@ import { PHONE_LANDSCAPE } from "@/lib/landscape";
  * scroll, is still at the top, and motion is allowed. Returns a cleanup.
  */
 export function peekScroll(el: HTMLElement | null, delay = 650): () => void {
-  if (!el || !window.matchMedia(PHONE_LANDSCAPE).matches) return () => {};
+  if (!el || !window.matchMedia(landscapeQuery()).matches) return () => {};
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
   let back: ReturnType<typeof setTimeout> | undefined;
   const go = setTimeout(() => {

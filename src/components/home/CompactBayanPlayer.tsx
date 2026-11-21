@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { PHONE_LANDSCAPE } from "@/lib/landscape";
+import { landscapeQuery } from "@/lib/landscape";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
@@ -231,7 +231,7 @@ export function CompactBayanPlayer({
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
     // Phone landscape has only the side rail (no full player).
-    if (!next && window.matchMedia(PHONE_LANDSCAPE).matches) return;
+    if (!next && window.matchMedia(landscapeQuery()).matches) return;
     // A manual switch overrides any pending auto-restore (see below).
     if (remember) {
       autoCollapsedRef.current = false;
@@ -300,7 +300,7 @@ export function CompactBayanPlayer({
   const landscapeCollapsedRef = useRef(false);
   const landscapeRestoreRef = useRef(false);
   useEffect(() => {
-    const mq = window.matchMedia(PHONE_LANDSCAPE);
+    const mq = window.matchMedia(landscapeQuery());
     const apply = () => {
       if (mq.matches) {
         if (!collapsedRef.current) {

@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 import plugin from "tailwindcss/plugin";
-import { PHONE_LANDSCAPE } from "./src/lib/landscape";
+import { PHONE_LANDSCAPE, TABLET_CLASS, TABLET_LANDSCAPE } from "./src/lib/landscape";
 
 /**
  * Huda Bayan design tokens.
@@ -111,7 +111,7 @@ const config: Config = {
     // src/lib/landscape.ts; portrait and desktop untouched). A variant, not a `raw` screen: any raw screen turns
     // off every `max-*` breakpoint variant (max-sm:, max-md:) site-wide.
     plugin(({ addVariant }) => {
-      addVariant("phoneland", `@media ${PHONE_LANDSCAPE}`);
+      addVariant("phoneland", [`@media ${PHONE_LANDSCAPE}`, `@media ${TABLET_LANDSCAPE} { :where(.${TABLET_CLASS}) & }`]);
     }),
   ],
 };

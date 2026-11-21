@@ -3,6 +3,7 @@ import "./globals.css";
 import { fontVariables } from "./fonts";
 import { shareMetadata, siteConfig } from "@/lib/site";
 import { ThemeProvider, themeInitScript } from "@/components/theme/ThemeProvider";
+import { TABLET_INIT_SCRIPT } from "@/lib/landscape";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SurahListenCounter } from "@/components/player/SurahListenCounter";
@@ -79,6 +80,8 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* Tablet → the `huda-tablet` class (landscape layout, lib/landscape) */}
+        <script dangerouslySetInnerHTML={{ __html: TABLET_INIT_SCRIPT }} />
       </head>
       {/* Extensions (Grammarly: data-gr-ext-installed …) add attributes to
           <body> before React hydrates; ignore that attribute-only mismatch. */}

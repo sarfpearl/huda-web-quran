@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { PHONE_LANDSCAPE } from "@/lib/landscape";
+import { landscapeQuery } from "@/lib/landscape";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { PrayerRugIcon } from "@/components/ui/Icon";
@@ -337,7 +337,7 @@ export function CenterVerseDisplay({
   const [hasPills, setHasPills] = useState(false);
   const [sideInset, setSideInset] = useState<number | null>(null);
   const [sceneHeight, setSceneHeight] = useState<number | null>(null);
-  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE);
+  const phoneLandscape = useMediaQuery(landscapeQuery());
   // Layout phase: measured before the first paint after hydration.
   useLayoutEffect(() => {
     const dock = document.querySelector<HTMLElement>("[data-player-dock]");
@@ -350,7 +350,7 @@ export function CenterVerseDisplay({
       if (dock) {
         const scene = dock.parentElement?.getBoundingClientRect();
         const rect = dock.getBoundingClientRect();
-        if (window.matchMedia(PHONE_LANDSCAPE).matches) {
+        if (window.matchMedia(landscapeQuery()).matches) {
           // Side rail: the stage keeps the full height and clears the rail on
           // both sides, so the text stays centred on the screen (a hidden
           // rail — tap-to-focus — leaves just the edge gap).
@@ -477,7 +477,7 @@ export function CenterVerseDisplay({
         // still scrolled — too small for the Tajweed marks.
         // Phone landscape: a higher floor (data-fit-min-land) — a long ayah
         // stays large and its pane scrolls (and follows the recitation).
-        const land = window.matchMedia(PHONE_LANDSCAPE).matches;
+        const land = window.matchMedia(landscapeQuery()).matches;
         // Phone landscape: one fixed size (data-fit-land, px) for every ayah,
         // short or long — a long one keeps it and its pane scrolls.
         // A tablet sideways (iPad, ~820–1024px tall) gets the same layout
@@ -631,7 +631,7 @@ export function CenterVerseDisplay({
           const s = ar.getBoundingClientRect();
           const r = el.getBoundingClientRect();
           // Phone landscape: the recited line stays in the middle of the screen.
-          const anchor = window.matchMedia(PHONE_LANDSCAPE).matches ? s.height / 2 - r.height / 2 : s.height * 0.3;
+          const anchor = window.matchMedia(landscapeQuery()).matches ? s.height / 2 - r.height / 2 : s.height * 0.3;
           return ar.scrollTop + r.top - s.top + along - anchor;
         });
       }
