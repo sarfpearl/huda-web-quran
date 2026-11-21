@@ -597,3 +597,77 @@ export function buildDashboard(payload: DashboardPayload | null | undefined, opt
     cards,
   };
 }
+
+/** One row of public.kofi_gifts (supabase/migrations/20261121120000_kofi_gifts.sql). */
+export interface KofiGiftRow {
+  gift_at: string;
+  kind?: string | null;
+  from_name?: string | null;
+  amount: number | string;
+  currency: string;
+  message?: string | null;
+  is_public?: boolean | null;
+  is_subscription?: boolean | null;
+  tier_name?: string | null;
+}
+
+export function formatMoney(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
+}
+
+/**
+ * Ko-fi card: real gifts from Ko-fi's webhook, read live (not from the
+ * morning snapshot). `rows` null = the table could not be read; `reason`
+ * says why. Rows come newest first.
+ */
+export function kofiGiftsCard(rows: KofiGiftRow[] | null, reason?: string, now: number = Date.now()): Card {
+  if (!rows) return unavailable("kofi", "Support · Ko-fi", reason ?? "Ko-fi gifts-ஐ ஏற்ற முடியவில्லை");
+  const amt = (r: KofiGiftRow) => {
+    const n = typeof r.amount === "number" ? r.amount : Number(r.amount);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const sum = (list: KofiGiftRow[]) => {
+    const by = new Map<string, number>();
+    for (const r of list) by.set(r.currency, (by.get(r.currency) ?? 0) + amt(r));
+    return [...by.entries()].map(([c, v]) => formatMoney(v, c)).join(" + ");
+  };
+  const since = now - 30 * 24 * 3600 * 1000;
+  const recent = rows.filter((r) => new Date(r.gift_at).getTime() >= since);
+
+  return {
+    id: "kofi",
+    title: "Support · Ko-fi",
+    status: "ok",
+    value: recent.length ? sum(recent) : "0",
+    caption: `Ko-fi-ல் வந்த பணம் · 30 நாள் (${compact(recent.length)} gifts)`,
+    lines: rows.length
+      ? [`கடைசி: ${rows[0].from_name?.trim() || "பெயர் இல்லை"} · ${formatMoney(amt(rows[0]), rows[0].currency)} · ${formatIST(rows[0].gift_at)}`]
+      : ["இன்னும் Ko-fi gift எதுவும் வரவில்லை"],
+    detail: [
+      {
+        kind: "list",
+        title: `சமீபத்திய gifts (${compact(rows.length)})`,
+        empty: "இன்னும் Ko-fi gift எதுவும் வரவில்லை. Ko-fi webhook அமைத்ததும் இங்கே தெரியும்.",
+        items: rows.map((r) => {
+          const extra = [
+            r.is_subscription ? `மாதாந்திரம்${r.tier_name ? ` · ${r.tier_name}` : ""}` : r.kind && r.kind !== "Donation" ? r.kind : null,
+            r.message ? `“${r.message}”${r.is_public === false ? " (தனிப்பட்ட செய்தி)" : ""}` : null,
+          ].filter(Boolean);
+          return {
+            primary: `${r.from_name?.trim() || "பெயர் இல்லை"} — ${formatMoney(amt(r), r.currency)}`,
+            secondary: [formatIST(r.gift_at), ...extra].join(" · "),
+          };
+        }),
+      },
+      ...(rows.length ? [{ kind: "stats" as const, items: [{ label: "மொத்தம் (கடைசி 50)", value: sum(rows) }] }] : []),
+      {
+        kind: "text",
+        text: "இவை Ko-fi உறுதி செய்த உண்மையான பணம் (Ko-fi webhook → /api/kofi). பெயர் கொடுத்தவர் தட்டச்சு செய்தது; email சேமிக்கப்படுவதில்லை. UPI பணம் இங்கே வராது — அது GPay / வங்கி app-ல் மட்டும்.",
+      },
+    ],
+  };
+}

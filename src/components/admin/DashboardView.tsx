@@ -5,7 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { contentLabel } from "@/components/home/QuranEngagement";
 import { DashboardCards } from "@/components/admin/DashboardCards";
-import { buildDashboard, type DashboardPayload, type TrendRow } from "@/lib/dashboard";
+import { buildDashboard, kofiGiftsCard, type DashboardPayload, type KofiGiftRow, type TrendRow } from "@/lib/dashboard";
 import { AlertIcon } from "@/components/ui/Icon";
 
 /*
@@ -33,6 +33,8 @@ export function DashboardView() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null | undefined>(undefined);
   const [trend, setTrend] = useState<TrendRow[]>([]);
+  // Ko-fi gifts are read live from public.kofi_gifts, not from the snapshot.
+  const [kofi, setKofi] = useState<{ rows: KofiGiftRow[] | null; reason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Decided after mount so the server and first client render match.
   const [configured, setConfigured] = useState<boolean | null>(null);
@@ -71,6 +73,23 @@ export function DashboardView() {
       return;
     }
     setSnapshot((latest.data as Snapshot | null) ?? null);
+
+    const gifts = await supabase
+      .from("kofi_gifts")
+      .select("gift_at, kind, from_name, amount, currency, message, is_public, is_subscription, tier_name")
+      .order("gift_at", { ascending: false })
+      .limit(50);
+    setKofi(
+      gifts.error
+        ? {
+            rows: null,
+            reason:
+              gifts.error.code === "42P01" || gifts.error.code === "PGRST205"
+                ? "kofi_gifts table இன்னும் இல்லை — supabase/migrations/20261121120000_kofi_gifts.sql-ஐ SQL editor-ல் ஓட்டுங்கள்"
+                : "Ko-fi gifts-ஐ ஏற்ற முடியவில்லை",
+          }
+        : { rows: (gifts.data as KofiGiftRow[]) ?? [] },
+    );
 
     // Trend lines: a few numbers from each of the last 14 snapshots. If this
     // query fails the cards still show; only the trend lines go missing.
@@ -118,20 +137,19 @@ export function DashboardView() {
   const signOut = async () => {
     await getSupabaseBrowserClient()?.auth.signOut();
     setSnapshot(undefined);
+    setKofi(null);
     setIsAdmin(null);
     setLinkSent(false);
   };
 
-  const model = useMemo(
-    () =>
-      snapshot
-        ? buildDashboard(snapshot.payload, {
-            trend,
-            label: (kind, id) => contentLabel({ kind, id }),
-          })
-        : null,
-    [snapshot, trend],
-  );
+  const model = useMemo(() => {
+    if (!snapshot) return null;
+    const m = buildDashboard(snapshot.payload, {
+      trend,
+      label: (kind, id) => contentLabel({ kind, id }),
+    });
+    return kofi ? { ...m, cards: [...m.cards, kofiGiftsCard(kofi.rows, kofi.reason)] } : m;
+  }, [snapshot, trend, kofi]);
 
   return (
     <div className="space-y-5 py-6">
