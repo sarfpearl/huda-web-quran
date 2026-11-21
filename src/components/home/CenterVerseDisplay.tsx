@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { PHONE_LANDSCAPE } from "@/lib/landscape";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { PrayerRugIcon } from "@/components/ui/Icon";
@@ -63,8 +64,6 @@ interface CenterVerseDisplayProps {
   meaningCurrentTime?: number;
 }
 
-/** Phone turned sideways (same as the `phoneland` Tailwind screen). */
-const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
 
 /** Live match of a media query (false on the server and before mount). */
 function useMediaQuery(query: string): boolean {
@@ -481,8 +480,11 @@ export function CenterVerseDisplay({
         const land = window.matchMedia(PHONE_LANDSCAPE).matches;
         // Phone landscape: one fixed size (data-fit-land, px) for every ayah,
         // short or long — a long one keeps it and its pane scrolls.
+        // A tablet sideways (iPad, ~820–1024px tall) gets the same layout
+        // with the size scaled to its height (a phone is ~390px tall).
         if (land && texts.every((t) => t.dataset.fitLand)) {
-          texts.forEach((t) => (t.style.fontSize = `${Number(t.dataset.fitLand)}px`));
+          const k = Math.min(1.7, Math.max(1, window.innerHeight / 400));
+          texts.forEach((t) => (t.style.fontSize = `${Math.round(Number(t.dataset.fitLand) * k)}px`));
           return;
         }
         const mins = texts.map(

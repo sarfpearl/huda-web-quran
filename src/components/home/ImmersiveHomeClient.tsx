@@ -18,7 +18,7 @@ import { reciterHasSurah } from "@/lib/data/quranReciters";
 import { InstallGuide, InstallGuideButton } from "./InstallGuide";
 import { SupportSheet } from "@/components/support/SupportSheet";
 import { SupportGift } from "@/components/support/SupportGift";
-import { afterSplash, afterStage } from "@/lib/onboarding";
+import { afterSplash, afterStage, onOnboardingDone } from "@/lib/onboarding";
 import { FeedbackLantern } from "@/components/feedback/FeedbackLantern";
 import { FirstVisitTour } from "./FirstVisitTour";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
@@ -1702,10 +1702,59 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       .catch(() => start());
   };
 
-  // Deep link (/surah/36/3, lib/deepLink): cue that Surah at that ayah once,
-  // on open — browsers don't let a page start audio by itself, so it waits
-  // for play. A Juz link offers « ▶ Juz 30 » instead (a Juz starts playing).
+  // Deep link (/surah/36/3, lib/deepLink — the website's Listen buttons):
+  // cue that Surah at that ayah once, on open, and start it by itself as soon
+  // as the onboarding is over. A first visit's last onboarding tap starts it
+  // (that tap is the user gesture browsers want before sound); a returning
+  // listener with nothing to answer gets play() at once, and only if the
+  // browser refuses, a single « ▶ Surah N:A » pill to tap.
+  // A Juz link offers « ▶ Juz 30 » instead (a Juz starts playing).
   const deepLinkAppliedRef = useRef(false);
+  const livePlayerRef = useRef(player);
+  livePlayerRef.current = player;
+  // "wait": onboarding still on; "want": over, but the cue is still loading.
+  const deepLinkPlayRef = useRef<"wait" | "want" | null>(null);
+  const [deepLinkTap, setDeepLinkTap] = useState(false);
+  const tryDeepLinkPlayRef = useRef<() => void>(() => {});
+  tryDeepLinkPlayRef.current = () => {
+    if (!deepLinkPlayRef.current || deepLink?.kind !== "surah") return;
+    // Returning listener: the steps finish under the splash — start once the
+    // ayah is on screen.
+    if (!document.documentElement.classList.contains("huda-ready")) {
+      void afterSplash().then(() => tryDeepLinkPlayRef.current());
+      return;
+    }
+    const p = livePlayerRef.current;
+    if (p.isPlaying) {
+      deepLinkPlayRef.current = null;
+      return;
+    }
+    // The cue (the ayah's start needs its timings) is not in yet: the effect
+    // below starts it when it is.
+    if (!p.current || getSurahByTrackId(p.current.id)?.number !== deepLink.surah) {
+      deepLinkPlayRef.current = "want";
+      return;
+    }
+    deepLinkPlayRef.current = null;
+    p.resume();
+    // Refused (no gesture) — the browser rejects play() at once; a slow
+    // network only delays it. Then offer the one tap.
+    window.setTimeout(() => {
+      const q = livePlayerRef.current;
+      if (!q.isPlaying && !q.isLoading && q.current && getSurahByTrackId(q.current.id)?.number === deepLink.surah)
+        setDeepLinkTap(true);
+    }, 2500);
+  };
+  useEffect(() => {
+    if (deepLinkPlayRef.current === "want") tryDeepLinkPlayRef.current();
+  }, [player.current?.id]);
+  useEffect(() => {
+    if (player.isPlaying) setDeepLinkTap(false);
+  }, [player.isPlaying]);
+  const deepLinkTapAt =
+    deepLinkTap && deepLink?.kind === "surah" && player.current && getSurahByTrackId(player.current.id)?.number === deepLink.surah
+      ? deepLink
+      : null;
   useEffect(() => {
     if (!mounted || deepLinkAppliedRef.current || deepLink?.kind !== "surah") return;
     deepLinkAppliedRef.current = true;
@@ -1716,6 +1765,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     if (player.current) return;
     // Cue even though the landing already shows this Surah: nothing is loaded yet.
     openSurahAt(deepLink.surah, deepLink.ayah, true);
+    deepLinkPlayRef.current = "wait";
+    // No cleanup: the applied-once guard above would not register it again.
+    onOnboardingDone(() => tryDeepLinkPlayRef.current());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
   const juzLink = deepLink?.kind === "juz" && !hasPlayed ? deepLink.juz : null;
@@ -2076,7 +2128,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         className={`${landFocusOn ? "hidden " : ""}pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+5.75rem)] z-30`}
       >
       <AnimatePresence>
-        {!readingActive && (showBookmarkPill || showContinuePill || juzLink) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
+        {!readingActive && (showBookmarkPill || showContinuePill || juzLink || deepLinkTapAt) && !player.isPlaying && !player.isLoading && !engagement.composerOpen && (
           <motion.div
             key="main-bookmark"
             initial={{ opacity: 0, y: -8 }}
@@ -2085,6 +2137,22 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             transition={{ duration: 0.3 }}
             className="flex flex-wrap justify-center gap-2 px-4"
           >
+            {deepLinkTapAt && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  setDeepLinkTap(false);
+                  player.resume();
+                }}
+                className="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-300/40 bg-black/45 backdrop-blur-md py-1.5 px-3.5 text-xs sm:text-sm font-medium text-sand-50 shadow-lg hover:text-white cursor-pointer"
+              >
+                <PlayIcon className="text-emerald-300" />
+                <span>
+                  {surahNameIn(deepLinkTapAt.surah, language)} {deepLinkTapAt.surah}:{deepLinkTapAt.ayah}
+                </span>
+              </button>
+            )}
             {juzLink && (
               <button
                 type="button"
@@ -2100,7 +2168,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 </span>
               </button>
             )}
-            {showContinuePill && continueAt && (
+            {/* The ayah link's own pill stands alone (one clear tap). */}
+            {showContinuePill && continueAt && !deepLinkTapAt && (
               <button
                 type="button"
                 onClick={() => {
@@ -2119,7 +2188,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 </span>
               </button>
             )}
-            {showBookmarkPill && mainBookmark && (
+            {showBookmarkPill && mainBookmark && !deepLinkTapAt && (
             <button
               type="button"
               onClick={() => {
@@ -2467,3 +2536,4 @@ function useVisibleArea(sceneRef: React.RefObject<HTMLDivElement | null>): boole
   }, [sceneRef]);
   return keyboardOpen;
 }
+

@@ -848,10 +848,11 @@ html:has([data-reading-page]) #huda-splash {
 .huda-splash-text {
   display: contents;
 }
-/* Phone landscape: too short for the stack — the name, tagline and loader
+/* Phone / tablet landscape (src/lib/landscape.ts): too short for the stack — the name, tagline and loader
    (centred on each other) to the left of the logo, on its middle line; the
    pair centred on the screen */
-@media (orientation: landscape) and (max-height: 500px) {
+@media (orientation: landscape) and (max-height: 500px),
+  (orientation: landscape) and (pointer: coarse) and (max-width: 1400px) {
   .huda-splash-row {
     display: flex;
     flex-direction: row-reverse;

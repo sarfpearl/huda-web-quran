@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { PHONE_LANDSCAPE } from "@/lib/landscape";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
@@ -1395,8 +1396,6 @@ function CoverFlight({
 const LATIN_UI = new Set<UiLang>(["en", "id", "tr", "fr", "ms"]);
 
 const SMALL_SCREEN = "(max-width: 767px)";
-/** Same as the `phoneland` Tailwind screen. */
-const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
 const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition-none";

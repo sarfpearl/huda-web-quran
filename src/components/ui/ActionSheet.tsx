@@ -9,8 +9,9 @@ import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
 
-/** A phone turned sideways (same as the `phoneland` Tailwind screen). */
-export const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
+/** Phone or tablet turned sideways (same as the `phoneland` Tailwind variant). */
+export { PHONE_LANDSCAPE } from "@/lib/landscape";
+import { PHONE_LANDSCAPE } from "@/lib/landscape";
 
 /**
  * Phone landscape: once a sheet has opened, nudge its list down a little and
