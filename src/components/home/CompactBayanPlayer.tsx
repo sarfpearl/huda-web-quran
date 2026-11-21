@@ -1044,23 +1044,51 @@ export function CompactBayanPlayer({
           <PrevIcon className="text-lg" />
         </button>
 
-        {/* Play: green light spreading out from the centre, a 50% white rim,
-            and a soft feathered halo (no hard ring) */}
+        {/* Play: a golden "sunrise" disc. A thin ring around it fills with the
+            track's progress; while playing, soft light waves ripple outward. */}
         <button
           type="button"
           onClick={() => { haptic(); handlePlayToggle(); }}
           data-tour="play"
-          className="grid h-14 w-14 max-[369px]:h-12 max-[369px]:w-12 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.5)_0%,rgba(16,185,129,0.2)_55%,rgba(16,185,129,0.06)_100%)] backdrop-blur-sm text-emerald-400 shadow-[0_0_40px_14px_rgba(16,185,129,0.22)] border-2 border-white/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          className={`huda-play-sun group relative grid h-16 w-16 max-[369px]:h-14 max-[369px]:w-14 shrink-0 place-items-center rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 ${isPlaying ? "is-playing" : ""}`}
           aria-label={isPlaying ? "Pause" : "Play"}
           data-tooltip={isPlaying ? t(language, "Pause") : t(language, "Play")}
         >
-          {isLoading ? (
-            <DotLoader className="text-xl" />
-          ) : isPlaying ? (
-            <PauseIcon className="text-2xl text-amber-400" fill="currentColor" />
-          ) : (
-            <PlayIcon className="text-2xl ml-0.5 text-amber-400" fill="currentColor" />
-          )}
+          {/* light waves (only animate while playing) */}
+          <span className="huda-play-wave" aria-hidden="true" />
+          <span className="huda-play-wave huda-play-wave-2" aria-hidden="true" />
+          {/* progress ring */}
+          <svg className="pointer-events-none absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+            <circle
+              cx="32"
+              cy="32"
+              r="30"
+              fill="none"
+              stroke="url(#huda-play-ring)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              pathLength={100}
+              strokeDasharray={`${barPct} 100`}
+              className="transition-[stroke-dasharray] duration-150 ease-linear"
+            />
+            <defs>
+              <linearGradient id="huda-play-ring" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#fde68a" />
+                <stop offset="100%" stopColor="#34d399" />
+              </linearGradient>
+            </defs>
+          </svg>
+          {/* the sun disc */}
+          <span className="huda-play-disc relative grid h-[46px] w-[46px] max-[369px]:h-10 max-[369px]:w-10 place-items-center rounded-full text-[#2a1a04]">
+            {isLoading ? (
+              <DotLoader className="text-lg" />
+            ) : isPlaying ? (
+              <PauseIcon className="text-[22px]" fill="currentColor" />
+            ) : (
+              <PlayIcon className="text-[22px] ml-0.5" fill="currentColor" />
+            )}
+          </span>
         </button>
 
         <button

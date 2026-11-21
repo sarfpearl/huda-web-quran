@@ -9,7 +9,7 @@ import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { OPEN_TOUR_EVENT, TOUR_DONE_KEY, TOUR_STEPS, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
-import { LanternIcon } from "@/components/ui/Icon";
+import { Mosque01Icon } from "@/components/ui/Icon";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
@@ -320,10 +320,10 @@ export function FirstVisitTour() {
         style={{ width: cardW, transform: `translate3d(${cardX}px, ${cardY}px, 0)` }}
       >
         <div className="relative overflow-hidden rounded-[22px] border border-amber-200/25 bg-[#0d0b08]/[0.92] px-5 pb-4 pt-4 text-sand-50 shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,236,190,0.08)] backdrop-blur-xl">
-          {/* Hugeicons Lantern (Islamic set), very faint, in the corner. */}
-          <LanternIcon
-            className="pointer-events-none absolute -right-5 -top-5 h-28 w-28 text-amber-200/[0.1]"
-            strokeWidth={0.75}
+          {/* Hugeicons Mosque (Islamic set), very faint, rising from the corner. */}
+          <Mosque01Icon
+            className="pointer-events-none absolute -right-4 -top-3 h-28 w-28 text-amber-200/[0.09]"
+            strokeWidth={0.9}
           />
 
           <div aria-live="polite" className="relative">
