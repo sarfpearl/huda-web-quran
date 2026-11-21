@@ -485,13 +485,20 @@ export function CenterVerseDisplay({
         // short or long — a long one keeps it and its pane scrolls.
         // A tablet sideways (iPad, ~820–1024px tall) gets the same layout
         // with the size scaled to its height (a phone is ~390px tall).
-        if (land && texts.every((t) => t.dataset.fitLand)) {
-          const k = Math.min(1.7, Math.max(1, window.innerHeight / 400));
-          texts.forEach((t) => (t.style.fontSize = `${Math.round(Number(t.dataset.fitLand) * k)}px`));
+        // A tablet (taller than a phone) gets that size as its ceiling only:
+        // a long ayah shrinks to fit the screen (down to the landscape floor)
+        // instead of running far past it — at the full fixed size a long
+        // meaning filled the screen and the recited part was out of view.
+        const k = Math.min(1.7, Math.max(1, window.innerHeight / 400));
+        const tabletLand = land && k > 1 && texts.every((t) => t.dataset.fitLand);
+        if (land && !tabletLand && texts.every((t) => t.dataset.fitLand)) {
+          texts.forEach((t) => (t.style.fontSize = `${Math.round(Number(t.dataset.fitLand))}px`));
           return;
         }
-        const mins = texts.map(
-          (t, j) => Number((land ? t.dataset.fitMinLand : undefined) ?? t.dataset.fitMin) || bases[j]
+        const mins = texts.map((t, j) =>
+          tabletLand
+            ? Math.round(Number(t.dataset.fitMinLand) * Math.min(1.25, k))
+            : Number((land ? t.dataset.fitMinLand : undefined) ?? t.dataset.fitMin) || bases[j]
         );
         // Growth cap depends on screen size: medium on phones, larger on
         // tablets, full on desktop (data-fit-max-mobile / -tablet / -max).
@@ -502,10 +509,10 @@ export function CenterVerseDisplay({
               t.dataset.fitMax
           ) || 0;
         const maxs = texts.map((t, j) => {
-          const cap = capOf(t);
+          const cap = tabletLand ? Math.round(Number(t.dataset.fitLand) * k) : capOf(t);
           // Never grow past the cap; shrink the base down to it on small screens.
           const m = cap > 0 ? cap : bases[j];
-          return maxOverride ? Math.max(mins[j], Math.min(m, maxOverride)) : m;
+          return maxOverride && !tabletLand ? Math.max(mins[j], Math.min(m, maxOverride)) : m;
         });
         const apply = (scale: number) =>
           texts.forEach(
@@ -592,6 +599,11 @@ export function CenterVerseDisplay({
     // greeting is still up, so the stage mounts later with the same fitKey.
   }, [fitKey, showTranslation, language, translationLang, extraMeaning, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
 
+  const meaningSpeakingRef = useRef(meaningSpeaking);
+  meaningSpeakingRef.current = meaningSpeaking;
+  const meaningWordsRef = useRef(meaningWords);
+  meaningWordsRef.current = meaningWords;
+
   // User manual scrolling: pause followScroll so user swipe/touch doesn't fight auto-scroll
   const userScrollAtRef = useRef(0);
   useEffect(() => {
@@ -618,6 +630,21 @@ export function CenterVerseDisplay({
     };
   }, []);
 
+  // Meaning audio: the pane keeps the spoken (highlighted) meaning word in view.
+  const followMeaningIdx = meaningSpeaking ? getActiveMeaningWordIndex(meaningWords, meaningCurrentTime) : -1;
+  useEffect(() => {
+    if (followMeaningIdx < 0) return;
+    const mn = meaningPaneRef.current;
+    if (!mn || !overflows(mn) || performance.now() - userScrollAtRef.current < 4000) return;
+    const el = mn.querySelector<HTMLElement>(`[data-mword-idx="${followMeaningIdx}"]`);
+    if (!el) return;
+    followScroll(mn, () => {
+      const s = mn.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return mn.scrollTop + r.top - s.top - (s.height / 2 - r.height / 2);
+    });
+  }, [followMeaningIdx, fitKey]);
+
   // Auto-scroll, teleprompter-style (followScroll): the Arabic pane drifts
   // with the recitation — the active word's line plus how far along it the
   // word is — so lines flow on instead of stepping; the meaning pane tracks
@@ -640,7 +667,8 @@ export function CenterVerseDisplay({
       }
     }
     const mn = meaningPaneRef.current;
-    if (mn && overflows(mn) && !userScrolledRecently) {
+    // While the meaning is spoken word by word, that word leads (above).
+    if (mn && overflows(mn) && !userScrolledRecently && !(meaningSpeakingRef.current && meaningWordsRef.current?.length)) {
       const total = ar?.querySelectorAll("[data-word-idx]").length ?? 0;
       const p = total > 1 ? Math.min(1, propWordIndex / (total - 1)) : 0;
       // Hold the meaning at its start for the first 20% of the recitation and
@@ -889,7 +917,7 @@ export function CenterVerseDisplay({
         >
           <div
             ref={arabicPaneRef}
-            className={`flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar ${
+            className={`flex flex-col min-h-0 max-h-full overflow-y-auto overflow-x-hidden touch-pan-y overscroll-contain no-scrollbar ${
               // Stacked (mobile): Arabic keeps its fitted height (≤ 68%) and never
               // shrinks — the meaning pane below takes the rest and scrolls.
               // Padding equals the stage's fade strips (20px top / 20px bottom), so
@@ -994,7 +1022,7 @@ export function CenterVerseDisplay({
           {showTranslation && (
             <div
               ref={meaningPaneRef}
-              className="flex flex-col min-h-0 max-h-full overflow-y-auto overscroll-contain no-scrollbar pb-[20px] md:pt-[20px] md:flex-1 md:basis-0 md:min-w-0 md:border-r md:border-white/15 md:pr-6 lg:pr-10"
+              className="flex flex-col min-h-0 max-h-full overflow-y-auto overflow-x-hidden touch-pan-y overscroll-contain no-scrollbar pb-[20px] md:pt-[20px] md:flex-1 md:basis-0 md:min-w-0 md:border-r md:border-white/15 md:pr-6 lg:pr-10"
             >
             <p
               data-fit-text
@@ -1007,7 +1035,7 @@ export function CenterVerseDisplay({
               lang={meaning.id}
               dir={meaning.dir}
               style={meaning.font && meaning.id !== "ta" ? { fontFamily: meaning.font } : undefined}
-              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal ${meaningSpeaking && !meaningWords ? "text-amber-200" : "text-sand-50"} text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-[opacity,color] duration-300 ${translationSizeClass}`}
+              className={`${meaning.id === "ta" ? "font-tamil" : meaning.font ? "" : "font-serif sm:font-sans"} ${meaning.dir === "rtl" ? "md:text-right" : "md:text-left tracking-wide"} font-normal ${meaningSpeaking && !meaningWords ? "text-amber-200" : "text-sand-50"} text-center leading-[1.8] sm:leading-[2.1] md:leading-[2.1] lg:leading-[2.1] quran-translation-shadow [overflow-wrap:anywhere] px-4 sm:px-6 md:px-2 max-w-3xl md:max-w-none m-auto transition-[opacity,color] duration-300 ${translationSizeClass}`}
             >
               {meaningWords && meaningWords.length > 0 ? (
                 meaningWords.map(([w], idx) => {
@@ -1015,6 +1043,7 @@ export function CenterVerseDisplay({
                   return (
                     <span
                       key={idx}
+                      data-mword-idx={idx}
                       className={`inline transition-[color,text-shadow] duration-100 ${
                         isActive
                           ? "text-amber-300 quran-word-glow font-medium"
