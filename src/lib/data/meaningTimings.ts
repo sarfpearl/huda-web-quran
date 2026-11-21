@@ -44,7 +44,8 @@ export function getAyahMeaningTimings(
   timings: SurahMeaningTimings | null,
   ayah: number | undefined
 ): MeaningWordTuple[] | null {
-  if (!timings || !ayah) return null;
+  // Ayah 0 is Al-Fatihah's Isti'adhah (its meaning clip is 001000).
+  if (!timings || ayah === undefined || ayah < 0) return null;
   return timings[String(ayah)] ?? null;
 }
 

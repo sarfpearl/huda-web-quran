@@ -295,6 +295,13 @@ async function main() {
             }
           }
 
+          // Keep Al-Fatihah's Isti'adhah ("0", align-istiadhah-meaning.py): not an ayah, so not aligned here.
+          if (existsSync(outFile)) {
+            try {
+              const kept = JSON.parse(readFileSync(outFile, "utf8"))["0"];
+              if (kept) surahTimings["0"] = kept;
+            } catch {}
+          }
           writeFileSync(outFile, JSON.stringify(surahTimings), "utf8");
           const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
           console.log(`done in ${elapsed}s`);
