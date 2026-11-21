@@ -22,6 +22,7 @@ import {
   type GlyphVerse,
   type QuranScript,
 } from "@/lib/data/quranGlyphs";
+import { landscapeQuery } from "@/lib/landscape";
 import { alongLine, followScroll, stopFollow } from "@/lib/followScroll";
 import SurahBanner from "./SurahBanner";
 import { READER_SCALES } from "./ImmersiveHeader";
@@ -748,7 +749,7 @@ export function ReadingView({
       if (!playerShown) return void (el.style.bottom = "max(env(safe-area-inset-bottom,0px),var(--vv-bottom,0px))");
       // Phone landscape: the player is a rail at the side, not below — the
       // class's bottom applies (measuring the rail left the text 24px tall).
-      if (window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches) return el.style.removeProperty("bottom");
+      if (window.matchMedia(landscapeQuery()).matches) return el.style.removeProperty("bottom");
       const f = frame.getBoundingClientRect();
       if (!f.height) return el.style.removeProperty("bottom");
       el.style.bottom = `${Math.max(0, host.getBoundingClientRect().bottom - f.top + 8)}px`;

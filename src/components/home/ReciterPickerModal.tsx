@@ -1,5 +1,6 @@
 "use client";
 
+import { landscapeQuery } from "@/lib/landscape";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
@@ -8,7 +9,7 @@ import {
   reciterIsUnavailable,
   type QuranReciter,
 } from "@/lib/data/quranReciters";
-import { ActionSheet, PHONE_LANDSCAPE, PLAYER_GLASS, StickySearch, useIsMobile } from "@/components/ui/ActionSheet";
+import { ActionSheet, PLAYER_GLASS, StickySearch, useIsMobile } from "@/components/ui/ActionSheet";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -66,7 +67,7 @@ export function ReciterPickerModal({
       setSyncFilter(reciterHasWordTiming(selectedReciter) ? "word" : "verse");
       // Phone landscape: open at the top (title, sync tabs and note first);
       // the listener scrolls to the list themself.
-      if (window.matchMedia(PHONE_LANDSCAPE).matches) return;
+      if (window.matchMedia(landscapeQuery()).matches) return;
       const id = requestAnimationFrame(() => {
         selectedItemRef.current?.scrollIntoView({ block: "nearest" });
       });

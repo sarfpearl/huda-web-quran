@@ -447,6 +447,9 @@ export function InstallGuide() {
 
   const dismiss = () => {
     setOpen(false);
+    // Now, inside the tap (not only in the effect below): a deep-linked ayah
+    // may start playing when this was the last onboarding step.
+    if (open) finishStage("install");
     try {
       localStorage.setItem(DISMISSED_KEY, String(Date.now()));
     } catch {}

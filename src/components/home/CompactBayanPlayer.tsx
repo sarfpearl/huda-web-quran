@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { landscapeQuery } from "@/lib/landscape";
 import Image from "next/image";
 import type { BayanWithRelations } from "@/types/bayan";
 import { useAudioPlayer, END_MODES } from "@/contexts/AudioPlayerContext";
@@ -230,7 +231,7 @@ export function CompactBayanPlayer({
   const toggleCollapsed = (next: boolean, remember = true) => {
     if (next === collapsed) return;
     // Phone landscape has only the side rail (no full player).
-    if (!next && window.matchMedia(PHONE_LANDSCAPE).matches) return;
+    if (!next && window.matchMedia(landscapeQuery()).matches) return;
     // A manual switch overrides any pending auto-restore (see below).
     if (remember) {
       autoCollapsedRef.current = false;
@@ -299,7 +300,7 @@ export function CompactBayanPlayer({
   const landscapeCollapsedRef = useRef(false);
   const landscapeRestoreRef = useRef(false);
   useEffect(() => {
-    const mq = window.matchMedia(PHONE_LANDSCAPE);
+    const mq = window.matchMedia(landscapeQuery());
     const apply = () => {
       if (mq.matches) {
         if (!collapsedRef.current) {
@@ -1395,8 +1396,6 @@ function CoverFlight({
 const LATIN_UI = new Set<UiLang>(["en", "id", "tr", "fr", "ms"]);
 
 const SMALL_SCREEN = "(max-width: 767px)";
-/** Same as the `phoneland` Tailwind screen. */
-const PHONE_LANDSCAPE = "(orientation: landscape) and (max-height: 500px)";
 
 // Views sit bottom-centred inside the shell so it can resize around them.
 const viewBase = "transition-[opacity,transform,filter] motion-reduce:transition-none";

@@ -1,5 +1,6 @@
 "use client";
 
+import { landscapeQuery } from "@/lib/landscape";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
@@ -12,7 +13,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PHONE_LANDSCAPE, PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -289,7 +290,7 @@ export function TopicPickerModal({
   useEffect(() => {
     // Phone landscape: open at the top (tabs and topics first); the
     // listener scrolls to the list themself.
-    if (!isOpen || window.matchMedia(PHONE_LANDSCAPE).matches) return;
+    if (!isOpen || window.matchMedia(landscapeQuery()).matches) return;
     const timer = setTimeout(() => {
       listRef.current
         ?.querySelector<HTMLElement>('[aria-current="true"]')
