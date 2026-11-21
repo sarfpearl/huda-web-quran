@@ -136,12 +136,25 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
         0.34 / 0.59 (66 has no QDC segments at all).
       - Shuraim 57:7, Tunaiji 34:50 — the measured first word sits 0.4 s
         before / 1.2 s after the voice onset.
-- [ ] **QDC timings off on ayahs the app still highlights.** The anchor
+- [x] **QDC timings off on ayahs the app still highlights.** The anchor
       check of the repair above measured "good" neighbour ayahs 1–7.5 s off
       the voice in Abdul Basit 4, 30, 32, 33, 35, 36; Alafasy 13; Shatri 2,
       5, 7, 34, 35, 37; Tunaiji 34 (drifting recordings the stream verdict
       rates match/inconclusive). Candidates for a whole-Surah
       `align-reciter-timings.py` run, as done for Shatri 10.
+      **Done 2026-11-21:** all 14 re-aligned whole (CTC forced alignment on
+      the streamed audio, $0). Ayahs whose first word starts within 0.3 s of
+      the voice onset: Abdul Basit 4 81/172 → 176/176, 30 9/60 → 60/60,
+      36 19/77 → 83/83; Shatri 2 202/278 → 284/285; Tunaiji 34 8/54 → 54/54
+      (34:48–50 were 7–15 s off, now highlighted); every Surah's median
+      onset error 0.02–0.04 s. The model's transcript of each new ayah
+      window matches its text as well as or better than the old one. Also
+      gives Shatri 37:66–67 and Tunaiji 34:50 a highlight (repeats kept).
+      **Meaning stops rebuilt** (`build-meaning-stops.mjs`) for these 14 and
+      Shatri 10, Alafasy 60: they were measured on the old timings (before
+      #239), so in Shatri 10 the recitation stopped up to 6 s inside the
+      next ayah — a second of the next ayah, then the meaning, then the
+      rest. `meaning-stops-qa.mjs`: Shatri 10 108/108 stops in a pause.
 - [x] **Alafasy word timings run ~0.5 s ahead of the voice** in places
       (93:3, 93:4 …): the highlight leads the recitation inside the ayah.
       **Done 2026-11-15:** measured, not guessed — every Alafasy word's onset
