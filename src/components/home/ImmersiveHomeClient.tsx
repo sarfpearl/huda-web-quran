@@ -935,6 +935,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const meaningKey = player.meaningClip?.key;
   const [meaningSurah, meaningAyah] = useMemo(() => {
     if (!meaningKey) return [undefined, undefined];
+    // The preludes' clips: the Bismillah reads 1:1, the Isti'adhah is "1:0".
+    if (meaningKey === "bismillah") return [1, 1];
+    if (meaningKey === "istiadhah") return [1, 0];
     const [s, a] = meaningKey.split(":").map(Number);
     return [s, a];
   }, [meaningKey]);
