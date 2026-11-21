@@ -1,6 +1,6 @@
 # HuDa — Login திட்டம் (முடிவு எடுப்பதற்கான ஆவணம்)
 
-> **தேதி:** 2026-11-15 · **நிலை:** owner முடிவுக்காக (code எதுவும் இல்லை)
+> **தேதி:** 2026-11-15 · **மீண்டும் சரிபார்த்தது:** 2026-11-21 (main-ன் இப்போதைய code-உடன்) · **நிலை:** owner முடிவுக்காக (code எதுவும் இல்லை)
 > **மூலம்:** `docs/NEXT_TASKS_2026_11_15.md` → task 6
 > விலை / limit எல்லாம் 2026-11-15 அன்று provider-களின் சொந்தப் பக்கங்களில் சரிபார்த்தவை (கடைசிப் பகுதியில் links).
 > **[கருத்து]** என்று குறித்தவை என் மதிப்பீடு — ஆதாரம் காட்டிய உண்மை அல்ல.
@@ -114,16 +114,17 @@ Owner-ன் இப்போதைய mobile app **Firebase** (Blaze plan).
 | `huda:debug-audio` (sessionStorage) | Developer debug | `src/lib/audioDebug.ts` | ❌ | — |
 | `huda-verses-v*` | பழைய cache (தானாக நீக்கப்படுகிறது) | `quranVerses.ts` | ❌ | — |
 | Service worker caches | Offline pages / data | `public/sw.js` | ❌ | — |
+| `huda-reminders` | Reading reminder நேரங்கள் (எ.கா. 06:30) + `updatedAt` | `src/lib/reminders/store.ts`, `push.ts` | ✅ **ஆம்** (owner கேட்டது) | முழுப் பட்டியல் ஒன்றாக; புதிய `updatedAt` வெல்லும். Code-ல் ஏற்கனவே "login பின்னர் sync செய்யும்" என்று வடிவமைக்கப்பட்டது |
+| (server) `push_subscriptions` | ஒவ்வொரு browser-ன் push "முகவரி", time zone, மொழி | `supabase/migrations/20261115120000_reading_reminders.sql` | ❌ சாதனத்துக்குச் சொந்தம் | ஆனால் `user_id` column **ஏற்கனவே உள்ளது** (இப்போது null) — login ஆனதும் நிரப்பலாம் |
+| `huda-tour-done` | முதல் வருகை tour பார்த்தாகிவிட்டது | `src/lib/tour/steps.ts` | ✅ ஆம் | **[கருத்து]** புதிய phone-ல் மீண்டும் tour தேவையில்லை; settings-ல் replay உள்ளது |
+| `huda-support-way` | Support-ல் தேர்ந்த வழி (UPI / Ko-fi) | `src/lib/support.ts` | ✅ ஆம் | setting |
+| `huda-feedback-peeked`, `huda-support-peeked` | Lantern / gift முதல் "peek" முடிந்தது | `src/lib/feedback.ts`, `src/lib/support.ts` | ❌ இல்லை | சாதனத்துக்குச் சொந்தம் |
+| `huda-dots-look` | Splash loader-ன் சுழலும் தோற்றம் | `SplashScreen.tsx` | ❌ இல்லை | அலங்காரம் மட்டும் |
+| OPFS (on-device files) | Record video ஓடும்போது chunks | `src/lib/record/chunkSink.ts` | ❌ ஒருபோதும் இல்லை | பெரிய video; server-க்கு அனுப்பக் கூடாது |
 
-**இப்போது நடக்கும் மற்ற sessions கொண்டுவருபவை** (அவை merge ஆனதும் இந்தப் பட்டியலில் சேர்க்க):
-
-| அம்சம் | Sync? |
-| :--- | :--- |
-| Reminders — நேரங்கள் (எ.கா. 6:30 AM) | ✅ ஆம் (owner கேட்டது) |
-| Reminders — push subscription | ❌ ஒவ்வொரு சாதனத்துக்கும் தனி (சாதனத்தின் "முகவரி"); ஆனால் அந்த row-ஐ `user_id`-உடன் இணைக்கலாம் |
-| Tour guide "பார்த்தாகிவிட்டது" | ✅ ஆம் — **[கருத்து]** புதிய phone-ல் மீண்டும் tour தேவையில்லை; settings-ல் replay இருக்கும் |
-| Feedback lantern "முதல் peek முடிந்தது" | ❌ சாதனத்துக்குச் சொந்தம் |
-| Record video தரம் (1080p / 720p) | ✅ ஆம் |
+குறிப்புகள் (2026-11-21):
+- Record video தரம் (1080p / 720p) **சேமிக்கப்படுவதில்லை** (`RecordStudio.tsx`-ல் `useState` மட்டும்) — பின்னர் சேமிக்கப்பட்டால் sync ✅ ஆம்.
+- Feedback (`20261115121000_feedback.sql`), support taps (`20261120120000_support_taps.sql`) server tables anonymous — account-உடன் இணைக்க வேண்டாம்.
 
 **விதி (எதிர்காலத்துக்கு):** புதிய setting சேர்க்கும்போது இந்த அட்டவணையில் "sync ஆம்/இல்லை" என்று ஒரு வரி சேர்க்க வேண்டும்.
 
@@ -161,7 +162,8 @@ Owner-ன் இப்போதைய mobile app **Firebase** (Blaze plan).
 
 ### 5.5 Account நீக்கம் (Apple-க்குக் கட்டாயம்)
 - Settings → Account → "Account-ஐ நீக்கு" — உறுதிப்படுத்திய பின்:
-  - Supabase-ல் user + அவரது எல்லா rows நீக்கப்படும் (`on delete cascade`), push subscriptions உட்பட.
+  - Supabase-ல் user + அவரது எல்லா sync rows நீக்கப்படும் (`on delete cascade`).
+  - கவனம்: இன்றைய `push_subscriptions.user_id` = `on delete set null` — user நீக்கினால் row நிற்கும், இணைப்பு மட்டும் போகும். Account நீக்கம் அந்த user-ன் push subscriptions + reminders-ஐயும் வெளிப்படையாக நீக்க வேண்டும் (அல்லது Phase 3-ல் `cascade` ஆக மாற்ற).
   - Apple-ல் login செய்தவருக்கு Apple token-ஐயும் revoke செய்ய வேண்டும் **[கருத்து: Apple-ன் account deletion வழிகாட்டுதல்; app கட்டும்போது சரிபார்க்க]**.
   - சாதனத்தில் உள்ள data guest data-வாகத் தொடரும் (விரும்பினால் அதையும் நீக்கலாம்).
 - Web-லும் அதே பொத்தான் இருக்கும் (ஒரே account).
@@ -195,6 +197,8 @@ Owner-ன் இப்போதைய mobile app **Firebase** (Blaze plan).
 ### 6.3 Bundle அளவு
 `src/lib/supabase/rpc.ts` இன்று வேண்டுமென்றே முழு Supabase client-ஐத் தவிர்க்கிறது (home page-லிருந்து ~60 KB gzipped குறைவு). Login code-ஐ **பயனர் sign-in sheet திறக்கும்போதோ, ஏற்கனவே login ஆன session இருக்கும்போதோ மட்டும்** load செய்ய வேண்டும் — guest-களுக்கு page வேகம் மாறக்கூடாது.
 
+**2026-11-21 கண்டது:** `src/lib/supportTaps.ts` (support UPI PR) முழு client-ஐ (`src/lib/supabase/client.ts` → `@supabase/ssr`) import செய்கிறது; அது `SupportSheet` → `ImmersiveHomeClient.tsx` வழியாக home page-ல் நேரடியாக (static import) வருகிறது. எனவே இந்தச் சேமிப்பு இப்போது போயிருக்கலாம். Login-க்கு முன் இதை `rpc.ts` வழிக்கு மாற்றவோ / lazy ஆக்கவோ வேண்டும் (தனி சிறிய perf PR).
+
 ---
 
 ## 7. கூடவே வரும் தேவைகள்
@@ -215,11 +219,11 @@ Owner-ன் இப்போதைய mobile app **Firebase** (Blaze plan).
 | (ஒப்பீடு) Firebase email link | Spark **5 / நாள்**, Blaze 25,000 / நாள் | — |
 
 - **[கருத்து]** பெரும்பாலோர் Google / Apple பயன்படுத்துவார்கள்; email பின்னால் வரும் வழி. 300/நாள் தொடக்கத்துக்குப் போதும்.
-- Domain `hudaguidance.com`-ல் SPF / DKIM records (GoDaddy DNS) சேர்க்க வேண்டும் — இல்லையென்றால் email spam-க்குப் போகும். அனுப்புநர்: எ.கா. `login@hudaguidance.com`.
+- Domain `hudaguidance.com`-ல் SPF / DKIM records (**Cloudflare DNS** — domain GoDaddy-ல் பதிவு, DNS Cloudflare-ல்) சேர்க்க வேண்டும் — இல்லையென்றால் email spam-க்குப் போகும். அனுப்புநர்: எ.கா. `login@hudaguidance.com`.
 - Admin dashboard login-உம் அதே SMTP வழியாகப் போகும் — பாதிப்பு இல்லை.
 
 ### 7.3 Privacy policy
-இன்று site-ல் privacy policy பக்கம் **இல்லை**. Login-க்கு முன் தேவை (Google OAuth consent screen, Apple, App Store எல்லாம் கேட்கும்). அதில்:
+இன்று (2026-11-21) site-ல் privacy policy பக்கம் இன்னும் **இல்லை** (`src/app/`-ல் route இல்லை). Login-க்கு முன் தேவை (Google OAuth consent screen, Apple, App Store எல்லாம் கேட்கும்). அதில்:
 - என்ன சேமிக்கிறோம் (email, பெயர், login வழி; படித்த இடம், bookmarks, settings, reminder நேரங்கள்).
 - என்ன **சேமிக்கவில்லை** (இடம் / location server-க்குப் போகாது; analytics anonymous, account-உடன் இணைக்கப்படாது).
 - எங்கே (Supabase; region), யாருடன் பகிர்கிறோம் (யாருடனும் இல்லை; email அனுப்ப Brevo).
@@ -236,9 +240,9 @@ Owner-ன் இப்போதைய mobile app **Firebase** (Blaze plan).
 | Phase | என்ன | தோராய வேலை | Owner தர வேண்டியது |
 | :--- | :--- | :--- | :--- |
 | **0. முடிவுகள்** | இந்த ஆவணத்தில் §9 பதில்கள் | — | §9 |
-| **1. Login அடித்தளம் (web)** | Privacy policy பக்கம்; Brevo SMTP + DNS; Supabase Auth: Google + email; Settings அட்டை, sign-in sheet, account பக்கம், logout, **account நீக்கம்**; lazy-load | 2–3 நாள் | Google Cloud OAuth client; Brevo கணக்கு; GoDaddy DNS அணுகல் |
+| **1. Login அடித்தளம் (web)** | Privacy policy பக்கம்; Brevo SMTP + DNS; Supabase Auth: Google + email; Settings அட்டை, sign-in sheet, account பக்கம், logout, **account நீக்கம்**; lazy-load | 2–3 நாள் | Google Cloud OAuth client; Brevo கணக்கு; Cloudflare DNS அணுகல் |
 | **2. Last read + bookmarks sync** | Tables + RLS, முதல்-login இணைப்பு, "இங்கிருந்து தொடரவா?", offline queue | 2–3 நாள் | Preview-ல் இரண்டு சாதனங்களில் சோதனை |
-| **3. எல்லா settings + reminders sync** | `user_settings`, `huda:sync-meta`, §4 அட்டவணைப்படி; reminders tables-ஐ `user_id`-உடன் இணைத்தல் | 2 நாள் | — |
+| **3. எல்லா settings + reminders sync** | `user_settings`, `huda:sync-meta`, §4 அட்டவணைப்படி; `huda-reminders` sync; `push_subscriptions.user_id` (column ஏற்கனவே உள்ளது) நிரப்புதல் | 2 நாள் | — |
 | **4. Apple sign-in (web)** | Services ID, `.p8` key, 6-மாத secret நினைவூட்டல், relay email | 1 நாள் | Apple Developer கணக்கு ($99) |
 | **5. Mobile app** | App-ல் Supabase SDK, native Google + Apple; Firebase-ல் login users இருந்தால் migration அல்லது bridge | App திட்டத்தோடு; migration இருந்தால் +2–4 நாள் | Firebase users எண்ணிக்கை; app எந்த தொழில்நுட்பம் (Swift / Kotlin / Flutter / React Native) |
 
@@ -252,7 +256,7 @@ Phase 4-ஐ Phase 1-உடன் சேர்க்கலாம் — Apple க
 2. இப்போதைய **Firebase mobile app-ல் login உண்டா? எத்தனை users?** (இல்லை / குறைவு என்றால் migration தேவையில்லை)
 3. **Apple Developer கணக்கு** ($99/ஆண்டு) — ஏற்கனவே உண்டா? எந்தப் பெயரில் (தனிநபர் / நிறுவனம்)?
 4. **Brevo** கணக்கு (இலவசம்) உருவாக்க ஒப்புதல்; அனுப்புநர் முகவரி (எ.கா. `login@hudaguidance.com`).
-5. **Google Cloud** OAuth consent screen-க்கு: app பெயர் "HuDa", logo, support email.
+5. **Google Cloud** OAuth consent screen-க்கு: app பெயர் "HuDa", logo (`public/Huda_Logo_Master.png`-லிருந்து resize), support email.
 6. Privacy policy-ல் போட **தொடர்பு email**.
 7. Logout-ல் default: "இந்தச் சாதனத்தில் வைத்திரு" — சரியா?
 8. எழுத்து அளவு phone / desktop தனித்தனி, location sync இல்லை — சரியா?
