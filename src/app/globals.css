@@ -1011,14 +1011,3 @@ input[type="search"]::-webkit-search-results-decoration {
 @media (prefers-reduced-motion: reduce) {
   .huda-play-sun.is-playing .huda-play-wave { animation: none; }
 }
-
-/* Tour card: a small field of arches in the top-right corner (no stars). */
-.huda-tour-arches {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 11V6.5a4 4 0 0 1 8 0V11' fill='none' stroke='%23fde68a' stroke-width='1'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-position: right top;
-  background-size: 12px 12px;
-  opacity: 0.22;
-  -webkit-mask-image: radial-gradient(ellipse 100% 100% at 100% 0%, #000 20%, transparent 85%);
-  mask-image: radial-gradient(ellipse 100% 100% at 100% 0%, #000 20%, transparent 85%);
-}

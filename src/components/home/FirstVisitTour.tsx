@@ -319,9 +319,35 @@ export function FirstVisitTour() {
         style={{ width: cardW, transform: `translate3d(${cardX}px, ${cardY}px, 0)` }}
       >
         <div className="relative overflow-hidden rounded-[22px] border border-amber-200/25 bg-[#0d0b08]/[0.92] px-5 pb-4 pt-4 text-sand-50 shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,236,190,0.08)] backdrop-blur-xl">
-          {/* A small field of arches in the top-right corner, fading out before
-              it reaches the title and text. */}
-          <div className="huda-tour-arches pointer-events-none absolute right-0 top-0 h-[68px] w-[120px]" aria-hidden="true" />
+          {/* A soft flower (rounded petals) peeking in from the top-right
+              corner; it stays in the corner, clear of the title and text. */}
+          <svg
+            className="pointer-events-none absolute -right-[46px] -top-[46px] h-[124px] w-[124px] text-amber-200/[0.16]"
+            viewBox="0 0 120 120"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            aria-hidden="true"
+          >
+            <ellipse key="o0" cx="60" cy="30" rx="11" ry="26" transform="rotate(0 60 60)" />
+            <ellipse key="o1" cx="60" cy="30" rx="11" ry="26" transform="rotate(45 60 60)" />
+            <ellipse key="o2" cx="60" cy="30" rx="11" ry="26" transform="rotate(90 60 60)" />
+            <ellipse key="o3" cx="60" cy="30" rx="11" ry="26" transform="rotate(135 60 60)" />
+            <ellipse key="o4" cx="60" cy="30" rx="11" ry="26" transform="rotate(180 60 60)" />
+            <ellipse key="o5" cx="60" cy="30" rx="11" ry="26" transform="rotate(225 60 60)" />
+            <ellipse key="o6" cx="60" cy="30" rx="11" ry="26" transform="rotate(270 60 60)" />
+            <ellipse key="o7" cx="60" cy="30" rx="11" ry="26" transform="rotate(315 60 60)" />
+            <ellipse key="i0" cx="60" cy="44" rx="6" ry="14" transform="rotate(22.5 60 60)" />
+            <ellipse key="i1" cx="60" cy="44" rx="6" ry="14" transform="rotate(67.5 60 60)" />
+            <ellipse key="i2" cx="60" cy="44" rx="6" ry="14" transform="rotate(112.5 60 60)" />
+            <ellipse key="i3" cx="60" cy="44" rx="6" ry="14" transform="rotate(157.5 60 60)" />
+            <ellipse key="i4" cx="60" cy="44" rx="6" ry="14" transform="rotate(202.5 60 60)" />
+            <ellipse key="i5" cx="60" cy="44" rx="6" ry="14" transform="rotate(247.5 60 60)" />
+            <ellipse key="i6" cx="60" cy="44" rx="6" ry="14" transform="rotate(292.5 60 60)" />
+            <ellipse key="i7" cx="60" cy="44" rx="6" ry="14" transform="rotate(337.5 60 60)" />
+            <circle cx="60" cy="60" r="7" />
+            <circle cx="60" cy="60" r="2.5" fill="currentColor" />
+          </svg>
 
           <div aria-live="polite" className="relative">
             <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-amber-200/60">
