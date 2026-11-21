@@ -22,7 +22,7 @@ recitation moves again. (`?debug=audio` shows the on-phone log.)
 
 ### Added 2026-11-20 (Support HuDa — after Ko-fi verification)
 - [ ] Ko-fi live: once the PayPal behind ko-fi.com/sarfpearl is verified and the page shows a Donate box, set `NEXT_PUBLIC_SUPPORT_KOFI_URL=https://ko-fi.com/sarfpearl` in Vercel (Production + Preview) and redeploy — the India / Other countries switch then appears with no code change.
-- [ ] Ko-fi gifts on the admin dashboard: Ko-fi webhook → a small `/api/kofi` route (checks Ko-fi's verification token, kept only in Vercel env) → Supabase table → list of real gifts (name given, amount, time, message) on /admin/dashboard. UPI stays tries-only (support_taps); UPI payments themselves are only in GPay / the bank app.
+- [x] Ko-fi gifts on the admin dashboard (done 2026-11-21, PR #279 — webhook live, test tip showed on the card): Ko-fi webhook → a small `/api/kofi` route (checks Ko-fi's verification token, kept only in Vercel env) → Supabase table → list of real gifts (name given, amount, time, message) on /admin/dashboard. UPI stays tries-only (support_taps); UPI payments themselves are only in GPay / the bank app.
 
 ### Added 2026-11-18 (Google Search — plan in `docs/SEO_PLAN.md`)
 
