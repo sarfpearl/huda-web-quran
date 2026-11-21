@@ -852,7 +852,8 @@ html:has([data-reading-page]) #huda-splash {
    (centred on each other) to the left of the logo, on its middle line; the
    pair centred on the screen */
 @media (orientation: landscape) and (max-height: 500px),
-  (orientation: landscape) and (pointer: coarse) and (max-width: 1400px) {
+  (orientation: landscape) and (pointer: coarse) and (max-width: 1400px),
+  (orientation: landscape) and (max-width: 1400px) and (max-aspect-ratio: 155/100) {
   .huda-splash-row {
     display: flex;
     flex-direction: row-reverse;
