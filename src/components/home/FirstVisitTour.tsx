@@ -7,7 +7,7 @@ import { useUiLang, isRtl } from "@/lib/uiLang";
 import { tourT } from "@/lib/i18n/tour";
 import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
-import { OPEN_TOUR_EVENT, TOUR_DONE_KEY, TOUR_STEPS, type TourStep } from "@/lib/tour/steps";
+import { OPEN_TOUR_EVENT, TIP_STEPS, TOUR_DONE_KEY, TOUR_STEPS, TOUR_TIP_EVENT, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
 
 /*
@@ -59,6 +59,22 @@ function markDone() {
 }
 
 /** The step's control as it is on screen, or null when it isn't shown. */
+const tipKey = (name: string) => `huda-tip-${name}`;
+function tipSeen(name: string) {
+  try {
+    return localStorage.getItem(tipKey(name)) === "1";
+  } catch {
+    return false;
+  }
+}
+function markTipSeen(name: string) {
+  try {
+    localStorage.setItem(tipKey(name), "1");
+  } catch {
+    /* private mode: shown again next visit */
+  }
+}
+
 function findTarget(name: string): HTMLElement | null {
   for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)) {
     // A `display: contents` wrapper has no box: its first child is the control.
@@ -101,9 +117,13 @@ export function FirstVisitTour() {
   /** The lantern's hook now, and its speed (px/s). */
   const motion = useRef<{ cur: Point; vel: Point } | null>(null);
   const open = steps !== null;
+  /** A one-off tip (TIP_STEPS) is showing, not the tour: closing it leaves
+   *  the tour's own "done" and the onboarding stage alone. */
+  const tipRef = useRef(false);
   useDialogFocus(open, dialogRef);
 
   const start = useCallback(() => {
+    tipRef.current = false;
     const list = TOUR_STEPS.filter(present);
     setIndex(0);
     setSteps(list);
@@ -127,6 +147,28 @@ export function FirstVisitTour() {
     };
   }, [start]);
 
+  // One-off tips: once per browser, never over the tour, and only once the
+  // control is on screen (the action that shows it has only just run).
+  useEffect(() => {
+    const onTip = (e: Event) => {
+      const name = (e as CustomEvent<string>).detail;
+      const tip = TIP_STEPS[name];
+      if (!tip || tipSeen(name)) return;
+      window.setTimeout(() => {
+        if (tip.target && !findTarget(tip.target)) return;
+        setSteps((cur) => {
+          if (cur) return cur;
+          markTipSeen(name);
+          tipRef.current = true;
+          setIndex(0);
+          return [tip];
+        });
+      }, 350);
+    };
+    window.addEventListener(TOUR_TIP_EVENT, onTip);
+    return () => window.removeEventListener(TOUR_TIP_EVENT, onTip);
+  }, []);
+
   // Settings › App tour.
   useEffect(() => {
     window.addEventListener(OPEN_TOUR_EVENT, start);
@@ -134,12 +176,14 @@ export function FirstVisitTour() {
   }, [start]);
 
   const close = useCallback(() => {
-    markDone();
+    const wasTip = tipRef.current;
+    tipRef.current = false;
+    if (!wasTip) markDone();
     setSteps(null);
     setRect(null);
     goal.current = null;
     motion.current = null;
-    finishStage("tour");
+    if (!wasTip) finishStage("tour");
   }, []);
 
   const step = steps?.[index];
@@ -350,9 +394,11 @@ export function FirstVisitTour() {
           </svg>
 
           <div aria-live="polite" className="relative">
-            <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-amber-200/60">
-              {tourT(lang, "{n} of {total}", { n: index + 1, total })}
-            </p>
+            {total > 1 && (
+              <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-amber-200/60">
+                {tourT(lang, "{n} of {total}", { n: index + 1, total })}
+              </p>
+            )}
             <h2 id={titleId} className="text-[17px] font-semibold leading-snug text-amber-100">
               {tourT(lang, step.title)}
             </h2>
@@ -361,8 +407,9 @@ export function FirstVisitTour() {
             </p>
           </div>
 
-          {/* Beads (a tasbih), one per step: the lit one is here. */}
-          <div className="relative mt-3.5 flex items-center gap-[5px]" aria-hidden="true">
+          {/* Beads (a tasbih), one per step: the lit one is here. A one-card
+              tip has none, nor a counter. */}
+          <div className={`relative mt-3.5 items-center gap-[5px] ${total > 1 ? "flex" : "hidden"}`} aria-hidden="true">
             {steps!.map((_, i) => (
               <span
                 key={i}

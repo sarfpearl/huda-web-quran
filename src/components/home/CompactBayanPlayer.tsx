@@ -664,35 +664,6 @@ export function CompactBayanPlayer({
     else seekToTime(Math.min(Math.max(currentTime + dir * 5, 0), totalDuration || 0));
   };
 
-  // Rail only, and only when it is tall enough (not a phone turned sideways):
-  // previous / next ayah — or page, in reading mode — beside |< / >|.
-  const railStep = (dir: -1 | 1) => {
-    const onStep = pageNav
-      ? () => pageNav.onStep(dir)
-      : dir < 0 ? onPrevVerse : onNextVerse;
-    if (!onStep) return null;
-    const disabled = pageNav
-      ? dir < 0 ? pageNav.page <= pageNav.first : pageNav.page >= pageNav.last
-      : dir < 0 ? atFirstAyah : atLastAyah;
-    const label = pageNav
-      ? t(language, dir < 0 ? "Previous Page" : "Next Page")
-      : t(language, dir < 0 ? "Previous Ayah" : "Next Ayah");
-    const Icon = dir < 0 ? ArrowLeftDoubleIcon : ArrowRightDoubleIcon;
-    return (
-      <button
-        type="button"
-        onClick={() => { haptic(); onStep(); }}
-        disabled={disabled}
-        className={railStepBtn}
-        aria-label={label}
-        title={label}
-        data-tooltip={label}
-      >
-        <Icon className="text-base" />
-      </button>
-    );
-  };
-
   const ringPct = dragPct ?? Math.min(Math.max(juzProgressPct, 0), 100);
   const thumbAngle = (ringPct / 100) * 2 * Math.PI;
   // Compact pill hugs its controls at every size, spaced exactly like the full
@@ -722,8 +693,6 @@ export function CompactBayanPlayer({
           <PrevIcon className="text-lg" />
         </button>
 
-        {/* Tall rail (tablet / large landscape, not a phone): « previous ayah */}
-        {railStep(-1)}
 
         {/* Cover = play button, ringed by the seek bar — tap to play / pause, drag the ring to seek */}
         <div
@@ -817,9 +786,6 @@ export function CompactBayanPlayer({
         </div>
 
 
-
-        {/* Tall rail: next ayah » */}
-        {railStep(1)}
 
         <button
           type="button"
@@ -1488,12 +1454,6 @@ const NARROW_BTN = "max-[369px]:h-10 max-[369px]:w-10";
 
 const compactBtn =
   "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 phoneland:h-10 phoneland:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
-
-/** « » ayah steps on the side rail — shown only when the rail is tall
- *  (min-height 501px: a tablet or large landscape window; a phone turned
- *  sideways is ≤ 500px tall and keeps the 3-button rail). */
-const railStepBtn =
-  "hidden phoneland:[@media(min-height:501px)]:grid h-9 w-9 shrink-0 place-items-center rounded-full text-sand-100 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none";
 
 /** Side-rail Surah name. Fits → static and centred. Too long → slides to its
  *  end and back (pausing at each end) so the whole name can be read; reduced

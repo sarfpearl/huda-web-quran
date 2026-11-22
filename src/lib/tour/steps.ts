@@ -20,6 +20,7 @@ export const TOUR_STEPS: TourStep[] = [
   { target: "translation", title: "Translation", text: "Show the meaning under each ayah, in the language you choose." },
   { target: "tajweed", title: "Tajweed & script", text: "Colour the letters by their tajweed rules, or change the Quran script." },
   { target: "reciter", title: "Reciter", text: "Choose whose voice recites the Quran for you." },
+  { target: "text-only", title: "Text only", text: "Hide every button and keep only the ayah on the screen. Tap it again to bring them back." },
   { target: "reading", title: "Reading mode", text: "Read the whole Surah page by page, with the recited ayah lit." },
   { target: "browse", title: "Surahs, Juz & search", text: "Find any Surah, Juz or ayah — search by words, topic or voice. Settings are here too." },
   { target: "feedback", title: "Feedback", text: "Found a problem or have an idea? Tap the little lantern at the edge and tell us." },
@@ -36,3 +37,16 @@ export const TOUR_STEPS: TourStep[] = [
 export const TOUR_DONE_KEY = "huda-tour-done";
 /** Settings › App tour: shows it again. */
 export const OPEN_TOUR_EVENT = "huda:open-tour";
+
+/**
+ * One-off tips: a single lantern card for a control that only appears after
+ * an action (⤢ → the ⤡ that brings the controls back). Shown once per
+ * browser, the first time — `showTourTip(name)` from the action.
+ */
+export const TIP_STEPS: Record<string, TourStep> = {
+  "show-controls": { target: "show-controls", title: "Show the controls", text: "Everything is hidden now. Tap here to bring the buttons and the player back." },
+};
+export const TOUR_TIP_EVENT = "huda:tour-tip";
+export function showTourTip(name: string) {
+  window.dispatchEvent(new CustomEvent(TOUR_TIP_EVENT, { detail: name }));
+}

@@ -191,6 +191,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={focus.onToggle}
+            data-tour="show-controls"
             aria-label={t(language, "Show the controls")}
             data-tooltip={t(language, "Show the controls")}
             className={FOCUS_BTN}
@@ -218,6 +219,7 @@ export function ImmersiveHeader({
           <button
             type="button"
             onClick={focus.onToggle}
+            data-tour="text-only"
             aria-label={t(language, "Show only the text")}
             data-tooltip={t(language, "Show only the text")}
             className={`max-[379px]:hidden ${FOCUS_BTN}`}
