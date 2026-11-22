@@ -68,17 +68,6 @@ const strings: Strings = {
   "Privacy policy": { ta: "தனியுரிமைக் கொள்கை", ur: "رازداری کی پالیسی", ml: "സ്വകാര്യതാ നയം", hi: "निजता नीति", id: "Kebijakan privasi", bn: "গোপনীয়তা নীতি", tr: "Gizlilik politikası", fr: "Politique de confidentialité", ms: "Dasar privasi" },
   "Signed in with Google": { ta: "Google மூலம் உள்நுழைந்துள்ளீர்கள்", ur: "Google سے سائن اِن", ml: "Google ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്തു", hi: "Google से साइन इन", id: "Masuk dengan Google", bn: "Google দিয়ে সাইন ইন", tr: "Google ile giriş yapıldı", fr: "Connecté avec Google", ms: "Log masuk dengan Google" },
   "Signed in with email": { ta: "Email மூலம் உள்நுழைந்துள்ளீர்கள்", ur: "ای میل سے سائن اِن", ml: "ഇമെയിൽ ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്തു", hi: "ईमेल से साइन इन", id: "Masuk dengan email", bn: "ইমেইল দিয়ে সাইন ইন", tr: "E-posta ile giriş yapıldı", fr: "Connecté par e-mail", ms: "Log masuk dengan e-mel" },
-  "Keeping your reading on every device is coming soon, in sha Allah.": {
-    ta: "எல்லா சாதனங்களிலும் உங்கள் படிப்பைச் சேமிப்பது விரைவில் வரும், இன் ஷா அல்லாஹ்.",
-    ur: "ہر آلے پر آپ کی تلاوت محفوظ رکھنا جلد آ رہا ہے، ان شاء اللہ۔",
-    ml: "എല്ലാ ഉപകരണങ്ങളിലും നിങ്ങളുടെ വായന സൂക്ഷിക്കുന്നത് ഉടൻ വരും, ഇൻ ഷാ അല്ലാഹ്.",
-    hi: "हर डिवाइस पर आपकी पढ़ाई सहेजना जल्द आ रहा है, इन शा अल्लाह।",
-    id: "Menyimpan bacaan Anda di setiap perangkat segera hadir, insya Allah.",
-    bn: "সব ডিভাইসে আপনার পড়া সংরক্ষণ শিগগিরই আসছে, ইনশাআল্লাহ।",
-    tr: "Okumanızı her cihazda saklama yakında geliyor, inşallah.",
-    fr: "Retrouver votre lecture sur chaque appareil arrive bientôt, in sha Allah.",
-    ms: "Menyimpan bacaan anda di setiap peranti akan datang tidak lama lagi, insya-Allah.",
-  },
   "Sign out": { ta: "வெளியேறு", ur: "سائن آؤٹ", ml: "സൈൻ ഔട്ട്", hi: "साइन आउट", id: "Keluar", bn: "সাইন আউট", tr: "Çıkış yap", fr: "Se déconnecter", ms: "Log keluar" },
   "Delete account": { ta: "கணக்கை நீக்கு", ur: "اکاؤنٹ حذف کریں", ml: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", hi: "अकाउंट हटाएँ", id: "Hapus akun", bn: "অ্যাকাউন্ট মুছুন", tr: "Hesabı sil", fr: "Supprimer le compte", ms: "Padam akaun" },
   "This deletes your account and everything saved with it. What is on this device stays. This can't be undone.": {
@@ -124,5 +113,12 @@ const strings: Strings = {
     ms: "Buka pautan dalam pelayar yang sama tempat anda memintanya.",
   },
   "Back to HuDa": { ta: "HuDa-வுக்குத் திரும்பு", ur: "HuDa پر واپس", ml: "HuDa-യിലേക്ക് മടങ്ങുക", hi: "HuDa पर वापस", id: "Kembali ke HuDa", bn: "HuDa-তে ফিরুন", tr: "HuDa'ya dön", fr: "Retour à HuDa", ms: "Kembali ke HuDa" },
+  Synced: { ta: "சேமிக்கப்பட்டது", ur: "محفوظ ہو گیا", ml: "സമന്വയിപ്പിച്ചു", hi: "सिंक हो गया", id: "Tersinkron", bn: "সিঙ্ক হয়েছে", tr: "Eşitlendi", fr: "Synchronisé", ms: "Disegerakkan" },
+  "Syncing…": { ta: "சேமிக்கிறது…", ur: "محفوظ ہو رہا ہے…", ml: "സമന്വയിപ്പിക്കുന്നു…", hi: "सिंक हो रहा है…", id: "Menyinkronkan…", bn: "সিঙ্ক হচ্ছে…", tr: "Eşitleniyor…", fr: "Synchronisation…", ms: "Menyegerakkan…" },
+  "Not synced yet — will try again.": { ta: "இன்னும் சேமிக்கவில்லை — மீண்டும் முயலும்.", ur: "ابھی محفوظ نہیں ہوا — دوبارہ کوشش ہو گی۔", ml: "ഇതുവരെ സമന്വയിപ്പിച്ചില്ല — വീണ്ടും ശ്രമിക്കും.", hi: "अभी सिंक नहीं हुआ — फिर कोशिश होगी।", id: "Belum tersinkron — akan dicoba lagi.", bn: "এখনও সিঙ্ক হয়নি — আবার চেষ্টা হবে।", tr: "Henüz eşitlenmedi — tekrar denenecek.", fr: "Pas encore synchronisé — nouvel essai bientôt.", ms: "Belum disegerakkan — akan cuba lagi." },
+  "Your last read, bookmarks and settings follow you on every device.": { ta: "கடைசியாகப் படித்த இடம், bookmarks, settings உங்கள் எல்லா சாதனங்களிலும் கிடைக்கும்.", ur: "آخری پڑھی ہوئی جگہ، بُک مارکس اور سیٹنگز ہر ڈیوائس پر آپ کے ساتھ ہیں۔", ml: "അവസാനം വായിച്ച സ്ഥലം, ബുക്ക്‌മാർക്കുകൾ, സെറ്റിംഗ്സ് എല്ലാ ഉപകരണങ്ങളിലും ലഭിക്കും.", hi: "आख़िरी पढ़ी जगह, बुकमार्क और सेटिंग्स हर डिवाइस पर आपके साथ हैं।", id: "Bacaan terakhir, penanda, dan pengaturan Anda ikut di setiap perangkat.", bn: "শেষ পড়া জায়গা, বুকমার্ক আর সেটিংস সব ডিভাইসে আপনার সাথে থাকে।", tr: "Son okuduğunuz yer, yer imleri ve ayarlar her cihazda sizinle.", fr: "Votre dernière lecture, vos signets et vos réglages vous suivent sur chaque appareil.", ms: "Bacaan terakhir, penanda dan tetapan anda ikut di setiap peranti." },
+  "Keep your last read and bookmarks on this device?": { ta: "கடைசியாகப் படித்த இடமும் bookmarks-உம் இந்தச் சாதனத்தில் இருக்கட்டுமா?", ur: "آخری پڑھی ہوئی جگہ اور بُک مارکس اس ڈیوائس پر رہیں؟", ml: "അവസാനം വായിച്ച സ്ഥലവും ബുക്ക്‌മാർക്കുകളും ഈ ഉപകരണത്തിൽ സൂക്ഷിക്കണോ?", hi: "आख़िरी पढ़ी जगह और बुकमार्क इस डिवाइस पर रहें?", id: "Simpan bacaan terakhir dan penanda di perangkat ini?", bn: "শেষ পড়া জায়গা আর বুকমার্ক এই ডিভাইসে থাকবে?", tr: "Son okuduğunuz yer ve yer imleri bu cihazda kalsın mı?", fr: "Garder votre dernière lecture et vos signets sur cet appareil ?", ms: "Simpan bacaan terakhir dan penanda di peranti ini?" },
+  "Keep on this device": { ta: "இந்தச் சாதனத்தில் வை", ur: "اس ڈیوائس پر رکھیں", ml: "ഈ ഉപകരണത്തിൽ സൂക്ഷിക്കുക", hi: "इस डिवाइस पर रखें", id: "Simpan di perangkat ini", bn: "এই ডিভাইসে রাখুন", tr: "Bu cihazda tut", fr: "Garder sur cet appareil", ms: "Simpan di peranti ini" },
+  "Remove from this device": { ta: "இந்தச் சாதனத்திலிருந்து நீக்கு", ur: "اس ڈیوائس سے ہٹائیں", ml: "ഈ ഉപകരണത്തിൽ നിന്ന് നീക്കുക", hi: "इस डिवाइस से हटाएँ", id: "Hapus dari perangkat ini", bn: "এই ডিভাইস থেকে সরান", tr: "Bu cihazdan kaldır", fr: "Retirer de cet appareil", ms: "Buang dari peranti ini" },
 };
 export default strings;

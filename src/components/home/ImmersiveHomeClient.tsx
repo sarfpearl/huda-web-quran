@@ -49,7 +49,9 @@ import {
   type PlaceDetail,
   type TranslationLang,
 } from "@/lib/data/translations";
-import { bookmarkId, loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/lastRead";
+import { READING_SYNCED_EVENT, bookmarkId, loadBookmarks, saveBookmarks, type Bookmark } from "@/lib/lastRead";
+import { accountHint } from "@/lib/auth/account";
+import { startSync } from "@/lib/auth/sync";
 import { deepLinkMeta, deepLinkPath, type DeepLink } from "@/lib/deepLink";
 import { siteConfig } from "@/lib/site";
 import {
@@ -1556,7 +1558,15 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // at the first ayah on screen; with bookmarks on screen, tapping takes them
   // out. Otherwise it marks / unmarks the ayah being recited.
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  useEffect(() => setBookmarks(loadBookmarks().slice(0, 1)), []);
+  useEffect(() => {
+    const load = () => setBookmarks(loadBookmarks().slice(0, 1));
+    load();
+    // The optional account brought a newer bookmark from another device.
+    window.addEventListener(READING_SYNCED_EVENT, load);
+    // Signed in on this browser: keep the reading and settings in step.
+    if (accountHint()) startSync();
+    return () => window.removeEventListener(READING_SYNCED_EVENT, load);
+  }, []);
   const updateBookmarks = (next: Bookmark[]) => {
     setBookmarks(next);
     saveBookmarks(next);
