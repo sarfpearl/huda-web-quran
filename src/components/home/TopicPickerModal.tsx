@@ -868,7 +868,12 @@ export function TopicPickerModal({
               <SearchStuckProvider value={setSearchStuck}>
               <div
                 ref={scrollWrapRef}
-                className={wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]"}
+                className={cn(
+                  wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]",
+                  // Phones: the list runs on to the panel's bottom edge, not cut
+                  // short by the panel's bottom padding (keyboard closed only).
+                  wholeScroll && !isFavourites && !(kb.bottom > 0) && "-mb-[max(0.75rem,env(safe-area-inset-bottom))]",
+                )}
                 onScrollCapture={(ev) => setPanelScrolled((ev.target as HTMLElement).scrollTop > 0)}
               >
               {settingsPage === "language" ? (
@@ -1047,6 +1052,9 @@ export function TopicPickerModal({
                       wholeScroll ? "space-y-2 pt-1" : "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1",
                       // Room for the About logo (and the mic) floating over the list's end.
                       !isFavourites && (voiceSupported ? "pb-36" : "pb-20"),
+                      // Larger screens: run on through the panel's bottom padding
+                      // to its edge; the bottom corners follow the panel's curve.
+                      !wholeScroll && !isFavourites && "-mb-4 rounded-b-[12px] sm:rounded-b-[24px] md:-mb-6 md:rounded-b-[16px]",
                     )}
                   >
                     {/* BROWSE (box empty): the selected tab's full list. */}
@@ -1159,7 +1167,13 @@ export function TopicPickerModal({
 
                   {/* Voice search: a floating gold button over the list (phones:
                       held at the panel's bottom edge while the panel scrolls). */}
-                  <div className={wholeScroll ? "pointer-events-none sticky bottom-0 z-10 -mt-20 h-20" : "contents"}>
+                  <div
+                    className={cn(
+                      wholeScroll ? "pointer-events-none sticky bottom-0 z-10 -mt-20 h-20" : "contents",
+                      // Keep the mic/logo above the home bar now the list runs to the edge.
+                      wholeScroll && !isFavourites && !(kb.bottom > 0) && "bottom-[max(0.75rem,env(safe-area-inset-bottom))]",
+                    )}
+                  >
                   {!isFavourites && voiceSupported && dictationHint && (
                     <p
                       role="status"
