@@ -838,19 +838,6 @@ export function TopicPickerModal({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                {/* Phone landscape: « About HuDa » as the logo here, not the footer row */}
-                {!isFavourites && !showAbout && !showSettings && (
-                  <button
-                    type="button"
-                    onClick={() => setView("about")}
-                    className="tap-44 pointer-events-auto hidden h-10 w-10 place-items-center overflow-hidden rounded-full bg-white/10 transition-colors hover:bg-white/20 cursor-pointer active:scale-90 phoneland:grid"
-                    aria-label={t(lang, "About HuDa Web Quran")}
-                    data-tooltip={t(lang, "About HuDa Web Quran")}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 rounded-full object-contain" />
-                  </button>
-                )}
                 {!isFavourites && !showSettings && (
                   <button
                     type="button"
@@ -881,7 +868,12 @@ export function TopicPickerModal({
               <SearchStuckProvider value={setSearchStuck}>
               <div
                 ref={scrollWrapRef}
-                className={wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]"}
+                className={cn(
+                  wholeScroll ? "no-scrollbar -mx-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 [&>*]:shrink-0" : "contents [&>*]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]",
+                  // Phones: the list runs on to the panel's bottom edge, not cut
+                  // short by the panel's bottom padding (keyboard closed only).
+                  wholeScroll && !isFavourites && !(kb.bottom > 0) && "-mb-[max(0.75rem,env(safe-area-inset-bottom))]",
+                )}
                 onScrollCapture={(ev) => setPanelScrolled((ev.target as HTMLElement).scrollTop > 0)}
               >
               {settingsPage === "language" ? (
@@ -1058,7 +1050,11 @@ export function TopicPickerModal({
                     }}
                     className={cn(
                       wholeScroll ? "space-y-2 pt-1" : "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1",
-                      !isFavourites && voiceSupported && "pb-20",
+                      // Room for the About logo (and the mic) floating over the list's end.
+                      !isFavourites && (voiceSupported ? "pb-36" : "pb-20"),
+                      // Larger screens: run on through the panel's bottom padding
+                      // to its edge; the bottom corners follow the panel's curve.
+                      !wholeScroll && !isFavourites && "-mb-4 rounded-b-[12px] sm:rounded-b-[24px] md:-mb-6 md:rounded-b-[16px]",
                     )}
                   >
                     {/* BROWSE (box empty): the selected tab's full list. */}
@@ -1171,11 +1167,17 @@ export function TopicPickerModal({
 
                   {/* Voice search: a floating gold button over the list (phones:
                       held at the panel's bottom edge while the panel scrolls). */}
-                  <div className={wholeScroll ? "pointer-events-none sticky bottom-0 z-10 -mt-20 h-20" : "contents"}>
+                  <div
+                    className={cn(
+                      wholeScroll ? "pointer-events-none sticky bottom-0 z-10 -mt-20 h-20" : "contents",
+                      // Keep the mic/logo above the home bar now the list runs to the edge.
+                      wholeScroll && !isFavourites && !(kb.bottom > 0) && "bottom-[max(0.75rem,env(safe-area-inset-bottom))]",
+                    )}
+                  >
                   {!isFavourites && voiceSupported && dictationHint && (
                     <p
                       role="status"
-                      className="pointer-events-auto absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
+                      className="pointer-events-auto absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] right-20rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
                     >
                       {/* The keyboard's own mic, drawn where {mic} stands. */}
                       {t(lang, "Tap {mic} on the keyboard to search by voice.")
@@ -1200,34 +1202,29 @@ export function TopicPickerModal({
                       )}
                     </button>
                   )}
+                  {/* « About HuDa »: the logo floats just above the mic, the same
+                      size, on every screen — hidden while searching, when the
+                      keyboard leaves the results little room. */}
+                  {!isFavourites && !(kb.bottom > 0 || searchQuery.trim()) && (
+                    <button
+                      type="button"
+                      onClick={() => setView("about")}
+                      className={cn(
+                        "pointer-events-auto absolute right-3 z-10 grid h-14 w-14 place-items-center overflow-hidden rounded-full bg-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.4)] ring-1 ring-white/15 backdrop-blur-md transition-colors hover:bg-white/20 cursor-pointer active:scale-90",
+                        voiceSupported ? "bottom-[4.75rem]" : "bottom-3",
+                      )}
+                      aria-label={t(lang, "About HuDa Web Quran")}
+                      data-tooltip={t(lang, "About HuDa Web Quran")}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/huda-logo-circle.webp" alt="" width={56} height={56} className="h-14 w-14 rounded-full object-contain" />
+                    </button>
+                  )}
                   </div>
                   </div>
                 </>
               )}
 
-              {/* 5. Footer: « About HuDa » (the browser only) — not while
-                  searching, when the keyboard leaves the results little room */}
-              {!isFavourites && !showAbout && !showSettings && !(kb.bottom > 0 || searchQuery.trim()) && (
-                <button
-                  type="button"
-                  onClick={() => setView("about")}
-                  className={`mt-3 ${isMobile ? "mb-1.5" : ""} flex w-full shrink-0 items-center gap-3 phoneland:hidden rounded-full border border-white/10 bg-white/5 p-1.5 text-left hover:bg-white/10 transition-colors cursor-pointer`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-contain" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold text-white">
-                      {t(lang, "About HuDa Web Quran")}
-                    </span>
-                    <span className="block truncate text-[11px] text-sand-200/60">
-                      {ABOUT.appUrl || ABOUT.appNote
-                        ? t(lang, "The app · credits · feedback")
-                        : t(lang, "Credits · feedback")}
-                    </span>
-                  </span>
-                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/60" />
-                </button>
-              )}
               </div>
               </SearchStuckProvider>
             </motion.div>
