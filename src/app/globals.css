@@ -1032,3 +1032,11 @@ input[type="search"]::-webkit-search-results-decoration {
 @media (prefers-reduced-motion: reduce) {
   .huda-play-sun.is-playing .huda-play-wave { animation: none; }
 }
+
+/* Side-rail Surah name (CompactBayanPlayer RailTitle): slide to the end of a
+   long name, pause, slide back, pause. */
+@keyframes huda-rail-marquee {
+  0%, 18% { transform: translateX(0); }
+  50%, 68% { transform: translateX(var(--rail-shift, 0)); }
+  100% { transform: translateX(0); }
+}
