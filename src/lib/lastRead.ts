@@ -12,6 +12,22 @@ export interface LastRead {
 
 const KEY = "huda:last-read";
 
+/**
+ * Fired (on window) when the reader changes the last read or the bookmarks
+ * here, so the optional account sync (lib/account) can send them on.
+ */
+export const READING_CHANGED_EVENT = "huda:reading-changed";
+/** Fired when the account sync wrote newer copies from another device. */
+export const READING_SYNCED_EVENT = "huda:reading-synced";
+
+function changed() {
+  try {
+    window.dispatchEvent(new Event(READING_CHANGED_EVENT));
+  } catch {
+    /* no window */
+  }
+}
+
 function load(key: string): LastRead | null {
   try {
     const v = JSON.parse(localStorage.getItem(key) ?? "null");
@@ -26,8 +42,14 @@ function load(key: string): LastRead | null {
 export const loadLastRead = () => load(KEY);
 
 export function saveLastRead(surah: number, ayah: number) {
+  writeLastRead({ surah, ayah, at: Date.now() });
+  changed();
+}
+
+/** Stores a position as it is (the sync's copy from another device). */
+export function writeLastRead(v: LastRead) {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ surah, ayah, at: Date.now() }));
+    localStorage.setItem(KEY, JSON.stringify(v));
   } catch {
     /* storage unavailable */
   }
@@ -50,6 +72,8 @@ export interface Bookmark {
 
 const BOOKMARKS_KEY = "huda:bookmarks";
 const OLD_BOOKMARK_KEY = "huda:bookmark"; // single bookmark, before the list
+// When the list last changed (epoch ms), so a removal syncs too.
+const BOOKMARKS_AT_KEY = "huda:bookmarks-at";
 
 export const bookmarkId = (b: Pick<Bookmark, "kind" | "juz" | "surah" | "ayah">) =>
   `${b.kind}${b.kind === "juz" ? b.juz : ""}:${b.surah}:${b.ayah}`;
@@ -80,9 +104,37 @@ export function loadBookmarks(): Bookmark[] {
 }
 
 export function saveBookmarks(list: Bookmark[]) {
+  writeBookmarks(list, Date.now());
+  changed();
+}
+
+/** Stores a list with the time it changed (the sync's copy from another device). */
+export function writeBookmarks(list: Bookmark[], at: number) {
   try {
     localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(list));
+    localStorage.setItem(BOOKMARKS_AT_KEY, String(at));
     localStorage.removeItem(OLD_BOOKMARK_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/** When the bookmark list last changed here: saved since 2026-11-22, else its newest bookmark. */
+export function loadBookmarksAt(): number {
+  try {
+    const at = Number(localStorage.getItem(BOOKMARKS_AT_KEY));
+    if (at > 0) return at;
+  } catch {
+    /* storage unavailable */
+  }
+  return loadBookmarks().reduce((m, b) => Math.max(m, Number(b.at) || 0), 0);
+}
+
+/** Removes the last read and the bookmarks from this browser (sign-out: "remove from this device"). */
+export function clearReading() {
+  try {
+    for (const k of [KEY, BOOKMARKS_KEY, BOOKMARKS_AT_KEY, OLD_BOOKMARK_KEY]) localStorage.removeItem(k);
+    window.dispatchEvent(new Event(READING_SYNCED_EVENT));
   } catch {
     /* storage unavailable */
   }

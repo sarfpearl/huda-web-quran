@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRightIcon, CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
-import { t, useUiLang } from "@/lib/uiLang";
+import { t, uiLocale, useUiLang } from "@/lib/uiLang";
 import {
   authWays,
   deleteAccount,
   getAccount,
+  googleRedirectOnly,
   onAccountChange,
+  renderGoogleButton,
   sendEmailLink,
   signInWithGoogle,
   signOut,
@@ -17,6 +19,7 @@ import {
   type AuthWays,
   type EmailLinkResult,
 } from "@/lib/auth/account";
+import { flushBeforeSignOut, forgetThisDevice, startSync, useSyncState } from "@/lib/auth/sync";
 
 /*
  * Settings › Account: the optional login (docs/LOGIN_STRATEGY.md, Phase 1).
@@ -121,6 +124,31 @@ function SignedOut() {
   // Unknown (offline / settings unreadable): offer both and let the call report.
   const googleOn = ways === undefined || ways === null || ways.google;
 
+  // Google's own button (this site's name on Google's screen); the redirect
+  // button where it can't work: Home-Screen app on iPhone, script blocked.
+  const gisRef = useRef<HTMLDivElement>(null);
+  const [redirect, setRedirect] = useState(false);
+  const [gisFailed, setGisFailed] = useState(false);
+  useEffect(() => setRedirect(googleRedirectOnly()), []);
+  useEffect(() => {
+    const el = gisRef.current;
+    if (!el || !googleOn || redirect || sentTo) return;
+    let live = true;
+    void renderGoogleButton(el, {
+      locale: uiLocale(lang),
+      width: el.clientWidth || 320,
+      onStart: () => live && setBusy("google"),
+      onDone: (ok) => {
+        if (!live) return;
+        setBusy(null);
+        if (!ok) setError(TRY_AGAIN);
+      },
+    }).then((ok) => live && !ok && setGisFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [googleOn, redirect, sentTo, lang]);
+
   return (
     <div className={SCROLL}>
       <div className={cn(GROUP, "py-4")}>
@@ -150,15 +178,29 @@ function SignedOut() {
         </div>
       ) : (
         <div className={cn(GROUP, "space-y-3 py-4")}>
-          <button
-            type="button"
-            onClick={google}
-            disabled={!googleOn || busy !== null}
-            className={cn(BIG_BTN, "border-white/15 bg-white text-slate-900 hover:bg-sand-50")}
-          >
-            <GoogleIcon className="text-lg" />
-            {t(lang, "Continue with Google")}
-          </button>
+          {googleOn && !redirect && (
+            <div
+              ref={gisRef}
+              aria-busy={busy === "google"}
+              className={cn("flex min-h-12 w-full justify-center [color-scheme:light]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
+            />
+          )}
+          {(!googleOn || redirect || gisFailed) && (
+            <button
+              type="button"
+              onClick={google}
+              disabled={!googleOn || busy !== null}
+              className={cn(BIG_BTN, "border-white/15 bg-white text-slate-900 hover:bg-sand-50")}
+            >
+              <GoogleIcon className="text-lg" />
+              {t(lang, "Continue with Google")}
+            </button>
+          )}
+          {busy === "google" && !redirect && !gisFailed && (
+            <p role="status" className="text-center text-xs text-sand-200/80">
+              {t(lang, "Signing you in…")}
+            </p>
+          )}
           {!googleOn && <p className="text-center text-[11px] text-sand-200/60">{t(lang, "Google sign-in isn't set up yet.")}</p>}
 
           <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-widest text-sand-200/40" aria-hidden="true">
@@ -206,8 +248,19 @@ function SignedOut() {
 function SignedIn({ account }: { account: Account }) {
   const lang = useUiLang();
   const [confirming, setConfirming] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const sync = useSyncState();
+
+  // Sign out: send what is still waiting, then keep or forget this device's copy.
+  const leave = async (keep: boolean) => {
+    setBusy(true);
+    await flushBeforeSignOut();
+    await signOut();
+    if (!keep) forgetThisDevice();
+    setBusy(false);
+  };
 
   const remove = async () => {
     setBusy(true);
@@ -233,18 +286,55 @@ function SignedIn({ account }: { account: Account }) {
       </div>
 
       <div className={cn(GROUP, "flex gap-3 py-3.5")}>
-        <CloudSavedIcon className="mt-0.5 shrink-0 text-lg text-sand-200/70" />
-        <p className="text-xs leading-relaxed text-sand-200/80">{t(lang, "Keeping your reading on every device is coming soon, in sha Allah.")}</p>
+        <CloudSavedIcon className={cn("mt-0.5 shrink-0 text-lg", sync === "synced" ? "text-emerald-300" : "text-sand-200/70")} />
+        <div className="min-w-0" aria-live="polite">
+          <p className="text-sm font-semibold text-white">
+            {t(lang, sync === "offline" ? "Not synced yet — will try again." : sync === "synced" ? "Synced" : "Syncing…")}
+          </p>
+          <p className="mt-0.5 text-xs leading-relaxed text-sand-200/80">
+            {t(lang, "Your last read, bookmarks and settings follow you on every device.")}
+          </p>
+        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => void signOut()}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-left text-sm font-semibold text-white transition-colors hover:bg-white/10 cursor-pointer active:scale-[0.99]"
-      >
-        {t(lang, "Sign out")}
-        <LogoutIcon className="text-lg text-sand-200/80" />
-      </button>
+      {leaving ? (
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+          <p className="text-xs leading-relaxed text-sand-100">{t(lang, "Keep your last read and bookmarks on this device?")}</p>
+          <div className="mt-3 flex flex-col gap-2">
+            {[true, false].map((keep) => (
+              <button
+                key={String(keep)}
+                type="button"
+                disabled={busy}
+                onClick={() => void leave(keep)}
+                className={cn(
+                  "h-10 rounded-full text-sm font-semibold transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60",
+                  keep ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400" : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                )}
+              >
+                {t(lang, keep ? "Keep on this device" : "Remove from this device")}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setLeaving(false)}
+              disabled={busy}
+              className="h-9 rounded-full text-xs font-semibold text-sand-200/80 hover:text-white cursor-pointer"
+            >
+              {t(lang, "Cancel")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setLeaving(true)}
+          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-left text-sm font-semibold text-white transition-colors hover:bg-white/10 cursor-pointer active:scale-[0.99]"
+        >
+          {t(lang, "Sign out")}
+          <LogoutIcon className="text-lg text-sand-200/80" />
+        </button>
+      )}
 
       {confirming ? (
         <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-4">
@@ -298,6 +388,8 @@ function SignedIn({ account }: { account: Account }) {
 /** Settings › Account. */
 export function AccountPage() {
   const account = useAccount();
+  // Signing in here (Google's pop-up) starts the sync without a page load.
+  useEffect(() => startSync(), []);
   if (account === undefined) return <div className={SCROLL} />;
   return account ? <SignedIn account={account} /> : <SignedOut />;
 }

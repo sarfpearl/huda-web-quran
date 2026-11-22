@@ -18,7 +18,7 @@ export const metadata: Metadata = {
  * after. Keep it in step with docs/LOGIN_STRATEGY.md §4 / §7.3.
  */
 
-const UPDATED = "21 November 2026";
+const UPDATED = "22 November 2026";
 
 function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
@@ -71,8 +71,8 @@ export default function PrivacyPage() {
         <Section heading="With an account (optional)">
           <p>
             You can sign in with Google or with a link sent to your email. We then store: your email address, your name
-            (if Google shares it), how you signed in, and — once syncing is switched on — your last read place,
-            bookmarks, settings and reminder times, so they follow you to every device.
+            (if Google shares it), how you signed in, and your last read place, bookmarks and settings (language,
+            translation, reciter, theme and similar), so they follow you to every device.
           </p>
           <p>
             We do <strong>not</strong> store your location, and the anonymous listening statistics are never linked to
@@ -120,7 +120,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               <strong>Account உடன் (விருப்பம்):</strong> Google அல்லது email link மூலம் sign in. சேமிப்பது: email, பெயர் (Google
-              தந்தால்), sign-in வழி; sync இயங்கியதும் படித்த இடம், bookmarks, settings, reminder நேரங்கள். இடம் (location)
+              தந்தால்), sign-in வழி; படித்த இடம், bookmarks, settings (மொழி, மொழிபெயர்ப்பு, reciter, theme போன்றவை). இடம் (location)
               சேமிக்கப்படாது; anonymous கேட்டல் புள்ளிவிவரங்கள் account-உடன் இணைக்கப்படாது.
             </p>
             <p>

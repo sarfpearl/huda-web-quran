@@ -29,7 +29,7 @@ import { READER_SCALES } from "./ImmersiveHeader";
 import { BookmarkIcon, CloseIcon, PrayerRugIcon } from "@/components/ui/Icon";
 import { isSajdah, isSajdahWord } from "@/lib/data/sajdah";
 import { fitWaqfWords, onFontsLoaded, waqfProps } from "@/lib/waqf";
-import { loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
+import { READING_SYNCED_EVENT, loadLastRead, saveLastRead, type LastRead } from "@/lib/lastRead";
 import { MUSHAF_PAGE_COUNT, MUSHAF_PAGE_STARTS, mushafPageOf } from "@/lib/data/mushafPages";
 import { surahNameIn, t, useUiLang, word } from "@/lib/uiLang";
 
@@ -497,7 +497,13 @@ export function ReadingView({
   // recited ayah while playing, or the ayah at the top of the view after
   // scrolling by hand — never the view merely opening somewhere.
   const [lastRead, setLastRead] = useState<LastRead | null>(null);
-  useEffect(() => setLastRead(loadLastRead()), []);
+  useEffect(() => {
+    const load = () => setLastRead(loadLastRead());
+    load();
+    // A newer place read on another device (the optional account's sync).
+    window.addEventListener(READING_SYNCED_EVENT, load);
+    return () => window.removeEventListener(READING_SYNCED_EVENT, load);
+  }, []);
   useEffect(() => {
     if (playing && active) saveLastRead(active.surah, active.ayah);
   }, [activeKey, playing]); // eslint-disable-line react-hooks/exhaustive-deps

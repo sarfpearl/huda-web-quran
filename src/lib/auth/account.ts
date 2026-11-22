@@ -16,6 +16,20 @@ export function loginEnabled(): boolean {
   return process.env.NEXT_PUBLIC_VERCEL_ENV !== "production";
 }
 
+/**
+ * True when this browser may have a session (Supabase's auth cookie), without
+ * loading the client: the home starts the sync only then, so guests never
+ * download it.
+ */
+export function accountHint(): boolean {
+  if (typeof document === "undefined") return false;
+  let ref = "";
+  try {
+    ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname.split(".")[0];
+  } catch {}
+  return Boolean(ref) && document.cookie.split("; ").some((c) => c.startsWith(`sb-${ref}-auth-token=`) || c.startsWith(`sb-${ref}-auth-token.`));
+}
+
 /** Where the sign-in link and Google send the browser back to. */
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 /** sessionStorage: the page to return to once signed in. */
@@ -29,7 +43,8 @@ export interface Account {
   provider: string;
 }
 
-async function client(): Promise<SupabaseClient | null> {
+/** The full Supabase client, imported on first use (null when not configured). */
+export async function client(): Promise<SupabaseClient | null> {
   const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
   return getSupabaseBrowserClient();
 }
@@ -38,11 +53,16 @@ function toAccount(user: User | null | undefined): Account | null {
   if (!user) return null;
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
   const name = typeof meta.full_name === "string" ? meta.full_name : typeof meta.name === "string" ? meta.name : "";
+  // The way in used last: an account made by email and later opened with
+  // Google keeps "email" as its first provider.
+  const ids = [...(user.identities ?? [])].sort(
+    (a, b) => (Date.parse(b.last_sign_in_at ?? "") || 0) - (Date.parse(a.last_sign_in_at ?? "") || 0),
+  );
   return {
     id: user.id,
     email: user.email ?? "",
     name,
-    provider: String(user.app_metadata?.provider ?? "email"),
+    provider: String(ids[0]?.provider ?? user.app_metadata?.provider ?? "email"),
   };
 }
 
@@ -110,6 +130,97 @@ export async function signInWithGoogle(): Promise<"redirecting" | "unconfigured"
     options: { redirectTo: callbackUrl(), queryParams: { prompt: "select_account" } },
   });
   return error ? "failed" : "redirecting";
+}
+
+/**
+ * Google's own sign-in (Google Identity Services) on this site: its button
+ * opens Google's window for www.hudaguidance.com itself and hands back an ID
+ * token that Supabase checks (`signInWithIdToken`). The address bar never
+ * shows the Supabase project, so Google's screen names our site — and, once
+ * Google has verified the brand, "HuDa Web Quran". The OAuth client is the
+ * one in Supabase › Google › Client IDs; its id is public.
+ */
+export const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "505836642709-ndeb9es3m18t6hbro2bum9p30gktvj88.apps.googleusercontent.com";
+
+interface GoogleId {
+  initialize(o: Record<string, unknown>): void;
+  renderButton(el: HTMLElement, o: Record<string, unknown>): void;
+}
+
+let gis: Promise<GoogleId | null> | null = null;
+function loadGis(): Promise<GoogleId | null> {
+  const ready = () => (window as unknown as { google?: { accounts?: { id?: GoogleId } } }).google?.accounts?.id ?? null;
+  gis ??= new Promise((resolve) => {
+    if (ready()) return resolve(ready());
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    const timer = setTimeout(() => resolve(null), 10_000);
+    s.onload = () => {
+      clearTimeout(timer);
+      resolve(ready());
+    };
+    s.onerror = () => {
+      clearTimeout(timer);
+      gis = null;
+      resolve(null);
+    };
+    document.head.appendChild(s);
+  });
+  return gis;
+}
+
+async function sha256Hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Installed on an iPhone's Home Screen, Google's pop-up can't hand back to the
+ * app: use the redirect sign-in there (it shows the Supabase address).
+ */
+export const googleRedirectOnly = () =>
+  typeof navigator !== "undefined" && (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+/**
+ * Draws Google's "Continue with Google" button into `el`. Resolves false when
+ * Google's script can't load (blocked / offline): show the redirect button.
+ */
+export async function renderGoogleButton(
+  el: HTMLElement,
+  o: { locale: string; width: number; onStart: () => void; onDone: (ok: boolean) => void },
+): Promise<boolean> {
+  const id = await loadGis();
+  if (!id || !el.isConnected) return false;
+  const raw = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const nonce = await sha256Hex(raw);
+  id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    nonce,
+    ux_mode: "popup",
+    context: "signin",
+    itp_support: true,
+    use_fedcm_for_button: true,
+    callback: async ({ credential }: { credential?: string }) => {
+      if (!credential) return o.onDone(false);
+      o.onStart();
+      const supabase = await client();
+      const r = await supabase?.auth.signInWithIdToken({ provider: "google", token: credential, nonce: raw });
+      o.onDone(Boolean(r && !r.error));
+    },
+  });
+  id.renderButton(el, {
+    type: "standard",
+    theme: "outline",
+    size: "large",
+    shape: "pill",
+    text: "continue_with",
+    logo_alignment: "center",
+    width: Math.max(200, Math.min(400, Math.round(o.width))),
+    locale: o.locale,
+  });
+  return true;
 }
 
 export type EmailLinkResult = "sent" | "invalid" | "rate" | "closed" | "failed" | "unconfigured";
