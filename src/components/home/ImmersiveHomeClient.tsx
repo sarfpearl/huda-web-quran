@@ -22,6 +22,7 @@ import { SupportGift } from "@/components/support/SupportGift";
 import { afterSplash, afterStage, onOnboardingDone } from "@/lib/onboarding";
 import { FeedbackLantern } from "@/components/feedback/FeedbackLantern";
 import { FirstVisitTour } from "./FirstVisitTour";
+import { showTourTip } from "@/lib/tour/steps";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { STANDALONE_SILENT, useAudioPlayer, type EndMode, type MeaningCue } from "@/contexts/AudioPlayerContext";
@@ -1251,11 +1252,23 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
-  const [landFocus, setLandFocus] = useState(false);
-  const landFocusOn = phoneLandscape && !readingActive && landFocus;
+  // A big screen (tablet, laptop, desktop — 768px+ wide, not a phone on its
+  // side): the same ⤢ in the header hides everything, ⤡ brings it back. Only
+  // by hand there — no hiding on a tap of the scene or when playback starts.
+  const [bigScreen, setBigScreen] = useState(false);
   useEffect(() => {
-    if (!phoneLandscape || readingActive) setLandFocus(false);
-  }, [phoneLandscape, readingActive]);
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setBigScreen(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  const textOnlyToggle = phoneLandscape || bigScreen;
+  const [landFocus, setLandFocus] = useState(false);
+  const landFocusOn = textOnlyToggle && !readingActive && landFocus;
+  useEffect(() => {
+    if (!textOnlyToggle || readingActive) setLandFocus(false);
+  }, [textOnlyToggle, readingActive]);
   useEffect(() => {
     if (!phoneLandscape || readingActive) return;
     const onClick = (ev: MouseEvent) => {
@@ -2012,9 +2025,17 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         focus={
           readingActive
             ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) }
-            : phoneLandscape
-              ? // Landscape: ⤢ in the header hides it all at once, ⤡ brings it back.
-                { on: landFocusOn, onToggle: () => setLandFocus((v) => !v) }
+            : textOnlyToggle
+              ? // Landscape / big screen: ⤢ in the header hides it all at
+                // once, ⤡ brings it back. The first ⤢ by hand: the lantern
+                // points at ⤡, so the way back is known.
+                {
+                  on: landFocusOn,
+                  onToggle: () => {
+                    if (!landFocusOn) showTourTip("show-controls");
+                    setLandFocus((v) => !v);
+                  },
+                }
               : undefined
         }
         showTajweed={tajweedShown}

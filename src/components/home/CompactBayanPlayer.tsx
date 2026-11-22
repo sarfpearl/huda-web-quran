@@ -678,10 +678,9 @@ export function CompactBayanPlayer({
         <div className="contents phoneland:hidden">
           <VolumeControl buttonClassName={compactBtn} active={collapsed} />
         </div>
-        {/* Phone landscape rail: the Surah name (English) on top */}
-        <span className="hidden max-w-[4.75rem] truncate text-center text-[10px] font-semibold leading-tight text-sand-100 phoneland:block" title={bayan.title}>
-          {bayan.title}
-        </span>
+        {/* Phone landscape rail: the Surah name (English) on top — a long
+            name slides back and forth so it can be read in full. */}
+        <RailTitle title={bayan.title} />
 
         <button
           type="button"
@@ -1455,6 +1454,45 @@ const NARROW_BTN = "max-[369px]:h-10 max-[369px]:w-10";
 
 const compactBtn =
   "grid h-12 w-12 max-[369px]:h-10 max-[369px]:w-10 phoneland:h-10 phoneland:w-10 shrink-0 place-items-center rounded-full bg-black/40 text-sand-100 border border-white/10 hover:text-white hover:bg-black/60 active:scale-90 transition-all cursor-pointer";
+
+/** Side-rail Surah name. Fits → static and centred. Too long → slides to its
+ *  end and back (pausing at each end) so the whole name can be read; reduced
+ *  motion keeps it still and truncated, with the full name as a tooltip. */
+function RailTitle({ title }: { title: string }) {
+  const boxRef = useRef<HTMLSpanElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [shift, setShift] = useState(0);
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const text = textRef.current;
+    if (!box || !text) return;
+    const measure = () => {
+      const over = text.scrollWidth - box.clientWidth;
+      setShift(over > 1 ? Math.ceil(over) : 0);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    ro.observe(text);
+    return () => ro.disconnect();
+  }, [title]);
+  return (
+    <span
+      ref={boxRef}
+      className={`hidden w-[4.75rem] overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-tight text-sand-100 phoneland:block ${shift ? "text-left [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]" : "text-center"}`}
+      title={title}
+    >
+      <span
+        key={title}
+        ref={textRef}
+        className={`inline-block ${shift ? "px-1 motion-safe:animate-[huda-rail-marquee_var(--rail-dur)_ease-in-out_infinite] motion-reduce:max-w-full motion-reduce:truncate" : ""}`}
+        style={shift ? ({ "--rail-shift": `-${shift + 8}px`, "--rail-dur": `${Math.max(5, 3 + shift / 12)}s` } as React.CSSProperties) : undefined}
+      >
+        {title}
+      </span>
+    </span>
+  );
+}
 
 /** « » ayah steps inside the Ayat pill — full pill height (36px). */
 // 32px wide (44px hit area via tap-44): with the cover shown, the pill
