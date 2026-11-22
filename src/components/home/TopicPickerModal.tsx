@@ -838,19 +838,6 @@ export function TopicPickerModal({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                {/* Phone landscape: « About HuDa » as the logo here, not the footer row */}
-                {!isFavourites && !showAbout && !showSettings && (
-                  <button
-                    type="button"
-                    onClick={() => setView("about")}
-                    className="tap-44 pointer-events-auto hidden h-10 w-10 place-items-center overflow-hidden rounded-full bg-white/10 transition-colors hover:bg-white/20 cursor-pointer active:scale-90 phoneland:grid"
-                    aria-label={t(lang, "About HuDa Web Quran")}
-                    data-tooltip={t(lang, "About HuDa Web Quran")}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 rounded-full object-contain" />
-                  </button>
-                )}
                 {!isFavourites && !showSettings && (
                   <button
                     type="button"
@@ -1059,6 +1046,8 @@ export function TopicPickerModal({
                     className={cn(
                       wholeScroll ? "space-y-2 pt-1" : "no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pt-1",
                       !isFavourites && voiceSupported && "pb-20",
+                      // Phone landscape: room for the About logo floating above the mic.
+                      !isFavourites && (voiceSupported ? "phoneland:pb-32" : "phoneland:pb-16"),
                     )}
                   >
                     {/* BROWSE (box empty): the selected tab's full list. */}
@@ -1175,7 +1164,7 @@ export function TopicPickerModal({
                   {!isFavourites && voiceSupported && dictationHint && (
                     <p
                       role="status"
-                      className="pointer-events-auto absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
+                      className="pointer-events-auto absolute bottom-[4.75rem] right-3 z-10 max-w-[15rem] phoneland:right-20 rounded-2xl bg-black/80 px-3 py-2 text-xs leading-snug text-sand-100 shadow-lg ring-1 ring-white/10"
                     >
                       {/* The keyboard's own mic, drawn where {mic} stands. */}
                       {t(lang, "Tap {mic} on the keyboard to search by voice.")
@@ -1198,6 +1187,23 @@ export function TopicPickerModal({
                       ) : (
                         <VoiceSearchIcon className="text-[26px]" />
                       )}
+                    </button>
+                  )}
+                  {/* Phone landscape: « About HuDa » as a logo just above the mic,
+                      not the footer row (centred on the mic's column). */}
+                  {!isFavourites && (
+                    <button
+                      type="button"
+                      onClick={() => setView("about")}
+                      className={cn(
+                        "tap-44 pointer-events-auto !absolute right-5 z-10 hidden h-10 w-10 place-items-center overflow-hidden rounded-full bg-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.4)] ring-1 ring-white/15 backdrop-blur-md transition-colors hover:bg-white/20 cursor-pointer active:scale-90 phoneland:grid",
+                        voiceSupported ? "bottom-[4.75rem]" : "bottom-3",
+                      )}
+                      aria-label={t(lang, "About HuDa Web Quran")}
+                      data-tooltip={t(lang, "About HuDa Web Quran")}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/huda-logo-circle.webp" alt="" width={40} height={40} className="h-10 w-10 rounded-full object-contain" />
                     </button>
                   )}
                   </div>
