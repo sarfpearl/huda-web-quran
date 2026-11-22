@@ -12,7 +12,8 @@
  *     with what the last sync saw (SNAPSHOT_KEY), so the setters stay as
  *     they are. Before this browser ever synced, the account's value wins.
  * Settings brought from another device are applied by reloading the page
- * once, right after signing in or opening the page — never mid-session.
+ * (not while something plays, at most once a minute); where listening
+ * stopped and the reading place apply live.
  *
  * Runs on sign-in, page open, return to the page, network back, a little
  * after a reading change, and once a minute if a setting changed here.
@@ -39,6 +40,9 @@ import {
  * purpose: place (privacy), volume, install / peek flags, the analytics id,
  * reminders (each browser has its own push subscription).
  */
+/** Where listening stopped (the home's « Continue » pill): applied live, never by a reload. */
+const LISTEN_KEY = "huda-player:last";
+
 const SYNCED_SETTINGS = [
   "huda-ui-lang",
   "huda-translation-lang",
@@ -53,14 +57,16 @@ const SYNCED_SETTINGS = [
   "huda:prayer-prefs",
   "huda-comment-name",
   "huda-tour-done",
+  LISTEN_KEY,
 ] as const;
 /** Kept apart for phones and for larger screens: a phone's size suits no desktop. */
 const PER_SCREEN = "huda:reader-scale-v2";
 
 /** What the last sync saw: { [account key]: { v, at } }. */
 const SNAPSHOT_KEY = "huda:sync-snapshot";
-/** sessionStorage: settings were applied by a reload in this tab already. */
+/** sessionStorage: when this tab last reloaded to apply settings (epoch ms). */
 const RELOADED_KEY = "huda:sync-reloaded";
+const RELOAD_GAP_MS = 60_000;
 
 type Setting = { v: string | null; at: number };
 type Settings = Record<string, Setting>;
@@ -165,7 +171,7 @@ function parseSettings(v: unknown): Settings {
 /** Per setting: whose value stays, and whether this browser took any from the account. */
 function mergeSettings(remote: Settings, snap: Settings | null, now: number) {
   const merged: Settings = { ...remote };
-  let pulled = false;
+  const pulled: string[] = [];
   let push = false;
   for (const [acc, localKey] of settingKeys()) {
     const local = read(localKey);
@@ -185,7 +191,7 @@ function mergeSettings(remote: Settings, snap: Settings | null, now: number) {
       push = true;
     } else if (r.v !== local) {
       write(localKey, r.v);
-      pulled = true;
+      pulled.push(localKey);
     }
   }
   return { merged, pulled, push };
@@ -196,8 +202,6 @@ function mergeSettings(remote: Settings, snap: Settings | null, now: number) {
 let userId: string | null = null;
 let syncing = false;
 let again = false;
-/** The first sync after sign-in or page open may reload to apply settings. */
-let mayReload = false;
 
 async function sync() {
   if (!userId) return;
@@ -239,9 +243,9 @@ async function sync() {
       writeBookmarks(remote.bookmarks, remote.at);
       readingPulled = true;
     }
-    if (readingPulled) window.dispatchEvent(new Event(READING_SYNCED_EVENT));
-
     const settings = mergeSettings(remote.settings, loadSnapshot(), now);
+    if (settings.pulled.includes(LISTEN_KEY)) readingPulled = true;
+    if (readingPulled) window.dispatchEvent(new Event(READING_SYNCED_EVENT));
 
     if (!data || !sameRead(lastRead, remote.lastRead) || local.at > remote.at || settings.push) {
       const { error: upsertError } = await supabase.from("user_sync").upsert({
@@ -257,18 +261,20 @@ async function sync() {
     saveSnapshot(settings.merged);
     setState("synced");
 
-    const reload = mayReload && settings.pulled;
-    mayReload = false;
-    if (reload) {
-      // Once per tab, so a setting that will not stick can never loop.
-      let done = false;
+    // Settings from another device take effect with one reload — never while
+    // something plays, at most once a minute (a setting that won't stick can't loop).
+    const applied = settings.pulled.some((k) => k !== LISTEN_KEY);
+    const playing = typeof navigator !== "undefined" && navigator.mediaSession?.playbackState === "playing";
+    if (applied && !playing && document.visibilityState === "visible") {
       try {
-        done = sessionStorage.getItem(RELOADED_KEY) === "1";
-        sessionStorage.setItem(RELOADED_KEY, "1");
+        const last = Number(sessionStorage.getItem(RELOADED_KEY)) || 0;
+        if (Date.now() - last > RELOAD_GAP_MS) {
+          sessionStorage.setItem(RELOADED_KEY, String(Date.now()));
+          window.location.reload();
+        }
       } catch {
-        done = true;
+        /* no sessionStorage: the settings apply on the next visit */
       }
-      if (!done) window.location.reload();
     }
   } catch {
     setState("offline");
@@ -319,7 +325,6 @@ function onAccount(id: string | null) {
     setState("off");
     return;
   }
-  mayReload = true;
   lastPull = Date.now();
   void sync();
 }

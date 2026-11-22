@@ -56,8 +56,8 @@ Code: `src/lib/auth/sync.ts`, `src/lib/auth/account.ts` (`renderGoogleButton`), 
 
 ## என்ன மாறியது
 
-- **Sync:** login ஆனவருக்கு கடைசியாகப் படித்த இடம், bookmark, settings (மொழி, மொழிபெயர்ப்பு, பொருள் audio, script, Tajweed, reciter, repeat முறை, theme, பின்னணி மங்கல், தொழுகை கணக்கு முறை, comment பெயர், tour) எல்லா சாதனங்களிலும் வரும். எழுத்து அளவு phone / பெரிய திரைக்குத் தனித்தனி. இடம் (location), volume, reminders sync ஆகாது.
-- ஒவ்வொன்றுக்கும் **புதிய மாற்றம் வெல்லும்**. Browser-ல் உடனே சேமிக்கப்படும்; பின்னணியில் account-க்கு. வேறு சாதனத்தின் settings வந்தால் page ஒருமுறை reload ஆகும் (login செய்த / page திறந்த உடனே மட்டும்).
+- **Sync:** login ஆனவருக்கு கடைசியாகப் படித்த இடம், கேட்டு நிறுத்திய இடம் (home-ன் "Continue"), bookmark, settings (மொழி, மொழிபெயர்ப்பு, பொருள் audio, script, Tajweed, reciter, repeat முறை, theme, பின்னணி மங்கல், தொழுகை கணக்கு முறை, comment பெயர், tour) எல்லா சாதனங்களிலும் வரும். எழுத்து அளவு phone / பெரிய திரைக்குத் தனித்தனி. இடம் (location), volume, reminders sync ஆகாது.
+- ஒவ்வொன்றுக்கும் **புதிய மாற்றம் வெல்லும்**. Browser-ல் உடனே சேமிக்கப்படும்; பின்னணியில் account-க்கு. வேறு சாதனத்தின் settings வந்தால் page ஒருமுறை reload ஆகும் (எதுவும் ஓடாதபோது மட்டும், நிமிடத்துக்கு ஒருமுறைக்கு மேல் இல்லை). படித்த / கேட்ட இடம், bookmark reload இல்லாமலே வரும். **இரண்டு browser-லும் login செய்திருக்க வேண்டும்.**
 - **Sign out:** "இந்தச் சாதனத்தில் வை" / "இந்தச் சாதனத்திலிருந்து நீக்கு" என்று கேட்கும்.
 - **Google பொத்தான்:** Google-ன் சொந்த "Sign in with Google" (Google Identity Services). Google திரையில் supabase.co-க்குப் பதிலாக நம் தளம் காட்டும்; brand verification-க்குப் பின் "HuDa Web Quran". Home Screen-ல் install செய்த iPhone app-ல் மட்டும் பழைய redirect வழி.
 - "Signed in with email" பிழை திருத்தம்: கடைசியாகப் பயன்படுத்திய வழி (Google / email) காட்டும்.

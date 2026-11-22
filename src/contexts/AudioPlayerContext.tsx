@@ -25,6 +25,7 @@ import {
 import { cbrMasterUrl, reciterHasSurah } from "@/lib/data/quranReciters";
 import { alog, elInfo } from "@/lib/audioDebug";
 import AudioDebugPanel from "@/components/player/AudioDebugPanel";
+import { READING_SYNCED_EVENT } from "@/lib/lastRead";
 
 /*
  * ─────────────────────────────────────────────────────────────────────────
@@ -528,6 +529,22 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     } catch {
       /* ignore */
     }
+  }, []);
+
+  // The optional account brought where listening stopped on another device:
+  // the home's « Continue » follows it (unless something is playing here).
+  useEffect(() => {
+    const reload = () => {
+      if (typeof navigator !== "undefined" && navigator.mediaSession?.playbackState === "playing") return;
+      try {
+        const last = JSON.parse(localStorage.getItem(LAST_KEY) ?? "null") as ContinueListening | null;
+        setContinueListening(last?.bayan ? last : null);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener(READING_SYNCED_EVENT, reload);
+    return () => window.removeEventListener(READING_SYNCED_EVENT, reload);
   }, []);
 
   // Sync volume, mute & playbackRate to HTML5 audio elements. Every new src
