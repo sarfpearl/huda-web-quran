@@ -378,7 +378,7 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
  * card resizing and the compact ⇄ expanded switch.
  */
 function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined) {
-  const [geo, setGeo] = useState<{ width: number; left: number; right: number; radius: number; first: number; last: number } | null>(null);
+  const [geo, setGeo] = useState<{ width: number; left: number; right: number; radius: number } | null>(null);
   useEffect(() => {
     const wrap = container?.current;
     if (!wrap || typeof ResizeObserver === "undefined") return;
@@ -393,26 +393,7 @@ function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined)
       const view = ([...card.children] as HTMLElement[]).find((v) => !v.inert && v.getAttribute("aria-hidden") !== "true");
       let left = 0;
       let right = 0;
-      // Where the view's first control starts and its last one ends, from the
-      // card's edges (layout offsets, not rects — see below).
-      let first = 0;
-      let last = 0;
       if (view) {
-        // (A `display: contents` wrapper — the 🔊 group — counts as its children.)
-        const flat = (els: HTMLElement[]): HTMLElement[] =>
-          els.flatMap((el) => (getComputedStyle(el).display === "contents" ? flat([...el.children] as HTMLElement[]) : [el]));
-        const ctrls = flat([...view.children] as HTMLElement[]).filter((el) => el.offsetWidth > 0 && getComputedStyle(el).position !== "absolute");
-        if (ctrls.length) {
-          // Within the view by rects, undone of any mid-crossfade scale, then
-          // the view's own layout place in the card.
-          const v = view.getBoundingClientRect();
-          const k = v.width / (view.offsetWidth || 1) || 1;
-          const side = Math.max(0, (card.clientWidth - view.offsetWidth) / 2);
-          const a = ctrls[0].getBoundingClientRect();
-          const z = ctrls[ctrls.length - 1].getBoundingClientRect();
-          first = side + (a.left - v.left) / k;
-          last = side + (v.right - z.right) / k;
-        }
         // Layout sizes, not rects: the views are centred in the card, and a
         // rect would include the transform mid-crossfade (a transient value
         // that nothing re-measured, leaving the strip padded ~190px).
@@ -424,10 +405,8 @@ function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined)
       // The compact pill is rounder than the full card; the frame's bottom
       // corners follow it so the two outlines never split into a double line.
       const radius = parseFloat(getComputedStyle(card).borderBottomLeftRadius) || 0;
-      const next = { width: Math.round(c.width), left: Math.round(left), right: Math.round(right), radius, first: Math.round(first), last: Math.round(last) };
-      setGeo((g) =>
-        g && g.width === next.width && g.left === next.left && g.right === next.right && g.radius === next.radius && g.first === next.first && g.last === next.last ? g : next,
-      );
+      const next = { width: Math.round(c.width), left: Math.round(left), right: Math.round(right), radius };
+      setGeo((g) => (g && g.width === next.width && g.left === next.left && g.right === next.right && g.radius === next.radius ? g : next));
     };
     const ro = new ResizeObserver(measure);
     const sync = () => {
@@ -988,16 +967,13 @@ export function PlayerStatsFrame({
   // With the bottom strip the card floats inside the frame, inset by CARD_INSET.
   const CARD_INSET = 10;
   const inset = withFooter ? CARD_INSET : 0;
-  // Compact player (card inset in the frame): ♡ lines up with the card's first
-  // button (🔊) and the comment count ends with its last (^) (owner,
-  // 2026-11-23) — the ♡ button's 6px of room round its icon taken off.
-  const stripInsets = withFooter
-    ? { paddingLeft: Math.max(inset + (geo?.first ?? 16) - 6, 4), paddingRight: inset + (geo?.last ?? 16) }
-    : {
-        // Full player: the same edges as its content (♡'s 6px taken off too).
-        paddingLeft: Math.max((geo?.left ?? 16) - 6, 4),
-        paddingRight: Math.max(geo?.right ?? 16, 8),
-      };
+  // The row's edges (owner, 2026-11-23): ♡ and the comment count sit 22px in
+  // from the frame on every device and in both player sizes — the 5 icons
+  // hug the left, the 3 the right, and a wider card only widens the gap
+  // between them. (Measured from the frame's outer edge: its 1px border is
+  // outside the padding. ♡'s button has 6px of room round its icon.)
+  const EDGE = 22 - 1;
+  const stripInsets = { paddingLeft: EDGE - 6, paddingRight: EDGE };
   // Narrow frame (compact player on a small screen): the top strip sheds, in
   // turn, the "Live" word and wide gaps, then the Live button (its count is in
   // the views details too), then the extra edge room — never overflows.
