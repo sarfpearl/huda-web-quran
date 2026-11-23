@@ -9,7 +9,7 @@ import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
 import { swingAngle, threadPath } from "@/lib/feedbackSwing";
 import { CheckIcon, MessageIcon } from "@/components/ui/Icon";
-import { OPEN_FEEDBACK_EVENT } from "@/lib/settingsEvents";
+import { EDGE_OUT_EVENT, OPEN_FEEDBACK_EVENT } from "@/lib/settingsEvents";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -64,6 +64,24 @@ export function FeedbackLantern({ playing, hidden = false }: { playing: boolean;
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [out, setOut] = useState(false);
+
+  // Only one of the gift / the feedback lantern out at a time (owner,
+  // 2026-11-23): say when this one comes out or goes back; while the other
+  // is out, this one goes back and hides.
+  const [otherOut, setOtherOut] = useState(false);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(EDGE_OUT_EVENT, { detail: { who: "feedback", out } }));
+  }, [out]);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ who: string; out: boolean }>).detail;
+      if (!d || d.who === "feedback") return;
+      setOtherOut(d.out);
+      if (d.out) setOut(false);
+    };
+    window.addEventListener(EDGE_OUT_EVENT, on);
+    return () => window.removeEventListener(EDGE_OUT_EVENT, on);
+  }, []);
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);
   const [ready, setReady] = useState(false);
@@ -251,7 +269,7 @@ export function FeedbackLantern({ playing, hidden = false }: { playing: boolean;
   const shown = Boolean(geo) && !open;
 
   return (
-    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
+    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className={`${hidden ? "hidden " : ""}${otherOut ? "opacity-0 [&_*]:!pointer-events-none " : ""}pointer-events-none absolute inset-0 z-40 transition-opacity duration-300`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"

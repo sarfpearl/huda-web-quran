@@ -7,3 +7,7 @@ export const OPEN_INSTALL_GUIDE_EVENT = "huda:install-guide";
 export const OPEN_ACCOUNT_EVENT = "huda:open-account";
 /** Opens the feedback form (FeedbackLantern) — Settings › Send feedback. */
 export const OPEN_FEEDBACK_EVENT = "huda:open-feedback";
+/** The edge gift (SupportGift) and the feedback lantern: only one is out at
+ *  a time — the one coming out says so, the other hides until it is back.
+ *  detail: { who: "gift" | "feedback"; out: boolean } */
+export const EDGE_OUT_EVENT = "huda:edge-out";
