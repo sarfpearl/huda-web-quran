@@ -1039,7 +1039,7 @@ export function PlayerStatsFrame({
     </>
   );
   const stat =
-    "tap-44 flex items-center gap-1.5 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
+    "tap-44 flex items-center gap-1.5 max-[419px]:gap-1 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
 
   return (
     <div data-player-frame className="relative max-w-full">
@@ -1082,13 +1082,13 @@ export function PlayerStatsFrame({
       style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden", "phoneland:!hidden")}
+        className={cn("relative w-0 min-w-full items-center justify-between gap-3 max-[419px]:gap-2 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden", "phoneland:!hidden")}
         style={topInsets}
         ref={stripRef}
       >
         <HoverTooltips container={topStripRef} />
         {leading ?? <span />}
-        <div data-tour="community" className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5" : "gap-3 sm:gap-4")}>
+        <div data-tour="community" className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5 max-[419px]:gap-2" : "gap-3 sm:gap-4")}>
           {fit < 2 && (
           <button
             type="button"
@@ -1115,8 +1115,7 @@ export function PlayerStatsFrame({
             className={cn(stat, viewsOpen && "text-emerald-300")}
           >
             <ViewCountIcon className="text-xs sm:text-sm" />
-            {/* 320px phones: the eye alone (the number is in its details). */}
-            <span className="max-[339px]:sr-only">{stats ? compactCount(stats.content.users) : "–"}</span>
+            <span>{stats ? compactCount(stats.content.users) : "–"}</span>
           </button>
           {/* Comments (moved here from the header): opens the comment box */}
           <button

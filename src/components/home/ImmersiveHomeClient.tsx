@@ -2330,8 +2330,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           footerRef={setPlayerFooter}
           footerOpen={playerCollapsed}
           leading={
-            <div className="flex items-center gap-3 max-[339px]:gap-2">
-            {/* 320px phones (iPhone SE 1st gen): the gaps a little tighter. */}
+            <div className="flex items-center gap-3 max-[419px]:gap-2">
+            {/* Phones under 420px (360px Androids): the gaps a little tighter,
+                so Live, views and comments all fit beside the 5 icons. */}
             {/* Image / video background: Settings › Background */}
             {/* Reopens the Add to Home Screen guide after it was dismissed —
                 compact player: leads the bottom strip instead */}
