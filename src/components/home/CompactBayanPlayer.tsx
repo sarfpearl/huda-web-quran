@@ -669,11 +669,14 @@ export function CompactBayanPlayer({
   // Compact pill hugs its controls, spaced exactly like the full card's
   // transport row — except on a phone held upright, where it takes the
   // screen's width (up to 25rem) with the controls spread evenly, so the row
-  // of icons above has room (owner, 2026-11-23, 360px Androids).
+  // of icons above has room (owner, 2026-11-23, 360px Androids). The width
+  // leaves the frame's 2rem of screen edge, the card's 10px inset each side
+  // in the frame and its 1px border each side (3.375rem in all) — wider, the
+  // card clipped its own first and last buttons.
   const compactView = (
       <div
         ref={compactRef}
-        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-md:w-[min(calc(100vw-2rem),25rem)] max-w-[calc(100vw-2rem)] justify-center max-md:justify-evenly items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2 phoneland:flex-col phoneland:!w-max phoneland:!justify-center phoneland:gap-2 phoneland:px-2 phoneland:py-2.5`}
+        className={`${viewPos(collapsed)} ${viewBase} ${collapsed ? viewShown : viewHidden} player-compact flex w-max max-md:w-[min(calc(100vw-3.375rem),25rem)] max-w-[calc(100vw-2rem)] justify-center max-md:justify-evenly items-center gap-2 sm:gap-3 max-[369px]:gap-1.5 p-2 px-3 max-md:px-4 max-[369px]:px-2 phoneland:flex-col phoneland:!w-max phoneland:!justify-center phoneland:gap-2 phoneland:px-2 phoneland:py-2.5`}
       >
         {/* Phone landscape: a side rail of previous / play / next only — the
             reciting stays the centre of the screen. */}

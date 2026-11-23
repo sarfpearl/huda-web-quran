@@ -192,7 +192,7 @@ export const googleRedirectOnly = () =>
  */
 export async function renderGoogleButton(
   el: HTMLElement,
-  o: { locale: string; width: number; onStart: () => void; onDone: (ok: boolean) => void },
+  o: { locale: string; width: number; round?: boolean; onStart: () => void; onDone: (ok: boolean) => void },
 ): Promise<boolean> {
   const id = await loadGis();
   if (!id || !el.isConnected) return false;
@@ -213,6 +213,11 @@ export async function renderGoogleButton(
       o.onDone(Boolean(r && !r.error));
     },
   });
+  // `round`: Google's own round "G" (the Profile menu's pair of circles).
+  if (o.round) {
+    id.renderButton(el, { type: "icon", theme: "outline", size: "large", shape: "circle", locale: o.locale });
+    return true;
+  }
   id.renderButton(el, {
     type: "standard",
     theme: "outline",

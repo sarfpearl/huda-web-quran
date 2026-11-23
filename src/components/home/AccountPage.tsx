@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
+import { AtIcon, CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { t, uiLocale, useUiLang } from "@/lib/uiLang";
 import {
@@ -30,6 +30,9 @@ import { flushBeforeSignOut, forgetThisDevice, startSync, useSyncState } from "@
 
 const GROUP = "rounded-2xl border border-white/10 bg-white/5 px-4 py-3";
 const SCROLL = "no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-2.5 text-sand-100";
+/** The Profile menu's round sign-in buttons (Google's "G", the @): white, 40px, like Google's own round button. */
+const ROUND_BTN =
+  "tap-44 grid h-10 w-10 place-items-center rounded-full border border-[#dadce0] bg-white text-slate-800 transition-colors hover:bg-sand-50 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-default";
 const BIG_BTN =
   "flex h-12 w-full items-center justify-center gap-2.5 rounded-full border text-sm font-semibold transition-colors cursor-pointer active:scale-[0.99] disabled:cursor-default disabled:opacity-50";
 
@@ -67,6 +70,12 @@ function SignedOut({ wrap }: { wrap: string }) {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
   const [sentTo, setSentTo] = useState("");
+  // The email form shows once its round @ is tapped (owner, 2026-11-23).
+  const [emailOpen, setEmailOpen] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (emailOpen) emailRef.current?.focus();
+  }, [emailOpen]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -110,6 +119,7 @@ function SignedOut({ wrap }: { wrap: string }) {
     void renderGoogleButton(el, {
       locale: uiLocale(lang),
       width: el.clientWidth || 320,
+      round: true,
       onStart: () => live && setBusy("google"),
       onDone: (ok) => {
         if (!live) return;
@@ -154,24 +164,40 @@ function SignedOut({ wrap }: { wrap: string }) {
         </div>
       ) : (
         <div className={cn(GROUP, "space-y-3 py-4")}>
-          {googleOn && !redirect && (
-            <div
-              ref={gisRef}
-              aria-busy={busy === "google"}
-              className={cn("flex min-h-12 w-full justify-center [color-scheme:light]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
-            />
-          )}
-          {(!googleOn || redirect || gisFailed) && (
+          {/* Two round buttons: Google's "G" and an @ that opens the email form.
+              (Google's round button is sized for content-box, not this app's
+              border-box everywhere — its G sank and shrank to nothing.) */}
+          <div className="flex items-center justify-center gap-5">
+            {googleOn && !redirect && (
+              <div
+                ref={gisRef}
+                aria-busy={busy === "google"}
+                className={cn("grid h-10 w-10 place-items-center [color-scheme:light] [&_*]:[box-sizing:content-box]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
+              />
+            )}
+            {(!googleOn || redirect || gisFailed) && (
+              <button
+                type="button"
+                onClick={google}
+                disabled={!googleOn || busy !== null}
+                aria-label={t(lang, "Continue with Google")}
+                data-tooltip={t(lang, "Continue with Google")}
+                className={ROUND_BTN}
+              >
+                <GoogleIcon className="text-xl" />
+              </button>
+            )}
             <button
               type="button"
-              onClick={google}
-              disabled={!googleOn || busy !== null}
-              className={cn(BIG_BTN, "border-white/15 bg-white text-slate-900 hover:bg-sand-50")}
+              onClick={() => setEmailOpen((o) => !o)}
+              aria-expanded={emailOpen}
+              aria-label={t(lang, "Continue with email")}
+              data-tooltip={t(lang, "Continue with email")}
+              className={cn(ROUND_BTN, emailOpen && "ring-2 ring-emerald-400/70")}
             >
-              <GoogleIcon className="text-lg" />
-              {t(lang, "Continue with Google")}
+              <AtIcon className="h-5 w-5" />
             </button>
-          )}
+          </div>
           {busy === "google" && !redirect && !gisFailed && (
             <p role="status" className="text-center text-xs text-sand-200/80">
               {t(lang, "Signing you in…")}
@@ -179,12 +205,7 @@ function SignedOut({ wrap }: { wrap: string }) {
           )}
           {!googleOn && <p className="text-center text-[11px] text-sand-200/60">{t(lang, "Google sign-in isn't set up yet.")}</p>}
 
-          <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-widest text-sand-200/40" aria-hidden="true">
-            <span className="h-px flex-1 bg-white/10" />
-            <MailIcon className="text-sm" />
-            <span className="h-px flex-1 bg-white/10" />
-          </div>
-
+          {emailOpen && (
           <form onSubmit={send} className="space-y-2.5">
             <label className="block">
               <span className="sr-only">{t(lang, "Your email address")}</span>
@@ -193,6 +214,7 @@ function SignedOut({ wrap }: { wrap: string }) {
                 inputMode="email"
                 autoComplete="email"
                 required
+                ref={emailRef}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t(lang, "Your email address")}
@@ -203,6 +225,7 @@ function SignedOut({ wrap }: { wrap: string }) {
               {busy === "email" ? "…" : t(lang, "Continue with email")}
             </button>
           </form>
+          )}
           {error && (
             <p role="alert" className="text-center text-xs text-amber-200">
               {t(lang, error)}

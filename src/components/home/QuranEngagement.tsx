@@ -378,7 +378,7 @@ export function PlayerLikeButton({ e, lang = "en" }: { e: QuranEngagement; lang?
  * card resizing and the compact ⇄ expanded switch.
  */
 function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined) {
-  const [geo, setGeo] = useState<{ width: number; left: number; right: number; radius: number } | null>(null);
+  const [geo, setGeo] = useState<{ width: number; left: number; right: number; radius: number; first: number; last: number } | null>(null);
   useEffect(() => {
     const wrap = container?.current;
     if (!wrap || typeof ResizeObserver === "undefined") return;
@@ -393,7 +393,26 @@ function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined)
       const view = ([...card.children] as HTMLElement[]).find((v) => !v.inert && v.getAttribute("aria-hidden") !== "true");
       let left = 0;
       let right = 0;
+      // Where the view's first control starts and its last one ends, from the
+      // card's edges (layout offsets, not rects — see below).
+      let first = 0;
+      let last = 0;
       if (view) {
+        // (A `display: contents` wrapper — the 🔊 group — counts as its children.)
+        const flat = (els: HTMLElement[]): HTMLElement[] =>
+          els.flatMap((el) => (getComputedStyle(el).display === "contents" ? flat([...el.children] as HTMLElement[]) : [el]));
+        const ctrls = flat([...view.children] as HTMLElement[]).filter((el) => el.offsetWidth > 0 && getComputedStyle(el).position !== "absolute");
+        if (ctrls.length) {
+          // Within the view by rects, undone of any mid-crossfade scale, then
+          // the view's own layout place in the card.
+          const v = view.getBoundingClientRect();
+          const k = v.width / (view.offsetWidth || 1) || 1;
+          const side = Math.max(0, (card.clientWidth - view.offsetWidth) / 2);
+          const a = ctrls[0].getBoundingClientRect();
+          const z = ctrls[ctrls.length - 1].getBoundingClientRect();
+          first = side + (a.left - v.left) / k;
+          last = side + (v.right - z.right) / k;
+        }
         // Layout sizes, not rects: the views are centred in the card, and a
         // rect would include the transform mid-crossfade (a transient value
         // that nothing re-measured, leaving the strip padded ~190px).
@@ -405,8 +424,10 @@ function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined)
       // The compact pill is rounder than the full card; the frame's bottom
       // corners follow it so the two outlines never split into a double line.
       const radius = parseFloat(getComputedStyle(card).borderBottomLeftRadius) || 0;
-      const next = { width: Math.round(c.width), left: Math.round(left), right: Math.round(right), radius };
-      setGeo((g) => (g && g.width === next.width && g.left === next.left && g.right === next.right && g.radius === next.radius ? g : next));
+      const next = { width: Math.round(c.width), left: Math.round(left), right: Math.round(right), radius, first: Math.round(first), last: Math.round(last) };
+      setGeo((g) =>
+        g && g.width === next.width && g.left === next.left && g.right === next.right && g.radius === next.radius && g.first === next.first && g.last === next.last ? g : next,
+      );
     };
     const ro = new ResizeObserver(measure);
     const sync = () => {
@@ -453,10 +474,17 @@ function useFitLevel(ref: RefObject<HTMLElement | null>, max: number, padFor: (l
       const l = levelRef.current;
       if (el.clientWidth <= 0) return;
       let next = l;
-      if (el.scrollWidth > el.clientWidth + 1 && l < max) {
-        // Content width only: the side padding changes with the level, so a
-        // raw scrollWidth would never compare right after it shrinks.
-        needs.current[l] = el.scrollWidth - padRef.current(l);
+      // What the items need (widths + gaps), against the room inside the
+      // padding: a flex row's end padding isn't in scrollWidth, so items
+      // running into it went unseen (the comment count past the ^ button).
+      const cs = getComputedStyle(el);
+      const items = ([...el.children] as HTMLElement[]).filter((c) => c.offsetWidth > 0 && getComputedStyle(c).position !== "absolute");
+      const used = items.reduce((w, c) => w + c.offsetWidth, 0) + (parseFloat(cs.columnGap) || 0) * Math.max(0, items.length - 1);
+      // The level's own padding, not the computed one (it eases over 500ms).
+      const room = el.clientWidth - padRef.current(l);
+      if (used > room + 1 && l < max) {
+        // Content width only: the side padding changes with the level.
+        needs.current[l] = used;
         next = l + 1;
       } else if (l > 0 && el.clientWidth - padRef.current(l - 1) >= (needs.current[l - 1] ?? Infinity)) {
         next = l - 1;
@@ -960,17 +988,22 @@ export function PlayerStatsFrame({
   // With the bottom strip the card floats inside the frame, inset by CARD_INSET.
   const CARD_INSET = 10;
   const inset = withFooter ? CARD_INSET : 0;
-  const stripInsets = {
-    paddingLeft: Math.max(geo?.left ?? 16, 8) + inset,
-    paddingRight: Math.max(geo?.right ?? 16, 8) + inset,
-  };
+  // Compact player (card inset in the frame): ♡ lines up with the card's first
+  // button (🔊) and the comment count ends with its last (^) (owner,
+  // 2026-11-23) — the ♡ button's 6px of room round its icon taken off.
+  const stripInsets = withFooter
+    ? { paddingLeft: Math.max(inset + (geo?.first ?? 16) - 6, 4), paddingRight: inset + (geo?.last ?? 16) }
+    : {
+        paddingLeft: Math.max(geo?.left ?? 16, 8) + inset,
+        paddingRight: Math.max(geo?.right ?? 16, 8) + inset,
+      };
   // Narrow frame (compact player on a small screen): the top strip sheds, in
   // turn, the "Live" word and wide gaps, then the Live button (its count is in
   // the views details too), then the extra edge room — never overflows.
   const topStripRef = useRef<HTMLDivElement>(null);
   const fullPad = stripInsets.paddingLeft + stripInsets.paddingRight;
-  const fit = useFitLevel(topStripRef, 3, (l) => (l >= 3 ? 16 + 2 * inset : fullPad));
-  const topInsets = fit >= 3 ? { paddingLeft: 8 + inset, paddingRight: 8 + inset } : stripInsets;
+  const fit = useFitLevel(topStripRef, 3, (l) => (l >= 3 && !withFooter ? 16 + 2 * inset : fullPad));
+  const topInsets = fit >= 3 && !withFooter ? { paddingLeft: 8 + inset, paddingRight: 8 + inset } : stripInsets;
 
   const toggleViews = () => {
     setViewsOpen((v) => !v);
