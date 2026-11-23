@@ -2306,7 +2306,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           footerRef={setPlayerFooter}
           footerOpen={playerCollapsed}
           leading={
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 max-[339px]:gap-2">
+            {/* 320px phones (iPhone SE 1st gen): the gaps a little tighter. */}
             {/* Image / video background: Settings › Background */}
             {/* Reopens the Add to Home Screen guide after it was dismissed —
                 compact player: leads the bottom strip instead */}

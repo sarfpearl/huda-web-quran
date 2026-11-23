@@ -1103,7 +1103,8 @@ export function PlayerStatsFrame({
             className={cn(stat, viewsOpen && "text-emerald-300")}
           >
             <ViewCountIcon className="text-xs sm:text-sm" />
-            <span>{stats ? compactCount(stats.content.users) : "–"}</span>
+            {/* 320px phones: the eye alone (the number is in its details). */}
+            <span className="max-[339px]:sr-only">{stats ? compactCount(stats.content.users) : "–"}</span>
           </button>
           {/* Comments (moved here from the header): opens the comment box */}
           <button
