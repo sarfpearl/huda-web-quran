@@ -236,7 +236,7 @@ function SignedOut({ wrap }: { wrap: string }) {
 
       <p className="px-2 pb-2 text-center text-[11px] leading-relaxed text-sand-200/60">
         {t(lang, "We save only your last read, bookmarks and settings. No ads, nothing sold.")}{" "}
-        <Link href="/privacy" className="font-semibold text-sand-100 underline underline-offset-2 hover:text-white">
+        <Link href="/privacy" className="whitespace-nowrap font-semibold text-sand-100 underline underline-offset-2 hover:text-white">
           {t(lang, "Privacy policy")}
         </Link>
       </p>

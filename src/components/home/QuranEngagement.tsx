@@ -994,8 +994,9 @@ export function PlayerStatsFrame({
   const stripInsets = withFooter
     ? { paddingLeft: Math.max(inset + (geo?.first ?? 16) - 6, 4), paddingRight: inset + (geo?.last ?? 16) }
     : {
-        paddingLeft: Math.max(geo?.left ?? 16, 8) + inset,
-        paddingRight: Math.max(geo?.right ?? 16, 8) + inset,
+        // Full player: the same edges as its content (♡'s 6px taken off too).
+        paddingLeft: Math.max((geo?.left ?? 16) - 6, 4),
+        paddingRight: Math.max(geo?.right ?? 16, 8),
       };
   // Narrow frame (compact player on a small screen): the top strip sheds, in
   // turn, the "Live" word and wide gaps, then the Live button (its count is in

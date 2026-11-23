@@ -11,7 +11,7 @@ import {
   reciterHasWordTiming,
   reciterHasWordTimingFor,
 } from "@/lib/data/service";
-import { ImamQuranIcon, VideoCameraIcon, ImageIcon, TranslateIcon, CloseIcon, SearchIcon } from "@/components/ui/Icon";
+import { ImamQuranIcon, VideoCameraIcon, ImageIcon, LanguageIcon, CloseIcon, SearchIcon } from "@/components/ui/Icon";
 import { t, type UiLang } from "@/lib/uiLang";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
@@ -247,7 +247,7 @@ export function ImmersiveHeader({
             }`}
           >
             {/* Translate icon; dimmed (not slashed) when the translation is hidden */}
-            <TranslateIcon className="h-5 w-5" />
+            <LanguageIcon className="h-5 w-5" />
             <span
               className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && current.id === "ta" ? "font-tamil" : ""}`}
               style={showMeaning && current.font && current.id !== "ta" ? { fontFamily: current.font } : undefined}

@@ -5,3 +5,5 @@ export const OPEN_PRAYER_TIMES_EVENT = "huda:open-prayer-times";
 export const OPEN_INSTALL_GUIDE_EVENT = "huda:install-guide";
 /** Opens Settings › Account (the header avatar). */
 export const OPEN_ACCOUNT_EVENT = "huda:open-account";
+/** Opens the feedback form (FeedbackLantern) — Settings › Send feedback. */
+export const OPEN_FEEDBACK_EVENT = "huda:open-feedback";

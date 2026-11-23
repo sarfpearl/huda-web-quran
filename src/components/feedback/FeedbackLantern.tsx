@@ -9,6 +9,7 @@ import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
 import { swingAngle, threadPath } from "@/lib/feedbackSwing";
 import { CheckIcon, MessageIcon } from "@/components/ui/Icon";
+import { OPEN_FEEDBACK_EVENT } from "@/lib/settingsEvents";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -214,6 +215,15 @@ export function FeedbackLantern({ playing, hidden = false }: { playing: boolean;
     setEverOpened(true);
     setOpen(true);
   };
+
+  // Settings › Send feedback: the same form, without the lantern's drop.
+  const openFormRef = useRef(openForm);
+  openFormRef.current = openForm;
+  useEffect(() => {
+    const open = () => openFormRef.current();
+    window.addEventListener(OPEN_FEEDBACK_EVENT, open);
+    return () => window.removeEventListener(OPEN_FEEDBACK_EVENT, open);
+  }, []);
 
   const onClick = (e: React.MouseEvent) => {
     haptic();

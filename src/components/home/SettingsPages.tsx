@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { CheckIcon, ChevronRightIcon } from "@/components/ui/Icon";
+import { CheckIcon, ChevronRightIcon, MessageIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
@@ -10,7 +10,7 @@ import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isMeaningLang } from "@/lib/data/meaningAudio";
 import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
 import { WaqfLegend } from "./WaqfLegend";
-import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
+import { OPEN_FEEDBACK_EVENT, OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 import { SCENE_DIM_DEFAULTS, type SceneDim } from "./SceneOverlay";
 import { SupportSettingsRow } from "@/components/support/SupportSheet";
@@ -207,6 +207,14 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
           <Row label={tourT(lang, "App tour")} value={tourT(lang, "Show again")} onClick={() => onLeave(OPEN_TOUR_EVENT)} />
         </>
       )}
+      {/* Feedback, as the edge lantern opens it (owner, 2026-11-23). */}
+      <button type="button" onClick={() => onLeave(OPEN_FEEDBACK_EVENT)} className={ROW}>
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-white">
+          <MessageIcon className="h-5 w-5 text-emerald-300" />
+          {t(lang, "Send feedback")}
+        </span>
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/80 rtl:-scale-x-100" />
+      </button>
       <SupportSettingsRow onLeave={onLeave} />
     </div>
   );
