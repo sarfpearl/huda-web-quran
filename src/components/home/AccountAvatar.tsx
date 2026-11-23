@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { accountHint, getAccount, loginEnabled, onAccountChange, type Account } from "@/lib/auth/account";
 import { OPEN_ACCOUNT_EVENT } from "@/lib/settingsEvents";
+import { UserIcon } from "@/components/ui/Icon";
 import { t, useUiLang } from "@/lib/uiLang";
 
 /**
  * The header's round profile picture (owner, 2026-11-23): the Google photo
- * once signed in; before that a muted head-and-shoulders silhouette in the
+ * once signed in; before that the icon set's "user" figure in the
  * same glass circle as the other header buttons, never lit. A tap opens
  * Settings › Account.
  *
@@ -66,13 +67,9 @@ export function AccountAvatar({ className = "" }: { className?: string }) {
           {initial}
         </span>
       ) : (
-        // Guest: the familiar blank profile picture — a head and shoulders,
-        // cropped by the circle — muted, never lit (owner, 2026-11-23: the
-        // Arabic word didn't read as a profile picture).
-        <svg aria-hidden="true" viewBox="0 0 40 40" className="absolute inset-0 h-full w-full text-sand-200/45">
-          <circle cx="20" cy="15.5" r="7" fill="currentColor" />
-          <path d="M5 40c0-8.3 6.7-14 15-14s15 5.7 15 14z" fill="currentColor" />
-        </svg>
+        // Guest: the Hugeicons "user" figure, like the other header icons
+        // (owner, 2026-11-23: from the icon set, not a drawn silhouette).
+        <UserIcon aria-hidden="true" className="h-5 w-5 text-white" />
       )}
     </button>
   );

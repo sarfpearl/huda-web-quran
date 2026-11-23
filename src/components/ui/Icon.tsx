@@ -783,6 +783,14 @@ export const MinusCircleIcon = (p: IconProps) => (
   </Base>
 );
 
+/* Guest profile picture in the header — Hugeicons free set: user. */
+export const UserIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M20 21.0001C19.713 17.269 16.7289 14.3151 12.995 14.0662L12 13.9999C11.6446 14.0096 11.3134 14.0225 11.0008 14.0378C7.3 14.2192 4.28417 17.3057 4 21.0001" />
+    <circle cx="12" cy="6.99988" r="4" />
+  </Base>
+);
+
 /* Account (login) — Hugeicons free set: user-circle, mail-01, google, logout-01, cloud-saving-done-01. */
 export const UserCircleIcon = (p: IconProps) => (
   <Base strokeWidth={1.5} {...p}>
