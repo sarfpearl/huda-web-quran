@@ -39,7 +39,7 @@ import {
 } from "@/lib/data/meaningAudio";
 import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
 import { ShareMenu } from "@/components/record/ShareMenu";
-import { BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, RotateLeftIcon } from "@/components/ui/Icon";
+import { ArrowExpandIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, BookmarkCheckIcon, BookmarkMinusIcon, PlayIcon, RotateLeftIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -243,8 +243,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // Current ayah's text + translation while a Juz plays per-ayah (word-sync reciter).
   const [juzAyahVerse, setJuzAyahVerse] = useState<AyahVerse | null>(null);
   // Short-lived info notice (e.g. Audio Only reciter → plays from Ayah 1).
-  const [notice, setNotice] = useState<{ id: number; text: string } | null>(null);
-  const showNotice = (text: string) => setNotice({ id: Date.now(), text });
+  // `icon`: a notice's own mark (the bookmark ones); the turn arrow otherwise.
+  const [notice, setNotice] = useState<{ id: number; text: string; icon?: "bookmark-added" | "bookmark-removed" } | null>(null);
+  const showNotice = (text: string, icon?: "bookmark-added" | "bookmark-removed") => setNotice({ id: Date.now(), text, icon });
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(null), 4500);
@@ -1151,11 +1152,16 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       const ayahNo = currentSegment?.ayahNumber;
       const prevStop = activeSurah && ayahNo && ayahNo > 1 ? meaningStopsFor(selectedReciter.id, activeSurah.number)?.[ayahNo - 2] : undefined;
       player.seek(Math.max(word.startTime, ayahStart + 0.02, (prevStop ?? 0) + 0.02));
+      // Paused: a tapped word recites from there (owner, 2026-11-23).
+      if (!player.isPlaying && player.current) player.resume();
       return;
     }
     if (juzPreSegment) return;
     const at = ayahClipTimeOf(juzAyahVerse, word.startTime, player.duration);
-    if (at !== null) player.seek(at);
+    if (at !== null) {
+      player.seek(at);
+      if (!player.isPlaying && player.current) player.resume();
+    }
   };
 
   // Tajweed colours: on by default everywhere (Safari / iOS included);
@@ -1252,23 +1258,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
-  // A big screen (tablet, laptop, desktop — 768px+ wide, not a phone on its
-  // side): the same ⤢ in the header hides everything, ⤡ brings it back. Only
-  // by hand there — no hiding on a tap of the scene or when playback starts.
-  const [bigScreen, setBigScreen] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const update = () => setBigScreen(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const textOnlyToggle = phoneLandscape || bigScreen;
   const [landFocus, setLandFocus] = useState(false);
-  const landFocusOn = textOnlyToggle && !readingActive && landFocus;
+  // Every screen size now (owner, 2026-11-23): a phone held upright has its
+  // ⤢ in the player card's row.
+  const landFocusOn = !readingActive && landFocus;
   useEffect(() => {
-    if (!textOnlyToggle || readingActive) setLandFocus(false);
-  }, [textOnlyToggle, readingActive]);
+    if (readingActive) setLandFocus(false);
+  }, [readingActive]);
   useEffect(() => {
     if (!phoneLandscape || readingActive) return;
     const onClick = (ev: MouseEvent) => {
@@ -1324,14 +1320,61 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     return () => window.clearTimeout(id);
   }, [landFocusOn]);
   const focusOn = (readingActive && readerFocus) || landFocusOn;
-  // Listening: focus reading hides only the header — the player stays (and
-  // stays through a pause, so the button just tapped doesn't vanish).
-  const [focusKeepsPlayer, setFocusKeepsPlayer] = useState(false);
+  // Text only, any screen: a tap anywhere but a word (or a control) brings
+  // everything back, like ⤡ (owner, 2026-11-23). Phone landscape has its own
+  // tap-to-toggle above.
   useEffect(() => {
-    if (!focusOn) setFocusKeepsPlayer(false);
-    else if (player.isPlaying) setFocusKeepsPlayer(true);
-  }, [focusOn, player.isPlaying]);
-  const playerAway = focusOn && (landFocusOn || (!focusKeepsPlayer && !player.isPlaying));
+    if (!focusOn || (phoneLandscape && !readingActive)) return;
+    const onClick = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target || target.closest('button, a, input, textarea, select, label, [role="dialog"], [role="slider"], [data-action-sheet], .quran-word.cursor-pointer'))
+        return;
+      if (window.getSelection()?.toString()) return;
+      if (document.querySelector('[data-action-sheet], [role="dialog"]')) return;
+      setReaderFocus(false);
+      setLandFocus(false);
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [focusOn, phoneLandscape, readingActive]);
+  // ⤢ hides everything but the scene and the ayah (its translation too, when
+  // on); ⤡ brings it all back. In the header where there's room, in the
+  // player card's row on a phone held upright. The first ⤢ by hand: the
+  // lantern points at ⤡, so the way back is known (once per browser).
+  // 📖 Reading mode: the whole Surah's / Juz's text.
+  const readingToggle = (className: string, iconClass: string) =>
+    ((activeSurah && !isJuz) || (isJuz && activeJuz)) && (
+      <button
+        type="button"
+        onClick={() => {
+          const on = !readingMode;
+          setReadingMode(on);
+          showNotice(t(language, on ? "Reading mode on" : "Ayah mode on"));
+        }}
+        aria-pressed={readingMode}
+        data-tour="reading"
+        aria-label={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
+        data-tooltip={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
+        // On: the same line book, in gold (owner: no filled icon) — no
+        // coloured ring (nor the focus ring a tap left on it).
+        className={`${className} shrink-0 place-items-center transition-all cursor-pointer focus-visible:outline-none ${
+          readingMode ? "text-amber-300 hover:text-amber-200" : "text-sand-100 hover:text-white"
+        }`}
+      >
+        <BookOpenIcon className={iconClass} />
+      </button>
+    );
+  const focusToggle = {
+    on: focusOn,
+    onToggle: () => {
+      if (!focusOn) showTourTip("show-controls");
+      if (readingActive) setReaderFocus((v) => !v);
+      else setLandFocus((v) => !v);
+    },
+  };
+  // Text only hides the player too, in reading mode as well (owner,
+  // 2026-11-23); a tap off the text or ⤡ brings it back.
+  const playerAway = focusOn;
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
@@ -1609,6 +1652,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       ? { kind: "juz", juz: activeJuz.id, ...at, at: Date.now() }
       : { kind: "surah", ...at, at: Date.now() };
   const onAirBookmarked = Boolean(onAirAyah && bookmarks.some((b) => bookmarkId(b) === bookmarkId(bookmarkFor(onAirAyah))));
+  // « Bookmark added · Al-Baqarah 2:31 »
+  const bookmarkNotice = (added: boolean, at: { surah: number; ayah: number }) =>
+    showNotice(
+      `${t(language, added ? "Bookmark added" : "Bookmark removed")} · ${surahNameIn(at.surah, language)} ${at.surah}:${at.ayah}`,
+      added ? "bookmark-added" : "bookmark-removed",
+    );
   const handleToggleBookmark = () => {
     if (!readingActive) {
       if (!onAirAyah) return;
@@ -1616,11 +1665,15 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       updateBookmarks(
         onAirBookmarked ? bookmarks.filter((b) => bookmarkId(b) !== id) : [bookmarkFor(onAirAyah)]
       );
+      // Ayah view: nothing on the text shows the mark (reading mode draws
+      // it on the page), so say it — with where (owner, 2026-11-23).
+      bookmarkNotice(!onAirBookmarked, onAirAyah);
       return;
     }
     if (pageBookmarks.length) {
       const drop = new Set(pageBookmarks.map(bookmarkId));
       updateBookmarks(bookmarks.filter((b) => !drop.has(bookmarkId(b))));
+      bookmarkNotice(false, pageBookmarks[0]);
       return;
     }
     const at = player.isPlaying && readingAyah ? readingAyah : visibleAyah ?? readingAyah;
@@ -1629,6 +1682,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       ? { kind: "juz", juz: readingJuz.id, ...at, at: Date.now() }
       : { kind: "surah", ...at, at: Date.now() };
     updateBookmarks([b]);
+    bookmarkNotice(true, at);
   };
   const bookmarkOn = readingActive ? pageBookmarks.length > 0 : onAirBookmarked;
   const mainBookmark = bookmarks[0] ?? null;
@@ -2022,22 +2076,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         // Reading mode is Arabic only: no translation to choose there.
         onToggleMeaning={readingActive ? undefined : handleToggleMeaning}
         // …and gets a text-size control in its place.
-        focus={
-          readingActive
-            ? { on: focusOn, onToggle: () => setReaderFocus((v) => !v) }
-            : textOnlyToggle
-              ? // Landscape / big screen: ⤢ in the header hides it all at
-                // once, ⤡ brings it back. The first ⤢ by hand: the lantern
-                // points at ⤡, so the way back is known.
-                {
-                  on: landFocusOn,
-                  onToggle: () => {
-                    if (!landFocusOn) showTourTip("show-controls");
-                    setLandFocus((v) => !v);
-                  },
-                }
-              : undefined
-        }
+        focus={focusToggle}
         showTajweed={tajweedShown}
         onToggleTajweed={handleToggleTajweed}
         script={quranScript}
@@ -2064,28 +2103,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           )
         }
       >
-        {/* Reading mode toggle: the whole Surah's / Juz's text */}
-        {((activeSurah && !isJuz) || (isJuz && activeJuz)) && (
-          <button
-            type="button"
-            onClick={() => {
-              const on = !readingMode;
-              setReadingMode(on);
-              showNotice(t(language, on ? "Reading mode on" : "Ayah mode on"));
-            }}
-            aria-pressed={readingMode}
-            data-tour="reading"
-            aria-label={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
-            data-tooltip={readingMode ? t(language, "Exit reading mode") : t(language, "Reading mode")}
-            // On: the same line book, in gold (owner: no filled icon) — no
-            // coloured ring (nor the focus ring a tap left on it).
-            className={`pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg hover:bg-black/20 hover:border-white/30 active:scale-90 transition-all cursor-pointer focus-visible:outline-none ${
-              readingMode ? "text-amber-300 hover:text-amber-200" : "text-sand-100 hover:text-white"
-            }`}
-          >
-            <BookOpenIcon className="h-5 w-5" />
-          </button>
-        )}
+        {/* Reading mode toggle — a phone held upright: in the card's row */}
+        {readingToggle("max-md:hidden phoneland:!grid pointer-events-auto grid h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 min-[400px]:h-11 min-[400px]:w-11 sm:h-12 sm:w-12 rounded-full bg-black/[0.08] backdrop-blur-[6px] border border-white/15 shadow-lg hover:bg-black/20 hover:border-white/30 active:scale-90", "h-5 w-5")}
         {/* Its Settings page edits the same preferences as the header. */}
         <HomeSettingsProvider
           value={{
@@ -2257,7 +2276,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-live="polite"
             className="flex max-w-[680px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
-            <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            {notice.icon === "bookmark-added" ? (
+              <BookmarkCheckIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : notice.icon === "bookmark-removed" ? (
+              <BookmarkMinusIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : (
+              <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            )}
             <span>{notice.text}</span>
           </div>
         </div>
@@ -2283,7 +2308,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-live="polite"
             className="mb-3 phoneland:hidden max-w-[680px] w-auto flex items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
-            <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            {notice.icon === "bookmark-added" ? (
+              <BookmarkCheckIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : notice.icon === "bookmark-removed" ? (
+              <BookmarkMinusIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : (
+              <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            )}
             <span>{notice.text}</span>
           </div>
         )}
@@ -2299,7 +2330,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           footerRef={setPlayerFooter}
           footerOpen={playerCollapsed}
           leading={
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 max-[419px]:gap-2">
+            {/* Phones under 420px (360px Androids): the gaps a little tighter,
+                so Live, views and comments all fit beside the 5 icons. */}
             {/* Image / video background: Settings › Background */}
             {/* Reopens the Add to Home Screen guide after it was dismissed —
                 compact player: leads the bottom strip instead */}
@@ -2356,6 +2389,19 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
                 className="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
               />
             )}
+            {/* A phone held upright: the header has no room for 📖 and ⤢
+                (its last spot is the profile picture), so they sit here. */}
+            {readingToggle("md:hidden pointer-events-auto relative grid h-7 w-7 rounded-full hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']", "text-base sm:text-lg")}
+            <button
+              type="button"
+              onClick={focusToggle.onToggle}
+              data-tour="text-only"
+              aria-label={t(language, "Show only the text")}
+              data-tooltip={t(language, "Show only the text")}
+              className="md:hidden pointer-events-auto relative grid h-7 w-7 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
+            >
+              <ArrowExpandIcon className="text-base sm:text-lg" />
+            </button>
             </div>
           }
         >
@@ -2456,12 +2502,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />
 
+      {/* ⤢ text only: the edge lantern and gift tab go too (kept mounted, and
+          kept direct children of the scene — they measure it as their parent). */}
       {/* Feedback: a faint lantern at the screen edge (components/feedback) */}
-      <FeedbackLantern playing={player.isPlaying} />
+      <FeedbackLantern playing={player.isPlaying} hidden={focusOn} />
+      {/* Help keep HuDa free: the gift tab at the left edge (components/support) */}
+      <SupportGift playing={player.isPlaying} suppressed={readingActive} hidden={focusOn} />
       {/* First visit: a lantern shows what each control does */}
       <FirstVisitTour />
-      {/* Help keep HuDa free: the gift tab at the left edge + its sheet (components/support) */}
-      <SupportGift playing={player.isPlaying} suppressed={readingActive} />
       <SupportSheet />
     </div>
     </SetUiLangContext.Provider>

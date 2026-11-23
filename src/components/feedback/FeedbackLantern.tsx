@@ -9,6 +9,7 @@ import { FEEDBACK_PEEKED_KEY, FEEDBACK_UI_ATTR } from "@/lib/feedback";
 import { haptic } from "@/lib/haptics";
 import { swingAngle, threadPath } from "@/lib/feedbackSwing";
 import { CheckIcon, MessageIcon } from "@/components/ui/Icon";
+import { EDGE_OUT_EVENT, OPEN_FEEDBACK_EVENT } from "@/lib/settingsEvents";
 
 const FeedbackSheet = dynamic(() => import("./FeedbackSheet"), { ssr: false });
 
@@ -59,10 +60,26 @@ const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-mo
  * first visit it swings out once by itself while a Surah plays. After a send
  * the form closes and a thank-you toast shows here.
  */
-export function FeedbackLantern({ playing }: { playing: boolean }) {
+export function FeedbackLantern({ playing, hidden = false }: { playing: boolean; hidden?: boolean }) {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [out, setOut] = useState(false);
+
+  // Only one of the gift / the feedback lantern out at a time (owner,
+  // 2026-11-23): say when this one comes out; when the other does, this one
+  // goes back to its place at the edge (still there, just not out).
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(EDGE_OUT_EVENT, { detail: { who: "feedback", out } }));
+  }, [out]);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ who: string; out: boolean }>).detail;
+      if (!d || d.who === "feedback") return;
+      if (d.out) setOut(false);
+    };
+    window.addEventListener(EDGE_OUT_EVENT, on);
+    return () => window.removeEventListener(EDGE_OUT_EVENT, on);
+  }, []);
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);
   const [ready, setReady] = useState(false);
@@ -215,6 +232,15 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
     setOpen(true);
   };
 
+  // Settings › Send feedback: the same form, without the lantern's drop.
+  const openFormRef = useRef(openForm);
+  openFormRef.current = openForm;
+  useEffect(() => {
+    const open = () => openFormRef.current();
+    window.addEventListener(OPEN_FEEDBACK_EVENT, open);
+    return () => window.removeEventListener(OPEN_FEEDBACK_EVENT, open);
+  }, []);
+
   const onClick = (e: React.MouseEvent) => {
     haptic();
     // Keyboard / screen reader (detail 0): straight to the form.
@@ -241,7 +267,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const shown = Boolean(geo) && !open;
 
   return (
-    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className="pointer-events-none absolute inset-0 z-40">
+    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"

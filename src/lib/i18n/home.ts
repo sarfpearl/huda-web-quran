@@ -23,6 +23,8 @@ const strings: Strings = {
   // ── Home controls ──
   "Exit reading mode": { ta: "வாசிப்பு முறையிலிருந்து வெளியேறு", ur: "مطالعہ موڈ سے باہر نکلیں", ml: "വായന മോഡിൽ നിന്ന് പുറത്തുകടക്കുക", hi: "पढ़ने का मोड छोड़ें", id: "Keluar dari mode baca", bn: "পড়ার মোড থেকে বের হন", tr: "Okuma modundan çık", fr: "Quitter le mode lecture", ms: "Keluar mod bacaan" },
   "Reading mode": { ta: "வாசிப்பு முறை", ur: "مطالعہ موڈ", ml: "വായന മോഡ്", hi: "पढ़ने का मोड", id: "Mode baca", bn: "পড়ার মোড", tr: "Okuma modu", fr: "Mode lecture", ms: "Mod bacaan" },
+  "Bookmark added": { ta: "புக்மார்க் சேர்க்கப்பட்டது", ur: "بک مارک شامل ہو گیا", ml: "ബുക്ക്മാർക്ക് ചേർത്തു", hi: "बुकमार्क जोड़ा गया", id: "Penanda ditambahkan", bn: "বুকমার্ক যোগ হয়েছে", tr: "Yer imi eklendi", fr: "Signet ajouté", ms: "Penanda ditambah" },
+  "Bookmark removed": { ta: "புக்மார்க் நீக்கப்பட்டது", ur: "بک مارک ہٹا دیا گیا", ml: "ബുക്ക്മാർക്ക് നീക്കി", hi: "बुकमार्क हटाया गया", id: "Penanda dihapus", bn: "বুকমার্ক সরানো হয়েছে", tr: "Yer imi kaldırıldı", fr: "Signet supprimé", ms: "Penanda dibuang" },
   "Reading mode on": { ta: "வாசிப்பு முறை இயக்கப்பட்டது", ur: "مطالعہ موڈ آن", ml: "വായന മോഡ് ഓൺ", hi: "पढ़ने का मोड चालू", id: "Mode baca aktif", bn: "পড়ার মোড চালু", tr: "Okuma modu açık", fr: "Mode lecture activé", ms: "Mod bacaan dihidupkan" },
   "Ayah mode on": { ta: "ஆயத் முறை இயக்கப்பட்டது", ur: "آیت موڈ آن", ml: "ആയത്ത് മോഡ് ഓൺ", hi: "आयत मोड चालू", id: "Mode ayat aktif", bn: "আয়াত মোড চালু", tr: "Ayet modu açık", fr: "Mode verset activé", ms: "Mod ayat dihidupkan" },
   Continue: { ta: "தொடர்க", ur: "جاری رکھیں", ml: "തുടരുക", hi: "जारी रखें", id: "Lanjutkan", bn: "চালিয়ে যান", tr: "Devam et", fr: "Reprendre", ms: "Teruskan" },

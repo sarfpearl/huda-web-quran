@@ -363,6 +363,15 @@ export const TranslateIcon = ({ slashed, ...p }: IconProps & { slashed?: boolean
     {slashed && <path d="M3 3l18 18" />}
   </Base>
 );
+/** 文A — the header's translation-language button (owner, 2026-11-23: picked
+ *  from the Figma icon library — Phosphor "Translate", regular, MIT). Filled
+ *  outline on Phosphor's 256 grid. */
+export const LanguageIcon = ({ title, ...p }: IconProps) => (
+  <svg viewBox="0 0 256 256" width="1em" height="1em" fill="currentColor" aria-hidden={title ? undefined : true} role={title ? "img" : undefined} {...p}>
+    {title ? <title>{title}</title> : null}
+    <path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z" />
+  </svg>
+);
 /** Open book (book-open-02) — Ayah meaning toggle. */
 export const BookOpenIcon = ({ slashed, ...p }: IconProps & { slashed?: boolean }) => (
   <Base {...p}>
@@ -393,6 +402,20 @@ export const BookmarkAddIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M19 12V18.212C19 20.1274 19 21.0852 18.3987 21.4076C17.7975 21.7301 17.0234 21.1875 15.4753 20.1024L13.6245 18.805C12.5964 18.0843 12.0824 17.724 11.5 17.724C10.9176 17.724 10.4036 18.0843 9.37552 18.805L7.52469 20.1024C5.97657 21.1875 5.20252 21.7301 4.60126 21.4076C4 21.0852 4 20.1274 4 18.212V8.23515C4 5.53157 4 4.17979 4.82376 3.33989C5.64752 2.5 6.97335 2.5 9.625 2.5H11.5" />
     <path d="M17 2.5V5.5M17 5.5V8.5M17 5.5H14M17 5.5H20" />
+  </Base>
+);
+/** Bookmark saved (bookmark-check-02) — the "Bookmark added" notice. */
+export const BookmarkCheckIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M19 10V18.212C19 20.1274 19 21.0852 18.3987 21.4076C17.7975 21.7301 17.0234 21.1875 15.4753 20.1024L13.6245 18.805C12.5964 18.0843 12.0824 17.724 11.5 17.724C10.9176 17.724 10.4036 18.0843 9.37552 18.805L7.52469 20.1024C5.97657 21.1875 5.20252 21.7301 4.60126 21.4076C4 21.0852 4 20.1274 4 18.212V8.23515C4 5.53157 4 4.17979 4.82376 3.33989C5.64752 2.5 6.97335 2.5 9.625 2.5H10.5" />
+    <path d="M14 5C14.8698 5.49623 15.5105 6.14836 16 7C16 7 17.5381 3.92075 20 2.5" />
+  </Base>
+);
+/** Bookmark removed (bookmark-minus-02) — the "Bookmark removed" notice. */
+export const BookmarkMinusIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M19 9.5V18.212C19 20.1274 19 21.0852 18.3987 21.4076C17.7975 21.7301 17.0234 21.1875 15.4753 20.1024L13.6245 18.805C12.5964 18.0843 12.0824 17.724 11.5 17.724C10.9176 17.724 10.4036 18.0843 9.37552 18.805L7.52469 20.1024C5.97657 21.1875 5.20252 21.7301 4.60126 21.4076C4 21.0852 4 20.1274 4 18.212V8.23515C4 5.53157 4 4.17979 4.82376 3.33989C5.64752 2.5 6.97335 2.5 9.625 2.5H11.5" />
+    <path d="M14 5.5H20" />
   </Base>
 );
 /** Favourite (heart) — outline, or filled when `filled`. */
@@ -780,6 +803,21 @@ export const MinusCircleIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M16 12H8" />
     <circle cx="12" cy="12" r="10" />
+  </Base>
+);
+
+/* Sign in with email (the Profile menu's round button) — Hugeicons free set: at. */
+export const AtIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M15.6 8.40033V12.9003C15.6 14.3915 16.8088 15.6003 18.3 15.6003C19.7912 15.6003 21 14.3915 21 12.9003V12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C14.0265 21 15.8965 20.3302 17.4009 19.2M15.6 12.0003C15.6 13.9886 13.9882 15.6003 12 15.6003C10.0118 15.6003 8.4 13.9886 8.4 12.0003C8.4 10.0121 10.0118 8.40033 12 8.40033C13.9882 8.40033 15.6 10.0121 15.6 12.0003Z" />
+  </Base>
+);
+
+/* Guest profile picture in the header — Hugeicons free set: user. */
+export const UserIcon = (p: IconProps) => (
+  <Base strokeWidth={1.5} {...p}>
+    <path d="M20 21.0001C19.713 17.269 16.7289 14.3151 12.995 14.0662L12 13.9999C11.6446 14.0096 11.3134 14.0225 11.0008 14.0378C7.3 14.2192 4.28417 17.3057 4 21.0001" />
+    <circle cx="12" cy="6.99988" r="4" />
   </Base>
 );
 

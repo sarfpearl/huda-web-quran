@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRightIcon, CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
+import { AtIcon, CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { t, uiLocale, useUiLang } from "@/lib/uiLang";
 import {
@@ -30,6 +30,9 @@ import { flushBeforeSignOut, forgetThisDevice, startSync, useSyncState } from "@
 
 const GROUP = "rounded-2xl border border-white/10 bg-white/5 px-4 py-3";
 const SCROLL = "no-scrollbar flex-1 overflow-y-auto pt-4 pr-1 space-y-2.5 text-sand-100";
+/** The Profile menu's round sign-in buttons (Google's "G", the @): white, 40px, like Google's own round button. */
+const ROUND_BTN =
+  "tap-44 grid h-10 w-10 place-items-center rounded-full border border-[#dadce0] bg-white text-slate-800 transition-colors hover:bg-sand-50 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-default";
 const BIG_BTN =
   "flex h-12 w-full items-center justify-center gap-2.5 rounded-full border text-sm font-semibold transition-colors cursor-pointer active:scale-[0.99] disabled:cursor-default disabled:opacity-50";
 
@@ -52,33 +55,6 @@ function useAccount(): Account | null | undefined {
   return account;
 }
 
-/** The Settings list's first row: who is signed in, or what signing in is for. */
-export function AccountRow({ onOpen }: { onOpen: () => void }) {
-  const lang = useUiLang();
-  const account = useAccount();
-  const signedIn = Boolean(account);
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.07] px-4 py-3.5 text-left transition-colors hover:bg-emerald-400/[0.12] cursor-pointer active:scale-[0.99]"
-    >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-emerald-300/30 bg-emerald-300/10 text-xl text-emerald-200">
-        {signedIn ? <CloudSavedIcon /> : <UserCircleIcon />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-white">
-          {signedIn ? t(lang, "Account") : t(lang, "Save your progress across devices")}
-        </span>
-        <span className="mt-0.5 block truncate text-xs text-sand-200/75">
-          {account === undefined ? " " : signedIn ? account?.email || account?.name : t(lang, "Optional — HuDa works fully without an account.")}
-        </span>
-      </span>
-      <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/80" />
-    </button>
-  );
-}
-
 const TRY_AGAIN = "Something went wrong. Check your connection and try again.";
 const EMAIL_ERROR: Partial<Record<EmailLinkResult, string>> = {
   invalid: "Enter a valid email address.",
@@ -88,12 +64,18 @@ const EMAIL_ERROR: Partial<Record<EmailLinkResult, string>> = {
   unconfigured: "Something went wrong. Check your connection and try again.",
 };
 
-function SignedOut() {
+function SignedOut({ wrap }: { wrap: string }) {
   const lang = useUiLang();
   const [ways, setWays] = useState<AuthWays | null | undefined>(undefined);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
   const [sentTo, setSentTo] = useState("");
+  // The email form shows once its round @ is tapped (owner, 2026-11-23).
+  const [emailOpen, setEmailOpen] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (emailOpen) emailRef.current?.focus();
+  }, [emailOpen]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -137,6 +119,7 @@ function SignedOut() {
     void renderGoogleButton(el, {
       locale: uiLocale(lang),
       width: el.clientWidth || 320,
+      round: true,
       onStart: () => live && setBusy("google"),
       onDone: (ok) => {
         if (!live) return;
@@ -150,11 +133,14 @@ function SignedOut() {
   }, [googleOn, redirect, sentTo, lang]);
 
   return (
-    <div className={SCROLL}>
+    <div className={wrap}>
       <div className={cn(GROUP, "py-4")}>
         <p className="text-base font-semibold text-white">{t(lang, "Save your progress across devices")}</p>
         <p className="mt-1.5 text-xs leading-relaxed text-sand-200/80">
           {t(lang, "Sign in to keep your last read, bookmarks and settings on every phone and computer.")}
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed text-sand-200/80">
+          {t(lang, "Listen to half a Surah on your phone, then carry on from the same ayah on your computer — everything stays in step.")}
         </p>
         <p className="mt-1.5 text-xs leading-relaxed text-emerald-200/80">{t(lang, "Optional — HuDa works fully without an account.")}</p>
       </div>
@@ -178,24 +164,49 @@ function SignedOut() {
         </div>
       ) : (
         <div className={cn(GROUP, "space-y-3 py-4")}>
-          {googleOn && !redirect && (
-            <div
-              ref={gisRef}
-              aria-busy={busy === "google"}
-              className={cn("flex min-h-12 w-full justify-center [color-scheme:light]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
-            />
-          )}
-          {(!googleOn || redirect || gisFailed) && (
-            <button
-              type="button"
-              onClick={google}
-              disabled={!googleOn || busy !== null}
-              className={cn(BIG_BTN, "border-white/15 bg-white text-slate-900 hover:bg-sand-50")}
-            >
-              <GoogleIcon className="text-lg" />
-              {t(lang, "Continue with Google")}
-            </button>
-          )}
+          {/* Two round buttons: Google's "G" and an @ that opens the email form.
+              (Google's round button is sized for content-box, not this app's
+              border-box everywhere — its G sank and shrank to nothing.) */}
+          {/* Said in words too (owner, 2026-11-23: two bare circles didn't
+              read as a sign-in): a title above, each circle named below. */}
+          <p className="text-center text-sm font-semibold text-white">{t(lang, "Sign in with")}</p>
+          <div className="flex items-start justify-center gap-8">
+            <div className="flex flex-col items-center gap-1.5">
+              {googleOn && !redirect && (
+                <div
+                  ref={gisRef}
+                  aria-busy={busy === "google"}
+                  className={cn("grid h-10 w-10 place-items-center [color-scheme:light] [&_*]:[box-sizing:content-box]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
+                />
+              )}
+              {(!googleOn || redirect || gisFailed) && (
+                <button
+                  type="button"
+                  onClick={google}
+                  disabled={!googleOn || busy !== null}
+                  aria-label={t(lang, "Continue with Google")}
+                  data-tooltip={t(lang, "Continue with Google")}
+                  className={ROUND_BTN}
+                >
+                  <GoogleIcon className="text-xl" />
+                </button>
+              )}
+              <span aria-hidden="true" className="text-[11px] text-sand-200/75">Google</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setEmailOpen((o) => !o)}
+                aria-expanded={emailOpen}
+                aria-label={t(lang, "Continue with email")}
+                data-tooltip={t(lang, "Continue with email")}
+                className={cn(ROUND_BTN, emailOpen && "ring-2 ring-emerald-400/70")}
+              >
+                <AtIcon className="h-5 w-5" />
+              </button>
+              <span aria-hidden="true" className="text-[11px] text-sand-200/75">{t(lang, "Email")}</span>
+            </div>
+          </div>
           {busy === "google" && !redirect && !gisFailed && (
             <p role="status" className="text-center text-xs text-sand-200/80">
               {t(lang, "Signing you in…")}
@@ -203,12 +214,7 @@ function SignedOut() {
           )}
           {!googleOn && <p className="text-center text-[11px] text-sand-200/60">{t(lang, "Google sign-in isn't set up yet.")}</p>}
 
-          <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-widest text-sand-200/40" aria-hidden="true">
-            <span className="h-px flex-1 bg-white/10" />
-            <MailIcon className="text-sm" />
-            <span className="h-px flex-1 bg-white/10" />
-          </div>
-
+          {emailOpen && (
           <form onSubmit={send} className="space-y-2.5">
             <label className="block">
               <span className="sr-only">{t(lang, "Your email address")}</span>
@@ -217,6 +223,7 @@ function SignedOut() {
                 inputMode="email"
                 autoComplete="email"
                 required
+                ref={emailRef}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t(lang, "Your email address")}
@@ -227,6 +234,7 @@ function SignedOut() {
               {busy === "email" ? "…" : t(lang, "Continue with email")}
             </button>
           </form>
+          )}
           {error && (
             <p role="alert" className="text-center text-xs text-amber-200">
               {t(lang, error)}
@@ -237,7 +245,7 @@ function SignedOut() {
 
       <p className="px-2 pb-2 text-center text-[11px] leading-relaxed text-sand-200/60">
         {t(lang, "We save only your last read, bookmarks and settings. No ads, nothing sold.")}{" "}
-        <Link href="/privacy" className="font-semibold text-sand-100 underline underline-offset-2 hover:text-white">
+        <Link href="/privacy" className="whitespace-nowrap font-semibold text-sand-100 underline underline-offset-2 hover:text-white">
           {t(lang, "Privacy policy")}
         </Link>
       </p>
@@ -245,7 +253,7 @@ function SignedOut() {
   );
 }
 
-function SignedIn({ account }: { account: Account }) {
+function SignedIn({ account, wrap }: { account: Account; wrap: string }) {
   const lang = useUiLang();
   const [confirming, setConfirming] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -271,7 +279,7 @@ function SignedIn({ account }: { account: Account }) {
   };
 
   return (
-    <div className={SCROLL}>
+    <div className={wrap}>
       <div className={cn(GROUP, "flex items-center gap-3 py-4")}>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-emerald-300/30 bg-emerald-300/10 text-2xl text-emerald-200">
           <UserCircleIcon />
@@ -386,10 +394,12 @@ function SignedIn({ account }: { account: Account }) {
 }
 
 /** Settings › Account. */
-export function AccountPage() {
+/** `embedded`: inside the Profile menu's scroll, not a page of its own. */
+export function AccountPage({ embedded = false }: { embedded?: boolean }) {
   const account = useAccount();
   // Signing in here (Google's pop-up) starts the sync without a page load.
   useEffect(() => startSync(), []);
-  if (account === undefined) return <div className={SCROLL} />;
-  return account ? <SignedIn account={account} /> : <SignedOut />;
+  const wrap = embedded ? "space-y-2.5" : SCROLL;
+  if (account === undefined) return <div className={wrap} />;
+  return account ? <SignedIn account={account} wrap={wrap} /> : <SignedOut wrap={wrap} />;
 }

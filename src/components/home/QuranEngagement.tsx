@@ -438,27 +438,45 @@ function usePlayerGeometry(container: RefObject<HTMLElement | null> | undefined)
  * and back down once the strip is as wide as the level below needed — the
  * width it overflowed at — so it never flickers between two levels.
  */
-function useFitLevel(ref: RefObject<HTMLElement | null>, max: number, padFor: (level: number) => number) {
+function useFitLevel(el: HTMLElement | null, max: number, padFor: (level: number) => number) {
   const padRef = useRef(padFor);
   padRef.current = padFor;
   const pad = padFor(0);
   const [level, setLevel] = useState(0);
   const levelRef = useRef(0);
-  const needs = useRef<number[]>([]);
-  const widthRef = useRef(-1);
+  // What each step took away (the "Live" word, the Live button…): widths
+  // the row would need back to step down. Only the difference is kept, not
+  // a total — a total measured while the row was briefly wider (loading)
+  // kept Live hidden on a strip with room for it (397px vs 393px).
+  const freed = useRef<number[]>([]);
+  const stepFrom = useRef<{ level: number; last: number } | null>(null);
+  // The element itself (not a ref), so a strip that is swapped for a new
+  // node is watched again.
   useLayoutEffect(() => {
-    const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const measure = () => {
       const l = levelRef.current;
       if (el.clientWidth <= 0) return;
+      // What the items need (widths + gaps), against the room inside the
+      // padding: a flex row's end padding isn't in scrollWidth, so items
+      // running into it went unseen (the comment count past the ^ button).
+      const cs = getComputedStyle(el);
+      const items = ([...el.children] as HTMLElement[]).filter((c) => c.offsetWidth > 0 && getComputedStyle(c).position !== "absolute");
+      const used = items.reduce((w, c) => w + c.offsetWidth, 0) + (parseFloat(cs.columnGap) || 0) * Math.max(0, items.length - 1);
+      // Just stepped up: note what that step freed — in the last group only
+      // (the one the levels thin out), so the other group changing at the
+      // same moment (icons arriving while the page loads) can't inflate it.
+      const last = items[items.length - 1]?.offsetWidth ?? 0;
+      const from = stepFrom.current;
+      if (from && from.level === l - 1) freed.current[l - 1] = Math.max(0, from.last - last);
+      stepFrom.current = null;
+      // The level's own padding, not the computed one (it eases over 500ms).
+      const room = (lv: number) => el.clientWidth - padRef.current(lv);
       let next = l;
-      if (el.scrollWidth > el.clientWidth + 1 && l < max) {
-        // Content width only: the side padding changes with the level, so a
-        // raw scrollWidth would never compare right after it shrinks.
-        needs.current[l] = el.scrollWidth - padRef.current(l);
+      if (used > room(l) + 1 && l < max) {
+        stepFrom.current = { level: l, last };
         next = l + 1;
-      } else if (l > 0 && el.clientWidth - padRef.current(l - 1) >= (needs.current[l - 1] ?? Infinity)) {
+      } else if (l > 0 && freed.current[l - 1] != null && used + freed.current[l - 1] <= room(l - 1)) {
         next = l - 1;
       }
       if (next !== l) {
@@ -466,28 +484,14 @@ function useFitLevel(ref: RefObject<HTMLElement | null>, max: number, padFor: (l
         setLevel(next);
       }
     };
-    // The strip's own width, and its groups' (a button coming or going).
-    // A level reached mid-animation (the player shrinking to compact) can
-    // stick, its "needs" measured on the way: when the strip's own width
-    // changes, measure again from the top (synchronously, so no flicker; the
-    // width doesn't depend on the level, so this can't loop).
-    const ro = new ResizeObserver(() => {
-      if (el.clientWidth !== widthRef.current) {
-        widthRef.current = el.clientWidth;
-        needs.current = [];
-        if (levelRef.current > 0) {
-          levelRef.current = 0;
-          setLevel(0);
-          return;
-        }
-      }
-      measure();
-    });
+    // The strip's own width, and its groups' (a button coming or going, a
+    // count growing).
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
     for (const c of el.children) ro.observe(c);
     measure();
     return () => ro.disconnect();
-  }, [ref, max, level, pad]);
+  }, [el, max, level, pad]);
   return level;
 }
 
@@ -960,17 +964,25 @@ export function PlayerStatsFrame({
   // With the bottom strip the card floats inside the frame, inset by CARD_INSET.
   const CARD_INSET = 10;
   const inset = withFooter ? CARD_INSET : 0;
-  const stripInsets = {
-    paddingLeft: Math.max(geo?.left ?? 16, 8) + inset,
-    paddingRight: Math.max(geo?.right ?? 16, 8) + inset,
-  };
+  // The row's edges (owner, 2026-11-23): ♡ and the comment count sit 22px in
+  // from the frame on every device and in both player sizes — the 5 icons
+  // hug the left, the 3 the right, and a wider card only widens the gap
+  // between them. (Measured from the frame's outer edge: its 1px border is
+  // outside the padding. ♡'s button has 6px of room round its icon.)
+  const EDGE = 22 - 1;
+  const stripInsets = { paddingLeft: EDGE - 6, paddingRight: EDGE };
   // Narrow frame (compact player on a small screen): the top strip sheds, in
   // turn, the "Live" word and wide gaps, then the Live button (its count is in
   // the views details too), then the extra edge room — never overflows.
-  const topStripRef = useRef<HTMLDivElement>(null);
+  const topStripRef = useRef<HTMLDivElement | null>(null);
+  const [stripEl, setStripEl] = useState<HTMLDivElement | null>(null);
+  const stripRef = useCallback((node: HTMLDivElement | null) => {
+    topStripRef.current = node;
+    setStripEl(node);
+  }, []);
   const fullPad = stripInsets.paddingLeft + stripInsets.paddingRight;
-  const fit = useFitLevel(topStripRef, 3, (l) => (l >= 3 ? 16 + 2 * inset : fullPad));
-  const topInsets = fit >= 3 ? { paddingLeft: 8 + inset, paddingRight: 8 + inset } : stripInsets;
+  const fit = useFitLevel(stripEl, 3, (l) => (l >= 3 && !withFooter ? 16 + 2 * inset : fullPad));
+  const topInsets = fit >= 3 && !withFooter ? { paddingLeft: 8 + inset, paddingRight: 8 + inset } : stripInsets;
 
   const toggleViews = () => {
     setViewsOpen((v) => !v);
@@ -1027,7 +1039,7 @@ export function PlayerStatsFrame({
     </>
   );
   const stat =
-    "tap-44 flex items-center gap-1.5 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
+    "tap-44 flex items-center gap-1.5 max-[419px]:gap-1 rounded-md text-[11px] sm:text-xs font-medium text-white tabular-nums transition-opacity hover:opacity-80 active:opacity-60";
 
   return (
     <div data-player-frame className="relative max-w-full">
@@ -1070,13 +1082,13 @@ export function PlayerStatsFrame({
       style={show && geo && !withFooter ? { borderBottomLeftRadius: geo.radius, borderBottomRightRadius: geo.radius } : undefined}
     >
       <div
-        className={cn("relative w-0 min-w-full items-center justify-between gap-3 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden", "phoneland:!hidden")}
+        className={cn("relative w-0 min-w-full items-center justify-between gap-3 max-[419px]:gap-2 transition-[padding] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none", STRIP_H, show ? "flex" : "hidden", "phoneland:!hidden")}
         style={topInsets}
-        ref={topStripRef}
+        ref={stripRef}
       >
         <HoverTooltips container={topStripRef} />
         {leading ?? <span />}
-        <div data-tour="community" className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5" : "gap-3 sm:gap-4")}>
+        <div data-tour="community" className={cn("flex shrink-0 items-center", fit >= 1 ? "gap-2.5 max-[419px]:gap-2" : "gap-3 sm:gap-4")}>
           {fit < 2 && (
           <button
             type="button"

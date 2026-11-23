@@ -23,6 +23,7 @@ export const TOUR_STEPS: TourStep[] = [
   { target: "text-only", title: "Text only", text: "Hide every button and keep only the ayah on the screen. Tap it again to bring them back." },
   { target: "reading", title: "Reading mode", text: "Read the whole Surah page by page, with the recited ayah lit." },
   { target: "browse", title: "Surahs, Juz & search", text: "Find any Surah, Juz or ayah — search by words, topic or voice. Settings are here too." },
+  { target: "account", title: "Settings & About", text: "Your settings and About HuDa are here. Sign-in for every device will come here too." },
   { target: "feedback", title: "Feedback", text: "Found a problem or have an idea? Tap the little lantern at the edge and tell us." },
   { target: "install", title: "Add to Home Screen", text: "Keep HuDa on your Home Screen and open it like an app." },
   { target: "favourites", title: "Favourites", text: "The Surahs and Juz you've liked, kept on this device." },

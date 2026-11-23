@@ -7,6 +7,7 @@ import { afterSplash, afterStage } from "@/lib/onboarding";
 import { haptic } from "@/lib/haptics";
 import { swingAngle, threadPath } from "@/lib/feedbackSwing";
 import { OPEN_SUPPORT_EVENT, SUPPORT_PEEKED_KEY, supportEnabled } from "@/lib/support";
+import { EDGE_OUT_EVENT } from "@/lib/settingsEvents";
 
 /*
  * The support entry, the feedback lantern's quiet partner on the left: a
@@ -151,13 +152,29 @@ function GiftArt({ open, still }: { open: boolean; still: boolean }) {
   );
 }
 
-export function SupportGift({ playing, suppressed }: { playing: boolean; suppressed: boolean }) {
+export function SupportGift({ playing, suppressed, hidden = false }: { playing: boolean; suppressed: boolean; hidden?: boolean }) {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [geo, setGeo] = useState<Geometry | null>(null);
   const [out, setOut] = useState(false);
+
+  // Only one of the gift / the feedback lantern out at a time (owner,
+  // 2026-11-23): say when this one comes out; when the other does, this one
+  // goes back to its place at the edge (still there, just not out).
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(EDGE_OUT_EVENT, { detail: { who: "gift", out } }));
+  }, [out]);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ who: string; out: boolean }>).detail;
+      if (!d || d.who === "gift") return;
+      if (d.out) setOut(false);
+    };
+    window.addEventListener(EDGE_OUT_EVENT, on);
+    return () => window.removeEventListener(EDGE_OUT_EVENT, on);
+  }, []);
   const rootRef = useRef<HTMLDivElement>(null);
   const outTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const threadRef = useRef<SVGPathElement>(null);
@@ -326,7 +343,7 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
   };
 
   return (
-    <div ref={rootRef} className="pointer-events-none absolute inset-0 z-40">
+    <div ref={rootRef} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"

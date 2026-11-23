@@ -11,7 +11,7 @@ import {
   reciterHasWordTiming,
   reciterHasWordTimingFor,
 } from "@/lib/data/service";
-import { ImamQuranIcon, VideoCameraIcon, ImageIcon, TranslateIcon, CloseIcon, SearchIcon } from "@/components/ui/Icon";
+import { ImamQuranIcon, VideoCameraIcon, ImageIcon, LanguageIcon, CloseIcon, SearchIcon } from "@/components/ui/Icon";
 import { t, type UiLang } from "@/lib/uiLang";
 import { TimeLocationWidget } from "@/components/navigation/TimeLocationWidget";
 import { HoverTooltips } from "@/components/player/HoverTooltips";
@@ -22,6 +22,7 @@ import { isMeaningLang } from "@/lib/data/meaningAudio";
 import { OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 import { WaqfLegend } from "./WaqfLegend";
+import { AccountAvatar } from "./AccountAvatar";
 
 /** How long the Tajweed panel stays open untouched before hiding itself. */
 const TAJWEED_AUTO_HIDE_MS = 4000;
@@ -222,7 +223,8 @@ export function ImmersiveHeader({
             data-tour="text-only"
             aria-label={t(language, "Show only the text")}
             data-tooltip={t(language, "Show only the text")}
-            className={`max-[379px]:hidden ${FOCUS_BTN}`}
+            // A phone held upright has no room: ⤢ sits in the player card's row.
+            className={`max-md:hidden phoneland:!grid ${FOCUS_BTN}`}
           >
             <ArrowExpandIcon className="h-5 w-5" />
           </button>
@@ -245,7 +247,7 @@ export function ImmersiveHeader({
             }`}
           >
             {/* Translate icon; dimmed (not slashed) when the translation is hidden */}
-            <TranslateIcon className="h-5 w-5" />
+            <LanguageIcon className="h-5 w-5" />
             <span
               className={`hidden sm:inline text-[10px] sm:text-xs ${showMeaning && current.id === "ta" ? "font-tamil" : ""}`}
               style={showMeaning && current.font && current.id !== "ta" ? { fontFamily: current.font } : undefined}
@@ -545,6 +547,9 @@ export function ImmersiveHeader({
 
         {/* Category Picker Menu (Menu.svg) */}
         {children}
+
+        {/* Profile picture (login): the last one on the right, every size. */}
+        <AccountAvatar />
       </div>
       </div>
     </header>

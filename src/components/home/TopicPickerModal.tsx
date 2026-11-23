@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import type { BayanWithRelations } from "@/types/bayan";
-import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, KeyboardMicIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon, SettingsIcon } from "@/components/ui/Icon";
+import { AndroidIcon, AppleIcon, CheckIcon, ChevronRightIcon, CloseIcon, CopyIcon, FavouriteIcon, KeyboardMicIcon, SearchIcon, SearchIcon02, VoiceSearchIcon, VoiceWaveIcon } from "@/components/ui/Icon";
 import { playClick } from "@/lib/clickSound";
 import { cn } from "@/lib/utils";
 import { useDialogFocus } from "@/lib/useDialogFocus";
@@ -33,7 +33,8 @@ import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
 import { RemindersPage } from "./RemindersPage";
 import { AccountPage } from "./AccountPage";
-import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
+import { OPEN_ACCOUNT_EVENT } from "@/lib/settingsEvents";
+import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, ProfileList, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
 import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
 import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
@@ -154,12 +155,24 @@ export function TopicPickerModal({
   const player = useAudioPlayer();
   const lang = useUiLang();
   const [isOpen, setIsOpen] = useState(false);
-  // The browser's list, its « About HuDa » view (footer link) or Settings
-  // (⚙ beside Close) and its App-language page; every open starts on the list.
-  const [view, setView] = useState<"list" | "about" | "settings" | SettingsPage>("list");
+  // The browser's list, its « About HuDa » view (the logo above the mic), and
+  // the header profile picture's menu (sign in · Settings · About) with
+  // Settings and its pages; 🔍 opens on the list, the picture on its menu.
+  const [view, setView] = useState<"list" | "profile" | "about" | "settings" | SettingsPage>("list");
+  const startViewRef = useRef<"profile" | null>(null);
+  // About reached from the profile menu goes back there, not to the list.
+  const [aboutFromProfile, setAboutFromProfile] = useState(false);
   useEffect(() => {
-    if (isOpen) setView("list");
+    if (isOpen) setView(startViewRef.current ?? "list");
+    startViewRef.current = null;
   }, [isOpen]);
+  useEffect(() => {
+    if (view === "list") setAboutFromProfile(false);
+  }, [view]);
+  const showProfile = !isFavourites && view === "profile";
+  // The Profile menu is short (sign-in, Settings, About): the panel fits it
+  // instead of standing full height (owner, 2026-11-23).
+  const fitHeight = showProfile;
   const showAbout = !isFavourites && view === "about";
   // A page under Settings (App language, Translation, …).
   const settingsPage = !isFavourites && SETTINGS_PAGES.includes(view as SettingsPage) ? (view as SettingsPage) : null;
@@ -192,7 +205,7 @@ export function TopicPickerModal({
   // Phones, browse list: the whole panel scrolls (header, tabs, topics, list),
   // only the search row stays at the top — a landscape phone has no room for
   // a fixed header above an inner list.
-  const wholeScroll = isMobile && !showAbout && !showSettings;
+  const wholeScroll = isMobile && !showAbout && !showSettings && !showProfile;
   const [panelScrolled, setPanelScrolled] = useState(false);
   const scrollWrapRef = useRef<HTMLDivElement>(null);
   // Phone landscape: a little peek on open, so the Surah list below shows.
@@ -284,6 +297,18 @@ export function TopicPickerModal({
     else if (player.current?.id.startsWith("quran-surah-")) setActiveTab("surah");
     setIsOpen(true);
   }, [openRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The header profile picture: its menu (sign in · Settings · About).
+  useEffect(() => {
+    if (isFavourites) return;
+    const open = () => {
+      startViewRef.current = "profile";
+      setView("profile");
+      setIsOpen(true);
+    };
+    window.addEventListener(OPEN_ACCOUNT_EVENT, open);
+    return () => window.removeEventListener(OPEN_ACCOUNT_EVENT, open);
+  }, [isFavourites]);
 
   // Every open: bring the playing Surah / Juz card to the middle of the list
   // (once the panel has slid in and the list has rendered).
@@ -795,7 +820,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto ${fitHeight ? "h-auto max-h-[86dvh]" : "h-[86dvh]"} max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : `top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] ${fitHeight ? "max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-var(--header-gap,1rem)-1rem)]" : "bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] md:bottom-4"} right-2 sm:right-8 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6`} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header — phones: a dark backing fades in behind it once
@@ -806,9 +831,23 @@ export function TopicPickerModal({
                   {(showAbout || showSettings) && (
                     <button
                       type="button"
-                      onClick={() => setView(settingsPage ? "settings" : "list")}
+                      onClick={() =>
+                        setView(
+                          settingsPage === "account" || view === "settings" || (showAbout && aboutFromProfile)
+                            ? "profile"
+                            : settingsPage
+                              ? "settings"
+                              : "list",
+                        )
+                      }
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
-                      aria-label={t(lang, settingsPage ? "Settings" : "Back to the list")}
+                      aria-label={
+                        settingsPage && settingsPage !== "account"
+                          ? t(lang, "Settings")
+                          : showAbout && !aboutFromProfile
+                            ? t(lang, "Back to the list")
+                            : t(lang, "Profile")
+                      }
                     >
                       <ChevronRightIcon className="h-4 w-4 rotate-180" />
                     </button>
@@ -819,7 +858,7 @@ export function TopicPickerModal({
                         ? t(lang, "Your Library")
                         : showAbout
                         ? t(lang, "The story & credits")
-                        : showSettings
+                        : showSettings || showProfile
                         ? t(lang, "Your preferences")
                         : t(lang, "Listen & Read")}
                     </span>
@@ -832,23 +871,14 @@ export function TopicPickerModal({
                         ? t(lang, SETTINGS_PAGE_TITLE[settingsPage])
                         : showSettings
                         ? t(lang, "Settings")
+                        : showProfile
+                        ? t(lang, "Profile")
                         : t(lang, "Choose a Surah or Juz")}
                     </h3>
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                {!isFavourites && !showSettings && (
-                  <button
-                    type="button"
-                    onClick={() => setView("settings")}
-                    className="tap-44 pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-white/10 text-sand-200 hover:bg-white/20 hover:text-white transition-colors cursor-pointer active:scale-90"
-                    aria-label={t(lang, "Settings")}
-                    data-tooltip={t(lang, "Settings")}
-                  >
-                    <SettingsIcon className="h-5 w-5" />
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -890,6 +920,14 @@ export function TopicPickerModal({
                 <AccountPage />
               ) : showSettings ? (
                 <SettingsList onOpen={setView} onLeave={leaveSettings} />
+              ) : showProfile ? (
+                <ProfileList
+                  onSettings={() => setView("settings")}
+                  onAbout={() => {
+                    setAboutFromProfile(true);
+                    setView("about");
+                  }}
+                />
               ) : showAbout ? (
                 <AboutView />
               ) : (

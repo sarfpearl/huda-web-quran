@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { CheckIcon, ChevronRightIcon } from "@/components/ui/Icon";
+import { CheckIcon, ChevronRightIcon, MessageIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import { cn } from "@/lib/utils";
 import { UI_LANGS, t, useUiLang } from "@/lib/uiLang";
@@ -10,18 +10,18 @@ import type { QuranScript } from "@/lib/data/quranGlyphs";
 import { isMeaningLang } from "@/lib/data/meaningAudio";
 import { MeaningAudioGroup, Switch, type MeaningAudioSettings } from "./MeaningAudioGroup";
 import { WaqfLegend } from "./WaqfLegend";
-import { OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
+import { OPEN_FEEDBACK_EVENT, OPEN_PRAYER_TIMES_EVENT, OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { READER_SCALES, SCRIPT_CHOICES } from "./ImmersiveHeader";
 import { SCENE_DIM_DEFAULTS, type SceneDim } from "./SceneOverlay";
 import { SupportSettingsRow } from "@/components/support/SupportSheet";
 import { tourT } from "@/lib/i18n/tour";
 import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
 import { useReminderSummary } from "./RemindersPage";
-import { AccountRow } from "./AccountPage";
+import { AccountPage } from "./AccountPage";
 import { loginEnabled } from "@/lib/auth/account";
 
 /*
- * Settings (⚙ in the content browser): every preference in one place. The
+ * Settings (the header profile picture › Settings): every preference in one place. The
  * values and setters are the home's own (ImmersiveHomeClient), so a change
  * here is the same as one from the header's controls. Reciter and prayer
  * times open their own sheets (the full pickers) through window events,
@@ -98,6 +98,24 @@ function savedPlace(): string {
 }
 
 /** Settings: one row per preference. */
+/**
+ * The header profile picture's menu (owner, 2026-11-23): the sign-in (or
+ * the signed-in account) itself on top, once login is switched on; then
+ * Settings, then About HuDa — the only way in to Settings.
+ */
+export function ProfileList({ onSettings, onAbout }: { onSettings: () => void; onAbout: () => void }) {
+  const lang = useUiLang();
+  return (
+    <div className={SCROLL}>
+      {/* Optional login (lib/auth/account): previews now, production once
+          switched on — shown right here, not a page behind a row. */}
+      {loginEnabled() && <AccountPage embedded />}
+      <Row label={t(lang, "Settings")} onClick={onSettings} />
+      <Row label={t(lang, "About HuDa Web Quran")} onClick={onAbout} />
+    </div>
+  );
+}
+
 export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage) => void; onLeave: (event: string) => void }) {
   const lang = useUiLang();
   const s = useHomeSettings();
@@ -109,8 +127,6 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
   const scriptLabel = s ? t(lang, SCRIPT_CHOICES.find((c) => c.id === s.script)?.label ?? "Uthmani") : "";
   return (
     <div className={SCROLL}>
-      {/* Optional login (lib/auth/account): previews now, production once switched on. */}
-      {loginEnabled() && <AccountRow onOpen={() => onOpen("account")} />}
       <Row label={t(lang, "App language")} value={ui?.label} valueLang={ui?.id} onClick={() => onOpen("language")} />
       {s && (
         <>
@@ -191,6 +207,14 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
           <Row label={tourT(lang, "App tour")} value={tourT(lang, "Show again")} onClick={() => onLeave(OPEN_TOUR_EVENT)} />
         </>
       )}
+      {/* Feedback, as the edge lantern opens it (owner, 2026-11-23). */}
+      <button type="button" onClick={() => onLeave(OPEN_FEEDBACK_EVENT)} className={ROW}>
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-white">
+          <MessageIcon className="h-5 w-5 text-emerald-300" />
+          {t(lang, "Send feedback")}
+        </span>
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/80 rtl:-scale-x-100" />
+      </button>
       <SupportSettingsRow onLeave={onLeave} />
     </div>
   );
