@@ -21,7 +21,7 @@ import { AccountRow } from "./AccountPage";
 import { loginEnabled } from "@/lib/auth/account";
 
 /*
- * Settings (⚙ in the content browser): every preference in one place. The
+ * Settings (the header profile picture › Settings): every preference in one place. The
  * values and setters are the home's own (ImmersiveHomeClient), so a change
  * here is the same as one from the header's controls. Reciter and prayer
  * times open their own sheets (the full pickers) through window events,
@@ -98,6 +98,23 @@ function savedPlace(): string {
 }
 
 /** Settings: one row per preference. */
+/**
+ * The header profile picture's menu (owner, 2026-11-23): sign in on top
+ * (once login is switched on), then Settings, then About HuDa — the only way
+ * in to Settings.
+ */
+export function ProfileList({ onAccount, onSettings, onAbout }: { onAccount: () => void; onSettings: () => void; onAbout: () => void }) {
+  const lang = useUiLang();
+  return (
+    <div className={SCROLL}>
+      {/* Optional login (lib/auth/account): previews now, production once switched on. */}
+      {loginEnabled() && <AccountRow onOpen={onAccount} />}
+      <Row label={t(lang, "Settings")} onClick={onSettings} />
+      <Row label={t(lang, "About HuDa Web Quran")} onClick={onAbout} />
+    </div>
+  );
+}
+
 export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage) => void; onLeave: (event: string) => void }) {
   const lang = useUiLang();
   const s = useHomeSettings();
@@ -109,8 +126,6 @@ export function SettingsList({ onOpen, onLeave }: { onOpen: (page: SettingsPage)
   const scriptLabel = s ? t(lang, SCRIPT_CHOICES.find((c) => c.id === s.script)?.label ?? "Uthmani") : "";
   return (
     <div className={SCROLL}>
-      {/* Optional login (lib/auth/account): previews now, production once switched on. */}
-      {loginEnabled() && <AccountRow onOpen={() => onOpen("account")} />}
       <Row label={t(lang, "App language")} value={ui?.label} valueLang={ui?.id} onClick={() => onOpen("language")} />
       {s && (
         <>

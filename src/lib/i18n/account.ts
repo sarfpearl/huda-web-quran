@@ -2,6 +2,7 @@ import type { Strings } from "@/lib/uiLang";
 
 /** Settings › Account (optional login) and /auth/callback. */
 const strings: Strings = {
+  Profile: { ta: "சுயவிவரம்", ur: "پروفائل", ml: "പ്രൊഫൈൽ", hi: "प्रोफ़ाइल", id: "Profil", bn: "প্রোফাইল", tr: "Profil", fr: "Profil", ms: "Profil" },
   Account: { ta: "கணக்கு", ur: "اکاؤنٹ", ml: "അക്കൗണ്ട്", hi: "अकाउंट", id: "Akun", bn: "অ্যাকাউন্ট", tr: "Hesap", fr: "Compte", ms: "Akaun" },
   "Not signed in": { ta: "உள்நுழையவில்லை", ur: "سائن اِن نہیں", ml: "സൈൻ ഇൻ ചെയ്തിട്ടില്ല", hi: "साइन इन नहीं", id: "Belum masuk", bn: "সাইন ইন করা নেই", tr: "Giriş yapılmadı", fr: "Non connecté", ms: "Belum log masuk" },
   "Save your progress across devices": {

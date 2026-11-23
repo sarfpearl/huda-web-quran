@@ -12,6 +12,8 @@ import { t, useUiLang } from "@/lib/uiLang";
  * same glass circle as the other header buttons, never lit. A tap opens
  * Settings › Account.
  *
+ * Always there (it holds Settings and About), login on or off.
+ *
  * Guests never download the Supabase client: it is only loaded when the
  * browser already holds a session cookie (`accountHint`).
  */
@@ -38,9 +40,11 @@ export function AccountAvatar({ className = "" }: { className?: string }) {
 
   useEffect(() => setPhotoFailed(false), [account?.avatarUrl]);
 
-  if (!enabled) return null;
-
-  const label = account ? `${t(lang, "Account")} · ${account.name || account.email}` : t(lang, "Not signed in");
+  const label = account
+    ? `${t(lang, "Account")} · ${account.name || account.email}`
+    : enabled
+      ? `${t(lang, "Not signed in")} · ${t(lang, "Settings")}`
+      : t(lang, "Settings");
   const photo = account?.avatarUrl && !photoFailed ? account.avatarUrl : "";
   const initial = account ? [...(account.name || account.email).trim()][0]?.toUpperCase() ?? "" : "";
 
