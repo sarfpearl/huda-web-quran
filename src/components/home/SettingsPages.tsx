@@ -17,7 +17,7 @@ import { SupportSettingsRow } from "@/components/support/SupportSheet";
 import { tourT } from "@/lib/i18n/tour";
 import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
 import { useReminderSummary } from "./RemindersPage";
-import { AccountRow } from "./AccountPage";
+import { AccountPage } from "./AccountPage";
 import { loginEnabled } from "@/lib/auth/account";
 
 /*
@@ -99,16 +99,17 @@ function savedPlace(): string {
 
 /** Settings: one row per preference. */
 /**
- * The header profile picture's menu (owner, 2026-11-23): sign in on top
- * (once login is switched on), then Settings, then About HuDa — the only way
- * in to Settings.
+ * The header profile picture's menu (owner, 2026-11-23): the sign-in (or
+ * the signed-in account) itself on top, once login is switched on; then
+ * Settings, then About HuDa — the only way in to Settings.
  */
-export function ProfileList({ onAccount, onSettings, onAbout }: { onAccount: () => void; onSettings: () => void; onAbout: () => void }) {
+export function ProfileList({ onSettings, onAbout }: { onSettings: () => void; onAbout: () => void }) {
   const lang = useUiLang();
   return (
     <div className={SCROLL}>
-      {/* Optional login (lib/auth/account): previews now, production once switched on. */}
-      {loginEnabled() && <AccountRow onOpen={onAccount} />}
+      {/* Optional login (lib/auth/account): previews now, production once
+          switched on — shown right here, not a page behind a row. */}
+      {loginEnabled() && <AccountPage embedded />}
       <Row label={t(lang, "Settings")} onClick={onSettings} />
       <Row label={t(lang, "About HuDa Web Quran")} onClick={onAbout} />
     </div>

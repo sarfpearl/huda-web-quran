@@ -170,6 +170,9 @@ export function TopicPickerModal({
     if (view === "list") setAboutFromProfile(false);
   }, [view]);
   const showProfile = !isFavourites && view === "profile";
+  // The Profile menu is short (sign-in, Settings, About): the panel fits it
+  // instead of standing full height (owner, 2026-11-23).
+  const fitHeight = showProfile;
   const showAbout = !isFavourites && view === "about";
   // A page under Settings (App language, Translation, …).
   const settingsPage = !isFavourites && SETTINGS_PAGES.includes(view as SettingsPage) ? (view as SettingsPage) : null;
@@ -817,7 +820,7 @@ export function TopicPickerModal({
               // Floating card in the player's glass. Top and right match the
               // header's padding (ImmersiveHeader), so the panel's corner is the
               // trigger button's corner and the morph opens from it.
-              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto h-[86dvh] max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : "top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 sm:right-8 md:bottom-4 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6"} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
+              className={`pointer-events-auto fixed z-50 flex flex-col ${PLAYER_GLASS} outline-none ${isMobile ? `inset-x-2 bottom-0 mx-auto ${fitHeight ? "h-auto max-h-[86dvh]" : "h-[86dvh]"} max-w-[520px] ${kb.bottom > 0 ? "rounded-[28px] border-b" : "rounded-t-[28px] border-b-0"} px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]` : `top-[calc(max(env(safe-area-inset-top),var(--vv-top,0px))+var(--header-gap,1rem))] ${fitHeight ? "max-h-[calc(100dvh-max(env(safe-area-inset-top),var(--vv-top,0px))-var(--header-gap,1rem)-1rem)]" : "bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] md:bottom-4"} right-2 sm:right-8 w-[88vw] max-w-md rounded-[28px] sm:rounded-[40px] p-4 md:p-6`} [&>*:not([data-ring])]:[opacity:calc((var(--reveal,1)-0.4)/0.6)]`}
             >
               <span data-ring aria-hidden="true" style={MORPH_RING} className="pointer-events-none absolute" />
               {/* 1. Shared Header — phones: a dark backing fades in behind it once
@@ -919,7 +922,6 @@ export function TopicPickerModal({
                 <SettingsList onOpen={setView} onLeave={leaveSettings} />
               ) : showProfile ? (
                 <ProfileList
-                  onAccount={() => setView("account")}
                   onSettings={() => setView("settings")}
                   onAbout={() => {
                     setAboutFromProfile(true);

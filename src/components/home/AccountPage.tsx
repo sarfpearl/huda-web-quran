@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRightIcon, CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
+import { CloudSavedIcon, GoogleIcon, LogoutIcon, MailIcon, TrashIcon, UserCircleIcon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { t, uiLocale, useUiLang } from "@/lib/uiLang";
 import {
@@ -52,33 +52,6 @@ function useAccount(): Account | null | undefined {
   return account;
 }
 
-/** The Settings list's first row: who is signed in, or what signing in is for. */
-export function AccountRow({ onOpen }: { onOpen: () => void }) {
-  const lang = useUiLang();
-  const account = useAccount();
-  const signedIn = Boolean(account);
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.07] px-4 py-3.5 text-left transition-colors hover:bg-emerald-400/[0.12] cursor-pointer active:scale-[0.99]"
-    >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-emerald-300/30 bg-emerald-300/10 text-xl text-emerald-200">
-        {signedIn ? <CloudSavedIcon /> : <UserCircleIcon />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-white">
-          {signedIn ? t(lang, "Account") : t(lang, "Save your progress across devices")}
-        </span>
-        <span className="mt-0.5 block truncate text-xs text-sand-200/75">
-          {account === undefined ? " " : signedIn ? account?.email || account?.name : t(lang, "Optional — HuDa works fully without an account.")}
-        </span>
-      </span>
-      <ChevronRightIcon className="h-4 w-4 shrink-0 text-sand-200/80" />
-    </button>
-  );
-}
-
 const TRY_AGAIN = "Something went wrong. Check your connection and try again.";
 const EMAIL_ERROR: Partial<Record<EmailLinkResult, string>> = {
   invalid: "Enter a valid email address.",
@@ -88,7 +61,7 @@ const EMAIL_ERROR: Partial<Record<EmailLinkResult, string>> = {
   unconfigured: "Something went wrong. Check your connection and try again.",
 };
 
-function SignedOut() {
+function SignedOut({ wrap }: { wrap: string }) {
   const lang = useUiLang();
   const [ways, setWays] = useState<AuthWays | null | undefined>(undefined);
   const [email, setEmail] = useState("");
@@ -150,11 +123,14 @@ function SignedOut() {
   }, [googleOn, redirect, sentTo, lang]);
 
   return (
-    <div className={SCROLL}>
+    <div className={wrap}>
       <div className={cn(GROUP, "py-4")}>
         <p className="text-base font-semibold text-white">{t(lang, "Save your progress across devices")}</p>
         <p className="mt-1.5 text-xs leading-relaxed text-sand-200/80">
           {t(lang, "Sign in to keep your last read, bookmarks and settings on every phone and computer.")}
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed text-sand-200/80">
+          {t(lang, "Listen to half a Surah on your phone, then carry on from the same ayah on your computer — everything stays in step.")}
         </p>
         <p className="mt-1.5 text-xs leading-relaxed text-emerald-200/80">{t(lang, "Optional — HuDa works fully without an account.")}</p>
       </div>
@@ -245,7 +221,7 @@ function SignedOut() {
   );
 }
 
-function SignedIn({ account }: { account: Account }) {
+function SignedIn({ account, wrap }: { account: Account; wrap: string }) {
   const lang = useUiLang();
   const [confirming, setConfirming] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -271,7 +247,7 @@ function SignedIn({ account }: { account: Account }) {
   };
 
   return (
-    <div className={SCROLL}>
+    <div className={wrap}>
       <div className={cn(GROUP, "flex items-center gap-3 py-4")}>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-emerald-300/30 bg-emerald-300/10 text-2xl text-emerald-200">
           <UserCircleIcon />
@@ -386,10 +362,12 @@ function SignedIn({ account }: { account: Account }) {
 }
 
 /** Settings › Account. */
-export function AccountPage() {
+/** `embedded`: inside the Profile menu's scroll, not a page of its own. */
+export function AccountPage({ embedded = false }: { embedded?: boolean }) {
   const account = useAccount();
   // Signing in here (Google's pop-up) starts the sync without a page load.
   useEffect(() => startSync(), []);
-  if (account === undefined) return <div className={SCROLL} />;
-  return account ? <SignedIn account={account} /> : <SignedOut />;
+  const wrap = embedded ? "space-y-2.5" : SCROLL;
+  if (account === undefined) return <div className={wrap} />;
+  return account ? <SignedIn account={account} wrap={wrap} /> : <SignedOut wrap={wrap} />;
 }

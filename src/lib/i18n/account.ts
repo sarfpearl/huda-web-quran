@@ -27,6 +27,17 @@ const strings: Strings = {
     fr: "Connectez-vous pour retrouver votre dernière lecture, vos signets et vos réglages sur chaque téléphone et ordinateur.",
     ms: "Log masuk supaya bacaan terakhir, penanda dan tetapan anda ada di setiap telefon dan komputer.",
   },
+  "Listen to half a Surah on your phone, then carry on from the same ayah on your computer — everything stays in step.": {
+    ta: "போனில் ஒரு சூராவின் பாதியைக் கேட்டுவிட்டு, மீதியை கணினியில் அதே ஆயத்திலிருந்து தொடரலாம் — எல்லாம் ஒன்றாகவே இருக்கும்.",
+    ur: "فون پر آدھی سورت سنیں، پھر کمپیوٹر پر اسی آیت سے آگے سنیں — سب کچھ ساتھ ساتھ رہتا ہے۔",
+    ml: "ഫോണിൽ ഒരു സൂറയുടെ പകുതി കേട്ട്, ബാക്കി കമ്പ്യൂട്ടറിൽ അതേ ആയത്തിൽ നിന്ന് തുടരാം — എല്ലാം ഒരുപോലെ നിലനിൽക്കും.",
+    hi: "फ़ोन पर आधी सूरह सुनें, फिर कंप्यूटर पर उसी आयत से आगे सुनें — सब कुछ साथ-साथ रहता है।",
+    id: "Dengarkan separuh surah di ponsel, lalu lanjutkan dari ayat yang sama di komputer — semuanya tetap selaras.",
+    bn: "ফোনে অর্ধেক সূরা শুনুন, তারপর কম্পিউটারে একই আয়াত থেকে চালিয়ে যান — সবকিছু একসাথে থাকে।",
+    tr: "Bir surenin yarısını telefonda dinleyin, sonra bilgisayarda aynı ayetten devam edin — her şey uyumlu kalır.",
+    fr: "Écoutez la moitié d’une sourate sur votre téléphone, puis reprenez au même verset sur votre ordinateur — tout reste synchronisé.",
+    ms: "Dengar separuh surah di telefon, kemudian sambung dari ayat yang sama di komputer — semuanya kekal seiring.",
+  },
   "Optional — HuDa works fully without an account.": {
     ta: "விருப்பம் மட்டுமே — account இல்லாமலும் HuDa முழுமையாக வேலை செய்யும்.",
     ur: "اختیاری — HuDa اکاؤنٹ کے بغیر بھی پوری طرح کام کرتا ہے۔",
