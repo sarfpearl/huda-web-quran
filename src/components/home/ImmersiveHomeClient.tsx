@@ -39,7 +39,7 @@ import {
 } from "@/lib/data/meaningAudio";
 import { getNextMeaningBoundary, useMeaningTimings } from "@/lib/data/meaningTimings";
 import { ShareMenu } from "@/components/record/ShareMenu";
-import { ArrowExpandIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, PlayIcon, RotateLeftIcon } from "@/components/ui/Icon";
+import { ArrowExpandIcon, BookOpenIcon, BookmarkIcon, BookmarkAddIcon, BookmarkCheckIcon, BookmarkMinusIcon, PlayIcon, RotateLeftIcon } from "@/components/ui/Icon";
 import { haptic } from "@/lib/haptics";
 import {
   browserTranslationLang,
@@ -243,8 +243,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   // Current ayah's text + translation while a Juz plays per-ayah (word-sync reciter).
   const [juzAyahVerse, setJuzAyahVerse] = useState<AyahVerse | null>(null);
   // Short-lived info notice (e.g. Audio Only reciter → plays from Ayah 1).
-  const [notice, setNotice] = useState<{ id: number; text: string } | null>(null);
-  const showNotice = (text: string) => setNotice({ id: Date.now(), text });
+  // `icon`: a notice's own mark (the bookmark ones); the turn arrow otherwise.
+  const [notice, setNotice] = useState<{ id: number; text: string; icon?: "bookmark-added" | "bookmark-removed" } | null>(null);
+  const showNotice = (text: string, icon?: "bookmark-added" | "bookmark-removed") => setNotice({ id: Date.now(), text, icon });
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(null), 4500);
@@ -1651,6 +1652,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       ? { kind: "juz", juz: activeJuz.id, ...at, at: Date.now() }
       : { kind: "surah", ...at, at: Date.now() };
   const onAirBookmarked = Boolean(onAirAyah && bookmarks.some((b) => bookmarkId(b) === bookmarkId(bookmarkFor(onAirAyah))));
+  // « Bookmark added · Al-Baqarah 2:31 »
+  const bookmarkNotice = (added: boolean, at: { surah: number; ayah: number }) =>
+    showNotice(
+      `${t(language, added ? "Bookmark added" : "Bookmark removed")} · ${surahNameIn(at.surah, language)} ${at.surah}:${at.ayah}`,
+      added ? "bookmark-added" : "bookmark-removed",
+    );
   const handleToggleBookmark = () => {
     if (!readingActive) {
       if (!onAirAyah) return;
@@ -1659,14 +1666,14 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
         onAirBookmarked ? bookmarks.filter((b) => bookmarkId(b) !== id) : [bookmarkFor(onAirAyah)]
       );
       // Ayah view: nothing on the text shows the mark (reading mode draws
-      // it on the page), so say it (owner, 2026-11-23).
-      showNotice(t(language, onAirBookmarked ? "Bookmark removed" : "Bookmark added"));
+      // it on the page), so say it — with where (owner, 2026-11-23).
+      bookmarkNotice(!onAirBookmarked, onAirAyah);
       return;
     }
     if (pageBookmarks.length) {
       const drop = new Set(pageBookmarks.map(bookmarkId));
       updateBookmarks(bookmarks.filter((b) => !drop.has(bookmarkId(b))));
-      showNotice(t(language, "Bookmark removed"));
+      bookmarkNotice(false, pageBookmarks[0]);
       return;
     }
     const at = player.isPlaying && readingAyah ? readingAyah : visibleAyah ?? readingAyah;
@@ -1675,7 +1682,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       ? { kind: "juz", juz: readingJuz.id, ...at, at: Date.now() }
       : { kind: "surah", ...at, at: Date.now() };
     updateBookmarks([b]);
-    showNotice(t(language, "Bookmark added"));
+    bookmarkNotice(true, at);
   };
   const bookmarkOn = readingActive ? pageBookmarks.length > 0 : onAirBookmarked;
   const mainBookmark = bookmarks[0] ?? null;
@@ -2269,7 +2276,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-live="polite"
             className="flex max-w-[680px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
-            <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            {notice.icon === "bookmark-added" ? (
+              <BookmarkCheckIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : notice.icon === "bookmark-removed" ? (
+              <BookmarkMinusIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : (
+              <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            )}
             <span>{notice.text}</span>
           </div>
         </div>
@@ -2295,7 +2308,13 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             aria-live="polite"
             className="mb-3 phoneland:hidden max-w-[680px] w-auto flex items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
-            <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            {notice.icon === "bookmark-added" ? (
+              <BookmarkCheckIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : notice.icon === "bookmark-removed" ? (
+              <BookmarkMinusIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            ) : (
+              <RotateLeftIcon className="h-4 w-4 shrink-0 text-amber-300" />
+            )}
             <span>{notice.text}</span>
           </div>
         )}
