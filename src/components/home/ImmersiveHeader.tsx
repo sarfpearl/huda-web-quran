@@ -22,6 +22,7 @@ import { isMeaningLang } from "@/lib/data/meaningAudio";
 import { OPEN_RECITERS_EVENT } from "@/lib/settingsEvents";
 import { TAJWEED_LEGEND } from "@/lib/data/quranGlyphs";
 import { WaqfLegend } from "./WaqfLegend";
+import { AccountAvatar } from "./AccountAvatar";
 
 /** How long the Tajweed panel stays open untouched before hiding itself. */
 const TAJWEED_AUTO_HIDE_MS = 4000;
@@ -222,7 +223,8 @@ export function ImmersiveHeader({
             data-tour="text-only"
             aria-label={t(language, "Show only the text")}
             data-tooltip={t(language, "Show only the text")}
-            className={`max-[379px]:hidden ${FOCUS_BTN}`}
+            // A phone held upright has no room: ⤢ sits in the player card's row.
+            className={`max-md:hidden phoneland:!grid ${FOCUS_BTN}`}
           >
             <ArrowExpandIcon className="h-5 w-5" />
           </button>
@@ -545,6 +547,9 @@ export function ImmersiveHeader({
 
         {/* Category Picker Menu (Menu.svg) */}
         {children}
+
+        {/* Profile picture (login): the last one on the right, every size. */}
+        <AccountAvatar />
       </div>
       </div>
     </header>

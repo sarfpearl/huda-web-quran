@@ -33,6 +33,7 @@ import { ABOUT } from "@/lib/data/about";
 import { ContentListCard } from "./ContentListCard";
 import { RemindersPage } from "./RemindersPage";
 import { AccountPage } from "./AccountPage";
+import { OPEN_ACCOUNT_EVENT } from "@/lib/settingsEvents";
 import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
 import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
@@ -157,8 +158,11 @@ export function TopicPickerModal({
   // The browser's list, its « About HuDa » view (footer link) or Settings
   // (⚙ beside Close) and its App-language page; every open starts on the list.
   const [view, setView] = useState<"list" | "about" | "settings" | SettingsPage>("list");
+  // …unless it was opened on a page (the header avatar → Account).
+  const startViewRef = useRef<SettingsPage | null>(null);
   useEffect(() => {
-    if (isOpen) setView("list");
+    if (isOpen) setView(startViewRef.current ?? "list");
+    startViewRef.current = null;
   }, [isOpen]);
   const showAbout = !isFavourites && view === "about";
   // A page under Settings (App language, Translation, …).
@@ -284,6 +288,18 @@ export function TopicPickerModal({
     else if (player.current?.id.startsWith("quran-surah-")) setActiveTab("surah");
     setIsOpen(true);
   }, [openRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The header avatar: straight to Settings › Account.
+  useEffect(() => {
+    if (isFavourites) return;
+    const open = () => {
+      startViewRef.current = "account";
+      setView("account");
+      setIsOpen(true);
+    };
+    window.addEventListener(OPEN_ACCOUNT_EVENT, open);
+    return () => window.removeEventListener(OPEN_ACCOUNT_EVENT, open);
+  }, [isFavourites]);
 
   // Every open: bring the playing Surah / Juz card to the middle of the list
   // (once the panel has slid in and the list has rendered).
