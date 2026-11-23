@@ -151,7 +151,7 @@ function GiftArt({ open, still }: { open: boolean; still: boolean }) {
   );
 }
 
-export function SupportGift({ playing, suppressed }: { playing: boolean; suppressed: boolean }) {
+export function SupportGift({ playing, suppressed, hidden = false }: { playing: boolean; suppressed: boolean; hidden?: boolean }) {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [ready, setReady] = useState(false);
@@ -326,7 +326,7 @@ export function SupportGift({ playing, suppressed }: { playing: boolean; suppres
   };
 
   return (
-    <div ref={rootRef} className="pointer-events-none absolute inset-0 z-40">
+    <div ref={rootRef} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"

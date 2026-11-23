@@ -1151,11 +1151,16 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       const ayahNo = currentSegment?.ayahNumber;
       const prevStop = activeSurah && ayahNo && ayahNo > 1 ? meaningStopsFor(selectedReciter.id, activeSurah.number)?.[ayahNo - 2] : undefined;
       player.seek(Math.max(word.startTime, ayahStart + 0.02, (prevStop ?? 0) + 0.02));
+      // Paused: a tapped word recites from there (owner, 2026-11-23).
+      if (!player.isPlaying && player.current) player.resume();
       return;
     }
     if (juzPreSegment) return;
     const at = ayahClipTimeOf(juzAyahVerse, word.startTime, player.duration);
-    if (at !== null) player.seek(at);
+    if (at !== null) {
+      player.seek(at);
+      if (!player.isPlaying && player.current) player.resume();
+    }
   };
 
   // Tajweed colours: on by default everywhere (Safari / iOS included);
@@ -1314,6 +1319,23 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     return () => window.clearTimeout(id);
   }, [landFocusOn]);
   const focusOn = (readingActive && readerFocus) || landFocusOn;
+  // Text only, any screen: a tap anywhere but a word (or a control) brings
+  // everything back, like ⤡ (owner, 2026-11-23). Phone landscape has its own
+  // tap-to-toggle above.
+  useEffect(() => {
+    if (!focusOn || (phoneLandscape && !readingActive)) return;
+    const onClick = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target || target.closest('button, a, input, textarea, select, label, [role="dialog"], [role="slider"], [data-action-sheet], .quran-word.cursor-pointer'))
+        return;
+      if (window.getSelection()?.toString()) return;
+      if (document.querySelector('[data-action-sheet], [role="dialog"]')) return;
+      setReaderFocus(false);
+      setLandFocus(false);
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [focusOn, phoneLandscape, readingActive]);
   // ⤢ hides everything but the scene and the ayah (its translation too, when
   // on); ⤡ brings it all back. In the header where there's room, in the
   // player card's row on a phone held upright. The first ⤢ by hand: the
@@ -1349,14 +1371,9 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       else setLandFocus((v) => !v);
     },
   };
-  // Listening: focus reading hides only the header — the player stays (and
-  // stays through a pause, so the button just tapped doesn't vanish).
-  const [focusKeepsPlayer, setFocusKeepsPlayer] = useState(false);
-  useEffect(() => {
-    if (!focusOn) setFocusKeepsPlayer(false);
-    else if (player.isPlaying) setFocusKeepsPlayer(true);
-  }, [focusOn, player.isPlaying]);
-  const playerAway = focusOn && (landFocusOn || (!focusKeepsPlayer && !player.isPlaying));
+  // Text only hides the player too, in reading mode as well (owner,
+  // 2026-11-23); a tap off the text or ⤡ brings it back.
+  const playerAway = focusOn;
   useEffect(() => {
     if (!readingActive) setReaderFocus(false);
   }, [readingActive]);
@@ -2348,7 +2365,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             )}
             {/* A phone held upright: the header has no room for 📖 and ⤢
                 (its last spot is the profile picture), so they sit here. */}
-            {readingToggle("md:hidden pointer-events-auto relative grid h-7 w-7 rounded-full hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']", "h-[18px] w-[18px]")}
+            {readingToggle("md:hidden pointer-events-auto relative grid h-7 w-7 rounded-full hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-['']", "text-base sm:text-lg")}
             <button
               type="button"
               onClick={focusToggle.onToggle}
@@ -2357,7 +2374,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               data-tooltip={t(language, "Show only the text")}
               className="md:hidden pointer-events-auto relative grid h-7 w-7 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
             >
-              <ArrowExpandIcon className="h-[18px] w-[18px]" />
+              <ArrowExpandIcon className="text-base sm:text-lg" />
             </button>
             </div>
           }
@@ -2459,13 +2476,12 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* First visit on a phone browser: how to add HuDa to the Home Screen */}
       <InstallGuide />
 
-      {/* ⤢ text only: the edge lantern and gift tab go too (kept mounted). */}
-      <div className={focusOn ? "hidden" : "contents"}>
-        {/* Feedback: a faint lantern at the screen edge (components/feedback) */}
-        <FeedbackLantern playing={player.isPlaying} />
-        {/* Help keep HuDa free: the gift tab at the left edge (components/support) */}
-        <SupportGift playing={player.isPlaying} suppressed={readingActive} />
-      </div>
+      {/* ⤢ text only: the edge lantern and gift tab go too (kept mounted, and
+          kept direct children of the scene — they measure it as their parent). */}
+      {/* Feedback: a faint lantern at the screen edge (components/feedback) */}
+      <FeedbackLantern playing={player.isPlaying} hidden={focusOn} />
+      {/* Help keep HuDa free: the gift tab at the left edge (components/support) */}
+      <SupportGift playing={player.isPlaying} suppressed={readingActive} hidden={focusOn} />
       {/* First visit: a lantern shows what each control does */}
       <FirstVisitTour />
       <SupportSheet />

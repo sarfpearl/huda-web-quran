@@ -59,7 +59,7 @@ const dialogOpen = () => Boolean(document.querySelector('[role="dialog"][aria-mo
  * first visit it swings out once by itself while a Surah plays. After a send
  * the form closes and a thank-you toast shows here.
  */
-export function FeedbackLantern({ playing }: { playing: boolean }) {
+export function FeedbackLantern({ playing, hidden = false }: { playing: boolean; hidden?: boolean }) {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [out, setOut] = useState(false);
@@ -241,7 +241,7 @@ export function FeedbackLantern({ playing }: { playing: boolean }) {
   const shown = Boolean(geo) && !open;
 
   return (
-    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className="pointer-events-none absolute inset-0 z-40">
+    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"

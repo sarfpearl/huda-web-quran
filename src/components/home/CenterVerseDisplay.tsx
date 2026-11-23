@@ -336,6 +336,9 @@ export function CenterVerseDisplay({
   const [topInset, setTopInset] = useState<number | null>(null);
   const [hasPills, setHasPills] = useState(false);
   const [sideInset, setSideInset] = useState<number | null>(null);
+  // ⤢ text only hid the player: the stage is padded alike top and bottom, so
+  // the ayah sits in the middle of the screen.
+  const [dockAway, setDockAway] = useState(false);
   const [sceneHeight, setSceneHeight] = useState<number | null>(null);
   const phoneLandscape = useMediaQuery(landscapeQuery());
   // Layout phase: measured before the first paint after hydration.
@@ -361,6 +364,7 @@ export function CenterVerseDisplay({
           setBottomInset(Math.max(0, (scene?.bottom ?? window.innerHeight) - rect.top) + 4);
           setSideInset(null);
         }
+        setDockAway(getComputedStyle(dock).visibility === "hidden");
       }
       if (header) {
         const scene = header.parentElement?.getBoundingClientRect();
@@ -401,7 +405,13 @@ export function CenterVerseDisplay({
       ? Math.max(bottomInset, Math.min(topInset, sceneHeight - topInset - LAND_MIN_STAGE))
       : null;
   const stageInsets = {
-    ...(landBottom != null ? { paddingBottom: landBottom } : bottomInset != null ? { paddingBottom: bottomInset } : {}),
+    ...(landBottom != null
+      ? { paddingBottom: landBottom }
+      : dockAway && topInset != null
+        ? { paddingBottom: topInset }
+        : bottomInset != null
+          ? { paddingBottom: bottomInset }
+          : {}),
     ...(topInset != null ? { paddingTop: topInset } : {}),
     ...(sideInset != null ? { paddingLeft: sideInset, paddingRight: sideInset } : {}),
   };
