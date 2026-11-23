@@ -1658,11 +1658,15 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       updateBookmarks(
         onAirBookmarked ? bookmarks.filter((b) => bookmarkId(b) !== id) : [bookmarkFor(onAirAyah)]
       );
+      // Ayah view: nothing on the text shows the mark (reading mode draws
+      // it on the page), so say it (owner, 2026-11-23).
+      showNotice(t(language, onAirBookmarked ? "Bookmark removed" : "Bookmark added"));
       return;
     }
     if (pageBookmarks.length) {
       const drop = new Set(pageBookmarks.map(bookmarkId));
       updateBookmarks(bookmarks.filter((b) => !drop.has(bookmarkId(b))));
+      showNotice(t(language, "Bookmark removed"));
       return;
     }
     const at = player.isPlaying && readingAyah ? readingAyah : visibleAyah ?? readingAyah;
@@ -1671,6 +1675,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       ? { kind: "juz", juz: readingJuz.id, ...at, at: Date.now() }
       : { kind: "surah", ...at, at: Date.now() };
     updateBookmarks([b]);
+    showNotice(t(language, "Bookmark added"));
   };
   const bookmarkOn = readingActive ? pageBookmarks.length > 0 : onAirBookmarked;
   const mainBookmark = bookmarks[0] ?? null;

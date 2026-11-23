@@ -167,36 +167,45 @@ function SignedOut({ wrap }: { wrap: string }) {
           {/* Two round buttons: Google's "G" and an @ that opens the email form.
               (Google's round button is sized for content-box, not this app's
               border-box everywhere — its G sank and shrank to nothing.) */}
-          <div className="flex items-center justify-center gap-5">
-            {googleOn && !redirect && (
-              <div
-                ref={gisRef}
-                aria-busy={busy === "google"}
-                className={cn("grid h-10 w-10 place-items-center [color-scheme:light] [&_*]:[box-sizing:content-box]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
-              />
-            )}
-            {(!googleOn || redirect || gisFailed) && (
+          {/* Said in words too (owner, 2026-11-23: two bare circles didn't
+              read as a sign-in): a title above, each circle named below. */}
+          <p className="text-center text-sm font-semibold text-white">{t(lang, "Sign in with")}</p>
+          <div className="flex items-start justify-center gap-8">
+            <div className="flex flex-col items-center gap-1.5">
+              {googleOn && !redirect && (
+                <div
+                  ref={gisRef}
+                  aria-busy={busy === "google"}
+                  className={cn("grid h-10 w-10 place-items-center [color-scheme:light] [&_*]:[box-sizing:content-box]", gisFailed && "hidden", busy === "google" && "pointer-events-none opacity-50")}
+                />
+              )}
+              {(!googleOn || redirect || gisFailed) && (
+                <button
+                  type="button"
+                  onClick={google}
+                  disabled={!googleOn || busy !== null}
+                  aria-label={t(lang, "Continue with Google")}
+                  data-tooltip={t(lang, "Continue with Google")}
+                  className={ROUND_BTN}
+                >
+                  <GoogleIcon className="text-xl" />
+                </button>
+              )}
+              <span aria-hidden="true" className="text-[11px] text-sand-200/75">Google</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
               <button
                 type="button"
-                onClick={google}
-                disabled={!googleOn || busy !== null}
-                aria-label={t(lang, "Continue with Google")}
-                data-tooltip={t(lang, "Continue with Google")}
-                className={ROUND_BTN}
+                onClick={() => setEmailOpen((o) => !o)}
+                aria-expanded={emailOpen}
+                aria-label={t(lang, "Continue with email")}
+                data-tooltip={t(lang, "Continue with email")}
+                className={cn(ROUND_BTN, emailOpen && "ring-2 ring-emerald-400/70")}
               >
-                <GoogleIcon className="text-xl" />
+                <AtIcon className="h-5 w-5" />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setEmailOpen((o) => !o)}
-              aria-expanded={emailOpen}
-              aria-label={t(lang, "Continue with email")}
-              data-tooltip={t(lang, "Continue with email")}
-              className={cn(ROUND_BTN, emailOpen && "ring-2 ring-emerald-400/70")}
-            >
-              <AtIcon className="h-5 w-5" />
-            </button>
+              <span aria-hidden="true" className="text-[11px] text-sand-200/75">{t(lang, "Email")}</span>
+            </div>
           </div>
           {busy === "google" && !redirect && !gisFailed && (
             <p role="status" className="text-center text-xs text-sand-200/80">
