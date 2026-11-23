@@ -161,9 +161,8 @@ export function SupportGift({ playing, suppressed, hidden = false }: { playing: 
   const [out, setOut] = useState(false);
 
   // Only one of the gift / the feedback lantern out at a time (owner,
-  // 2026-11-23): say when this one comes out or goes back; while the other
-  // is out, this one goes back and hides.
-  const [otherOut, setOtherOut] = useState(false);
+  // 2026-11-23): say when this one comes out; when the other does, this one
+  // goes back to its place at the edge (still there, just not out).
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(EDGE_OUT_EVENT, { detail: { who: "gift", out } }));
   }, [out]);
@@ -171,7 +170,6 @@ export function SupportGift({ playing, suppressed, hidden = false }: { playing: 
     const on = (e: Event) => {
       const d = (e as CustomEvent<{ who: string; out: boolean }>).detail;
       if (!d || d.who === "gift") return;
-      setOtherOut(d.out);
       if (d.out) setOut(false);
     };
     window.addEventListener(EDGE_OUT_EVENT, on);
@@ -345,7 +343,7 @@ export function SupportGift({ playing, suppressed, hidden = false }: { playing: 
   };
 
   return (
-    <div ref={rootRef} className={`${hidden ? "hidden " : ""}${otherOut ? "opacity-0 [&_*]:!pointer-events-none " : ""}pointer-events-none absolute inset-0 z-40 transition-opacity duration-300`}>
+    <div ref={rootRef} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"

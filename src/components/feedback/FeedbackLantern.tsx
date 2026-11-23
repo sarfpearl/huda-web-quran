@@ -66,9 +66,8 @@ export function FeedbackLantern({ playing, hidden = false }: { playing: boolean;
   const [out, setOut] = useState(false);
 
   // Only one of the gift / the feedback lantern out at a time (owner,
-  // 2026-11-23): say when this one comes out or goes back; while the other
-  // is out, this one goes back and hides.
-  const [otherOut, setOtherOut] = useState(false);
+  // 2026-11-23): say when this one comes out; when the other does, this one
+  // goes back to its place at the edge (still there, just not out).
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(EDGE_OUT_EVENT, { detail: { who: "feedback", out } }));
   }, [out]);
@@ -76,7 +75,6 @@ export function FeedbackLantern({ playing, hidden = false }: { playing: boolean;
     const on = (e: Event) => {
       const d = (e as CustomEvent<{ who: string; out: boolean }>).detail;
       if (!d || d.who === "feedback") return;
-      setOtherOut(d.out);
       if (d.out) setOut(false);
     };
     window.addEventListener(EDGE_OUT_EVENT, on);
@@ -269,7 +267,7 @@ export function FeedbackLantern({ playing, hidden = false }: { playing: boolean;
   const shown = Boolean(geo) && !open;
 
   return (
-    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className={`${hidden ? "hidden " : ""}${otherOut ? "opacity-0 [&_*]:!pointer-events-none " : ""}pointer-events-none absolute inset-0 z-40 transition-opacity duration-300`}>
+    <div ref={rootRef} data-feedback-lantern="" {...{ [FEEDBACK_UI_ATTR]: "" }} className={`${hidden ? "hidden " : ""}pointer-events-none absolute inset-0 z-40`}>
       {geo && (
         <motion.svg
           className="absolute inset-0 h-full w-full overflow-visible"
