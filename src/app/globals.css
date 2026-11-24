@@ -905,8 +905,10 @@ svg,
 video {
   -webkit-user-drag: none;
 }
-/* Every <video> is a muted background scene: Safari (and the macOS "web app"
-   WebKit shell) still drew its own play glyph in the middle of a paused clip —
+/* Every <video> is a muted background scene. The real fix for WebKit's play
+   glyph is no autoplay attribute on the clips (WebKit forces its start button
+   on an autoplay video it won't start, e.g. Low Power Mode); this is a
+   backstop. Safari (and the macOS "web app" WebKit shell) still drew its own play glyph in the middle of a paused clip —
    over the verse. Hide the whole controls shadow tree, enclosure included: on
    the standalone web app the start-playback button lives in the overlay
    enclosure and survived hiding the button alone. */

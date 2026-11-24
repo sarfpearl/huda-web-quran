@@ -135,9 +135,11 @@ export function SurahCinematicBackground({
     if (!slot.loaded) {
       (slotIndex === 0 ? setSlotA : setSlotB)((prev) => ({ ...prev, loaded: true }));
     }
-    if (activeSlot === slotIndex || slot.src !== wantedSrcRef.current) return;
+    if (slot.src !== wantedSrcRef.current) return;
+    // The wanted clip starts here (there is no autoplay attribute) — also when
+    // it is already the active slot, e.g. a clip dropped in after none.
     if (isPlaying && video) video.play().catch(() => {});
-    setActiveSlot(slotIndex);
+    if (activeSlot !== slotIndex) setActiveSlot(slotIndex);
   };
 
   // A clip can finish buffering before React attaches onCanPlay (SSR/hydration,
@@ -216,12 +218,15 @@ export function SurahCinematicBackground({
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
       />
 
-      {/* 2. Video Slot A */}
+      {/* 2. Video Slot A. No `autoplay` attribute on either slot: WebKit
+          (Safari, the macOS web app) force-shows its own play button over an
+          autoplay video it won't start — Low Power Mode on battery — and no
+          CSS hides it. play() is called from code instead (owner's video,
+          2026-11-24: a play glyph sat over the verse until the clip ended). */}
       {slotA.src && (
         <video
           ref={videoRefA}
           src={slotA.src}
-          autoPlay={isPlaying}
           loop
           muted
           playsInline
@@ -249,7 +254,6 @@ export function SurahCinematicBackground({
         <video
           ref={videoRefB}
           src={slotB.src}
-          autoPlay={isPlaying}
           loop
           muted
           playsInline

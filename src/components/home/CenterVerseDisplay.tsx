@@ -743,22 +743,28 @@ export function CenterVerseDisplay({
       cancelled = true;
     };
   }, [tjKey, tajweed]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Warm the Bismillah prelude (1:1) — its glyphs, page font and QPC text —
-  // so it draws final on its first frame each time a Surah starts.
+  // Warm both preludes — the Bismillah (1:1) and the Isti'adhah (0:0, built
+  // from 2:67 + 16:98) — their glyphs, page fonts and QPC text, so each draws
+  // final on its first frame each time a Surah starts. Unwarmed, the
+  // Isti'adhah flashed in the Amiri fallback for a few frames before its
+  // Mushaf glyphs swapped in (owner's video, 2026-11-24).
   useEffect(() => {
-    const key = `${script}:1:1`;
-    if (!qpcCache.has(key))
-      fetchSurahWords(1, script).then((vs) => {
-        const v = vs?.find((x) => x.a === 1);
-        if (v) qpcCache.set(key, v);
+    const preludes: [string, (fetchWords: (n: number) => Promise<GlyphVerse[] | null>) => Promise<GlyphVerse | null>][] = [
+      [`${script}:1:1`, (fw) => fw(1).then((vs) => vs?.find((x) => x.a === 1) ?? null)],
+      [`${script}:0:0`, fetchIstiadhahWords],
+    ];
+    for (const [key, find] of preludes) {
+      if (!qpcCache.has(key))
+        find((n) => fetchSurahWords(n, script)).then((v) => {
+          if (v) qpcCache.set(key, v);
+        });
+      if (indoPak || !glyphFontsFor(tajweed) || glyphCache.has(key)) continue;
+      find(fetchSurahGlyphs).then(async (v) => {
+        if (!v) return;
+        const pages = [...new Set([...v.w.map((w) => w[1]), ...(v.e ? [v.e[1]] : [])])];
+        if ((await Promise.all(pages.map((p) => loadPageFont(p)))).every(Boolean)) glyphCache.set(key, v);
       });
-    if (indoPak || !glyphFontsFor(tajweed) || glyphCache.has(key)) return;
-    fetchSurahGlyphs(1).then(async (vs) => {
-      const v = vs?.find((x) => x.a === 1);
-      if (!v) return;
-      const pages = [...new Set([...v.w.map((w) => w[1]), ...(v.e ? [v.e[1]] : [])])];
-      if ((await Promise.all(pages.map((p) => loadPageFont(p)))).every(Boolean)) glyphCache.set(key, v);
-    });
+    }
   }, [script, tajweed, indoPak]);
   const glyphSource = glyphVerse?.key === tjKey ? glyphVerse.verse : tjKey ? glyphCache.get(tjKey) ?? null : null;
   const glyphs =
