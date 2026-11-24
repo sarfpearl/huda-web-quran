@@ -1076,12 +1076,10 @@ export function TopicPickerModal({
                   <div className={wholeScroll ? "relative flex flex-col" : "relative flex min-h-0 flex-1 flex-col"}>
                   <div
                     ref={listRef}
+                    // A finger on the list hides the keyboard. Not on scroll: typing shrinks
+                    // the list, its scroll position jumps, and the search box lost focus
+                    // after one letter.
                     onTouchStart={() => {
-                      if (document.activeElement instanceof HTMLInputElement) {
-                        document.activeElement.blur();
-                      }
-                    }}
-                    onScroll={() => {
                       if (document.activeElement instanceof HTMLInputElement) {
                         document.activeElement.blur();
                       }
