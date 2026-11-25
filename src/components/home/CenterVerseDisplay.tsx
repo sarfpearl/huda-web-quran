@@ -481,7 +481,9 @@ export function CenterVerseDisplay({
       // a readable floor (data-fit-min, px); past that its pane scrolls instead.
       // Binary-search the largest scale at which `group` fits: short ayahs grow
       // into free space (up to data-fit-max), long ones shrink (to data-fit-min).
-      const fitGroup = (texts: HTMLElement[], fits: () => boolean, maxOverride?: number) => {
+      // capScale: the size cap is scaled (0.78 = a step smaller, 1.25 = a step
+      // larger) — used to hand the emphasis to the language being read aloud.
+      const fitGroup = (texts: HTMLElement[], fits: () => boolean, maxOverride?: number, capScale = 1) => {
         if (texts.length === 0) return;
         texts.forEach((t) => (t.style.fontSize = ""));
         const bases = texts.map((t) => parseFloat(getComputedStyle(t).fontSize));
@@ -502,13 +504,16 @@ export function CenterVerseDisplay({
         const k = Math.min(1.7, Math.max(1, window.innerHeight / 400));
         const tabletLand = land && k > 1 && texts.every((t) => t.dataset.fitLand);
         if (land && !tabletLand && texts.every((t) => t.dataset.fitLand)) {
-          texts.forEach((t) => (t.style.fontSize = `${Math.round(Number(t.dataset.fitLand))}px`));
+          texts.forEach((t) => (t.style.fontSize = `${Math.round(Number(t.dataset.fitLand) * capScale)}px`));
           return;
         }
-        const mins = texts.map((t, j) =>
-          tabletLand
-            ? Math.round(Number(t.dataset.fitMinLand) * Math.min(1.25, k))
-            : Number((land ? t.dataset.fitMinLand : undefined) ?? t.dataset.fitMin) || bases[j]
+        // The readable floor moves with the emphasis too: a long ayah sits at
+        // its floors, so only moving the caps would change nothing there.
+        const mins = texts.map(
+          (t, j) =>
+            (tabletLand
+              ? Math.round(Number(t.dataset.fitMinLand) * Math.min(1.25, k))
+              : Number((land ? t.dataset.fitMinLand : undefined) ?? t.dataset.fitMin) || bases[j]) * capScale
         );
         // Growth cap depends on screen size: medium on phones, larger on
         // tablets, full on desktop (data-fit-max-mobile / -tablet / -max).
@@ -521,7 +526,7 @@ export function CenterVerseDisplay({
         const maxs = texts.map((t, j) => {
           const cap = tabletLand ? Math.round(Number(t.dataset.fitLand) * k) : capOf(t);
           // Never grow past the cap; shrink the base down to it on small screens.
-          const m = cap > 0 ? cap : bases[j];
+          const m = Math.max(mins[j], (cap > 0 ? cap : bases[j]) * capScale);
           return maxOverride && !tabletLand ? Math.max(mins[j], Math.min(m, maxOverride)) : m;
         });
         const apply = (scale: number) =>
@@ -556,6 +561,13 @@ export function CenterVerseDisplay({
       // MEANING_RATIO of the Arabic size (Arabic clearly larger than the meaning).
       const MEANING_RATIO = 0.6;
       const [arPane, mnPane] = [arabicPaneRef.current, meaningPaneRef.current];
+      // Owner, 2026-11-25: whichever language is being read aloud is the larger
+      // one. While the meaning (Tamil…) is spoken, the Arabic steps down and the
+      // meaning steps up; when the recitation is back, the default sizes return.
+      const meaningFocus = Boolean(mnPane) && meaningSpeakingRef.current;
+      const arScale = meaningFocus ? 0.78 : 1;
+      const mnScale = meaningFocus ? 1.25 : 1;
+      const mnCap = () => (meaningFocus ? undefined : arPx() * MEANING_RATIO);
       const arPx = () => {
         const h = arPane?.querySelector<HTMLElement>("[data-fit-text]");
         return h ? parseFloat(getComputedStyle(h).fontSize) : 0;
@@ -563,19 +575,20 @@ export function CenterVerseDisplay({
       if (cs.flexDirection.startsWith("row")) {
         // Side by side: each column gets the full height; the meaning column is
         // capped relative to the Arabic.
-        if (arPane) fitGroup(textsIn(arPane), () => blockH(arPane) <= avail);
-        if (mnPane) fitGroup(textsIn(mnPane), () => blockH(mnPane) <= avail, arPx() * MEANING_RATIO);
+        if (arPane) fitGroup(textsIn(arPane), () => blockH(arPane) <= avail, undefined, arScale);
+        if (mnPane) fitGroup(textsIn(mnPane), () => blockH(mnPane) <= avail, mnCap(), mnScale);
       } else {
         // Stacked: Arabic first within most of the height (all of it when the
         // meaning is hidden), then the meaning takes what is left.
         const gap = parseFloat(cs.rowGap) || 0;
-        const arBudget = mnPane ? avail * 0.68 : avail;
-        if (arPane) fitGroup(textsIn(arPane), () => blockH(arPane) <= arBudget);
+        const arBudget = mnPane ? avail * (meaningFocus ? 0.5 : 0.68) : avail;
+        if (arPane) fitGroup(textsIn(arPane), () => blockH(arPane) <= arBudget, undefined, arScale);
         if (mnPane) {
           fitGroup(
             textsIn(mnPane),
             () => (arPane ? blockH(arPane) + gap : 0) + blockH(mnPane) <= avail,
-            arPx() * MEANING_RATIO
+            mnCap(),
+            mnScale
           );
         }
       }
@@ -607,7 +620,7 @@ export function CenterVerseDisplay({
     };
     // showGreeting: the first item (e.g. the Isti'adhah) can arrive while the
     // greeting is still up, so the stage mounts later with the same fitKey.
-  }, [fitKey, showTranslation, language, translationLang, extraMeaning, reciterWordSync, Boolean(activeItemForFit), showGreeting]);
+  }, [fitKey, showTranslation, language, translationLang, extraMeaning, reciterWordSync, Boolean(activeItemForFit), showGreeting, meaningSpeaking]);
 
   const meaningSpeakingRef = useRef(meaningSpeaking);
   meaningSpeakingRef.current = meaningSpeaking;
