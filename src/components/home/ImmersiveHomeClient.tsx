@@ -401,6 +401,15 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
     );
   };
 
+  // The content browser: a Juz from its start, or from its ¼ / ½ / ¾ mark
+  // (the Juz already playing just moves there).
+  const handleBrowseJuz = (juzId: number, from?: [number, number]) => {
+    if (!from) return handleSelectJuz(juzId);
+    const i = Math.max(0, getJuzAyahPairs(juzId).findIndex(([s, a]) => s === from[0] && a === from[1]));
+    if (activeJuz?.id === juzId && player.ayahSequence) player.jumpToAyah(i);
+    else handleSelectJuz(juzId, i);
+  };
+
   // A Juz that ends in "next" mode → the next Juz (Juz 30 stops); in
   // "shuffle" → a random other Juz. ("repeat" restarts in the player.)
   const juzEndRef = useRef<(mode: EndMode) => boolean>(() => false);
@@ -2127,7 +2136,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
           <TopicPickerModal
             openRequest={browserOpenRequest}
             surahTracks={surahTracksForCurrentReciter}
-            onSelectJuz={handleSelectJuz}
+            onSelectJuz={handleBrowseJuz}
             onOpenAyah={openSurahAt}
           />
         </HomeSettingsProvider>
@@ -2342,7 +2351,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
               variant="favourites"
               triggerClassName="pointer-events-auto relative grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full text-sand-200 transition-opacity hover:opacity-80 active:opacity-60 before:absolute before:-inset-2 before:content-[''] cursor-pointer"
               surahTracks={surahTracksForCurrentReciter}
-              onSelectJuz={handleSelectJuz}
+              onSelectJuz={handleBrowseJuz}
             />
             {/* 🔖 add (bookmark +) / remove (filled) the ayah being read */}
             {onAirAyah && (

@@ -171,5 +171,9 @@ const strings: Strings = {
   // List cards
   "{n} listeners": { ta: "{n} கேட்டவர்கள்", ur: "{n} سامعین", ml: "{n} ശ്രോതാക്കൾ", hi: "{n} श्रोता", id: "{n} pendengar", bn: "{n} শ্রোতা", tr: "{n} dinleyici", fr: "{n} auditeurs", ms: "{n} pendengar" },
   Playing: { ta: "ஒலிக்கிறது", ur: "چل رہا ہے", ml: "പ്ലേ ചെയ്യുന്നു", hi: "चल रहा है", id: "Diputar", bn: "চলছে", tr: "Çalıyor", fr: "Lecture en cours", ms: "Sedang dimainkan" },
+  // Juz ¼ ½ ¾ (الربع / النصف / الثلاثة)
+  "Quarter of the Juz (Rubʿ) — from {ref}": { ta: "ஜுஸ்வின் கால் (ருப்உ) — {ref} முதல்", ur: "پارے کا ربع — {ref} سے", ml: "ജുസ്ഇന്റെ കാൽ (റുബ്ഉ) — {ref} മുതൽ", hi: "पारे का चौथाई (रुबअ) — {ref} से", id: "Seperempat juz (Rubʿ) — dari {ref}", bn: "পারার এক-চতুর্থাংশ (রুবু) — {ref} থেকে", tr: "Cüzün çeyreği (Rubʿ) — {ref} ayetinden", fr: "Quart du juz (Rubʿ) — à partir de {ref}", ms: "Suku juzuk (Rubʿ) — dari {ref}" },
+  "Half of the Juz (Niṣf) — from {ref}": { ta: "ஜுஸ்வின் பாதி (நிஸ்ஃப்) — {ref} முதல்", ur: "پارے کا نصف — {ref} سے", ml: "ജുസ്ഇന്റെ പകുതി (നിസ്ഫ്) — {ref} മുതൽ", hi: "पारे का आधा (निस्फ़) — {ref} से", id: "Setengah juz (Niṣf) — dari {ref}", bn: "পারার অর্ধেক (নিসফ) — {ref} থেকে", tr: "Cüzün yarısı (Nısf) — {ref} ayetinden", fr: "Moitié du juz (Niṣf) — à partir de {ref}", ms: "Separuh juzuk (Niṣf) — dari {ref}" },
+  "Three quarters of the Juz (Thalātha) — from {ref}": { ta: "ஜுஸ்வின் முக்கால் (தலாதா) — {ref} முதல்", ur: "پارے کے تین ربع (ثلاثہ) — {ref} سے", ml: "ജുസ്ഇന്റെ മുക്കാൽ (ഥലാഥ) — {ref} മുതൽ", hi: "पारे के तीन चौथाई (सलासा) — {ref} से", id: "Tiga perempat juz (Thalātha) — dari {ref}", bn: "পারার তিন-চতুর্থাংশ (সালাসা) — {ref} থেকে", tr: "Cüzün dörtte üçü (Selâse) — {ref} ayetinden", fr: "Trois quarts du juz (Thalātha) — à partir de {ref}", ms: "Tiga suku juzuk (Thalātha) — dari {ref}" },
 };
 export default strings;

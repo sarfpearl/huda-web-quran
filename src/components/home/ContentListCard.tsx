@@ -36,6 +36,9 @@ export interface ContentListCardProps {
   onClick: () => void;
   /** Custom extra classes */
   className?: string;
+  /** A row under the card (its own buttons, so outside the card's button) —
+   *  the Juz ¼ ½ ¾ starts. */
+  below?: React.ReactNode;
 }
 
 /**
@@ -59,6 +62,7 @@ export function ContentListCard({
   viewCountText,
   onClick,
   className,
+  below,
 }: ContentListCardProps) {
   const lang = useUiLang();
   const showCount = typeof viewCount === "number";
@@ -68,7 +72,7 @@ export function ContentListCard({
     setImgSrc(imageSrc);
   }, [imageSrc]);
 
-  return (
+  const card = (
     <button
       type="button"
       onClick={onClick}
@@ -161,5 +165,12 @@ export function ContentListCard({
         )}
       </div>
     </button>
+  );
+  if (!below) return card;
+  return (
+    <div className="space-y-1.5">
+      {card}
+      {below}
+    </div>
   );
 }

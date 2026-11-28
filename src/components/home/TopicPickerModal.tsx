@@ -37,6 +37,7 @@ import { OPEN_ACCOUNT_EVENT } from "@/lib/settingsEvents";
 import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, ProfileList, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
 import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
+import { juzQuarters, type AyahRef } from "@/lib/data/juzQuarters";
 import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
@@ -84,10 +85,17 @@ function VerseLine({ hit, script }: { hit: VerseHit; script: QuranScript }) {
   );
 }
 
+const QUARTER_GLYPHS = ["¼", "½", "¾"] as const;
+const QUARTER_KEYS = [
+  "Quarter of the Juz (Rubʿ) — from {ref}",
+  "Half of the Juz (Niṣf) — from {ref}",
+  "Three quarters of the Juz (Thalātha) — from {ref}",
+] as const;
+
 interface TopicPickerModalProps {
   surahTracks?: BayanWithRelations[];
   /** Play a Juz in the currently-selected reciter's voice (per-ayah). */
-  onSelectJuz?: (juzId: number) => void;
+  onSelectJuz?: (juzId: number, from?: AyahRef) => void;
   /** Cue a Surah at an ayah (Verse search result tapped). */
   onOpenAyah?: (surah: number, ayah: number) => void;
   /** Bump to open the browser from outside (the player's Surah / Juz name). */
@@ -714,6 +722,7 @@ export function TopicPickerModal({
   const renderJuzCard = (j: (typeof QURAN_JUZ)[number]) => {
     const isTrackCurrent = player.current?.id === `quran-juz-${j.id}`;
     const juzImg = quranThumbUrl("juz", j.id);
+    const quarters = juzQuarters(j.id);
     return (
       <ContentListCard
         key={`juz-${j.id}`}
@@ -728,6 +737,33 @@ export function TopicPickerModal({
         viewCountText={compactCount(countFor("juz", j.id) ?? 0)}
         isActive={isTrackCurrent}
         isPlaying={isTrackCurrent && player.isPlaying}
+        below={onSelectJuz && quarters ? (
+          // ¼ ½ ¾ — the Juz's margin marks: start from its quarter, half
+          // (an-Nisf) or three quarters.
+          <div className="flex gap-1.5 pl-[2.375rem]">
+            {quarters.map(([s, a], i) => {
+              const ref = `${s}:${a}`;
+              const label = t(lang, QUARTER_KEYS[i], { ref });
+              return (
+                <button
+                  key={ref}
+                  type="button"
+                  aria-label={`${word("juz", lang)} ${j.id} — ${label}`}
+                  data-tooltip={label}
+                  onClick={() => {
+                    dismissKeyboard();
+                    onSelectJuz(j.id, [s, a]);
+                    setIsOpen(false);
+                  }}
+                  className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 text-sand-100 transition-all hover:border-white/25 hover:bg-white/10 active:scale-95 cursor-pointer"
+                >
+                  <span className="text-sm font-bold leading-none text-amber-300">{QUARTER_GLYPHS[i]}</span>
+                  <span className="truncate text-[11px] font-semibold tabular-nums text-sand-200/75">{ref}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : undefined}
         onClick={() => {
           dismissKeyboard();
           if (onSelectJuz) {
