@@ -9,6 +9,7 @@ import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { OPEN_TOUR_EVENT, TIP_STEPS, TOUR_DONE_KEY, TOUR_STEPS, TOUR_TIP_EVENT, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
+import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
@@ -45,6 +46,8 @@ const RAIL_GAP = 14;
 const THREAD = 34;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
+
+const noop = () => {};
 
 type Rect = { x: number; y: number; w: number; h: number; r: string };
 type Point = { x: number; y: number };
@@ -159,6 +162,9 @@ export function FirstVisitTour() {
    *  the tour's own "done" and the onboarding stage alone. */
   const tipRef = useRef(false);
   useDialogFocus(open, dialogRef);
+  // Nothing else stays open under the tour (the install guide, the content
+  // browser…): its opening closes them; it ignores the others' own opening.
+  useOnlyOneSheet(open, noop);
 
   // Read when the tour starts (a language change mustn't restart it).
   const langRef = useRef(lang);

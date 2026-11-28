@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { afterSplash, finishStage } from "@/lib/onboarding";
+import { afterSplash, finishStage, onOnboardingDone } from "@/lib/onboarding";
 import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
 import { clock, currentWaqt, prayerLabel, regionDefaults, type AsrMadhab, type MethodId } from "@/lib/prayerTimes";
 import { PrayerTimesSheet, readPrayerPrefs, type PrayerPrefs } from "./PrayerTimesSheet";
@@ -305,7 +305,12 @@ export function TimeLocationWidget({
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
     let last = 0;
+    // Safari forgets the permission between loads, so this can bring up its
+    // prompt: never during the first-open steps or the tour (owner,
+    // 2026-11-28: the prompt came up over the tour's first card).
+    let ready = false;
     const refresh = () => {
+      if (!ready || document.querySelector(".huda-tour")) return;
       if (document.visibilityState !== "visible" || Date.now() - last < 10 * 60 * 1000) return;
       const had = coordsRef.current;
       if (!had) return;
@@ -336,11 +341,17 @@ export function TimeLocationWidget({
         .then((s) => s.state !== "denied" && look())
         .catch(look);
     };
-    // The saved place shows first; this follows.
-    const t = setTimeout(refresh, 1500);
+    // The saved place shows first; this follows, once the first-open steps
+    // (location, install guide, tour) are through.
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const stop = onOnboardingDone(() => {
+      ready = true;
+      t = setTimeout(refresh, 1500);
+    });
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("focus", refresh);
     return () => {
+      stop();
       clearTimeout(t);
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("focus", refresh);
