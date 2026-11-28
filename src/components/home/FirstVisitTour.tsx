@@ -46,12 +46,13 @@ const SPRING_C = 10.5;
 // above it (1/s, = 2%/s of the swing's size), and the pull per px/s² of the
 // hook's sideways speeding up / slowing down; short moves get a stronger
 // pull (up to ×2.8) so a hop between neighbouring buttons still swings.
-const SWING_W2 = 40;
+// Same beat as the hanging lantern's (SWING_PERIOD_S), so both swing alike.
+const SWING_W2 = (2 * Math.PI / 1.8) ** 2;
 const SWING_REST = (5 * Math.PI) / 180;
 const SWING_DAMP = 2 * Math.log(1 / 0.98);
-const SWING_PULL = 0.00095;
+const SWING_PULL = 0.001;
 const SWING_REF_PX = 300;
-// The most it leans either way (rad), approached softly.
+// The most it leans either way (rad).
 const TILT_MAX = 0.5;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
@@ -61,7 +62,7 @@ const THREAD = 34;
 // and when it starts (as the lantern has grown at the thread's end).
 const SWING_START_DEG = 14;
 const SWING_REST_DEG = 5;
-const SWING_PERIOD_S = 2;
+const SWING_PERIOD_S = 1.8;
 const SWING_DELAY_MS = 1300;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
@@ -376,7 +377,9 @@ export function FirstVisitTour() {
           swing.a += swing.w * dt;
         }
       }
-      const tilt = reduce ? 0 : TILT_MAX * Math.tanh(swing.a / TILT_MAX);
+      // Straight from the swing — a soft cap (tanh) flattened each turn, so it
+      // seemed to wait at either side (owner, 2026-11-28).
+      const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, swing.a));
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
