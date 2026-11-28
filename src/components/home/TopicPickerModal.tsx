@@ -740,7 +740,7 @@ export function TopicPickerModal({
         below={onSelectJuz && quarters ? (
           // ¼ ½ ¾ — the Juz's margin marks: start from its quarter, half
           // (an-Nisf) or three quarters.
-          <div className="flex gap-1.5 pl-[2.375rem]">
+          <div className="grid grid-cols-3 divide-x divide-white/[0.07] border-t border-white/[0.07]">
             {quarters.map(([s, a], i) => {
               const ref = `${s}:${a}`;
               const label = t(lang, QUARTER_KEYS[i], { ref });
@@ -755,10 +755,10 @@ export function TopicPickerModal({
                     onSelectJuz(j.id, [s, a]);
                     setIsOpen(false);
                   }}
-                  className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 text-sand-100 transition-all hover:border-white/25 hover:bg-white/10 active:scale-95 cursor-pointer"
+                  className="flex h-8 min-w-0 items-center justify-center gap-1.5 text-sand-200/55 transition-colors hover:bg-white/[0.06] hover:text-sand-100 active:bg-white/10 cursor-pointer"
                 >
-                  <span className="text-sm font-bold leading-none text-amber-300">{QUARTER_GLYPHS[i]}</span>
-                  <span className="truncate text-[11px] font-semibold tabular-nums text-sand-200/75">{ref}</span>
+                  <span className="text-xs font-bold leading-none text-amber-300/85">{QUARTER_GLYPHS[i]}</span>
+                  <span className="truncate text-[11px] font-medium tabular-nums">{ref}</span>
                 </button>
               );
             })}

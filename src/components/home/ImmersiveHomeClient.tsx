@@ -24,7 +24,7 @@ import { FeedbackLantern } from "@/components/feedback/FeedbackLantern";
 import { FirstVisitTour } from "./FirstVisitTour";
 import { showTourTip } from "@/lib/tour/steps";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
-import { isQuranScript, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
+import { isQuranScript, PAGES_NOTE, SCRIPT_STORAGE_KEY } from "@/lib/data/quranScript";
 import { STANDALONE_SILENT, useAudioPlayer, type EndMode, type MeaningCue } from "@/contexts/AudioPlayerContext";
 import {
   MEANING_AUDIO_PUBLISHED,
@@ -248,7 +248,8 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   const showNotice = (text: string, icon?: "bookmark-added" | "bookmark-removed") => setNotice({ id: Date.now(), text, icon });
   useEffect(() => {
     if (!notice) return;
-    const t = setTimeout(() => setNotice(null), 4500);
+    // Long notices (the script's pages note) stay up long enough to read.
+    const t = setTimeout(() => setNotice(null), Math.max(4500, notice.text.length * 60));
     return () => clearTimeout(t);
   }, [notice]);
 
@@ -1203,6 +1204,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   }, []);
   const handleChooseScript = (s: QuranScript) => {
     setQuranScript(s);
+    if (s !== quranScript) showNotice(t(language, PAGES_NOTE));
     try {
       localStorage.setItem(SCRIPT_STORAGE_KEY, s);
     } catch {
@@ -2283,7 +2285,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
             key={`land-${notice.id}`}
             role="status"
             aria-live="polite"
-            className="flex max-w-[680px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
+            className="flex max-w-[680px] items-center gap-2.5 rounded-2xl bg-black/[0.08] backdrop-blur-[14px] border border-amber-300/30 px-4 py-2.5 text-xs sm:text-sm text-sand-100 shadow-[0_12px_30px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
             {notice.icon === "bookmark-added" ? (
               <BookmarkCheckIcon className="h-4 w-4 shrink-0 text-amber-300" />
