@@ -33,12 +33,18 @@ const LANTERN_H = 58;
 // Lantern ↔ control and lantern ↔ card.
 const NEAR = 6;
 const CARD_GAP = 10;
-// The lantern's glide: a spring, a little under-damped so
-// it settles with a small sway (stiffness 1/s², damping 1/s).
-const SPRING_K = 55;
-const SPRING_C = 10.5;
-// How far it leans against its motion (rad per px/s), and at most.
-const TILT_PER_SPEED = 0.0016;
+// The lantern's glide: a spring (stiffness 1/s², damping 1/s), soft and
+// nearly critically damped: it eases into place instead of
+// rushing there and stopping dead (owner, 2026-11-28: "like braking at 60").
+const SPRING_K = 24;
+const SPRING_C = 9.2;
+// The lantern hangs from the moving hook as a pendulum: the hook's pull
+// sets it swinging, and it keeps swinging on after the hook stops, dying
+// down slowly (natural frequency² 1/s², damping 1/s, pull per px/s²).
+const SWING_W2 = 16;
+const SWING_DAMP = 1.1;
+const SWING_PULL = 0.0009;
+// The most it leans either way (rad).
 const TILT_MAX = 0.45;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
@@ -163,7 +169,7 @@ export function FirstVisitTour() {
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
   /** The lantern's hook now, and its speed (px/s). */
-  const motion = useRef<{ cur: Point; vel: Point } | null>(null);
+  const motion = useRef<{ cur: Point; vel: Point; swing: { a: number; w: number } } | null>(null);
   const open = steps !== null;
   /** A one-off tip (TIP_STEPS) is showing, not the tour: closing it leaves
    *  the tour's own "done" and the onboarding stage alone. */
@@ -319,8 +325,8 @@ export function FirstVisitTour() {
   useEffect(() => {
     const g0 = goal.current;
     if (!open || !g0) return;
-    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 } };
-    const { cur, vel } = motion.current;
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: 0, w: 0 } };
+    const { cur, vel, swing } = motion.current;
     let frame = 0;
     let last = performance.now();
     const t0 = last;
@@ -337,14 +343,19 @@ export function FirstVisitTour() {
           cur.y = g.y;
           vel.x = vel.y = 0;
         } else {
-          vel.x += (SPRING_K * (g.x - cur.x) - SPRING_C * vel.x) * dt;
+          const ax = SPRING_K * (g.x - cur.x) - SPRING_C * vel.x;
+          vel.x += ax * dt;
           vel.y += (SPRING_K * (g.y - cur.y) - SPRING_C * vel.y) * dt;
           cur.x += vel.x * dt;
           cur.y += vel.y * dt;
+          // The hook speeding up or slowing down swings the lantern the
+          // other way; it carries on swinging after the hook has stopped.
+          swing.w += (-SWING_W2 * swing.a - SWING_DAMP * swing.w + SWING_PULL * ax) * dt;
+          swing.a = Math.max(-TILT_MAX, Math.min(TILT_MAX, swing.a + swing.w * dt));
         }
       }
-      const sway = reduce ? 0 : 0.085 * Math.sin(((now - t0) / 1000) * 2.1);
-      const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, vel.x * TILT_PER_SPEED)) + sway;
+      const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
+      const tilt = reduce ? 0 : swing.a + sway;
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
@@ -432,6 +443,7 @@ export function FirstVisitTour() {
   const railW = Math.min(cardW * 0.75, 260);
   // The drop of light leaves from the lamp's centre (below the knot).
   const dropTop = THREAD + Math.round(LANTERN_H * 0.55);
+  const dropFall = Math.max(0, cardY + cardH / 2 - (railY.current ?? 0) - dropTop);
   const total = steps!.length;
   const titleId = "huda-tour-title";
   const textId = "huda-tour-text";
@@ -484,10 +496,9 @@ export function FirstVisitTour() {
             </div>
           </div>
           {/* A drop of light falls from the lantern to where the card comes. */}
-          <span
-            className="huda-tour-fall absolute"
-            style={{ top: dropTop, "--fall": `${Math.max(0, cardY + cardH / 2 - (railY.current ?? 0) - dropTop)}px` } as React.CSSProperties}
-          />
+          <span className="huda-tour-fall absolute" style={{ top: dropTop, "--fall": `${dropFall}px` } as React.CSSProperties} />
+          {/* Where it lands: a soft ring of light as the card opens out of it. */}
+          <span className="huda-tour-splash absolute" style={{ top: dropTop + dropFall }} />
           <span className="huda-tour-knot absolute" />
         </div>
       )}
@@ -622,7 +633,13 @@ const TOUR_CSS = `
 @keyframes huda-grow { from { transform: scale(0); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
 @keyframes huda-fall { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 12% { opacity: 1; transform: translateY(0) scale(1); }
   100% { transform: translateY(var(--fall, 16px)); opacity: 1; } }
-@keyframes huda-card-in { from { clip-path: circle(3px at 50% 50%); } to { clip-path: circle(75% at 50% 50%); } }
+/* Fully hidden until the drop lands (a 3px start showed as a stray dot). */
+@keyframes huda-card-in { 0% { clip-path: circle(0px at 50% 50%); opacity: 0; } 4% { opacity: 1; }
+  100% { clip-path: circle(75% at 50% 50%); opacity: 1; } }
+.huda-tour-splash { left: -6px; width: 12px; height: 12px; margin-top: -6px; border-radius: 9999px;
+  border: 1px solid rgba(253,230,138,0.9); box-shadow: 0 0 14px 3px rgba(252,211,77,0.55);
+  animation: huda-splash 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) 4.05s both; }
+@keyframes huda-splash { 0% { transform: scale(0.3); opacity: 0; } 15% { opacity: 1; } 100% { transform: scale(9); opacity: 0; } }
 @property --tx { syntax: "<length>"; inherits: true; initial-value: 50vw; }
 @property --ty { syntax: "<length>"; inherits: true; initial-value: 40vh; }
 @property --rx { syntax: "<length>"; inherits: true; initial-value: 60vmax; }
@@ -651,6 +668,6 @@ const TOUR_CSS = `
   .huda-tour, .huda-tour-halo, .huda-tour-card, .huda-tour-bead { transition: none; }
   .huda-tour-halo { animation: none; }
   .huda-tour-rail, .huda-tour-knot, .huda-tour-thread, .huda-tour-grow, .huda-tour-card-in { animation: none; }
-  .huda-tour-fall { display: none; }
+  .huda-tour-fall, .huda-tour-splash { display: none; }
 }
 `;
