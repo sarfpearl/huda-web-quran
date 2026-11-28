@@ -32,16 +32,17 @@ const LANTERN_W = 34;
 const LANTERN_H = 58;
 // Lantern ↔ control and lantern ↔ card.
 const NEAR = 6;
-// Under a control the lantern hangs on a short thread from a knot on the
-// control's lower edge, and swings about that knot — like the opening card's
-// lantern (owner, 2026-11-28: without it, it seemed pinned at its top).
-const SHORT_THREAD = 16;
+// The yellow ring round the control sits this far outside it; under a
+// control the lantern's hook ring sits on the ring's lowest point (owner,
+// 2026-11-28: merged into the yellow ring, no thread of its own).
+const HALO_PAD = 5;
+const HOOK_ON_RING = 3;
 const CARD_GAP = 10;
-// The lantern's glide: a spring, a little under-damped so
-// it settles with a small sway (stiffness 1/s², damping 1/s). (A softer,
-// pendulum-driven glide was tried on 2026-11-28; the owner preferred this.)
-const SPRING_K = 55;
-const SPRING_C = 10.5;
+// The lantern's glide: a critically damped spring (stiffness 1/s², damping
+// 1/s) — it arrives in ~0.7 s and stops on the spot; the under-damped one
+// ran ~4% past and came back, which read as a push (owner, 2026-11-28).
+const SPRING_K = 80;
+const SPRING_C = 17.9;
 // The lantern hangs from the hook like a pendulum (owner, 2026-11-28): as
 // the hook rushes right it swings back left, and when the hook stops it
 // swings on — right, left, right. The swing dies down only 2% a second
@@ -54,7 +55,7 @@ const SPRING_C = 10.5;
 const SWING_W2 = (2 * Math.PI / 1.8) ** 2;
 const SWING_REST = (5 * Math.PI) / 180;
 const SWING_DAMP = 2 * Math.log(1 / 0.98);
-const SWING_PULL = 0.001;
+const SWING_PULL = 0.0012;
 const SWING_REF_PX = 300;
 // The most it leans either way (rad).
 const TILT_MAX = 0.5;
@@ -184,8 +185,6 @@ export function FirstVisitTour() {
   const dialogRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
   const lanternRef = useRef<HTMLDivElement>(null);
-  /** The short thread's length now (0 over a control lower on the screen). */
-  const threadLen = useRef(0);
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
   /** The lantern's hook now, and its speed (px/s). */
@@ -350,12 +349,7 @@ export function FirstVisitTour() {
     let frame = 0;
     let last = performance.now();
     const draw = (tilt: number) => {
-      const el = lanternRef.current;
-      if (el) {
-        // Swings about the knot at the thread's top (its hook if no thread).
-        el.style.transformOrigin = `${LANTERN_W / 2}px ${-threadLen.current}px`;
-        el.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
-      }
+      if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
     };
     const tick = (now: number) => {
       const dt = Math.min(1 / 30, Math.max(1 / 240, (now - last) / 1000));
@@ -466,14 +460,12 @@ export function FirstVisitTour() {
     const cx = rect.x + rect.w / 2;
     const below = rect.y + rect.h / 2 < vh / 2;
     const hx = Math.max(EDGE + LANTERN_W / 2, Math.min(vw - EDGE - LANTERN_W / 2, cx));
-    const hy = below ? rect.y + rect.h + SHORT_THREAD : rect.y - NEAR - LANTERN_H;
-    threadLen.current = below ? SHORT_THREAD : 0;
+    const hy = below ? rect.y + rect.h + HALO_PAD - HOOK_ON_RING : rect.y - NEAR - LANTERN_H;
     hook = { x: hx, y: hy };
     cardY = below ? hy + LANTERN_H + CARD_GAP : hy - CARD_GAP - cardH;
     cardY = Math.max(EDGE, Math.min(vh - cardH - EDGE, cardY));
     cardX = Math.max(EDGE, Math.min(vw - cardW - EDGE, cx - cardW / 2));
   } else {
-    threadLen.current = 0;
     // Hung from a line under the greeting when it fits (the greeting, its
     // tagline and the line in view above it); else in the middle.
     const rail = greet ? greet.bottom + RAIL_GAP : null;
@@ -531,7 +523,7 @@ export function FirstVisitTour() {
         <div
           className="huda-tour-halo pointer-events-none absolute"
           aria-hidden="true"
-          style={{ left: rect.x - 5, top: rect.y - 5, width: rect.w + 10, height: rect.h + 10, borderRadius: `calc(${rect.r} + 5px)` }}
+          style={{ left: rect.x - HALO_PAD, top: rect.y - HALO_PAD, width: rect.w + HALO_PAD * 2, height: rect.h + HALO_PAD * 2, borderRadius: `calc(${rect.r} + ${HALO_PAD}px)` }}
         />
       )}
 
@@ -574,16 +566,9 @@ export function FirstVisitTour() {
       <div
         ref={lanternRef}
         className="pointer-events-none absolute left-0 top-0"
-        style={{ width: LANTERN_W, opacity: hung ? 0 : 1 }}
+        style={{ width: LANTERN_W, transformOrigin: `${LANTERN_W / 2}px 0`, opacity: hung ? 0 : 1 }}
         aria-hidden="true"
       >
-        {/* The short thread and its knot (under a control only). */}
-        <div
-          className="huda-tour-thread absolute bottom-full left-1/2 w-px -translate-x-1/2"
-          style={{ height: threadLen.current, animation: "none", transition: "height 0.3s ease" }}
-        >
-          <span className="huda-tour-knot absolute" style={{ left: -2.5, top: -3, width: 6, height: 6, animation: "none", opacity: threadLen.current ? 1 : 0 }} />
-        </div>
         <LanternArt glow />
       </div>
 
