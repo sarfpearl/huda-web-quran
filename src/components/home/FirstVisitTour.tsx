@@ -16,7 +16,9 @@ import { LanternArt } from "@/components/feedback/FeedbackLantern";
  * content browser slides in. The feedback lantern's fanoos (the same lantern)
  * glides from control to control, its light on each one and the rest of the
  * screen dimmed, with one short line about each (owner, 2026-11-17: no
- * thread). Skip on every step; Settings › App tour shows it again. The steps
+ * thread between controls; 2026-11-28: the opening and closing cards hang on
+ * a thread from a line under the greeting). Controls are visited top to
+ * bottom as they sit on this screen. Skip on every step; Settings › App tour shows it again. The steps
  * are data (lib/tour/steps); a control that isn't on screen is left out.
  */
 
@@ -37,6 +39,10 @@ const SPRING_C = 10.5;
 // How far it leans against its motion (rad per px/s), and at most.
 const TILT_PER_SPEED = 0.0011;
 const TILT_MAX = 0.45;
+// The opening / closing card: the line under the greeting, and the thread
+// from it down to the lantern's hook.
+const RAIL_GAP = 14;
+const THREAD = 34;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
 
@@ -100,6 +106,35 @@ function rectOf(el: HTMLElement): Rect {
 
 const present = (s: TourStep) => !s.target || Boolean(findTarget(s.target));
 
+/** The steps in screen order: everything along the top first, then on down
+ *  (row by row, in reading direction) — a phone's player icons sit at the
+ *  bottom, a desktop's in the header (owner, 2026-11-28). The opening and
+ *  closing cards stay first and last. */
+function inScreenOrder(list: TourStep[], rtl: boolean): TourStep[] {
+  const ROW = 32;
+  const placed = list.map((step, i) => {
+    const el = step.target ? findTarget(step.target) : null;
+    const r = el?.getBoundingClientRect();
+    return { step, i, y: r ? r.top + r.height / 2 : 0, x: r ? r.left + r.width / 2 : 0, has: Boolean(r) };
+  });
+  const head = placed.filter((p) => !p.has && p.i === 0);
+  const tail = placed.filter((p) => !p.has && p.i !== 0);
+  const middle = placed
+    .filter((p) => p.has)
+    .sort((a, b) => Math.round(a.y / ROW) - Math.round(b.y / ROW) || (rtl ? b.x - a.x : a.x - b.x) || a.i - b.i);
+  return [...head, ...middle, ...tail].map((p) => p.step);
+}
+
+/** The greeting (As-salamu alaykum + its tagline): the opening and closing
+ *  cards hang from a line under it. */
+function greetingRect(): DOMRect | null {
+  const el = document.querySelector<HTMLElement>('[data-tour-anchor="greeting"]');
+  const r = el?.getBoundingClientRect();
+  if (!el || !r || r.height < 8 || r.bottom <= 0 || r.top >= innerHeight) return null;
+  if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return null;
+  return r;
+}
+
 export function FirstVisitTour() {
   const lang = useUiLang();
   const reduce = useReducedMotion();
@@ -108,6 +143,10 @@ export function FirstVisitTour() {
   const [rect, setRect] = useState<Rect | null>(null);
   const [card, setCard] = useState({ w: 0, h: 0 });
   const [view, setView] = useState({ w: 0, h: 0 });
+  const [greet, setGreet] = useState<{ top: number; bottom: number; w: number } | null>(null);
+  /** The line the opening / closing card hangs from (its y), for the thread. */
+  const railY = useRef<number | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
@@ -122,9 +161,12 @@ export function FirstVisitTour() {
   const tipRef = useRef(false);
   useDialogFocus(open, dialogRef);
 
+  // Read when the tour starts (a language change mustn't restart it).
+  const langRef = useRef(lang);
+  langRef.current = lang;
   const start = useCallback(() => {
     tipRef.current = false;
-    const list = TOUR_STEPS.filter(present);
+    const list = inScreenOrder(TOUR_STEPS.filter(present), isRtl(langRef.current));
     setIndex(0);
     setSteps(list);
   }, []);
@@ -189,6 +231,32 @@ export function FirstVisitTour() {
   const step = steps?.[index];
   const last = steps ? index === steps.length - 1 : false;
 
+  // The window resized (phone ↔ desktop layout): the controls moved, so the
+  // order is worked out again; the lantern stays on the control it is on.
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  useEffect(() => {
+    if (!open) return;
+    let timer = 0;
+    const reorder = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (tipRef.current) return;
+        const here = stepRef.current;
+        const list = inScreenOrder(TOUR_STEPS.filter(present), isRtl(langRef.current));
+        const at = here ? list.indexOf(here) : -1;
+        setSteps(list);
+        if (at >= 0) setIndex(at);
+        else setIndex((i) => Math.min(i, list.length - 1));
+      }, 350);
+    };
+    addEventListener("resize", reorder);
+    return () => {
+      window.clearTimeout(timer);
+      removeEventListener("resize", reorder);
+    };
+  }, [open]);
+
   // Follow the control: layout shifts, rotation, the keyboard, resize.
   useLayoutEffect(() => {
     if (!step) return;
@@ -196,6 +264,10 @@ export function FirstVisitTour() {
       setView((v) => (v.w === innerWidth && v.h === innerHeight ? v : { w: innerWidth, h: innerHeight }));
       const el = step.target ? findTarget(step.target) : null;
       setRect(el ? rectOf(el) : null);
+      const g = step.target ? null : greetingRect();
+      setGreet((p) =>
+        !g ? null : p && p.top === g.top && p.bottom === g.bottom && p.w === g.width ? p : { top: g.top, bottom: g.bottom, w: g.width }
+      );
       const c = cardRef.current;
       if (c) setCard((p) => (p.w === c.offsetWidth && p.h === c.offsetHeight ? p : { w: c.offsetWidth, h: c.offsetHeight }));
     };
@@ -242,6 +314,9 @@ export function FirstVisitTour() {
     const t0 = last;
     const draw = (tilt: number) => {
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
+      // The thread up to the line (opening / closing card only).
+      const top = railY.current;
+      if (threadRef.current) threadRef.current.style.height = `${top === null ? 0 : Math.max(0, cur.y - top)}px`;
     };
     const tick = (now: number) => {
       const dt = Math.min(1 / 30, Math.max(1 / 240, (now - last) / 1000));
@@ -304,15 +379,28 @@ export function FirstVisitTour() {
     cardY = Math.max(EDGE, Math.min(vh - cardH - EDGE, cardY));
     cardX = Math.max(EDGE, Math.min(vw - cardW - EDGE, cx - cardW / 2));
   } else {
-    cardY = Math.max(EDGE + LANTERN_H + CARD_GAP + 40, (vh - cardH) / 2 + 30);
-    hook = { x: vw / 2, y: cardY - CARD_GAP - LANTERN_H };
+    // Hung from a line under the greeting when it fits (the greeting, its
+    // tagline and the line in view above it); else in the middle.
+    const rail = greet ? greet.bottom + RAIL_GAP : null;
+    const hungY = rail === null ? null : rail + THREAD + LANTERN_H + CARD_GAP;
+    if (rail !== null && hungY !== null && hungY + cardH <= vh - EDGE) {
+      cardY = hungY;
+      hook = { x: vw / 2, y: rail + THREAD };
+    } else {
+      cardY = Math.max(EDGE + LANTERN_H + CARD_GAP + 40, (vh - cardH) / 2 + 30);
+      hook = { x: vw / 2, y: cardY - CARD_GAP - LANTERN_H };
+    }
   }
+  const hung = !rect && greet !== null && hook.y === greet.bottom + RAIL_GAP + THREAD;
+  railY.current = hung ? greet!.bottom + RAIL_GAP : null;
   goal.current = hook;
   // The pool of light: on the control, else round the lantern and its card.
   const tx = rect ? rect.x + rect.w / 2 : vw / 2;
-  const ty = rect ? rect.y + rect.h / 2 : cardY + cardH / 2 - 20;
-  const rx = rect ? Math.max(rect.w * 0.95, 46) + 26 : cardW * 0.9;
-  const ry = rect ? Math.max(rect.h * 0.95, 40) + 26 : cardH * 1.25;
+  // Hung: the light takes in the greeting above as well.
+  const lightTop = hung ? greet!.top : cardY;
+  const ty = rect ? rect.y + rect.h / 2 : hung ? (lightTop + cardY + cardH) / 2 : cardY + cardH / 2 - 20;
+  const rx = rect ? Math.max(rect.w * 0.95, 46) + 26 : hung ? Math.max(cardW, greet!.w) * 0.8 : cardW * 0.9;
+  const ry = rect ? Math.max(rect.h * 0.95, 40) + 26 : hung ? (cardY + cardH - lightTop) * 0.75 : cardH * 1.25;
   const total = steps!.length;
   const titleId = "huda-tour-title";
   const textId = "huda-tour-text";
@@ -347,6 +435,13 @@ export function FirstVisitTour() {
         />
       )}
 
+      {/* The line under the greeting the opening / closing card hangs from. */}
+      <div
+        className="huda-tour-rail pointer-events-none absolute left-1/2 h-px -translate-x-1/2 transition-opacity duration-500"
+        aria-hidden="true"
+        style={{ top: railY.current ?? 0, width: Math.min(cardW * 0.75, 260), opacity: hung ? 1 : 0 }}
+      />
+
       {/* The lantern, placed every frame by its glide (above). */}
       <div
         ref={lanternRef}
@@ -354,6 +449,12 @@ export function FirstVisitTour() {
         style={{ width: LANTERN_W, transformOrigin: `${LANTERN_W / 2}px 0` }}
         aria-hidden="true"
       >
+        {/* Its thread up to the line (0 high away from the greeting). */}
+        <div
+          ref={threadRef}
+          className="huda-tour-thread absolute bottom-full left-1/2 w-px -translate-x-1/2"
+          style={{ height: 0 }}
+        />
         <LanternArt glow />
       </div>
 
@@ -458,6 +559,8 @@ export function FirstVisitTour() {
 }
 
 const TOUR_CSS = `
+.huda-tour-rail { background: linear-gradient(90deg, transparent, rgba(252,211,77,0.75) 30%, rgba(252,211,77,0.75) 70%, transparent); box-shadow: 0 0 6px rgba(252,211,77,0.35); }
+.huda-tour-thread { background: linear-gradient(to bottom, rgba(252,211,77,0.75), rgba(252,211,77,0.5)); }
 @property --tx { syntax: "<length>"; inherits: true; initial-value: 50vw; }
 @property --ty { syntax: "<length>"; inherits: true; initial-value: 40vh; }
 @property --rx { syntax: "<length>"; inherits: true; initial-value: 60vmax; }
