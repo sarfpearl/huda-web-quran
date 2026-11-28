@@ -40,13 +40,16 @@ const SPRING_K = 55;
 const SPRING_C = 10.5;
 // The lantern hangs from the hook like a pendulum (owner, 2026-11-28): as
 // the hook rushes right it swings back left, and when the hook stops it
-// swings on — right, left, right — dying down over ~3 s. Its natural
-// frequency² (1/s²), damping (1/s), and pull per px/s² of the hook's
-// sideways speeding up / slowing down; short moves get a stronger pull
-// (up to ×2.8) so a hop between neighbouring buttons still swings.
+// swings on — right, left, right. The swing dies down only 2% a second
+// (owner: never quickly) until it reaches a steady 5° sway, which it keeps.
+// Its natural frequency² (1/s²), the steady sway (rad), the slow-down while
+// above it (1/s, = 2%/s of the swing's size), and the pull per px/s² of the
+// hook's sideways speeding up / slowing down; short moves get a stronger
+// pull (up to ×2.8) so a hop between neighbouring buttons still swings.
 const SWING_W2 = 40;
-const SWING_DAMP = 1.7;
-const SWING_PULL = 0.0027;
+const SWING_REST = (5 * Math.PI) / 180;
+const SWING_DAMP = 2 * Math.log(1 / 0.98);
+const SWING_PULL = 0.00095;
 const SWING_REF_PX = 300;
 // The most it leans either way (rad), approached softly.
 const TILT_MAX = 0.5;
@@ -329,11 +332,10 @@ export function FirstVisitTour() {
   useEffect(() => {
     const g0 = goal.current;
     if (!open || !g0) return;
-    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: 0, w: 0, gain: 1, gx: g0.x } };
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: SWING_REST, w: 0, gain: 1, gx: g0.x } };
     const { cur, vel, swing } = motion.current;
     let frame = 0;
     let last = performance.now();
-    const t0 = last;
     const draw = (tilt: number) => {
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
     };
@@ -360,12 +362,15 @@ export function FirstVisitTour() {
           cur.y += vel.y * dt;
           // The hook pulling right swings the lantern's foot left (CSS
           // rotate: positive = foot to the left), and back when it brakes.
-          swing.w += (-SWING_W2 * swing.a - SWING_DAMP * swing.w + SWING_PULL * swing.gain * ax) * dt;
+          // Above the steady sway it loses 2% a second; below it, it is
+          // nudged back up, so it never stops.
+          const size = Math.hypot(swing.a, swing.w / Math.sqrt(SWING_W2));
+          const damp = size > SWING_REST ? SWING_DAMP : -0.6 * (1 - size / SWING_REST);
+          swing.w += (-SWING_W2 * swing.a - damp * swing.w + SWING_PULL * swing.gain * ax) * dt;
           swing.a += swing.w * dt;
         }
       }
-      const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
-      const tilt = reduce ? 0 : TILT_MAX * Math.tanh(swing.a / TILT_MAX) + sway;
+      const tilt = reduce ? 0 : TILT_MAX * Math.tanh(swing.a / TILT_MAX);
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
