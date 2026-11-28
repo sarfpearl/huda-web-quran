@@ -33,26 +33,14 @@ const LANTERN_H = 58;
 // Lantern ↔ control and lantern ↔ card.
 const NEAR = 6;
 const CARD_GAP = 10;
-// The lantern's glide: a spring, a little under-damped so
-// it settles with a small sway (stiffness 1/s², damping 1/s). (A softer,
-// pendulum-driven glide was tried on 2026-11-28; the owner preferred this.)
+// The lantern's glide between controls: a spring, a little under-damped so
+// it settles with a small sway (stiffness 1/s², damping 1/s) — as it was
+// before 2026-11-28 (a pendulum version was tried; the owner kept this).
 const SPRING_K = 55;
 const SPRING_C = 10.5;
-// The lantern hangs from the hook like a pendulum (owner, 2026-11-28): as
-// the hook rushes right it swings back left, and when the hook stops it
-// swings on — right, left, right. The swing dies down only 2% a second
-// (owner: never quickly) until it reaches a steady 5° sway, which it keeps.
-// Its natural frequency² (1/s²), the steady sway (rad), the slow-down while
-// above it (1/s, = 2%/s of the swing's size), and the pull per px/s² of the
-// hook's sideways speeding up / slowing down; short moves get a stronger
-// pull (up to ×2.8) so a hop between neighbouring buttons still swings.
-const SWING_W2 = 40;
-const SWING_REST = (5 * Math.PI) / 180;
-const SWING_DAMP = 2 * Math.log(1 / 0.98);
-const SWING_PULL = 0.00095;
-const SWING_REF_PX = 300;
-// The most it leans either way (rad), approached softly.
-const TILT_MAX = 0.5;
+// How far it leans against its motion (rad per px/s), and at most.
+const TILT_PER_SPEED = 0.0011;
+const TILT_MAX = 0.45;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
 const RAIL_GAP = 14;
@@ -176,7 +164,7 @@ export function FirstVisitTour() {
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
   /** The lantern's hook now, and its speed (px/s). */
-  const motion = useRef<{ cur: Point; vel: Point; swing: { a: number; w: number; gain: number; gx: number } } | null>(null);
+  const motion = useRef<{ cur: Point; vel: Point } | null>(null);
   const open = steps !== null;
   /** A one-off tip (TIP_STEPS) is showing, not the tour: closing it leaves
    *  the tour's own "done" and the onboarding stage alone. */
@@ -332,10 +320,11 @@ export function FirstVisitTour() {
   useEffect(() => {
     const g0 = goal.current;
     if (!open || !g0) return;
-    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: SWING_REST, w: 0, gain: 1, gx: g0.x } };
-    const { cur, vel, swing } = motion.current;
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 } };
+    const { cur, vel } = motion.current;
     let frame = 0;
     let last = performance.now();
+    const t0 = last;
     const draw = (tilt: number) => {
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
     };
@@ -349,28 +338,14 @@ export function FirstVisitTour() {
           cur.y = g.y;
           vel.x = vel.y = 0;
         } else {
-          if (g.x !== swing.gx) {
-            // A new move: how strongly this one pulls (short hops more).
-            const dx = Math.max(60, Math.abs(g.x - cur.x));
-            swing.gain = Math.min(2.8, Math.pow(Math.max(1, SWING_REF_PX / dx), 0.75));
-            swing.gx = g.x;
-          }
-          const ax = SPRING_K * (g.x - cur.x) - SPRING_C * vel.x;
-          vel.x += ax * dt;
+          vel.x += (SPRING_K * (g.x - cur.x) - SPRING_C * vel.x) * dt;
           vel.y += (SPRING_K * (g.y - cur.y) - SPRING_C * vel.y) * dt;
           cur.x += vel.x * dt;
           cur.y += vel.y * dt;
-          // The hook pulling right swings the lantern's foot left (CSS
-          // rotate: positive = foot to the left), and back when it brakes.
-          // Above the steady sway it loses 2% a second; below it, it is
-          // nudged back up, so it never stops.
-          const size = Math.hypot(swing.a, swing.w / Math.sqrt(SWING_W2));
-          const damp = size > SWING_REST ? SWING_DAMP : -0.6 * (1 - size / SWING_REST);
-          swing.w += (-SWING_W2 * swing.a - damp * swing.w + SWING_PULL * swing.gain * ax) * dt;
-          swing.a += swing.w * dt;
         }
       }
-      const tilt = reduce ? 0 : TILT_MAX * Math.tanh(swing.a / TILT_MAX);
+      const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
+      const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, vel.x * TILT_PER_SPEED)) + sway;
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
