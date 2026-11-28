@@ -183,21 +183,43 @@ export function FirstVisitTour({ arrivedByLink = false, offerChip = false }: { a
     countChipOffer();
     setChip(true);
   }, [arrivedByLink, offerChip]);
-  // Just above the player's frame, measured (it grows when expanded; in phone
-  // landscape it's a rail at the side, so the chip sits at the bottom edge).
-  const [chipBottom, setChipBottom] = useState(EDGE);
+  // Where the invite goes: by the reading / text-only buttons. On desktop
+  // they're in the header, so it hangs below the header from a thread tied to
+  // them; on a phone they're inside the player, so it sits just above the
+  // player's frame (owner, 2026-11-28). Measured while shown: the player grows,
+  // the window resizes.
+  type ChipPos = { top: boolean; y: number; x: number; thread: { x: number; y0: number; y1: number } | null };
+  const [chipPos, setChipPos] = useState<ChipPos | null>(null);
+  const chipRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!chip) return;
     const hide = window.setTimeout(() => setChip(false), CHIP_SHOW_MS);
     const measure = () => {
-      const top = document.querySelector<HTMLElement>("[data-player-frame]")?.getBoundingClientRect().top;
-      setChipBottom(top !== undefined && top > innerHeight / 2 ? innerHeight - top + 10 : EDGE);
+      const w = chipRef.current?.offsetWidth || 300;
+      const btn = findTarget("reading") || findTarget("text-only");
+      const r = btn?.getBoundingClientRect();
+      const clampX = (cx: number) => Math.max(EDGE, Math.min(innerWidth - EDGE - w, cx - w / 2));
+      if (r && r.top < innerHeight / 2) {
+        const header = document.querySelector<HTMLElement>("[data-scene-header]")?.getBoundingClientRect();
+        const y = Math.max(r.bottom, header?.bottom ?? 0) + 22;
+        const cx = r.left + r.width / 2;
+        const x = clampX(cx);
+        // The thread meets the card inside its rounded corners.
+        const tx = Math.max(x + 22, Math.min(x + w - 22, cx));
+        setChipPos({ top: true, y, x, thread: { x: tx, y0: r.bottom + 2, y1: y } });
+        return;
+      }
+      const frameTop = document.querySelector<HTMLElement>("[data-player-frame]")?.getBoundingClientRect().top;
+      const bottom = frameTop !== undefined && frameTop > innerHeight / 2 ? innerHeight - frameTop + 12 : EDGE;
+      setChipPos({ top: false, y: bottom, x: clampX(innerWidth / 2), thread: null });
     };
     measure();
     const id = window.setInterval(measure, 400);
+    addEventListener("resize", measure);
     return () => {
       window.clearTimeout(hide);
       window.clearInterval(id);
+      removeEventListener("resize", measure);
     };
   }, [chip]);
 
@@ -338,32 +360,49 @@ export function FirstVisitTour({ arrivedByLink = false, offerChip = false }: { a
   if (typeof document === "undefined") return null;
   if (!open || !step) {
     if (!chip) return null;
+    const pos = chipPos;
     return createPortal(
-      <div
-        dir={isRtl(lang) ? "rtl" : "ltr"}
-        className="huda-tour-chip pointer-events-none fixed inset-x-0 z-[260] flex justify-center px-4"
-        style={{ bottom: chipBottom }}
-      >
-        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-amber-200/35 bg-black/60 py-1 ps-2 pe-1 text-sand-50 shadow-lg backdrop-blur-md">
-          <button
-            type="button"
-            onClick={() => {
-              setChip(false);
-              start();
-            }}
-            className="flex items-center gap-2 rounded-full py-1 pe-2 text-xs font-medium hover:text-white sm:text-sm cursor-pointer"
-          >
-            <span className="huda-tour-chip-lantern block h-[26px] w-[14px] overflow-visible" aria-hidden="true">
+      <div dir={isRtl(lang) ? "rtl" : "ltr"} className="pointer-events-none fixed inset-0 z-[260]" style={{ visibility: pos ? "visible" : "hidden" }}>
+        {pos?.thread && (
+          <span
+            aria-hidden="true"
+            className="huda-invite-thread absolute w-px"
+            style={{ left: pos.thread.x, top: pos.thread.y0, height: pos.thread.y1 - pos.thread.y0 }}
+          />
+        )}
+        <div
+          ref={chipRef}
+          role="group"
+          aria-label={tourT(lang, "Take a 30-second tour?")}
+          className={`huda-invite pointer-events-auto absolute w-[min(300px,calc(100vw-32px))] ${pos?.top ? "huda-invite-top" : "huda-invite-bottom"}`}
+          style={pos ? (pos.top ? { top: pos.y, left: pos.x } : { bottom: pos.y, left: pos.x }) : { top: 0, left: 0 }}
+        >
+          <div className="huda-invite-glow" aria-hidden="true" />
+          <div className="relative flex items-center gap-3 py-3 ps-3 pe-9">
+            <span className="huda-invite-lantern shrink-0" aria-hidden="true">
               <LanternArt glow />
             </span>
-            <span>{tourT(lang, "Take a 30-second tour?")}</span>
-          </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-semibold leading-snug text-amber-50 sm:text-sm">{tourT(lang, "Take a 30-second tour?")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setChip(false);
+                  start();
+                }}
+                className="huda-invite-go mt-2 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold text-[#2a1a05] cursor-pointer"
+              >
+                {tourT(lang, "Begin")}
+                <span aria-hidden="true" className="rtl:-scale-x-100">→</span>
+              </button>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setChip(false)}
             aria-label={tourT(lang, "Not now")}
             data-tip={tourT(lang, "Not now")}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-sand-50/70 hover:bg-white/10 hover:text-white cursor-pointer"
+            className="absolute end-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full text-amber-100/60 hover:bg-white/10 hover:text-white cursor-pointer"
           >
             <CloseIcon className="h-3.5 w-3.5" />
           </button>
@@ -580,8 +619,44 @@ const TOUR_CSS = `
 `;
 
 const CHIP_CSS = `
-.huda-tour-chip { animation: huda-chip-in 0.45s cubic-bezier(0.32, 0.72, 0, 1) both; }
-.huda-tour-chip-lantern svg { width: 14px; height: 26px; }
-@keyframes huda-chip-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .huda-tour-chip { animation: none; } }
+.huda-invite {
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(58, 38, 12, 0.92), rgba(14, 10, 6, 0.94) 62%);
+  border: 1px solid rgba(240, 207, 122, 0.45);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 26px rgba(245, 184, 74, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+.huda-invite-top { animation: huda-invite-drop 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) both; transform-origin: 50% 0; }
+.huda-invite-bottom { animation: huda-invite-rise 0.55s cubic-bezier(0.32, 0.72, 0, 1) both; }
+.huda-invite-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120px 80px at 30px 50%, rgba(255, 214, 140, 0.22), transparent 70%);
+  animation: huda-invite-flicker 3.2s ease-in-out infinite;
+}
+.huda-invite-lantern { display: block; width: 22px; height: 41px; transform-origin: 50% 0; animation: huda-invite-sway 3.6s ease-in-out infinite; }
+.huda-invite-lantern svg { width: 22px; height: 41px; }
+.huda-invite-go {
+  background: linear-gradient(180deg, #f6d98a, #e0ad4c);
+  box-shadow: 0 0 0 1px rgba(255, 236, 180, 0.5) inset, 0 2px 10px rgba(245, 184, 74, 0.35);
+}
+.huda-invite-go:hover { filter: brightness(1.08); }
+.huda-invite-thread {
+  background: linear-gradient(180deg, rgba(240, 207, 122, 0.15), rgba(240, 207, 122, 0.75));
+  transform-origin: 50% 0;
+  animation: huda-invite-thread 0.45s ease-out both;
+}
+.huda-invite-thread::after {
+  content: ""; position: absolute; left: -2px; bottom: -2px; width: 5px; height: 5px; border-radius: 9999px;
+  background: #f0cf7a; box-shadow: 0 0 8px rgba(245, 184, 74, 0.8);
+}
+@keyframes huda-invite-drop { from { opacity: 0; transform: translateY(-14px) rotate(-2deg); } to { opacity: 1; transform: none; } }
+@keyframes huda-invite-rise { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes huda-invite-thread { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes huda-invite-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@keyframes huda-invite-flicker { 0%, 100% { opacity: 0.8; } 45% { opacity: 1; } 70% { opacity: 0.88; } }
+@media (prefers-reduced-motion: reduce) {
+  .huda-invite-top, .huda-invite-bottom, .huda-invite-glow, .huda-invite-lantern, .huda-invite-thread { animation: none; }
+}
 `;
