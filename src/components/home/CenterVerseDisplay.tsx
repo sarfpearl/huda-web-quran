@@ -115,6 +115,7 @@ function Greeting({ language, style, tagline = true }: { language: UiLang; style
     >
       <div
         ref={bodyRef}
+        data-tour-anchor="greeting"
         className="flex shrink-0 flex-col items-center text-center gap-3 sm:gap-4 phoneland:gap-1 phoneland:pb-3 select-none animate-in fade-in duration-500"
         style={{ transform: scale < 1 ? `scale(${scale})` : undefined, visibility: scale < 0.25 ? "hidden" : undefined }}
       >
