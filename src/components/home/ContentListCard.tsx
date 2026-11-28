@@ -36,6 +36,9 @@ export interface ContentListCardProps {
   onClick: () => void;
   /** Custom extra classes */
   className?: string;
+  /** A footer inside the card's frame (its own buttons, so outside the
+   *  card's button) — the Juz ¼ ½ ¾ starts. */
+  below?: React.ReactNode;
 }
 
 /**
@@ -59,6 +62,7 @@ export function ContentListCard({
   viewCountText,
   onClick,
   className,
+  below,
 }: ContentListCardProps) {
   const lang = useUiLang();
   const showCount = typeof viewCount === "number";
@@ -68,19 +72,24 @@ export function ContentListCard({
     setImgSrc(imageSrc);
   }, [imageSrc]);
 
-  return (
+  const card = (
     <button
       type="button"
       onClick={onClick}
       aria-current={isActive ? "true" : undefined}
       className={cn(
-        "group flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-all border select-none",
-        // Selected: soft glass with a thin gold border (the player's Quran gold) —
-        // no glow, which the list's scroll box would clip into a dark square.
-        isActive
-          ? SELECTED
-          : "bg-white/5 border-white/5 text-sand-100 hover:bg-white/10 hover:border-white/20 active:scale-[0.99]",
-        className
+        "group flex w-full items-center gap-3 p-2.5 text-left transition-all select-none",
+        below
+          ? "text-sand-100 hover:bg-white/5"
+          : cn(
+              "rounded-2xl border",
+              // Selected: soft glass with a thin gold border (the player's Quran gold) —
+              // no glow, which the list's scroll box would clip into a dark square.
+              isActive
+                ? SELECTED
+                : "bg-white/5 border-white/5 text-sand-100 hover:bg-white/10 hover:border-white/20 active:scale-[0.99]",
+              className
+            )
       )}
     >
       {/* 1. Leading Number (Mono font, green when active) */}
@@ -161,5 +170,19 @@ export function ContentListCard({
         )}
       </div>
     </button>
+  );
+  if (!below) return card;
+  // With a row of its own: one card frame round both, the row its footer.
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border transition-colors",
+        isActive ? SELECTED : "bg-white/5 border-white/5 hover:border-white/20",
+        className
+      )}
+    >
+      {card}
+      {below}
+    </div>
   );
 }

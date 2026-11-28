@@ -19,6 +19,7 @@ import { OPEN_TOUR_EVENT } from "@/lib/tour/steps";
 import { useReminderSummary } from "./RemindersPage";
 import { AccountPage } from "./AccountPage";
 import { loginEnabled } from "@/lib/auth/account";
+import { PAGES_NOTE } from "@/lib/data/quranScript";
 
 /*
  * Settings (the header profile picture › Settings): every preference in one place. The
@@ -391,6 +392,7 @@ export function QuranTextPage() {
               </button>
             ))}
           </div>
+          <p className="mt-2 text-xs leading-snug text-sand-200/60">{t(lang, PAGES_NOTE)}</p>
           {/* IndoPak: a key to the waqf (stop) signs in the text. */}
           {indoPak && <WaqfLegend lang={lang} />}
         </div>

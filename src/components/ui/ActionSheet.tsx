@@ -124,6 +124,21 @@ export function useIsMobile() {
   return mobile;
 }
 
+/** Phone-sized screen (portrait phone, or any landscape phone). An iPad,
+ *  though touch, is not one: its sheets keep a fixed header and scroll the
+ *  list inside (owner, 2026-11-28: the whole-panel scroll jumped on iPad). */
+export function useIsPhone() {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px), (max-height: 500px)");
+    const update = () => setPhone(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return phone;
+}
+
 /**
  * Room the on-screen keyboard takes at the bottom of the layout viewport, and
  * the visible height. iOS leaves fixed elements behind the keyboard, so a sheet

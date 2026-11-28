@@ -30,6 +30,7 @@ import { ActionSheet, StickySearch } from "@/components/ui/ActionSheet";
 import { ArrowExpandIcon, ArrowShrinkIcon, CheckIcon } from "@/components/ui/Icon";
 import { SELECTED, SELECTED_BADGE, SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
 import type { QuranScript } from "@/lib/data/quranGlyphs";
+import { PAGES_NOTE } from "@/lib/data/quranScript";
 
 /** Reading mode's text sizes, × the base size. */
 export const READER_SCALES = [0.8, 0.9, 1, 1.15, 1.25, 1.4, 1.6, 1.8];
@@ -420,6 +421,7 @@ export function ImmersiveHeader({
                         </button>
                       ))}
                     </div>
+                    <p className="mt-2 px-1 text-[11px] leading-snug text-sand-200/60">{t(language, PAGES_NOTE)}</p>
                     {/* IndoPak: a key to the waqf (stop) signs in the text. */}
                     {script === "indopak" && <WaqfLegend lang={language} scrollList />}
                   </div>

@@ -37,7 +37,15 @@ interface SavedPlace {
   coords?: { lat: number; lon: number };
   denied?: boolean;
   at: number;
+  /** How the name was found; an older save is named again on the next fix. */
+  v?: number;
 }
+// v2 (2026-11-28): a GPS fix (enableHighAccuracy) and the street-level
+// lookup, naming the nearest neighbourhood the way Google Maps does — v1 used
+// a coarse fix and named a place several km off (owner: Neelamangalam for
+// Vettrivel Nagar, Madambakkam).
+const NAME_V = 2;
+const GEO_OPTS = { enableHighAccuracy: true } as const;
 function readPlace(): SavedPlace | null {
   try {
     const p = JSON.parse(localStorage.getItem(PLACE_KEY) ?? "null") as SavedPlace | null;
@@ -112,7 +120,7 @@ export function TimeLocationWidget({
       const here = { lat: latitude, lon: longitude };
       setCoords(here);
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=en&lat=${latitude}&lon=${longitude}`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -124,7 +132,12 @@ export function TimeLocationWidget({
         };
         window.dispatchEvent(new CustomEvent(PLACE_EVENT, { detail }));
         setRegion(detail);
+        // The nearest named area first (Vettrivel Nagar), then wider ones.
         const city =
+          data.address?.neighbourhood ||
+          data.address?.residential ||
+          data.address?.quarter ||
+          data.address?.hamlet ||
           data.address?.suburb ||
           data.address?.town ||
           data.address?.city ||
@@ -133,7 +146,7 @@ export function TimeLocationWidget({
         if (city) {
           setLocation(plain(city));
         }
-        savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now() });
+        savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now(), v: NAME_V });
         return true;
       }
     } catch {
@@ -202,7 +215,7 @@ export function TimeLocationWidget({
         },
         // No timeout while the prompt can still be up: Safari counts it
         // against the prompt and would fail before the user answers.
-        wasAnswered ? { timeout: 5000 } : {},
+        wasAnswered ? { ...GEO_OPTS, timeout: 10000 } : GEO_OPTS,
       );
     };
     afterSplash()
@@ -280,16 +293,17 @@ export function TimeLocationWidget({
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            if (km(had.lat, had.lon, latitude, longitude) > 2) {
+            // Moved, or named the old way: name it again.
+            if (km(had.lat, had.lon, latitude, longitude) > 0.5 || readPlace()?.v !== NAME_V) {
               void applyPosition(position);
               return;
             }
             const here = { lat: latitude, lon: longitude };
             setCoords(here);
-            savePlace({ city: placeRef.current || undefined, detail: regionRef.current ?? undefined, coords: here, at: Date.now() });
+            savePlace({ city: placeRef.current || undefined, detail: regionRef.current ?? undefined, coords: here, at: Date.now(), v: NAME_V });
           },
           () => {},
-          { timeout: 15000, maximumAge: 5 * 60 * 1000 },
+          { ...GEO_OPTS, timeout: 15000, maximumAge: 5 * 60 * 1000 },
         );
       if (!navigator.permissions) {
         look();
@@ -321,7 +335,7 @@ export function TimeLocationWidget({
         void applyPosition(position).then((ok) => setLocating(ok ? "done" : "unnamed"));
       },
       () => setLocating("failed"),
-      { timeout: 15000, maximumAge: 0 },
+      { ...GEO_OPTS, timeout: 15000, maximumAge: 0 },
     );
   };
 
@@ -338,6 +352,7 @@ export function TimeLocationWidget({
         askAnswer.current = allowFromPill;
         setAskOpen(true);
       },
+      GEO_OPTS,
     );
   };
   // Sent to Settings by the « turned off » sheet: on coming back, try again
@@ -354,7 +369,7 @@ export function TimeLocationWidget({
           void applyPosition(position);
         },
         () => {},
-        { timeout: 10000 },
+        { ...GEO_OPTS, timeout: 10000 },
       );
     };
     document.addEventListener("visibilitychange", onShow);
