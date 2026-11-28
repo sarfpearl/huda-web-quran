@@ -9,6 +9,7 @@ import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { OPEN_TOUR_EVENT, TIP_STEPS, TOUR_DONE_KEY, TOUR_STEPS, TOUR_TIP_EVENT, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
+import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
@@ -33,18 +34,36 @@ const LANTERN_H = 58;
 const NEAR = 6;
 const CARD_GAP = 10;
 // The lantern's glide: a spring, a little under-damped so
-// it settles with a small sway (stiffness 1/s², damping 1/s).
+// it settles with a small sway (stiffness 1/s², damping 1/s). (A softer,
+// pendulum-driven glide was tried on 2026-11-28; the owner preferred this.)
 const SPRING_K = 55;
 const SPRING_C = 10.5;
-// How far it leans against its motion (rad per px/s), and at most.
-const TILT_PER_SPEED = 0.0011;
-const TILT_MAX = 0.45;
+// The lantern hangs from the hook like a pendulum (owner, 2026-11-28): as
+// the hook rushes right it swings back left, and when the hook stops it
+// swings on — right, left, right — dying down over ~3 s. Its natural
+// frequency² (1/s²), damping (1/s), and pull per px/s² of the hook's
+// sideways speeding up / slowing down; short moves get a stronger pull
+// (up to ×2.8) so a hop between neighbouring buttons still swings.
+const SWING_W2 = 40;
+const SWING_DAMP = 1.7;
+const SWING_PULL = 0.0027;
+const SWING_REF_PX = 300;
+// The most it leans either way (rad), approached softly.
+const TILT_MAX = 0.5;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
 const RAIL_GAP = 14;
 const THREAD = 34;
+// Its swing: the first push, the sway it settles to, one swing's length,
+// and when it starts (as the lantern has grown at the thread's end).
+const SWING_START_DEG = 14;
+const SWING_REST_DEG = 5;
+const SWING_PERIOD_S = 2;
+const SWING_DELAY_MS = 1300;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
+
+const noop = () => {};
 
 type Rect = { x: number; y: number; w: number; h: number; r: string };
 type Point = { x: number; y: number };
@@ -146,7 +165,7 @@ export function FirstVisitTour() {
   const [greet, setGreet] = useState<{ top: number; bottom: number; w: number } | null>(null);
   /** The line the opening / closing card hangs from (its y), for the thread. */
   const railY = useRef<number | null>(null);
-  const threadRef = useRef<HTMLDivElement>(null);
+  const pendulumRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
@@ -154,12 +173,15 @@ export function FirstVisitTour() {
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
   /** The lantern's hook now, and its speed (px/s). */
-  const motion = useRef<{ cur: Point; vel: Point } | null>(null);
+  const motion = useRef<{ cur: Point; vel: Point; swing: { a: number; w: number; gain: number; gx: number } } | null>(null);
   const open = steps !== null;
   /** A one-off tip (TIP_STEPS) is showing, not the tour: closing it leaves
    *  the tour's own "done" and the onboarding stage alone. */
   const tipRef = useRef(false);
   useDialogFocus(open, dialogRef);
+  // Nothing else stays open under the tour (the install guide, the content
+  // browser…): its opening closes them; it ignores the others' own opening.
+  useOnlyOneSheet(open, noop);
 
   // Read when the tour starts (a language change mustn't restart it).
   const langRef = useRef(lang);
@@ -307,16 +329,13 @@ export function FirstVisitTour() {
   useEffect(() => {
     const g0 = goal.current;
     if (!open || !g0) return;
-    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 } };
-    const { cur, vel } = motion.current;
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: 0, w: 0, gain: 1, gx: g0.x } };
+    const { cur, vel, swing } = motion.current;
     let frame = 0;
     let last = performance.now();
     const t0 = last;
     const draw = (tilt: number) => {
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
-      // The thread up to the line (opening / closing card only).
-      const top = railY.current;
-      if (threadRef.current) threadRef.current.style.height = `${top === null ? 0 : Math.max(0, cur.y - top)}px`;
     };
     const tick = (now: number) => {
       const dt = Math.min(1 / 30, Math.max(1 / 240, (now - last) / 1000));
@@ -328,14 +347,25 @@ export function FirstVisitTour() {
           cur.y = g.y;
           vel.x = vel.y = 0;
         } else {
-          vel.x += (SPRING_K * (g.x - cur.x) - SPRING_C * vel.x) * dt;
+          if (g.x !== swing.gx) {
+            // A new move: how strongly this one pulls (short hops more).
+            const dx = Math.max(60, Math.abs(g.x - cur.x));
+            swing.gain = Math.min(2.8, Math.pow(Math.max(1, SWING_REF_PX / dx), 0.75));
+            swing.gx = g.x;
+          }
+          const ax = SPRING_K * (g.x - cur.x) - SPRING_C * vel.x;
+          vel.x += ax * dt;
           vel.y += (SPRING_K * (g.y - cur.y) - SPRING_C * vel.y) * dt;
           cur.x += vel.x * dt;
           cur.y += vel.y * dt;
+          // The hook pulling right swings the lantern's foot left (CSS
+          // rotate: positive = foot to the left), and back when it brakes.
+          swing.w += (-SWING_W2 * swing.a - SWING_DAMP * swing.w + SWING_PULL * swing.gain * ax) * dt;
+          swing.a += swing.w * dt;
         }
       }
       const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
-      const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, vel.x * TILT_PER_SPEED)) + sway;
+      const tilt = reduce ? 0 : TILT_MAX * Math.tanh(swing.a / TILT_MAX) + sway;
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
@@ -344,6 +374,25 @@ export function FirstVisitTour() {
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [open, reduce]);
+
+  // The hanging lantern's swing, worked out every frame so it never stops
+  // and starts again: a push as it appears, settling to a steady medium
+  // sway (≈ ±5°) — like a lamp just hung on a thread.
+  const hangKey = steps && !rect && greet ? index : -1;
+  useEffect(() => {
+    const el = pendulumRef.current;
+    if (hangKey < 0 || !el || reduce) return;
+    const t0 = performance.now() + SWING_DELAY_MS;
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.max(0, (now - t0) / 1000);
+      const amp = SWING_REST_DEG + (SWING_START_DEG - SWING_REST_DEG) * Math.exp(-t / 1.6);
+      el.style.transform = `rotate(${amp * Math.sin((2 * Math.PI * t) / SWING_PERIOD_S)}deg)`;
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [hangKey, reduce]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -401,6 +450,10 @@ export function FirstVisitTour() {
   const ty = rect ? rect.y + rect.h / 2 : hung ? (lightTop + cardY + cardH) / 2 : cardY + cardH / 2 - 20;
   const rx = rect ? Math.max(rect.w * 0.95, 46) + 26 : hung ? Math.max(cardW, greet!.w) * 0.8 : cardW * 0.9;
   const ry = rect ? Math.max(rect.h * 0.95, 40) + 26 : hung ? (cardY + cardH - lightTop) * 0.75 : cardH * 1.25;
+  const railW = Math.min(cardW * 0.75, 260);
+  // The drop of light leaves from the lamp's centre (below the knot).
+  const dropTop = THREAD + Math.round(LANTERN_H * 0.55);
+  const dropFall = Math.max(0, cardY + cardH / 2 - (railY.current ?? 0) - dropTop);
   const total = steps!.length;
   const titleId = "huda-tour-title";
   const textId = "huda-tour-text";
@@ -435,26 +488,39 @@ export function FirstVisitTour() {
         />
       )}
 
-      {/* The line under the greeting the opening / closing card hangs from. */}
-      <div
-        className="huda-tour-rail pointer-events-none absolute left-1/2 h-px -translate-x-1/2 transition-opacity duration-500"
-        aria-hidden="true"
-        style={{ top: railY.current ?? 0, width: Math.min(cardW * 0.75, 260), opacity: hung ? 1 : 0 }}
-      />
+      {/* Opening / closing card: a line draws out from a knot at its centre
+          under the greeting, the lantern drops on a thread tied to the knot
+          and swings to rest like a pendulum, then the card comes (owner,
+          2026-11-28, after a hanging-charm video). Order: a dot under the
+          tagline → it parts into the line both ways → the thread comes down
+          from the centre → the lantern grows at its end → a drop of light
+          falls from it a second after it has grown → the card opens out of
+          the drop. */}
+      {hung && (
+        <div key={`hang-${index}`} className="pointer-events-none absolute" style={{ left: vw / 2, top: railY.current ?? 0 }} aria-hidden="true">
+          <div className="huda-tour-rail absolute top-0 h-px" style={{ width: railW, left: -railW / 2 }} />
+          <div ref={pendulumRef} className="huda-tour-pendulum absolute top-0" style={{ left: -LANTERN_W / 2, width: LANTERN_W }}>
+            <div className="huda-tour-thread mx-auto w-px" style={{ height: THREAD }} />
+            <div className="huda-tour-grow">
+              <LanternArt glow />
+            </div>
+          </div>
+          {/* A drop of light falls from the lantern to where the card comes. */}
+          <span className="huda-tour-fall absolute" style={{ top: dropTop, "--fall": `${dropFall}px` } as React.CSSProperties} />
+          {/* Where it lands: a soft ring of light as the card opens out of it. */}
+          <span className="huda-tour-splash absolute" style={{ top: dropTop + dropFall }} />
+          <span className="huda-tour-knot absolute" />
+        </div>
+      )}
 
-      {/* The lantern, placed every frame by its glide (above). */}
+      {/* The lantern, placed every frame by its glide (above); the hanging
+          one stands in for it on the opening / closing card. */}
       <div
         ref={lanternRef}
         className="pointer-events-none absolute left-0 top-0"
-        style={{ width: LANTERN_W, transformOrigin: `${LANTERN_W / 2}px 0` }}
+        style={{ width: LANTERN_W, transformOrigin: `${LANTERN_W / 2}px 0`, opacity: hung ? 0 : 1 }}
         aria-hidden="true"
       >
-        {/* Its thread up to the line (0 high away from the greeting). */}
-        <div
-          ref={threadRef}
-          className="huda-tour-thread absolute bottom-full left-1/2 w-px -translate-x-1/2"
-          style={{ height: 0 }}
-        />
         <LanternArt glow />
       </div>
 
@@ -463,7 +529,7 @@ export function FirstVisitTour() {
         className="huda-tour-card absolute"
         style={{ width: cardW, transform: `translate3d(${cardX}px, ${cardY}px, 0)` }}
       >
-        <div className="relative overflow-hidden rounded-[22px] border border-amber-200/25 bg-[#0d0b08]/[0.92] px-5 pb-4 pt-4 text-sand-50 shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,236,190,0.08)] backdrop-blur-xl">
+        <div className={`${hung ? "huda-tour-card-in " : ""}relative overflow-hidden rounded-[22px] border border-amber-200/25 bg-[#0d0b08]/[0.92] px-5 pb-4 pt-4 text-sand-50 shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,236,190,0.08)] backdrop-blur-xl`}>
           {/* A soft flower (rounded petals) peeking in from the top-right
               corner; it stays in the corner, clear of the title and text. */}
           <svg
@@ -533,7 +599,7 @@ export function FirstVisitTour() {
               </button>
             )}
             <span className="flex-1" />
-            {index > 0 && !last && (
+            {index > 0 && (
               <button
                 type="button"
                 onClick={() => go(-1)}
@@ -559,8 +625,31 @@ export function FirstVisitTour() {
 }
 
 const TOUR_CSS = `
-.huda-tour-rail { background: linear-gradient(90deg, transparent, rgba(252,211,77,0.75) 30%, rgba(252,211,77,0.75) 70%, transparent); box-shadow: 0 0 6px rgba(252,211,77,0.35); }
-.huda-tour-thread { background: linear-gradient(to bottom, rgba(252,211,77,0.75), rgba(252,211,77,0.5)); }
+.huda-tour-knot { left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 9999px; background: #fcd34d;
+  box-shadow: 0 0 8px rgba(252,211,77,0.85); animation: huda-knot 0.3s ease-out both; }
+.huda-tour-rail { background: linear-gradient(90deg, transparent, rgba(252,211,77,0.75) 30%, rgba(252,211,77,0.75) 70%, transparent);
+  box-shadow: 0 0 6px rgba(252,211,77,0.35); transform-origin: center; animation: huda-rail 0.55s cubic-bezier(0.3, 0.7, 0, 1) 0.3s both; }
+.huda-tour-pendulum { transform-origin: 50% 0; }
+.huda-tour-thread { background: linear-gradient(to bottom, rgba(252,211,77,0.8), rgba(252,211,77,0.55));
+  transform-origin: top; animation: huda-thread 0.4s ease-in-out 0.9s both; }
+.huda-tour-grow { transform-origin: 50% 0; animation: huda-grow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1.3s both; }
+.huda-tour-fall { left: -2.5px; width: 5px; height: 5px; border-radius: 9999px; background: #fde68a;
+  box-shadow: 0 0 10px 2px rgba(252,211,77,0.8); animation: huda-fall 0.65s cubic-bezier(0.55, 0, 1, 0.45) 3.4s both; }
+/* The drop lands where the card's centre will be, and grows into the card. */
+.huda-tour-card-in { animation: huda-card-in 1s cubic-bezier(0.3, 0.7, 0, 1) 4.05s both; }
+@keyframes huda-knot { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes huda-rail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes huda-thread { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes huda-grow { from { transform: scale(0); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes huda-fall { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 12% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { transform: translateY(var(--fall, 16px)); opacity: 1; } }
+/* Fully hidden until the drop lands (a 3px start showed as a stray dot). */
+@keyframes huda-card-in { 0% { clip-path: circle(0px at 50% 50%); opacity: 0; } 4% { opacity: 1; }
+  100% { clip-path: circle(75% at 50% 50%); opacity: 1; } }
+.huda-tour-splash { left: -6px; width: 12px; height: 12px; margin-top: -6px; border-radius: 9999px;
+  border: 1px solid rgba(253,230,138,0.9); box-shadow: 0 0 14px 3px rgba(252,211,77,0.55);
+  animation: huda-splash 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) 4.05s both; }
+@keyframes huda-splash { 0% { transform: scale(0.3); opacity: 0; } 15% { opacity: 1; } 100% { transform: scale(9); opacity: 0; } }
 @property --tx { syntax: "<length>"; inherits: true; initial-value: 50vw; }
 @property --ty { syntax: "<length>"; inherits: true; initial-value: 40vh; }
 @property --rx { syntax: "<length>"; inherits: true; initial-value: 60vmax; }
@@ -588,5 +677,7 @@ const TOUR_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .huda-tour, .huda-tour-halo, .huda-tour-card, .huda-tour-bead { transition: none; }
   .huda-tour-halo { animation: none; }
+  .huda-tour-rail, .huda-tour-knot, .huda-tour-thread, .huda-tour-grow, .huda-tour-card-in { animation: none; }
+  .huda-tour-fall, .huda-tour-splash { display: none; }
 }
 `;
