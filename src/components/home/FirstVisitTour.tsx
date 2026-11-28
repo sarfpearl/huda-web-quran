@@ -56,7 +56,11 @@ function chipOffers() {
     return CHIP_MAX_VISITS;
   }
 }
+/** `?tour-invite` on a deep link: shows the invite even after the tour or
+ *  its two offers (checking it on a browser that has seen them), uncounted. */
+const chipForced = () => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("tour-invite");
 function countChipOffer() {
+  if (chipForced()) return;
   try {
     localStorage.setItem(CHIP_KEY, String(chipOffers() + 1));
   } catch {
@@ -190,7 +194,7 @@ export function FirstVisitTour({
     // by itself): offered once they're back.
     if (!arrivedByLink || !offerChip || chipHidden || chipOfferedRef.current) return;
     chipOfferedRef.current = true;
-    if (isDone() || chipOffers() >= CHIP_MAX_VISITS) return;
+    if (!chipForced() && (isDone() || chipOffers() >= CHIP_MAX_VISITS)) return;
     // Armed: shown (and counted) once there's a free spot for it, below.
     setChip(true);
   }, [arrivedByLink, offerChip, chipHidden]);
