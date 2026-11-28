@@ -39,6 +39,8 @@ interface SavedPlace {
   at: number;
   /** How the name was found; an older save is named again on the next fix. */
   v?: number;
+  /** Google named it last time: ask Google again on this visit. */
+  g?: boolean;
 }
 // v2 (2026-11-28): a GPS fix (enableHighAccuracy) and the street-level
 // lookup, naming the nearest neighbourhood the way Google Maps does — v1 used
@@ -74,6 +76,8 @@ export function TimeLocationWidget({
   const [timeStr, setTimeStr] = useState<string>("");
   const [now, setNow] = useState<Date | null>(null);
   const [location, setLocation] = useState<string>(defaultLocation);
+  /** Who named the place — Google is credited in the prayer sheet. */
+  const [nameBy, setNameBy] = useState<"google" | "osm" | null>(null);
   const [mounted, setMounted] = useState<boolean>(false);
   // Prayer times: where the device is, and the method / Asr madhab (the
   // region's, unless chosen in the sheet).
@@ -112,16 +116,26 @@ export function TimeLocationWidget({
     return () => clearInterval(interval);
   }, []);
 
-  // Where the device is → prayer times; its place name (OpenStreetMap) → the
-  // pill and the first-visit translation language.
+  // Where the device is → prayer times; its place name → the pill (Google's,
+  // as in Google Maps, through /api/place; else OpenStreetMap's), and the
+  // region (OpenStreetMap) → the first-visit translation language.
   const applyPosition = useCallback(async (position: GeolocationPosition) => {
     try {
       const { latitude, longitude } = position.coords;
       const here = { lat: latitude, lon: longitude };
       setCoords(here);
+      const googleName = fetch(`/api/place?lat=${latitude}&lon=${longitude}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { name?: string | null } | null) => (d?.name ? String(d.name) : null))
+        .catch(() => null);
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=en&lat=${latitude}&lon=${longitude}`,
       );
+      const google = await googleName;
+      if (google) {
+        setLocation(plain(google));
+        setNameBy("google");
+      }
       if (res.ok) {
         const data = await res.json();
         // Where they are, for the first-visit translation language
@@ -143,10 +157,17 @@ export function TimeLocationWidget({
           data.address?.city ||
           data.address?.village ||
           data.address?.county;
-        if (city) {
-          setLocation(plain(city));
+        if (!google) {
+          if (city) setLocation(plain(city));
+          setNameBy("osm");
         }
-        savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now(), v: NAME_V });
+        // Google's name isn't kept (its terms): the next visit asks again and
+        // shows OpenStreetMap's meanwhile.
+        savePlace({ city: city ? plain(city) : undefined, detail, coords: here, at: Date.now(), v: NAME_V, g: Boolean(google) });
+        return true;
+      }
+      if (google) {
+        savePlace({ coords: here, at: Date.now(), v: NAME_V, g: true });
         return true;
       }
     } catch {
@@ -294,7 +315,8 @@ export function TimeLocationWidget({
           (position) => {
             const { latitude, longitude } = position.coords;
             // Moved, or named the old way: name it again.
-            if (km(had.lat, had.lon, latitude, longitude) > 0.5 || readPlace()?.v !== NAME_V) {
+            const saved = readPlace();
+            if (km(had.lat, had.lon, latitude, longitude) > 0.5 || saved?.v !== NAME_V || saved?.g) {
               void applyPosition(position);
               return;
             }
@@ -519,6 +541,7 @@ export function TimeLocationWidget({
         )}
       </button>
       <PrayerTimesSheet
+        placeBy={nameBy}
         open={sheetOpen}
         onClose={() => {
           setSheetOpen(false);
