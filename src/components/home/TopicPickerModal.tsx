@@ -13,7 +13,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useIsPhone, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -204,8 +204,10 @@ export function TopicPickerModal({
   const isMobile = useIsMobile();
   // Phones, browse list: the whole panel scrolls (header, tabs, topics, list),
   // only the search row stays at the top — a landscape phone has no room for
-  // a fixed header above an inner list.
-  const wholeScroll = isMobile && !showAbout && !showSettings && !showProfile;
+  // a fixed header above an inner list. Tablets keep the fixed header (the
+  // whole panel scrolling to the playing card pushed the tabs under search).
+  const isPhone = useIsPhone();
+  const wholeScroll = isMobile && isPhone && !showAbout && !showSettings && !showProfile;
   const [panelScrolled, setPanelScrolled] = useState(false);
   const scrollWrapRef = useRef<HTMLDivElement>(null);
   // Phone landscape: a little peek on open, so the Surah list below shows.

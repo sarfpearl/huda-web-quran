@@ -1707,7 +1707,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!isPlaying) return;
     const onShow = () => {
       if (document.visibilityState !== "visible") return;
-      const el = isPreludeRef.current ? preludeAudioRef.current : audioRef.current;
+      // A meaning (translation) clip in its turn: the recitation waits paused
+      // on purpose — check the meaning element, else unlocking mid-meaning
+      // showed ▶ while it played on (owner's iPhone, 2026-11-27).
+      const el = meaningRef.current
+        ? meaningAudioRef.current
+        : isPreludeRef.current
+          ? preludeAudioRef.current
+          : audioRef.current;
       if (!el) return;
       // Paused while the app was away without a pause event reaching us:
       // show play, so a tap starts it again.
