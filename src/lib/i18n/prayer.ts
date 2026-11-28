@@ -162,5 +162,6 @@ const strings: Strings = {
   },
   "Allow location": { ta: "இருப்பிடத்தை அனுமதி", ur: "مقام کی اجازت دیں", ml: "ലൊക്കേഷൻ അനുവദിക്കുക", hi: "लोकेशन की अनुमति दें", id: "Izinkan lokasi", bn: "লোকেশনের অনুমতি দিন", tr: "Konuma izin ver", fr: "Autoriser la position", ms: "Benarkan lokasi" },
   "Not now": { ta: "இப்போது வேண்டாம்", ur: "ابھی نہیں", ml: "ഇപ്പോൾ വേണ്ട", hi: "अभी नहीं", id: "Nanti saja", bn: "এখন নয়", tr: "Şimdi değil", fr: "Plus tard", ms: "Bukan sekarang" },
+  "Place name: Google.": { ta: "இடப் பெயர்: Google.", ur: "جگہ کا نام: Google۔", ml: "സ്ഥലപ്പേര്: Google.", hi: "जगह का नाम: Google.", id: "Nama tempat: Google.", bn: "স্থানের নাম: Google।", tr: "Yer adı: Google.", fr: "Nom du lieu : Google.", ms: "Nama tempat: Google." },
 };
 export default strings;
