@@ -397,7 +397,7 @@ export function FirstVisitTour({
           <div className="huda-invite-moon" aria-hidden="true">
             <span className="huda-invite-ripple" />
             <span className="huda-invite-halo" />
-            {[0, 1, 2, 3, 4].map((i) => (
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
               <span key={i} className={`huda-invite-spark huda-invite-spark-${i}`} />
             ))}
             <CrescentArt />
@@ -696,16 +696,20 @@ const CHIP_CSS = `
 .huda-invite-stacked .huda-invite-moon { position: absolute; top: 0; inset-inline-start: 14px; margin: 0; z-index: 1; }
 .huda-invite-crescent { filter: drop-shadow(0 0 6px rgba(245, 190, 90, 0.55)); animation: huda-invite-float 4.2s ease-in-out infinite; }
 .huda-invite-halo { position: absolute; inset: -60%; border-radius: 9999px; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(245, 190, 90, 0.22), rgba(245, 190, 90, 0.08) 55%, transparent 100%); }
+  background: radial-gradient(closest-side, rgba(245, 190, 90, 0.3), rgba(245, 190, 90, 0.1) 55%, transparent 100%);
+  animation: huda-invite-breathe 3s ease-in-out infinite; }
 .huda-invite-ripple { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none;
-  border: 1px solid rgba(240, 207, 122, 0.55); opacity: 0; animation: huda-invite-ripple 1.6s ease-out 0.1s 1 both; }
-.huda-invite-spark { position: absolute; width: 3px; height: 3px; border-radius: 9999px; background: #f6d98a;
-  box-shadow: 0 0 6px rgba(246, 217, 138, 0.9); opacity: 0; animation: huda-invite-spark 3.6s ease-in-out infinite; }
-.huda-invite-spark-0 { left: 8%; top: 70%; animation-delay: 0.4s; }
-.huda-invite-spark-1 { left: 88%; top: 18%; animation-delay: 1.3s; width: 2px; height: 2px; }
-.huda-invite-spark-2 { left: 70%; top: 92%; animation-delay: 2.1s; }
-.huda-invite-spark-3 { left: -14%; top: 22%; animation-delay: 2.8s; width: 2px; height: 2px; }
-.huda-invite-spark-4 { left: 104%; top: 62%; animation-delay: 0.9s; width: 2px; height: 2px; }
+  border: 1.5px solid rgba(240, 207, 122, 0.7); opacity: 0; animation: huda-invite-ripple 3.2s ease-out 0.1s infinite; }
+.huda-invite-spark { position: absolute; width: 4px; height: 4px; border-radius: 9999px; background: #ffe7a6;
+  box-shadow: 0 0 8px 1px rgba(246, 217, 138, 0.95); opacity: 0; animation: huda-invite-spark 2.8s ease-out infinite; }
+.huda-invite-spark-0 { left: 6%; top: 72%; animation-delay: 0s; }
+.huda-invite-spark-1 { left: 86%; top: 14%; animation-delay: 0.7s; width: 3px; height: 3px; }
+.huda-invite-spark-2 { left: 64%; top: 96%; animation-delay: 1.4s; }
+.huda-invite-spark-3 { left: -18%; top: 24%; animation-delay: 2.1s; width: 3px; height: 3px; }
+.huda-invite-spark-4 { left: 108%; top: 58%; animation-delay: 0.35s; width: 3px; height: 3px; }
+.huda-invite-spark-5 { left: 36%; top: -16%; animation-delay: 1.05s; }
+.huda-invite-spark-6 { left: -8%; top: 100%; animation-delay: 1.75s; width: 3px; height: 3px; }
+.huda-invite-spark-7 { left: 96%; top: 92%; animation-delay: 2.45s; width: 3px; height: 3px; }
 
 .huda-invite-card { position: relative; overflow: hidden; width: min(var(--card-w), calc(100vw - 32px));
   border-radius: 20px; border: 1px solid rgba(240, 207, 122, 0.28);
@@ -719,9 +723,9 @@ const CHIP_CSS = `
 .huda-invite-stacked .huda-invite-card { width: 100%; padding: 16px 38px 14px 16px; transform-origin: 20% 0; }
 [dir=rtl].huda-invite-stacked .huda-invite-card { padding: 16px 16px 14px 38px; }
 /* The animated accent: a 1.5px gold light along the top edge. */
-.huda-invite-accent { position: absolute; left: 0; right: 0; top: -0.5px; height: 1.5px; pointer-events: none;
+.huda-invite-accent { position: absolute; left: 0; right: 0; top: 0; height: 1.5px; pointer-events: none;
   background: linear-gradient(90deg, transparent 0%, rgba(255, 228, 160, 0.9) 50%, transparent 100%);
-  background-size: 45% 100%; background-repeat: no-repeat; animation: huda-invite-sweep 4.5s ease-in-out 0.6s infinite; }
+  background-size: 40% 100%; background-repeat: no-repeat; animation: huda-invite-sweep 3s ease-in-out 0.6s infinite; }
 .huda-invite-mosque { width: 64px; height: 36px; opacity: 0.55; }
 .huda-invite-title { font-size: 16px; line-height: 1.3; }
 .huda-invite-text { margin-top: 6px; font-size: 13px; line-height: 1.45; position: relative; }
@@ -751,13 +755,14 @@ const CHIP_CSS = `
   .huda-invite-text { display: none; }
   .huda-invite-go { margin-top: 8px; min-height: 36px; padding: 6px 14px; }
 }
-@keyframes huda-invite-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
-@keyframes huda-invite-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
-@keyframes huda-invite-ripple { 0% { opacity: 0.8; transform: scale(0.6); } 100% { opacity: 0; transform: scale(2.4); } }
-@keyframes huda-invite-spark { 0% { opacity: 0; transform: translateY(4px) scale(0.6); } 30% { opacity: 0.9; } 70% { opacity: 0.5; } 100% { opacity: 0; transform: translateY(-10px) scale(1); } }
+@keyframes huda-invite-in { from { opacity: 0; transform: translateY(8px) scale(0.88); } to { opacity: 1; transform: none; } }
+@keyframes huda-invite-float { 0%, 100% { transform: translateY(2px) rotate(-6deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
+@keyframes huda-invite-breathe { 0%, 100% { opacity: 0.65; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.08); } }
+@keyframes huda-invite-ripple { 0% { opacity: 0.9; transform: scale(0.7); } 70%, 100% { opacity: 0; transform: scale(2.6); } }
+@keyframes huda-invite-spark { 0% { opacity: 0; transform: translateY(6px) scale(0.4); } 25% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-22px) scale(0.6); } }
 @keyframes huda-invite-sweep { 0% { background-position: -60% 0; } 55%, 100% { background-position: 160% 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .huda-invite-crescent, .huda-invite-card, .huda-invite-accent { animation: none; }
+  .huda-invite-crescent, .huda-invite-card, .huda-invite-accent, .huda-invite-halo { animation: none; }
   .huda-invite-ripple, .huda-invite-spark { display: none; }
 }
 `;
