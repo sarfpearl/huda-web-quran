@@ -235,12 +235,10 @@ export function BookmarksPanel({
                   </div>
 
                   <div
+                    // A finger on the list hides the keyboard. Not on scroll: typing shrinks
+                    // the list, its scroll position jumps, and the search box lost focus
+                    // after one letter.
                     onTouchStart={() => {
-                      if (document.activeElement instanceof HTMLInputElement) {
-                        document.activeElement.blur();
-                      }
-                    }}
-                    onScroll={() => {
                       if (document.activeElement instanceof HTMLInputElement) {
                         document.activeElement.blur();
                       }

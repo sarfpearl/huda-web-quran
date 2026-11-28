@@ -13,7 +13,7 @@ import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { useOnlyOneSheet } from "@/lib/useOnlyOneSheet";
 import { useAutoCloseIdle } from "@/lib/useAutoCloseIdle";
-import { PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useKeyboardInset } from "@/components/ui/ActionSheet";
+import { PLAYER_GLASS, peekScroll, SearchStuckProvider, StickySearch, TitleBacking, useIsMobile, useIsPhone, useKeyboardInset } from "@/components/ui/ActionSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import {
   QURAN_JUZ,
@@ -37,6 +37,7 @@ import { OPEN_ACCOUNT_EVENT } from "@/lib/settingsEvents";
 import { QuranTextPage, SETTINGS_PAGES, SETTINGS_PAGE_TITLE, ProfileList, SettingsList, TextSizePage, TranslationPage, useHomeSettings, type SettingsPage } from "./SettingsPages";
 import { fetchSurahWords, type QuranScript } from "@/lib/data/quranGlyphs";
 import { compactCount } from "./QuranEngagement";
+import { juzQuarters, type AyahRef } from "@/lib/data/juzQuarters";
 import { getSupabaseRpcClient } from "@/lib/supabase/rpc";
 import { getSessionId } from "@/lib/audio/session";
 import { SELECTED_TAB, TAB, TAB_TRACK, UNSELECTED_TAB } from "@/components/ui/selection";
@@ -84,10 +85,17 @@ function VerseLine({ hit, script }: { hit: VerseHit; script: QuranScript }) {
   );
 }
 
+const QUARTER_GLYPHS = ["¼", "½", "¾"] as const;
+const QUARTER_KEYS = [
+  "Quarter of the Juz (Rubʿ) — from {ref}",
+  "Half of the Juz (Niṣf) — from {ref}",
+  "Three quarters of the Juz (Thalātha) — from {ref}",
+] as const;
+
 interface TopicPickerModalProps {
   surahTracks?: BayanWithRelations[];
   /** Play a Juz in the currently-selected reciter's voice (per-ayah). */
-  onSelectJuz?: (juzId: number) => void;
+  onSelectJuz?: (juzId: number, from?: AyahRef) => void;
   /** Cue a Surah at an ayah (Verse search result tapped). */
   onOpenAyah?: (surah: number, ayah: number) => void;
   /** Bump to open the browser from outside (the player's Surah / Juz name). */
@@ -204,8 +212,10 @@ export function TopicPickerModal({
   const isMobile = useIsMobile();
   // Phones, browse list: the whole panel scrolls (header, tabs, topics, list),
   // only the search row stays at the top — a landscape phone has no room for
-  // a fixed header above an inner list.
-  const wholeScroll = isMobile && !showAbout && !showSettings && !showProfile;
+  // a fixed header above an inner list. Tablets keep the fixed header (the
+  // whole panel scrolling to the playing card pushed the tabs under search).
+  const isPhone = useIsPhone();
+  const wholeScroll = isMobile && isPhone && !showAbout && !showSettings && !showProfile;
   const [panelScrolled, setPanelScrolled] = useState(false);
   const scrollWrapRef = useRef<HTMLDivElement>(null);
   // Phone landscape: a little peek on open, so the Surah list below shows.
@@ -712,6 +722,7 @@ export function TopicPickerModal({
   const renderJuzCard = (j: (typeof QURAN_JUZ)[number]) => {
     const isTrackCurrent = player.current?.id === `quran-juz-${j.id}`;
     const juzImg = quranThumbUrl("juz", j.id);
+    const quarters = juzQuarters(j.id);
     return (
       <ContentListCard
         key={`juz-${j.id}`}
@@ -726,6 +737,33 @@ export function TopicPickerModal({
         viewCountText={compactCount(countFor("juz", j.id) ?? 0)}
         isActive={isTrackCurrent}
         isPlaying={isTrackCurrent && player.isPlaying}
+        below={onSelectJuz && quarters ? (
+          // ¼ ½ ¾ — the Juz's margin marks: start from its quarter, half
+          // (an-Nisf) or three quarters.
+          <div className="grid grid-cols-3 divide-x divide-white/[0.07] border-t border-white/[0.07]">
+            {quarters.map(([s, a], i) => {
+              const ref = `${s}:${a}`;
+              const label = t(lang, QUARTER_KEYS[i], { ref });
+              return (
+                <button
+                  key={ref}
+                  type="button"
+                  aria-label={`${word("juz", lang)} ${j.id} — ${label}`}
+                  data-tooltip={label}
+                  onClick={() => {
+                    dismissKeyboard();
+                    onSelectJuz(j.id, [s, a]);
+                    setIsOpen(false);
+                  }}
+                  className="flex h-8 min-w-0 items-center justify-center gap-1.5 text-sand-200/55 transition-colors hover:bg-white/[0.06] hover:text-sand-100 active:bg-white/10 cursor-pointer"
+                >
+                  <span className="text-xs font-bold leading-none text-amber-300/85">{QUARTER_GLYPHS[i]}</span>
+                  <span className="truncate text-[11px] font-medium tabular-nums">{ref}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : undefined}
         onClick={() => {
           dismissKeyboard();
           if (onSelectJuz) {
@@ -1076,12 +1114,10 @@ export function TopicPickerModal({
                   <div className={wholeScroll ? "relative flex flex-col" : "relative flex min-h-0 flex-1 flex-col"}>
                   <div
                     ref={listRef}
+                    // A finger on the list hides the keyboard. Not on scroll: typing shrinks
+                    // the list, its scroll position jumps, and the search box lost focus
+                    // after one letter.
                     onTouchStart={() => {
-                      if (document.activeElement instanceof HTMLInputElement) {
-                        document.activeElement.blur();
-                      }
-                    }}
-                    onScroll={() => {
                       if (document.activeElement instanceof HTMLInputElement) {
                         document.activeElement.blur();
                       }

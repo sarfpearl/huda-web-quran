@@ -4,7 +4,7 @@
   "description": "Read and listen to the Holy Quran — 114 Surahs, 30 Juz, 51 reciters, word-by-word sync, Tajweed colours, and multilingual translations.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0e100f",
+  "background_color": "#0f2e25",
   "theme_color": "#1a5140",
   "orientation": "portrait",
   "categories": [

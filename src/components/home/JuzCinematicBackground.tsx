@@ -50,7 +50,6 @@ export function JuzCinematicBackground({
       <video
         ref={videoRef}
         src={videoSrc}
-        autoPlay={isPlaying}
         loop
         muted
         playsInline

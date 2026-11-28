@@ -34,8 +34,10 @@ export function SplashScreen() {
         {/* Wrappers are display: contents (a plain stack) except on a phone in
             landscape: then the name and tagline sit beside the logo. */}
         <div className="huda-splash-row">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/huda-logo.webp?v=3" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
+          <span className="huda-splash-glow">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/huda-logo.webp?v=3" alt="" width={190} height={190} fetchPriority="high" className="huda-splash-logo" />
+          </span>
           <div className="huda-splash-text">
             <p className="huda-splash-name">HuDa</p>
             <p className="huda-splash-tagline">Guidance for every moment</p>
