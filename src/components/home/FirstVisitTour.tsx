@@ -33,14 +33,26 @@ const LANTERN_H = 58;
 // Lantern ↔ control and lantern ↔ card.
 const NEAR = 6;
 const CARD_GAP = 10;
-// The lantern's glide between controls: a spring, a little under-damped so
-// it settles with a small sway (stiffness 1/s², damping 1/s) — as it was
-// before 2026-11-28 (a pendulum version was tried; the owner kept this).
+// The lantern's glide: a spring, a little under-damped so
+// it settles with a small sway (stiffness 1/s², damping 1/s). (A softer,
+// pendulum-driven glide was tried on 2026-11-28; the owner preferred this.)
 const SPRING_K = 55;
 const SPRING_C = 10.5;
-// How far it leans against its motion (rad per px/s), and at most.
-const TILT_PER_SPEED = 0.0011;
-const TILT_MAX = 0.45;
+// The lantern hangs from the hook like a pendulum (owner, 2026-11-28): as
+// the hook rushes right it swings back left, and when the hook stops it
+// swings on — right, left, right. The swing dies down only 2% a second
+// (owner: never quickly) until it reaches a steady 5° sway, which it keeps.
+// Its natural frequency² (1/s²), the steady sway (rad), the slow-down while
+// above it (1/s, = 2%/s of the swing's size), and the pull per px/s² of the
+// hook's sideways speeding up / slowing down; short moves get a stronger
+// pull (up to ×2.8) so a hop between neighbouring buttons still swings.
+const SWING_W2 = 40;
+const SWING_REST = (5 * Math.PI) / 180;
+const SWING_DAMP = 2 * Math.log(1 / 0.98);
+const SWING_PULL = 0.00095;
+const SWING_REF_PX = 300;
+// The most it leans either way (rad), approached softly.
+const TILT_MAX = 0.5;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
 const RAIL_GAP = 14;
@@ -157,6 +169,12 @@ export function FirstVisitTour() {
   /** The line the opening / closing card hangs from (its y), for the thread. */
   const railY = useRef<number | null>(null);
   const pendulumRef = useRef<HTMLDivElement>(null);
+  /** The hanging lantern's angle now (rad), handed to the glide on Begin. */
+  const hangAngle = useRef(0);
+  /** Where the line and thread were, kept a moment after Begin so they
+   *  draw back into the knot instead of vanishing. */
+  const hangAt = useRef<{ left: number; top: number; w: number } | null>(null);
+  const [leaving, setLeaving] = useState<{ left: number; top: number; w: number; n: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
@@ -164,7 +182,7 @@ export function FirstVisitTour() {
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
   /** The lantern's hook now, and its speed (px/s). */
-  const motion = useRef<{ cur: Point; vel: Point } | null>(null);
+  const motion = useRef<{ cur: Point; vel: Point; swing: { a: number; w: number; gain: number; gx: number } } | null>(null);
   const open = steps !== null;
   /** A one-off tip (TIP_STEPS) is showing, not the tour: closing it leaves
    *  the tour's own "done" and the onboarding stage alone. */
@@ -320,11 +338,10 @@ export function FirstVisitTour() {
   useEffect(() => {
     const g0 = goal.current;
     if (!open || !g0) return;
-    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 } };
-    const { cur, vel } = motion.current;
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: SWING_REST, w: 0, gain: 1, gx: g0.x } };
+    const { cur, vel, swing } = motion.current;
     let frame = 0;
     let last = performance.now();
-    const t0 = last;
     const draw = (tilt: number) => {
       if (lanternRef.current) lanternRef.current.style.transform = `translate(${cur.x - LANTERN_W / 2}px, ${cur.y}px) rotate(${tilt}rad)`;
     };
@@ -338,14 +355,28 @@ export function FirstVisitTour() {
           cur.y = g.y;
           vel.x = vel.y = 0;
         } else {
-          vel.x += (SPRING_K * (g.x - cur.x) - SPRING_C * vel.x) * dt;
+          if (g.x !== swing.gx) {
+            // A new move: how strongly this one pulls (short hops more).
+            const dx = Math.max(60, Math.abs(g.x - cur.x));
+            swing.gain = Math.min(2.8, Math.pow(Math.max(1, SWING_REF_PX / dx), 0.75));
+            swing.gx = g.x;
+          }
+          const ax = SPRING_K * (g.x - cur.x) - SPRING_C * vel.x;
+          vel.x += ax * dt;
           vel.y += (SPRING_K * (g.y - cur.y) - SPRING_C * vel.y) * dt;
           cur.x += vel.x * dt;
           cur.y += vel.y * dt;
+          // The hook pulling right swings the lantern's foot left (CSS
+          // rotate: positive = foot to the left), and back when it brakes.
+          // Above the steady sway it loses 2% a second; below it, it is
+          // nudged back up, so it never stops.
+          const size = Math.hypot(swing.a, swing.w / Math.sqrt(SWING_W2));
+          const damp = size > SWING_REST ? SWING_DAMP : -0.6 * (1 - size / SWING_REST);
+          swing.w += (-SWING_W2 * swing.a - damp * swing.w + SWING_PULL * swing.gain * ax) * dt;
+          swing.a += swing.w * dt;
         }
       }
-      const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
-      const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, vel.x * TILT_PER_SPEED)) + sway;
+      const tilt = reduce ? 0 : TILT_MAX * Math.tanh(swing.a / TILT_MAX);
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
@@ -359,6 +390,23 @@ export function FirstVisitTour() {
   // and starts again: a push as it appears, settling to a steady medium
   // sway (≈ ±5°) — like a lamp just hung on a thread.
   const hangKey = steps && !rect && greet ? index : -1;
+  // Begin (or Back from the last card): the lantern lets go of its thread
+  // and glides off at the angle it was swinging at; the thread draws up
+  // and the line draws back into the knot.
+  const hanging = hangKey >= 0;
+  const wasHanging = useRef(false);
+  useEffect(() => {
+    const was = wasHanging.current;
+    wasHanging.current = hanging;
+    if (!was || hanging || !hangAt.current) return;
+    if (motion.current) {
+      motion.current.swing.a = hangAngle.current;
+      motion.current.swing.w = 0;
+    }
+    setLeaving({ ...hangAt.current, n: Date.now() });
+    const t = window.setTimeout(() => setLeaving(null), 800);
+    return () => window.clearTimeout(t);
+  }, [hanging]);
   useEffect(() => {
     const el = pendulumRef.current;
     if (hangKey < 0 || !el || reduce) return;
@@ -367,7 +415,9 @@ export function FirstVisitTour() {
     const tick = (now: number) => {
       const t = Math.max(0, (now - t0) / 1000);
       const amp = SWING_REST_DEG + (SWING_START_DEG - SWING_REST_DEG) * Math.exp(-t / 1.6);
-      el.style.transform = `rotate(${amp * Math.sin((2 * Math.PI * t) / SWING_PERIOD_S)}deg)`;
+      const deg = amp * Math.sin((2 * Math.PI * t) / SWING_PERIOD_S);
+      el.style.transform = `rotate(${deg}deg)`;
+      hangAngle.current = (deg * Math.PI) / 180;
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -422,6 +472,7 @@ export function FirstVisitTour() {
   }
   const hung = !rect && greet !== null && hook.y === greet.bottom + RAIL_GAP + THREAD;
   railY.current = hung ? greet!.bottom + RAIL_GAP : null;
+  if (hung) hangAt.current = { left: vw / 2, top: greet!.bottom + RAIL_GAP, w: Math.min(cardW * 0.75, 260) };
   goal.current = hook;
   // The pool of light: on the control, else round the lantern and its card.
   const tx = rect ? rect.x + rect.w / 2 : vw / 2;
@@ -490,6 +541,15 @@ export function FirstVisitTour() {
           {/* Where it lands: a soft ring of light as the card opens out of it. */}
           <span className="huda-tour-splash absolute" style={{ top: dropTop + dropFall }} />
           <span className="huda-tour-knot absolute" />
+        </div>
+      )}
+
+      {/* Just after Begin: the thread draws up and the line back into the knot. */}
+      {!hung && leaving && (
+        <div key={`leave-${leaving.n}`} className="pointer-events-none absolute" style={{ left: leaving.left, top: leaving.top }} aria-hidden="true">
+          <div className="huda-tour-rail huda-tour-rail-out absolute top-0 h-px" style={{ width: leaving.w, left: -leaving.w / 2 }} />
+          <div className="huda-tour-thread huda-tour-thread-out absolute top-0 w-px" style={{ left: -0.5, height: THREAD }} />
+          <span className="huda-tour-knot huda-tour-knot-out absolute" />
         </div>
       )}
 
@@ -617,6 +677,12 @@ const TOUR_CSS = `
   box-shadow: 0 0 10px 2px rgba(252,211,77,0.8); animation: huda-fall 0.65s cubic-bezier(0.55, 0, 1, 0.45) 3.4s both; }
 /* The drop lands where the card's centre will be, and grows into the card. */
 .huda-tour-card-in { animation: huda-card-in 1s cubic-bezier(0.3, 0.7, 0, 1) 4.05s both; }
+.huda-tour-rail-out { animation: huda-rail-out 0.5s cubic-bezier(0.5, 0, 0.75, 0) 0.12s both; }
+.huda-tour-thread-out { animation: huda-thread-out 0.22s ease-in both; }
+.huda-tour-knot-out { animation: huda-knot-out 0.3s ease-in 0.5s both; }
+@keyframes huda-rail-out { from { transform: scaleX(1); opacity: 1; } to { transform: scaleX(0); opacity: 0.4; } }
+@keyframes huda-thread-out { from { transform: scaleY(1); } to { transform: scaleY(0); } }
+@keyframes huda-knot-out { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
 @keyframes huda-knot { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes huda-rail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes huda-thread { from { transform: scaleY(0); } to { transform: scaleY(1); } }
@@ -658,6 +724,6 @@ const TOUR_CSS = `
   .huda-tour, .huda-tour-halo, .huda-tour-card, .huda-tour-bead { transition: none; }
   .huda-tour-halo { animation: none; }
   .huda-tour-rail, .huda-tour-knot, .huda-tour-thread, .huda-tour-grow, .huda-tour-card-in { animation: none; }
-  .huda-tour-fall, .huda-tour-splash { display: none; }
+  .huda-tour-fall, .huda-tour-splash, .huda-tour-rail-out, .huda-tour-thread-out, .huda-tour-knot-out { display: none; }
 }
 `;
