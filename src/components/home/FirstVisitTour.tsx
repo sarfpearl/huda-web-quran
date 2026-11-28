@@ -470,7 +470,8 @@ export function FirstVisitTour() {
           2026-11-28, after a hanging-charm video). Order: a dot under the
           tagline → it parts into the line both ways → the thread comes down
           from the centre → the lantern grows at its end → a drop of light
-          falls from it → the card. */}
+          falls from it a second after it has grown → the card opens out of
+          the drop. */}
       {hung && (
         <div key={`hang-${index}`} className="pointer-events-none absolute" style={{ left: vw / 2, top: railY.current ?? 0 }} aria-hidden="true">
           <div className="huda-tour-rail absolute top-0 h-px" style={{ width: railW, left: -railW / 2 }} />
@@ -605,17 +606,18 @@ const TOUR_CSS = `
 .huda-tour-pendulum { transform-origin: 50% 0; }
 .huda-tour-thread { background: linear-gradient(to bottom, rgba(252,211,77,0.8), rgba(252,211,77,0.55));
   transform-origin: top; animation: huda-thread 0.4s ease-in-out 0.9s both; }
-.huda-tour-grow { transform-origin: 50% 0; animation: huda-grow 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) 1.3s both; }
+.huda-tour-grow { transform-origin: 50% 0; animation: huda-grow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1.3s both; }
 .huda-tour-fall { left: -2.5px; width: 5px; height: 5px; border-radius: 9999px; background: #fde68a;
-  box-shadow: 0 0 10px 2px rgba(252,211,77,0.8); animation: huda-fall 0.5s cubic-bezier(0.55, 0, 1, 0.45) 1.85s both; }
-.huda-tour-card-in { animation: huda-card-in 0.5s ease-out 2.3s both; }
+  box-shadow: 0 0 10px 2px rgba(252,211,77,0.8); animation: huda-fall 0.5s cubic-bezier(0.55, 0, 1, 0.45) 3.4s both; }
+/* The drop lands on the card's top edge and the card opens out of it. */
+.huda-tour-card-in { animation: huda-card-in 0.7s cubic-bezier(0.3, 0.7, 0, 1) 3.85s both; }
 @keyframes huda-knot { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes huda-rail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes huda-thread { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes huda-grow { from { transform: scale(0); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
 @keyframes huda-fall { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; }
-  85% { opacity: 1; } 100% { transform: translateY(16px); opacity: 0; } }
-@keyframes huda-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  90% { opacity: 1; } 100% { transform: translateY(16px); opacity: 0; } }
+@keyframes huda-card-in { from { clip-path: circle(3px at 50% 0); opacity: 0.9; } to { clip-path: circle(150% at 50% 0); opacity: 1; } }
 @property --tx { syntax: "<length>"; inherits: true; initial-value: 50vw; }
 @property --ty { syntax: "<length>"; inherits: true; initial-value: 40vh; }
 @property --rx { syntax: "<length>"; inherits: true; initial-value: 60vmax; }
