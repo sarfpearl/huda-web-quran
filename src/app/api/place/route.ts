@@ -50,12 +50,14 @@ export async function GET(req: Request) {
     if (!res.ok) return json({ name: null });
     const data = (await res.json()) as GeocodeResponse;
     if (data.status !== "OK" || !data.results?.length) return json({ name: null });
-    const parts = data.results.flatMap((r) => r.address_components);
-    if (url.searchParams.get("debug") === "1")
-      return json({ results: data.results.slice(0, 8).map((r) => (r as { types?: string[] }).types?.join(",") + " | " + r.address_components.map((c) => `${c.long_name}[${c.types.join(",")}]`).join("; ")) });
-    for (const type of ORDER) {
-      const c = parts.find((p) => p.types.includes(type));
-      if (c?.long_name) return json({ name: c.long_name, source: "google" });
+    // The nearest result first (Google lists them most precise first), the
+    // way Google Maps names the spot; a wider one only if it has no area name.
+    // (Mixing all results took a farther one's « Guduvancheri » for Madambakkam.)
+    for (const r of data.results) {
+      for (const type of ORDER) {
+        const c = r.address_components.find((p) => p.types.includes(type));
+        if (c?.long_name) return json({ name: c.long_name, source: "google" });
+      }
     }
     return json({ name: null });
   } catch {
