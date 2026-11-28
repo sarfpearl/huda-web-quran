@@ -33,18 +33,13 @@ const LANTERN_H = 58;
 // Lantern ↔ control and lantern ↔ card.
 const NEAR = 6;
 const CARD_GAP = 10;
-// The lantern's glide: a spring (stiffness 1/s², damping 1/s), soft and
-// nearly critically damped: it eases into place instead of
-// rushing there and stopping dead (owner, 2026-11-28: "like braking at 60").
-const SPRING_K = 24;
-const SPRING_C = 9.2;
-// The lantern hangs from the moving hook as a pendulum: the hook's pull
-// sets it swinging, and it keeps swinging on after the hook stops, dying
-// down slowly (natural frequency² 1/s², damping 1/s, pull per px/s²).
-const SWING_W2 = 16;
-const SWING_DAMP = 1.1;
-const SWING_PULL = 0.0009;
-// The most it leans either way (rad).
+// The lantern's glide: a spring, a little under-damped so
+// it settles with a small sway (stiffness 1/s², damping 1/s). (A softer,
+// pendulum-driven glide was tried on 2026-11-28; the owner preferred this.)
+const SPRING_K = 55;
+const SPRING_C = 10.5;
+// How far it leans against its motion (rad per px/s), and at most.
+const TILT_PER_SPEED = 0.0016;
 const TILT_MAX = 0.45;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
@@ -169,7 +164,7 @@ export function FirstVisitTour() {
   /** Where the lantern's hook is going (this step) — read by the frame loop. */
   const goal = useRef<Point | null>(null);
   /** The lantern's hook now, and its speed (px/s). */
-  const motion = useRef<{ cur: Point; vel: Point; swing: { a: number; w: number } } | null>(null);
+  const motion = useRef<{ cur: Point; vel: Point } | null>(null);
   const open = steps !== null;
   /** A one-off tip (TIP_STEPS) is showing, not the tour: closing it leaves
    *  the tour's own "done" and the onboarding stage alone. */
@@ -325,8 +320,8 @@ export function FirstVisitTour() {
   useEffect(() => {
     const g0 = goal.current;
     if (!open || !g0) return;
-    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 }, swing: { a: 0, w: 0 } };
-    const { cur, vel, swing } = motion.current;
+    motion.current ??= { cur: { x: g0.x, y: g0.y - DROP_IN_PX }, vel: { x: 0, y: 0 } };
+    const { cur, vel } = motion.current;
     let frame = 0;
     let last = performance.now();
     const t0 = last;
@@ -343,19 +338,14 @@ export function FirstVisitTour() {
           cur.y = g.y;
           vel.x = vel.y = 0;
         } else {
-          const ax = SPRING_K * (g.x - cur.x) - SPRING_C * vel.x;
-          vel.x += ax * dt;
+          vel.x += (SPRING_K * (g.x - cur.x) - SPRING_C * vel.x) * dt;
           vel.y += (SPRING_K * (g.y - cur.y) - SPRING_C * vel.y) * dt;
           cur.x += vel.x * dt;
           cur.y += vel.y * dt;
-          // The hook speeding up or slowing down swings the lantern the
-          // other way; it carries on swinging after the hook has stopped.
-          swing.w += (-SWING_W2 * swing.a - SWING_DAMP * swing.w + SWING_PULL * ax) * dt;
-          swing.a = Math.max(-TILT_MAX, Math.min(TILT_MAX, swing.a + swing.w * dt));
         }
       }
-      const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
-      const tilt = reduce ? 0 : swing.a + sway;
+      const sway = reduce ? 0 : 0.085 * Math.sin(((now - t0) / 1000) * 2.1);
+      const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, vel.x * TILT_PER_SPEED)) + sway;
       draw(tilt);
       frame = requestAnimationFrame(tick);
     };
