@@ -38,12 +38,18 @@ const CARD_GAP = 10;
 const SPRING_K = 55;
 const SPRING_C = 10.5;
 // How far it leans against its motion (rad per px/s), and at most.
-const TILT_PER_SPEED = 0.0011;
+const TILT_PER_SPEED = 0.0016;
 const TILT_MAX = 0.45;
 // The opening / closing card: the line under the greeting, and the thread
 // from it down to the lantern's hook.
 const RAIL_GAP = 14;
 const THREAD = 34;
+// Its swing: the first push, the sway it settles to, one swing's length,
+// and when it starts (as the lantern has grown at the thread's end).
+const SWING_START_DEG = 14;
+const SWING_REST_DEG = 5;
+const SWING_PERIOD_S = 2;
+const SWING_DELAY_MS = 1300;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
 
@@ -149,6 +155,7 @@ export function FirstVisitTour() {
   const [greet, setGreet] = useState<{ top: number; bottom: number; w: number } | null>(null);
   /** The line the opening / closing card hangs from (its y), for the thread. */
   const railY = useRef<number | null>(null);
+  const pendulumRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
@@ -336,7 +343,7 @@ export function FirstVisitTour() {
           cur.y += vel.y * dt;
         }
       }
-      const sway = reduce ? 0 : 0.06 * Math.sin(((now - t0) / 1000) * 2.1);
+      const sway = reduce ? 0 : 0.085 * Math.sin(((now - t0) / 1000) * 2.1);
       const tilt = reduce ? 0 : Math.max(-TILT_MAX, Math.min(TILT_MAX, vel.x * TILT_PER_SPEED)) + sway;
       draw(tilt);
       frame = requestAnimationFrame(tick);
@@ -346,6 +353,25 @@ export function FirstVisitTour() {
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [open, reduce]);
+
+  // The hanging lantern's swing, worked out every frame so it never stops
+  // and starts again: a push as it appears, settling to a steady medium
+  // sway (≈ ±5°) — like a lamp just hung on a thread.
+  const hangKey = steps && !rect && greet ? index : -1;
+  useEffect(() => {
+    const el = pendulumRef.current;
+    if (hangKey < 0 || !el || reduce) return;
+    const t0 = performance.now() + SWING_DELAY_MS;
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.max(0, (now - t0) / 1000);
+      const amp = SWING_REST_DEG + (SWING_START_DEG - SWING_REST_DEG) * Math.exp(-t / 1.6);
+      el.style.transform = `rotate(${amp * Math.sin((2 * Math.PI * t) / SWING_PERIOD_S)}deg)`;
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [hangKey, reduce]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -441,16 +467,21 @@ export function FirstVisitTour() {
       {/* Opening / closing card: a line draws out from a knot at its centre
           under the greeting, the lantern drops on a thread tied to the knot
           and swings to rest like a pendulum, then the card comes (owner,
-          2026-11-28, after a hanging-charm video). */}
+          2026-11-28, after a hanging-charm video). Order: a dot under the
+          tagline → it parts into the line both ways → the thread comes down
+          from the centre → the lantern grows at its end → a drop of light
+          falls from it → the card. */}
       {hung && (
         <div key={`hang-${index}`} className="pointer-events-none absolute" style={{ left: vw / 2, top: railY.current ?? 0 }} aria-hidden="true">
           <div className="huda-tour-rail absolute top-0 h-px" style={{ width: railW, left: -railW / 2 }} />
-          <div className="huda-tour-pendulum absolute top-0" style={{ left: -LANTERN_W / 2, width: LANTERN_W }}>
+          <div ref={pendulumRef} className="huda-tour-pendulum absolute top-0" style={{ left: -LANTERN_W / 2, width: LANTERN_W }}>
             <div className="huda-tour-thread mx-auto w-px" style={{ height: THREAD }} />
-            <div className="huda-tour-drop">
+            <div className="huda-tour-grow">
               <LanternArt glow />
             </div>
           </div>
+          {/* A drop of light falls from the lantern to where the card comes. */}
+          <span className="huda-tour-fall absolute" style={{ top: THREAD + LANTERN_H - 4 }} />
           <span className="huda-tour-knot absolute" />
         </div>
       )}
@@ -567,23 +598,23 @@ export function FirstVisitTour() {
 }
 
 const TOUR_CSS = `
-.huda-tour-rail { background: linear-gradient(90deg, transparent, rgba(252,211,77,0.75) 30%, rgba(252,211,77,0.75) 70%, transparent);
-  box-shadow: 0 0 6px rgba(252,211,77,0.35); transform-origin: center; animation: huda-rail 0.55s cubic-bezier(0.3, 0.7, 0, 1) 0.2s both; }
 .huda-tour-knot { left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 9999px; background: #fcd34d;
   box-shadow: 0 0 8px rgba(252,211,77,0.85); animation: huda-knot 0.3s ease-out both; }
-.huda-tour-pendulum { transform-origin: 50% 0;
-  animation: huda-swing 2.6s cubic-bezier(0.37, 0, 0.63, 1) 1.05s both, huda-sway 4.5s ease-in-out 3.65s infinite; }
+.huda-tour-rail { background: linear-gradient(90deg, transparent, rgba(252,211,77,0.75) 30%, rgba(252,211,77,0.75) 70%, transparent);
+  box-shadow: 0 0 6px rgba(252,211,77,0.35); transform-origin: center; animation: huda-rail 0.55s cubic-bezier(0.3, 0.7, 0, 1) 0.3s both; }
+.huda-tour-pendulum { transform-origin: 50% 0; }
 .huda-tour-thread { background: linear-gradient(to bottom, rgba(252,211,77,0.8), rgba(252,211,77,0.55));
-  transform-origin: top; animation: huda-thread 0.4s ease-out 0.7s both; }
-.huda-tour-drop { animation: huda-drop 0.55s cubic-bezier(0.3, 1.35, 0.5, 1) 0.75s both; }
-.huda-tour-card-in { animation: huda-card-in 0.5s ease-out 1.2s both; }
+  transform-origin: top; animation: huda-thread 0.4s ease-in-out 0.9s both; }
+.huda-tour-grow { transform-origin: 50% 0; animation: huda-grow 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) 1.3s both; }
+.huda-tour-fall { left: -2.5px; width: 5px; height: 5px; border-radius: 9999px; background: #fde68a;
+  box-shadow: 0 0 10px 2px rgba(252,211,77,0.8); animation: huda-fall 0.5s cubic-bezier(0.55, 0, 1, 0.45) 1.85s both; }
+.huda-tour-card-in { animation: huda-card-in 0.5s ease-out 2.3s both; }
 @keyframes huda-knot { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes huda-rail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes huda-thread { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-@keyframes huda-drop { from { transform: translateY(-34px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes huda-swing { 0% { transform: rotate(0); } 12% { transform: rotate(16deg); } 31% { transform: rotate(-11deg); }
-  49% { transform: rotate(7deg); } 66% { transform: rotate(-4deg); } 82% { transform: rotate(2deg); } 100% { transform: rotate(0); } }
-@keyframes huda-sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(1.6deg); } 75% { transform: rotate(-1.6deg); } }
+@keyframes huda-grow { from { transform: scale(0); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes huda-fall { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; }
+  85% { opacity: 1; } 100% { transform: translateY(16px); opacity: 0; } }
 @keyframes huda-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @property --tx { syntax: "<length>"; inherits: true; initial-value: 50vw; }
 @property --ty { syntax: "<length>"; inherits: true; initial-value: 40vh; }
@@ -612,6 +643,7 @@ const TOUR_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .huda-tour, .huda-tour-halo, .huda-tour-card, .huda-tour-bead { transition: none; }
   .huda-tour-halo { animation: none; }
-  .huda-tour-rail, .huda-tour-knot, .huda-tour-pendulum, .huda-tour-thread, .huda-tour-drop, .huda-tour-card-in { animation: none; }
+  .huda-tour-rail, .huda-tour-knot, .huda-tour-thread, .huda-tour-grow, .huda-tour-card-in { animation: none; }
+  .huda-tour-fall { display: none; }
 }
 `;
