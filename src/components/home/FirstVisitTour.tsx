@@ -9,6 +9,7 @@ import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { OPEN_TOUR_EVENT, TIP_STEPS, TOUR_DONE_KEY, TOUR_STEPS, TOUR_TIP_EVENT, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
+import { CloseIcon } from "@/components/ui/Icon";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
@@ -45,6 +46,33 @@ const RAIL_GAP = 14;
 const THREAD = 34;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
+
+// A visitor who came by a deep link (/surah/36/3) hears the recitation first,
+// no tour on arrival (owner, 2026-11-28): a small chip offers it once the
+// first ayah has ended (or 15 s), on at most two visits, then never again.
+const CHIP_KEY = "huda-tour-chip-offers";
+const CHIP_MAX_VISITS = 2;
+// An ignored chip goes by itself after this.
+const CHIP_SHOW_MS = 25000;
+
+function chipOffers() {
+  try {
+    return Number(localStorage.getItem(CHIP_KEY)) || 0;
+  } catch {
+    return CHIP_MAX_VISITS;
+  }
+}
+/** `?tour-invite` on a deep link: shows the invite even after the tour or
+ *  its two offers (checking it on a browser that has seen them), uncounted. */
+const chipForced = () => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("tour-invite");
+function countChipOffer() {
+  if (chipForced()) return;
+  try {
+    localStorage.setItem(CHIP_KEY, String(chipOffers() + 1));
+  } catch {
+    /* private mode */
+  }
+}
 
 type Rect = { x: number; y: number; w: number; h: number; r: string };
 type Point = { x: number; y: number };
@@ -135,7 +163,16 @@ function greetingRect(): DOMRect | null {
   return r;
 }
 
-export function FirstVisitTour() {
+export function FirstVisitTour({
+  arrivedByLink = false,
+  offerChip = false,
+  chipHidden = false,
+}: {
+  arrivedByLink?: boolean;
+  offerChip?: boolean;
+  /** ⤢ text only: everything but the ayah is hidden — the invite too. */
+  chipHidden?: boolean;
+} = {}) {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [steps, setSteps] = useState<TourStep[] | null>(null);
@@ -174,7 +211,8 @@ export function FirstVisitTour() {
   // First visit: after the onboarding prompts. Otherwise the stage passes at once.
   useEffect(() => {
     const viaSearch = window.location.hash === "#search" || window.location.hash === "#browse";
-    if (isDone() || viaSearch) {
+    // By a deep link: nothing over the recitation; the chip below offers it.
+    if (isDone() || viaSearch || arrivedByLink) {
       finishStage("tour");
       return;
     }
@@ -187,7 +225,146 @@ export function FirstVisitTour() {
       cancelled = true;
       window.clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start]);
+
+  // The deep-link chip: once per visit, when the home screen says it's due.
+  const [chip, setChip] = useState(false);
+  const chipOfferedRef = useRef(false);
+  useEffect(() => {
+    // Not while ⤢ text only hides the controls (phone landscape goes there
+    // by itself): offered once they're back.
+    if (!arrivedByLink || !offerChip || chipHidden || chipOfferedRef.current) return;
+    chipOfferedRef.current = true;
+    if (!chipForced() && (isDone() || chipOffers() >= CHIP_MAX_VISITS)) return;
+    // Armed: shown (and counted) once there's a free spot for it, below.
+    setChip(true);
+  }, [arrivedByLink, offerChip, chipHidden]);
+  // Where the invite goes: never over the ayah, the player, the navigation
+  // or the edge lantern (owner, 2026-11-28). The crescent belongs in the sky,
+  // so up under the navigation first — the right, then by the time — else
+  // down beside the player (right, left); on a phone, above the player or
+  // under the header. The first free spot wins, measured while shown (the
+  // ayah changes, the player grows, the window turns); it moves only when its
+  // spot is taken.
+  type ChipPos = { side: boolean; x: number; y: number; free: boolean };
+  const [chipPos, setChipPos] = useState<ChipPos | null>(null);
+  const chipRef = useRef<HTMLDivElement>(null);
+  const spotRef = useRef<string | null>(null);
+  // Glides to a new spot only once it's shown at its first one.
+  const [chipSettled, setChipSettled] = useState(false);
+  const placed = Boolean(chipPos?.free);
+  useEffect(() => {
+    if (!placed) return setChipSettled(false);
+    const id = window.setTimeout(() => setChipSettled(true), 300);
+    return () => window.clearTimeout(id);
+  }, [placed]);
+  useEffect(() => {
+    if (!chip) return setChipPos(null);
+    spotRef.current = null;
+    // The time it stays counts from when it's first seen.
+    let hide = 0;
+    const seen = () => {
+      if (hide) return;
+      countChipOffer();
+      hide = window.setTimeout(() => setChip(false), CHIP_SHOW_MS);
+    };
+    const box = (el: Element | null | undefined, pad = 0) => {
+      const r = el?.getBoundingClientRect();
+      return r && r.width > 0 && r.height > 0
+        ? { l: r.left - pad, t: r.top - pad, r: r.right + pad, b: r.bottom + pad }
+        : null;
+    };
+    type Box = NonNullable<ReturnType<typeof box>>;
+    const overlap = (a: Box, o: Box) =>
+      Math.max(0, Math.min(a.r, o.r) - Math.max(a.l, o.l)) * Math.max(0, Math.min(a.b, o.b) - Math.max(a.t, o.t));
+    // The ayah (and its translation) as drawn: its box is the whole stage,
+    // so the drawn pieces — the leaves — are what counts.
+    const ayahBox = () => {
+      const body = document.querySelector("[data-verse-stage] > div");
+      if (!body) return null;
+      let u: Box | null = null;
+      for (const leaf of body.querySelectorAll("*")) {
+        if (leaf.childElementCount) continue;
+        const r = leaf.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) continue;
+        if (leaf instanceof HTMLElement && leaf.checkVisibility && !leaf.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+        u = u
+          ? { l: Math.min(u.l, r.left), t: Math.min(u.t, r.top), r: Math.max(u.r, r.right), b: Math.max(u.b, r.bottom) }
+          : { l: r.left, t: r.top, r: r.right, b: r.bottom };
+      }
+      return u && { l: u.l - 12, t: u.t - 12, r: u.r + 12, b: u.b + 12 };
+    };
+    const measure = () => {
+      const el = chipRef.current;
+      if (!el) return;
+      const side = innerWidth >= 768;
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const vw = innerWidth;
+      const vh = innerHeight;
+      const header = box(document.querySelector("[data-scene-header]"));
+      const frame = box(document.querySelector("[data-player-frame]"));
+      const lastBtn = box(findTarget("account"));
+      const time = box(document.querySelector('[data-tour="prayer"] > *'));
+      const right = Math.min(vw - EDGE, lastBtn?.r ?? vw - EDGE);
+      const left = Math.max(EDGE, time?.l ?? EDGE);
+      const gap = vw >= 1200 ? 24 : 16;
+      const below = (header?.b ?? EDGE) + gap;
+      const feedback = box(findTarget("feedback"), 8);
+      const obstacles = [
+        ayahBox(),
+        frame && { ...frame, t: frame.t - 8 },
+        header,
+        feedback && { ...feedback, r: vw },
+      ].filter(Boolean) as Box[];
+      const clampX = (x: number) => Math.max(EDGE, Math.min(vw - EDGE - w, x));
+      const clampY = (y: number) => Math.max(EDGE, Math.min(vh - EDGE - h, y));
+      const playerBelow = frame && frame.t > vh / 2;
+      const spots: [string, number, number][] = side
+        ? [
+            ["top-right", right - w, below],
+            ["top-left", left, below],
+            ...(playerBelow
+              ? ([
+                  ["player-right", right - w, frame!.b - h],
+                  ["player-left", left, frame!.b - h],
+                ] as [string, number, number][])
+              : []),
+            ["bottom-right", right - w, vh - EDGE - h],
+          ]
+        : [
+            ["above-player", (vw - w) / 2, (playerBelow ? frame!.t - 12 : vh - EDGE) - h],
+            ["under-header", (vw - w) / 2, below],
+          ];
+      const placed = spots.map(([name, x, y]) => {
+        const r = { l: clampX(x), t: clampY(y), r: clampX(x) + w, b: clampY(y) + h };
+        return { name, x: r.l, y: r.t, hit: obstacles.reduce((n, o) => n + overlap(r, o), 0) };
+      });
+      const current = placed.find((p) => p.name === spotRef.current);
+      const pick =
+        current && current.hit === 0 ? current : placed.find((p) => p.hit === 0) ?? placed.reduce((a, b) => (b.hit < a.hit ? b : a));
+      spotRef.current = pick.name;
+      // No free spot (a long ayah fills a phone): it waits, out of sight,
+      // and fades back once the ayah leaves room.
+      const free = pick.hit === 0;
+      if (free) seen();
+      setChipPos((p) =>
+        p && p.side === side && p.x === pick.x && p.y === pick.y && p.free === free ? p : { side, x: pick.x, y: pick.y, free }
+      );
+    };
+    measure();
+    // Again once the layout (side or stacked) has rendered at its own size.
+    const raf = requestAnimationFrame(measure);
+    const id = window.setInterval(measure, 400);
+    addEventListener("resize", measure);
+    return () => {
+      window.clearTimeout(hide);
+      window.clearInterval(id);
+      cancelAnimationFrame(raf);
+      removeEventListener("resize", measure);
+    };
+  }, [chip, lang]);
 
   // One-off tips: once per browser, never over the tour, and only once the
   // control is on screen (the action that shows it has only just run).
@@ -356,7 +533,62 @@ export function FirstVisitTour() {
     }
   };
 
-  if (!open || !step || typeof document === "undefined") return null;
+  if (typeof document === "undefined") return null;
+  if (!open || !step) {
+    if (!chip || chipHidden) return null;
+    const pos = chipPos;
+    return createPortal(
+      <div className="pointer-events-none fixed inset-0 z-[260] overflow-hidden">
+        <div
+          ref={chipRef}
+          role="group"
+          aria-label={tourT(lang, "Take a 30-second tour?")}
+          dir={isRtl(lang) ? "rtl" : "ltr"}
+          className={`huda-invite absolute ${pos?.side ? "huda-invite-side" : "huda-invite-stacked"}${chipSettled ? " huda-invite-glide" : ""}${pos?.free ? "" : " huda-invite-wait"}`}
+          style={{ top: pos?.y ?? 0, left: pos?.x ?? 0 }}
+        >
+          <div className="huda-invite-moon" aria-hidden="true">
+            <span className="huda-invite-ripple" />
+            <span className="huda-invite-halo" />
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <span key={i} className={`huda-invite-spark huda-invite-spark-${i}`} />
+            ))}
+            <CrescentArt />
+          </div>
+          <div className="huda-invite-card pointer-events-auto">
+            <span className="huda-invite-accent" aria-hidden="true" />
+            <MosqueArt />
+            <button
+              type="button"
+              onClick={() => setChip(false)}
+              aria-label={tourT(lang, "Not now")}
+              data-tip={tourT(lang, "Not now")}
+              className="huda-invite-close absolute end-2 top-2 flex items-center justify-center rounded-full text-sand-50/60 hover:bg-white/10 hover:text-white cursor-pointer"
+            >
+              <CloseIcon className="h-3.5 w-3.5" />
+            </button>
+            <p className="huda-invite-title font-semibold text-sand-50">{tourT(lang, "Take a 30-second tour?")}</p>
+            <p className="huda-invite-text text-sand-50/70">
+              {tourT(lang, "Discover the features that make your Quran reading experience better.")}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setChip(false);
+                start();
+              }}
+              className="huda-invite-go relative inline-flex items-center gap-1.5 rounded-full font-semibold text-[#2a1a05] cursor-pointer"
+            >
+              {tourT(lang, "Begin")}
+              <span aria-hidden="true" className="rtl:-scale-x-100">→</span>
+            </button>
+          </div>
+        </div>
+        <style>{CHIP_CSS}</style>
+      </div>,
+      document.body
+    );
+  }
 
   // Where the light, the lantern and the card go: the lantern just under a
   // control in the top half of the screen (the card under it), just over one
@@ -588,5 +820,147 @@ const TOUR_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .huda-tour, .huda-tour-halo, .huda-tour-card, .huda-tour-bead { transition: none; }
   .huda-tour-halo { animation: none; }
+}
+`;
+
+/** The invite's crescent (gold, lit from the right). */
+function CrescentArt() {
+  return (
+    <svg viewBox="0 0 48 48" className="huda-invite-crescent relative block h-full w-full overflow-visible">
+      <defs>
+        <linearGradient id="huda-crescent-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff0c2" />
+          <stop offset="55%" stopColor="#f3c869" />
+          <stop offset="100%" stopColor="#c98f2c" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M30.5 6.5A19 19 0 1 0 41.5 36 15.5 15.5 0 1 1 30.5 6.5Z"
+        fill="url(#huda-crescent-gold)"
+      />
+    </svg>
+  );
+}
+
+/** A faint mosque on the card's lower corner (decoration). */
+function MosqueArt() {
+  return (
+    <svg viewBox="0 0 72 40" aria-hidden="true" className="huda-invite-mosque pointer-events-none absolute bottom-0 end-2">
+      <defs>
+        <linearGradient id="huda-mosque-gold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f0cf7a" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#f0cf7a" stopOpacity="0.05" />
+        </linearGradient>
+      </defs>
+      <g fill="url(#huda-mosque-gold)">
+        <rect x="64" y="6" width="3" height="34" rx="1" />
+        <path d="M65.5 1 L67 6 H64 Z" />
+        <rect x="6" y="18" width="2.4" height="22" rx="1" />
+        <path d="M7.2 14 L8.4 18 H6 Z" />
+        <path d="M24 40 V28 A12 12 0 0 1 48 28 V40 Z" />
+        <path d="M36 15 v-4" stroke="#f0cf7a" strokeOpacity="0.7" strokeWidth="1" />
+        <path d="M13 40 V32 A6 6 0 0 1 25 32 V40 Z" />
+        <path d="M47 40 V32 A6 6 0 0 1 59 32 V40 Z" />
+      </g>
+    </svg>
+  );
+}
+
+const CHIP_CSS = `
+.huda-invite { --moon: 56px; --card-w: 320px; display: flex; align-items: flex-start; gap: 14px; }
+/* Waiting for room: out of sight, its animations held at their start. */
+.huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
+.huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
+.huda-invite-wait, .huda-invite-wait * { animation-play-state: paused !important; }
+.huda-invite-glide { transition: opacity 0.6s ease, visibility 0.6s, top 0.9s cubic-bezier(0.22, 1, 0.36, 1), left 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+/* First the crescent rises into the sky, then, 1.5 s on, the card. */
+.huda-invite-moon { animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.huda-invite-side { flex-direction: row; }
+.huda-invite-stacked { --moon: 40px; display: block; width: min(var(--card-w), calc(100vw - 32px)); padding-top: calc(var(--moon) - 8px); }
+@media (min-width: 768px) and (max-width: 1199px) { .huda-invite { --moon: 44px; --card-w: 280px; gap: 10px; } }
+@media (max-width: 767px) { .huda-invite { --card-w: 320px; } }
+
+.huda-invite-moon { position: relative; flex: none; width: var(--moon); height: var(--moon); margin-top: 6px; }
+.huda-invite-stacked .huda-invite-moon { position: absolute; top: 0; inset-inline-start: 14px; margin: 0; z-index: 1; }
+.huda-invite-crescent { filter: drop-shadow(0 0 6px rgba(245, 190, 90, 0.55)); animation: huda-invite-float 8s ease-in-out 1.2s infinite; }
+.huda-invite-halo { position: absolute; inset: -60%; border-radius: 9999px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(245, 190, 90, 0.3), rgba(245, 190, 90, 0.1) 55%, transparent 100%);
+  animation: huda-invite-breathe 6s ease-in-out infinite; }
+.huda-invite-ripple { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none;
+  border: 1.5px solid rgba(240, 207, 122, 0.7); opacity: 0; animation: huda-invite-ripple 6s ease-out 0.3s infinite; }
+.huda-invite-spark { position: absolute; width: 4px; height: 4px; border-radius: 9999px; background: #ffe7a6;
+  box-shadow: 0 0 8px 1px rgba(246, 217, 138, 0.95); opacity: 0; animation: huda-invite-spark 5s ease-out 1s infinite; }
+.huda-invite-spark-0 { left: 6%; top: 72%; animation-delay: 0s; }
+.huda-invite-spark-1 { left: 86%; top: 14%; animation-delay: 0.7s; width: 3px; height: 3px; }
+.huda-invite-spark-2 { left: 64%; top: 96%; animation-delay: 1.4s; }
+.huda-invite-spark-3 { left: -18%; top: 24%; animation-delay: 2.1s; width: 3px; height: 3px; }
+.huda-invite-spark-4 { left: 108%; top: 58%; animation-delay: 0.35s; width: 3px; height: 3px; }
+.huda-invite-spark-5 { left: 36%; top: -16%; animation-delay: 1.05s; }
+.huda-invite-spark-6 { left: -8%; top: 100%; animation-delay: 1.75s; width: 3px; height: 3px; }
+.huda-invite-spark-7 { left: 96%; top: 92%; animation-delay: 2.45s; width: 3px; height: 3px; }
+
+.huda-invite-card { position: relative; overflow: hidden; width: min(var(--card-w), calc(100vw - 32px));
+  border-radius: 20px; border: 1px solid rgba(240, 207, 122, 0.28);
+  background: linear-gradient(155deg, rgba(36, 30, 20, 0.86), rgba(10, 12, 14, 0.9) 60%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 18px rgba(245, 184, 74, 0.08);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  padding: 18px 40px 18px 20px;
+  transform-origin: 0 20%;
+  animation: huda-invite-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1.5s both; }
+[dir=rtl] .huda-invite-card { padding: 18px 20px 18px 40px; transform-origin: 100% 20%; }
+.huda-invite-stacked .huda-invite-card { width: 100%; padding: 16px 38px 14px 16px; transform-origin: 20% 0; }
+[dir=rtl].huda-invite-stacked .huda-invite-card { padding: 16px 16px 14px 38px; }
+/* The animated accent: a 1.5px gold light running round all four edges
+   (a turning conic light, masked to the border ring). */
+.huda-invite-accent { position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.huda-invite-accent::before { content: ""; position: absolute; left: 50%; top: 50%; width: 220%; aspect-ratio: 1; translate: -50% -50%;
+  background: conic-gradient(from 0deg, transparent 0deg 250deg, rgba(255, 228, 160, 0.15) 290deg, rgba(255, 236, 180, 0.95) 340deg, transparent 360deg);
+  animation: huda-invite-orbit 7s linear 2.6s infinite; }
+.huda-invite-mosque { width: 64px; height: 36px; opacity: 0.55; }
+.huda-invite-title { font-size: 16px; line-height: 1.3; }
+.huda-invite-text { margin-top: 6px; font-size: 13px; line-height: 1.45; position: relative; }
+.huda-invite-go { margin-top: 14px; padding: 7px 16px; font-size: 14px; min-height: 36px;
+  background: linear-gradient(180deg, #f6d98a, #e2ad4b); box-shadow: inset 0 0 0 1px rgba(255, 236, 180, 0.45), 0 2px 8px rgba(245, 184, 74, 0.25); }
+.huda-invite-go:hover { filter: brightness(1.07); }
+.huda-invite-close { width: 30px; height: 30px; }
+@media (min-width: 768px) and (max-width: 1199px) {
+  .huda-invite-card { padding: 15px 36px 15px 16px; }
+  .huda-invite-title { font-size: 15px; }
+  .huda-invite-text { font-size: 12px; }
+  .huda-invite-go { margin-top: 12px; font-size: 13px; padding: 6px 14px; min-height: 34px; }
+  .huda-invite-mosque { width: 54px; height: 30px; }
+}
+@media (max-width: 767px) {
+  .huda-invite-title { font-size: 15px; }
+  .huda-invite-text { font-size: 12.5px; margin-top: 4px; }
+  /* Touch: a full 40px tap target. */
+  .huda-invite-go { margin-top: 10px; min-height: 40px; padding: 8px 18px; }
+  .huda-invite-close { width: 36px; height: 36px; top: 4px; inset-inline-end: 4px; }
+  .huda-invite-mosque { width: 50px; height: 28px; }
+}
+/* Short screens (phone landscape): no description, tighter. */
+@media (max-height: 480px) {
+  .huda-invite { --card-w: 270px; }
+  .huda-invite-stacked { --moon: 32px; }
+  .huda-invite-text { display: none; }
+  .huda-invite-go { margin-top: 8px; min-height: 36px; padding: 6px 14px; }
+}
+@keyframes huda-invite-in { from { opacity: 0; transform: translateY(8px) scale(0.88); } to { opacity: 1; transform: none; } }
+@keyframes huda-invite-moon-in { from { opacity: 0; transform: translateY(14px) scale(0.7); } to { opacity: 1; transform: none; } }
+@keyframes huda-invite-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-6px) rotate(3deg); } }
+@keyframes huda-invite-breathe { 0%, 100% { opacity: 0.65; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.08); } }
+@keyframes huda-invite-ripple { 0% { opacity: 0.85; transform: scale(0.7); } 45%, 100% { opacity: 0; transform: scale(2.6); } }
+@keyframes huda-invite-spark { 0% { opacity: 0; transform: translateY(6px) scale(0.4); } 30% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-18px) scale(0.6); } }
+@keyframes huda-invite-orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .huda-invite-moon, .huda-invite-crescent, .huda-invite-card, .huda-invite-accent::before, .huda-invite-halo { animation: none; }
+  /* Waiting for room: out of sight, its animations held at their start. */
+.huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
+.huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
+.huda-invite-wait, .huda-invite-wait * { animation-play-state: paused !important; }
+  .huda-invite-glide { transition: opacity 0.6s ease, visibility 0.6s; }
+  .huda-invite-ripple, .huda-invite-spark { display: none; }
 }
 `;

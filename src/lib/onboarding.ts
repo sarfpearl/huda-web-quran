@@ -65,3 +65,18 @@ export function afterSplash(): Promise<void> {
     observer.observe(root, { attributes: true, attributeFilter: ["class"] });
   });
 }
+
+/**
+ * Opened by a deep link (/surah/36/3, /juz/30 — the website's Listen
+ * buttons)? Then the recitation comes first: no location sheet, install
+ * guide or tour on arrival (owner, 2026-11-28); they wait for a later visit,
+ * and the tour is offered by a small chip (FirstVisitTour). Read from the
+ * address the page was opened at, before playback moves it.
+ */
+let openedByLink: boolean | null = null;
+export function arrivedByDeepLink(): boolean {
+  if (openedByLink === null) {
+    openedByLink = typeof window !== "undefined" && /^\/(surah|juz)\/\d+/.test(window.location.pathname);
+  }
+  return openedByLink;
+}
