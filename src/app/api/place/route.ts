@@ -51,6 +51,8 @@ export async function GET(req: Request) {
     const data = (await res.json()) as GeocodeResponse;
     if (data.status !== "OK" || !data.results?.length) return json({ name: null });
     const parts = data.results.flatMap((r) => r.address_components);
+    if (url.searchParams.get("debug") === "1")
+      return json({ results: data.results.slice(0, 8).map((r) => (r as { types?: string[] }).types?.join(",") + " | " + r.address_components.map((c) => `${c.long_name}[${c.types.join(",")}]`).join("; ")) });
     for (const type of ORDER) {
       const c = parts.find((p) => p.types.includes(type));
       if (c?.long_name) return json({ name: c.long_name, source: "google" });
