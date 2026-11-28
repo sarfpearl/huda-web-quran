@@ -2536,7 +2536,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* Help keep HuDa free: the gift tab at the left edge (components/support) */}
       <SupportGift playing={player.isPlaying} suppressed={readingActive} hidden={focusOn} />
       {/* First visit: a lantern shows what each control does */}
-      <FirstVisitTour arrivedByLink={cameByLink} offerChip={tourChipDue} />
+      <FirstVisitTour arrivedByLink={cameByLink} offerChip={tourChipDue} chipHidden={focusOn} />
       <SupportSheet />
     </div>
     </SetUiLangContext.Provider>

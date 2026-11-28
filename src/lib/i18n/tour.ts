@@ -15,6 +15,7 @@ const strings: Strings = {
 
   // ── Deep-link chip (FirstVisitTour) ──
   "Take a 30-second tour?": { ta: "30 வினாடி அறிமுகம் பார்க்கலாமா?", ur: "30 سیکنڈ کا تعارف دیکھیں؟", ml: "30 സെക്കൻഡ് പരിചയം കാണണോ?", hi: "30 सेकंड का परिचय देखें?", id: "Lihat tur 30 detik?", bn: "৩০ সেকেন্ডের পরিচিতি দেখবেন?", tr: "30 saniyelik turu görmek ister misiniz?", fr: "Une visite de 30 secondes ?", ms: "Lihat lawatan 30 saat?" },
+  "Discover the features that make your Quran reading experience better.": { ta: "குர்ஆன் ஓதலை இன்னும் இனிமையாக்கும் வசதிகளைக் கண்டறியுங்கள்.", ur: "وہ خصوصیات دیکھیں جو آپ کے قرآن پڑھنے کے تجربے کو بہتر بناتی ہیں۔", ml: "നിങ്ങളുടെ ഖുർആൻ പാരായണം കൂടുതൽ മികച്ചതാക്കുന്ന സൗകര്യങ്ങൾ കണ്ടെത്തുക.", hi: "वे सुविधाएँ देखें जो आपके क़ुरआन पढ़ने के अनुभव को बेहतर बनाती हैं।", id: "Temukan fitur yang membuat pengalaman membaca Al-Qur'an Anda lebih baik.", bn: "যে সুবিধাগুলো আপনার কুরআন পড়াকে আরও সুন্দর করে, সেগুলো জেনে নিন।", tr: "Kur'an okuma deneyiminizi güzelleştiren özellikleri keşfedin.", fr: "Découvrez les fonctions qui rendent votre lecture du Coran plus agréable.", ms: "Terokai ciri yang menjadikan pengalaman membaca al-Quran anda lebih baik." },
   "Not now": { ta: "இப்போது வேண்டாம்", ur: "ابھی نہیں", ml: "ഇപ്പോൾ വേണ്ട", hi: "अभी नहीं", id: "Nanti saja", bn: "এখন নয়", tr: "Şimdi değil", fr: "Pas maintenant", ms: "Bukan sekarang" },
 
   // ── Steps ──
