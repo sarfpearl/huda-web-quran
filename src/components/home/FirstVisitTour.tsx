@@ -231,6 +231,32 @@ export function FirstVisitTour() {
   const step = steps?.[index];
   const last = steps ? index === steps.length - 1 : false;
 
+  // The window resized (phone ↔ desktop layout): the controls moved, so the
+  // order is worked out again; the lantern stays on the control it is on.
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  useEffect(() => {
+    if (!open) return;
+    let timer = 0;
+    const reorder = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (tipRef.current) return;
+        const here = stepRef.current;
+        const list = inScreenOrder(TOUR_STEPS.filter(present), isRtl(langRef.current));
+        const at = here ? list.indexOf(here) : -1;
+        setSteps(list);
+        if (at >= 0) setIndex(at);
+        else setIndex((i) => Math.min(i, list.length - 1));
+      }, 350);
+    };
+    addEventListener("resize", reorder);
+    return () => {
+      window.clearTimeout(timer);
+      removeEventListener("resize", reorder);
+    };
+  }, [open]);
+
   // Follow the control: layout shifts, rotation, the keyboard, resize.
   useLayoutEffect(() => {
     if (!step) return;
