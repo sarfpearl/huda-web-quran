@@ -260,6 +260,7 @@ export function FirstVisitTour({
   const chipRef = useRef<HTMLDivElement>(null);
   const spotRef = useRef<string | null>(null);
   const miniSpotRef = useRef<string | null>(null);
+  const miniRef = useRef<HTMLButtonElement>(null);
   const cardSizeRef = useRef<{ w: number; h: number } | null>(null);
   // Glides to a new spot only once it's shown at its first one.
   const [chipSettled, setChipSettled] = useState(false);
@@ -295,7 +296,7 @@ export function FirstVisitTour({
       Math.max(0, Math.min(a.r, o.r) - Math.max(a.l, o.l)) * Math.max(0, Math.min(a.b, o.b) - Math.max(a.t, o.t));
     // The ayah (and its translation) as drawn: its box is the whole stage,
     // so the drawn pieces — the leaves — are what counts.
-    const ayahBox = () => {
+    const ayahBox = (pad: number) => {
       const body = document.querySelector("[data-verse-stage] > div");
       if (!body) return null;
       let u: Box | null = null;
@@ -308,7 +309,7 @@ export function FirstVisitTour({
           ? { l: Math.min(u.l, r.left), t: Math.min(u.t, r.top), r: Math.max(u.r, r.right), b: Math.max(u.b, r.bottom) }
           : { l: r.left, t: r.top, r: r.right, b: r.bottom };
       }
-      return u && { l: u.l - 12, t: u.t - 12, r: u.r + 12, b: u.b + 12 };
+      return u && { l: u.l - pad, t: u.t - pad, r: u.r + pad, b: u.b + pad };
     };
     const measure = () => {
       const el = chipRef.current;
@@ -331,7 +332,8 @@ export function FirstVisitTour({
       const below = (header?.b ?? EDGE) + gap;
       const feedback = box(findTarget("feedback"), 8);
       const obstacles = [
-        ayahBox(),
+        // Its line boxes run taller than the letters: a phone's row needs less.
+        ayahBox(side ? 12 : 4),
         frame && { ...frame, t: frame.t - 8 },
         header,
         feedback && { ...feedback, r: vw },
@@ -352,7 +354,7 @@ export function FirstVisitTour({
             ["bottom-right", right - w, vh - EDGE - h],
           ]
         : [
-            ["above-player", (vw - w) / 2, (playerBelow ? frame!.t - 12 : vh - EDGE) - h],
+            ["above-player", (vw - w) / 2, (playerBelow ? frame!.t - 8 : vh - EDGE) - h],
             ["under-header", (vw - w) / 2, below],
           ];
       const placed = spots.map(([name, x, y]) => {
@@ -368,24 +370,26 @@ export function FirstVisitTour({
       let mini: { x: number; y: number } | null = null;
       if (!free && !chipOpenRef.current) {
         const M = MINI_MOON;
+        // With its label: as laid out, or about that before the first layout.
+        const MW = miniRef.current?.offsetWidth || M + 90;
         const buttons = header
           ? [...document.querySelectorAll("[data-scene-header] button, [data-scene-header] a")].map((b) => box(b, 4)).filter(Boolean) as Box[]
           : [];
         const minis: [string, number, number][] = [];
         if (time) {
           const nextL = Math.min(...buttons.filter((b) => b.l > time.r).map((b) => b.l), vw - EDGE);
-          if (nextL - time.r >= M + 16) minis.push(["header-gap", (time.r + nextL) / 2 - M / 2, (time.t + time.b) / 2 - M / 2]);
+          if (nextL - time.r >= MW + 16) minis.push(["header-gap", (time.r + nextL) / 2 - MW / 2, (time.t + time.b) / 2 - M / 2]);
         }
         if (frame && playerBelow) {
-          minis.push(["player-end", frame.r - M - 12, frame.t - M - 10], ["player-start", frame.l + 12, frame.t - M - 10]);
+          minis.push(["player-end", frame.r - MW - 12, frame.t - M - 10], ["player-start", frame.l + 12, frame.t - M - 10]);
         }
-        minis.push(["under-header", right - M, below]);
+        minis.push(["under-header", right - MW, below]);
         const miniObstacles = [obstacles[0], obstacles[1], obstacles[3], time && { ...time, l: time.l - 4, r: time.r + 4 }, ...buttons].filter(
           Boolean
         ) as Box[];
         const tried = minis.map(([name, x, y]) => {
-          const r = { l: x, t: y, r: x + M, b: y + M };
-          const inView = x >= 4 && y >= 4 && x + M <= vw - 4 && y + M <= vh - 4;
+          const r = { l: x, t: y, r: x + MW, b: y + M };
+          const inView = x >= 4 && y >= 4 && x + MW <= vw - 4 && y + M <= vh - 4;
           return { name, x, y, ok: inView && miniObstacles.every((o) => overlap(r, o) === 0) };
         });
         const keep = tried.find((t) => t.name === miniSpotRef.current && t.ok);
@@ -610,10 +614,15 @@ export function FirstVisitTour({
             onClick={() => setChipOpen(true)}
             aria-label={tourT(lang, "Take a 30-second tour?")}
             data-tip={tourT(lang, "Take a 30-second tour?")}
+            ref={miniRef}
             className="huda-invite-mini pointer-events-auto absolute cursor-pointer"
             style={{ left: pos!.mini!.x, top: pos!.mini!.y }}
           >
             <span className="huda-invite-moon block">{moonArt}</span>
+            <span className="huda-invite-mini-label">
+              {tourT(lang, "App tour")}
+              <span aria-hidden="true" className="rtl:-scale-x-100">›</span>
+            </span>
           </button>
         )}
         <div
@@ -941,9 +950,14 @@ function MosqueArt() {
 const CHIP_CSS = `
 .huda-invite { --moon: 56px; --card-w: 320px; display: flex; align-items: flex-start; gap: 14px; }
 /* The crescent alone, a tap target in a free corner of the sky. */
-.huda-invite-mini { width: ${MINI_MOON}px; height: ${MINI_MOON}px; border-radius: 9999px; padding: 0; background: none; border: 0;
+.huda-invite-mini { display: flex; align-items: center; gap: 6px; height: ${MINI_MOON}px; border-radius: 9999px; padding: 0; background: none; border: 0;
   animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1), top 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
-.huda-invite-mini .huda-invite-moon { width: 100%; height: 100%; margin: 0; animation: none; }
+.huda-invite-mini .huda-invite-moon { width: ${MINI_MOON}px; height: ${MINI_MOON}px; flex: none; margin: 0; animation: none; }
+/* Says it's a button: a small gold-edged tag beside the crescent. */
+.huda-invite-mini-label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; border-radius: 9999px; padding: 5px 11px;
+  font-size: 12px; font-weight: 600; color: #fbeec8; background: rgba(20, 16, 10, 0.72); border: 1px solid rgba(240, 207, 122, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  animation: huda-invite-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) 1.2s both; }
 .huda-invite-mini:focus-visible { outline: 2px solid rgba(240, 207, 122, 0.8); outline-offset: 4px; }
 /* Waiting for room: out of sight, its animations held at their start. */
 .huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
@@ -953,12 +967,13 @@ const CHIP_CSS = `
 /* First the crescent rises into the sky, then, 1.5 s on, the card. */
 .huda-invite-moon { animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .huda-invite-side { flex-direction: row; }
-.huda-invite-stacked { --moon: 40px; display: block; width: min(var(--card-w), calc(100vw - 32px)); padding-top: calc(var(--moon) - 8px); }
+/* Phone: one compact row — crescent, question, Begin, × (owner, 2026-11-28). */
+.huda-invite-stacked { --moon: 30px; display: block; width: min(400px, calc(100vw - 32px)); }
 @media (min-width: 768px) and (max-width: 1199px) { .huda-invite { --moon: 44px; --card-w: 280px; gap: 10px; } }
 @media (max-width: 767px) { .huda-invite { --card-w: 320px; } }
 
 .huda-invite-moon { position: relative; flex: none; width: var(--moon); height: var(--moon); margin-top: 6px; }
-.huda-invite-stacked .huda-invite-moon { position: absolute; top: 0; inset-inline-start: 14px; margin: 0; z-index: 1; }
+.huda-invite-stacked .huda-invite-moon { position: absolute; top: 50%; inset-inline-start: 14px; margin: calc(var(--moon) / -2) 0 0; z-index: 1; }
 .huda-invite-crescent { filter: drop-shadow(0 0 6px rgba(245, 190, 90, 0.55)); animation: huda-invite-float 8s ease-in-out 1.2s infinite; }
 .huda-invite-halo { position: absolute; inset: -60%; border-radius: 9999px; pointer-events: none;
   background: radial-gradient(closest-side, rgba(245, 190, 90, 0.3), rgba(245, 190, 90, 0.1) 55%, transparent 100%);
@@ -985,8 +1000,12 @@ const CHIP_CSS = `
   transform-origin: 0 20%;
   animation: huda-invite-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1.5s both; }
 [dir=rtl] .huda-invite-card { padding: 18px 20px 18px 40px; transform-origin: 100% 20%; }
-.huda-invite-stacked .huda-invite-card { width: 100%; padding: 16px 38px 14px 16px; transform-origin: 20% 0; }
-[dir=rtl].huda-invite-stacked .huda-invite-card { padding: 16px 16px 14px 38px; }
+.huda-invite-stacked .huda-invite-card { width: 100%; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 54px; border-radius: 9999px; transform-origin: 10% 50%; }
+[dir=rtl].huda-invite-stacked .huda-invite-card { padding: 6px 54px 6px 6px; transform-origin: 90% 50%; }
+.huda-invite-stacked .huda-invite-title { order: 1; flex: 1; min-width: 0; font-size: 14px; line-height: 1.25; }
+.huda-invite-stacked .huda-invite-text, .huda-invite-stacked .huda-invite-mosque { display: none; }
+.huda-invite-stacked .huda-invite-go { order: 2; flex: none; margin: 0; min-height: 40px; padding: 6px 14px; font-size: 13px; }
+.huda-invite-stacked .huda-invite-close { order: 3; position: static; flex: none; width: 36px; height: 36px; }
 /* The animated accent: a 1.5px gold light running round all four edges
    (a turning conic light, masked to the border ring). */
 .huda-invite-accent { position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; overflow: hidden;
@@ -1020,7 +1039,6 @@ const CHIP_CSS = `
 /* Short screens (phone landscape): no description, tighter. */
 @media (max-height: 480px) {
   .huda-invite { --card-w: 270px; }
-  .huda-invite-stacked { --moon: 32px; }
   .huda-invite-text { display: none; }
   .huda-invite-go { margin-top: 8px; min-height: 36px; padding: 6px 14px; }
 }
@@ -1033,15 +1051,6 @@ const CHIP_CSS = `
 @keyframes huda-invite-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .huda-invite-moon, .huda-invite-crescent, .huda-invite-card, .huda-invite-accent::before, .huda-invite-halo { animation: none; }
-  /* The crescent alone, a tap target in a free corner of the sky. */
-.huda-invite-mini { width: ${MINI_MOON}px; height: ${MINI_MOON}px; border-radius: 9999px; padding: 0; background: none; border: 0;
-  animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1), top 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
-.huda-invite-mini .huda-invite-moon { width: 100%; height: 100%; margin: 0; animation: none; }
-.huda-invite-mini:focus-visible { outline: 2px solid rgba(240, 207, 122, 0.8); outline-offset: 4px; }
-/* Waiting for room: out of sight, its animations held at their start. */
-.huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
-.huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
-.huda-invite-wait, .huda-invite-wait * { animation-play-state: paused !important; }
   .huda-invite-glide { transition: opacity 0.6s ease, visibility 0.6s; }
   .huda-invite-ripple, .huda-invite-spark { display: none; }
 }
