@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PLAYER_GLASS } from "@/components/ui/ActionSheet";
-import { afterStage, finishStage } from "@/lib/onboarding";
+import { afterStage, arrivedByDeepLink, finishStage } from "@/lib/onboarding";
 import { OPEN_INSTALL_GUIDE_EVENT } from "@/lib/settingsEvents";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -406,7 +406,8 @@ export function InstallGuide() {
     // browser waits for this to close (or be skipped).
     let timer = 0;
     let cancelled = false;
-    if (!detected || snoozed() || (typeof window !== "undefined" && window.location.hash === "#search")) finishStage("install");
+    // Not over a recitation opened by a deep link either (lib/onboarding).
+    if (!detected || snoozed() || arrivedByDeepLink() || (typeof window !== "undefined" && window.location.hash === "#search")) finishStage("install");
     else
       afterStage("location")
         .then(() => waitForPrompt(PROMPT_WAIT_MS))

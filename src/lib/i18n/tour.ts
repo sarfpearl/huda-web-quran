@@ -13,6 +13,10 @@ const strings: Strings = {
   "App tour": { ta: "செயலி அறிமுகம்", ur: "ایپ کا تعارف", ml: "ആപ്പ് പരിചയം", hi: "ऐप परिचय", id: "Tur aplikasi", bn: "অ্যাপ পরিচিতি", tr: "Uygulama turu", fr: "Visite de l'appli", ms: "Lawatan aplikasi" },
   "Show again": { ta: "மீண்டும் காட்டு", ur: "دوبارہ دکھائیں", ml: "വീണ്ടും കാണിക്കുക", hi: "फिर दिखाएँ", id: "Tampilkan lagi", bn: "আবার দেখান", tr: "Yeniden göster", fr: "Revoir", ms: "Tunjuk semula" },
 
+  // ── Deep-link chip (FirstVisitTour) ──
+  "Take a 30-second tour?": { ta: "30 வினாடி அறிமுகம் பார்க்கலாமா?", ur: "30 سیکنڈ کا تعارف دیکھیں؟", ml: "30 സെക്കൻഡ് പരിചയം കാണണോ?", hi: "30 सेकंड का परिचय देखें?", id: "Lihat tur 30 detik?", bn: "৩০ সেকেন্ডের পরিচিতি দেখবেন?", tr: "30 saniyelik turu görmek ister misiniz?", fr: "Une visite de 30 secondes ?", ms: "Lihat lawatan 30 saat?" },
+  "Not now": { ta: "இப்போது வேண்டாம்", ur: "ابھی نہیں", ml: "ഇപ്പോൾ വേണ്ട", hi: "अभी नहीं", id: "Nanti saja", bn: "এখন নয়", tr: "Şimdi değil", fr: "Pas maintenant", ms: "Bukan sekarang" },
+
   // ── Steps ──
   "A quick look around": { ta: "ஒரு சிறு சுற்றுப் பார்வை", ur: "ایک مختصر جائزہ", ml: "ഒരു ചെറിയ ചുറ്റിക്കാണൽ", hi: "एक छोटी-सी झलक", id: "Melihat-lihat sebentar", bn: "এক নজরে ঘুরে দেখা", tr: "Kısa bir tur", fr: "Petit tour d'horizon", ms: "Tinjauan ringkas" },
   "A little lantern will show you what each button does. It takes half a minute.": { ta: "ஒவ்வொரு பொத்தானும் என்ன செய்கிறது என்பதை ஒரு சிறு விளக்கு காட்டும். அரை நிமிடம் போதும்.", ur: "ایک چھوٹی سی قندیل آپ کو دکھائے گی کہ ہر بٹن کیا کرتا ہے۔ آدھا منٹ لگے گا۔", ml: "ഓരോ ബട്ടണും എന്തു ചെയ്യുന്നു എന്ന് ഒരു ചെറിയ വിളക്ക് കാണിച്ചുതരും. അര മിനിറ്റ് മതി.", hi: "एक छोटी-सी लालटेन आपको दिखाएगी कि हर बटन क्या करता है। बस आधा मिनट।", id: "Sebuah lentera kecil akan menunjukkan fungsi setiap tombol. Hanya setengah menit.", bn: "একটি ছোট লণ্ঠন দেখাবে প্রতিটি বোতাম কী করে। আধা মিনিট লাগবে।", tr: "Küçük bir fener her düğmenin ne işe yaradığını gösterecek. Yarım dakika sürer.", fr: "Une petite lanterne va vous montrer à quoi sert chaque bouton. Une demi-minute suffit.", ms: "Sebuah tanglung kecil akan menunjukkan fungsi setiap butang. Hanya setengah minit." },

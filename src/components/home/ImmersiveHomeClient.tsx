@@ -1867,6 +1867,22 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
   }, [mounted]);
   const juzLink = deepLink?.kind === "juz" && !hasPlayed ? deepLink.juz : null;
 
+  // By a link, the tour is only offered (FirstVisitTour's chip) once the
+  // recitation has been heard: its first ayah has ended, or 15 s of playing.
+  const [tourChipDue, setTourChipDue] = useState(false);
+  const liveAyah = isJuz ? juzAyahVerse?.ayahNumber : currentVerse?.ayahNumber;
+  const firstHeardAyahRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cameByLink || tourChipDue || !player.isPlaying || player.isPrelude || !liveAyah) return;
+    if (firstHeardAyahRef.current === null) firstHeardAyahRef.current = liveAyah;
+    else if (liveAyah !== firstHeardAyahRef.current) {
+      setTourChipDue(true);
+      return;
+    }
+    const id = window.setTimeout(() => setTourChipDue(true), 15000);
+    return () => window.clearTimeout(id);
+  }, [cameByLink, tourChipDue, player.isPlaying, player.isPrelude, liveAyah]);
+
   // The address follows what is playing (a refresh or a shared link comes
   // back to it): /surah/N/ayah, or /juz/N. "/" stays until something plays.
   const playingLink: DeepLink | null = !player.current
@@ -2520,7 +2536,7 @@ export function ImmersiveHomeClient({ deepLink = null }: { deepLink?: DeepLink |
       {/* Help keep HuDa free: the gift tab at the left edge (components/support) */}
       <SupportGift playing={player.isPlaying} suppressed={readingActive} hidden={focusOn} />
       {/* First visit: a lantern shows what each control does */}
-      <FirstVisitTour />
+      <FirstVisitTour arrivedByLink={cameByLink} offerChip={tourChipDue} />
       <SupportSheet />
     </div>
     </SetUiLangContext.Provider>

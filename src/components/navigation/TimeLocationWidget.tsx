@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { afterSplash, finishStage } from "@/lib/onboarding";
+import { afterSplash, arrivedByDeepLink, finishStage } from "@/lib/onboarding";
 import { PLACE_EVENT, type PlaceDetail } from "@/lib/data/translations";
 import { clock, currentWaqt, prayerLabel, regionDefaults, type AsrMadhab, type MethodId } from "@/lib/prayerTimes";
 import { PrayerTimesSheet, readPrayerPrefs, type PrayerPrefs } from "./PrayerTimesSheet";
@@ -238,6 +238,12 @@ export function TimeLocationWidget({
         // pill was left showing only the clock.
         if (status?.state === "granted") {
           ask(true);
+          return;
+        }
+        // Came by a deep link: the recitation first — the sheet waits for
+        // the next visit (lib/onboarding arrivedByDeepLink).
+        if (arrivedByDeepLink()) {
+          done();
           return;
         }
         // Not answered yet: first say what it's for (LocationAskSheet).

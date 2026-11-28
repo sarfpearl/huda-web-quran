@@ -9,6 +9,7 @@ import { afterSplash, afterStage, finishStage } from "@/lib/onboarding";
 import { useDialogFocus } from "@/lib/useDialogFocus";
 import { OPEN_TOUR_EVENT, TIP_STEPS, TOUR_DONE_KEY, TOUR_STEPS, TOUR_TIP_EVENT, type TourStep } from "@/lib/tour/steps";
 import { LanternArt } from "@/components/feedback/FeedbackLantern";
+import { CloseIcon } from "@/components/ui/Icon";
 
 /*
  * First-visit tour: once per browser, right after the onboarding prompts
@@ -39,6 +40,29 @@ const TILT_PER_SPEED = 0.0011;
 const TILT_MAX = 0.45;
 // On the first card it floats down into place from this far above.
 const DROP_IN_PX = 28;
+
+// A visitor who came by a deep link (/surah/36/3) hears the recitation first,
+// no tour on arrival (owner, 2026-11-28): a small chip offers it once the
+// first ayah has ended (or 15 s), on at most two visits, then never again.
+const CHIP_KEY = "huda-tour-chip-offers";
+const CHIP_MAX_VISITS = 2;
+// An ignored chip goes by itself after this.
+const CHIP_SHOW_MS = 20000;
+
+function chipOffers() {
+  try {
+    return Number(localStorage.getItem(CHIP_KEY)) || 0;
+  } catch {
+    return CHIP_MAX_VISITS;
+  }
+}
+function countChipOffer() {
+  try {
+    localStorage.setItem(CHIP_KEY, String(chipOffers() + 1));
+  } catch {
+    /* private mode */
+  }
+}
 
 type Rect = { x: number; y: number; w: number; h: number; r: string };
 type Point = { x: number; y: number };
@@ -100,7 +124,7 @@ function rectOf(el: HTMLElement): Rect {
 
 const present = (s: TourStep) => !s.target || Boolean(findTarget(s.target));
 
-export function FirstVisitTour() {
+export function FirstVisitTour({ arrivedByLink = false, offerChip = false }: { arrivedByLink?: boolean; offerChip?: boolean } = {}) {
   const lang = useUiLang();
   const reduce = useReducedMotion();
   const [steps, setSteps] = useState<TourStep[] | null>(null);
@@ -132,7 +156,8 @@ export function FirstVisitTour() {
   // First visit: after the onboarding prompts. Otherwise the stage passes at once.
   useEffect(() => {
     const viaSearch = window.location.hash === "#search" || window.location.hash === "#browse";
-    if (isDone() || viaSearch) {
+    // By a deep link: nothing over the recitation; the chip below offers it.
+    if (isDone() || viaSearch || arrivedByLink) {
       finishStage("tour");
       return;
     }
@@ -145,7 +170,36 @@ export function FirstVisitTour() {
       cancelled = true;
       window.clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start]);
+
+  // The deep-link chip: once per visit, when the home screen says it's due.
+  const [chip, setChip] = useState(false);
+  const chipOfferedRef = useRef(false);
+  useEffect(() => {
+    if (!arrivedByLink || !offerChip || chipOfferedRef.current) return;
+    chipOfferedRef.current = true;
+    if (isDone() || chipOffers() >= CHIP_MAX_VISITS) return;
+    countChipOffer();
+    setChip(true);
+  }, [arrivedByLink, offerChip]);
+  // Just above the player's frame, measured (it grows when expanded; in phone
+  // landscape it's a rail at the side, so the chip sits at the bottom edge).
+  const [chipBottom, setChipBottom] = useState(EDGE);
+  useEffect(() => {
+    if (!chip) return;
+    const hide = window.setTimeout(() => setChip(false), CHIP_SHOW_MS);
+    const measure = () => {
+      const top = document.querySelector<HTMLElement>("[data-player-frame]")?.getBoundingClientRect().top;
+      setChipBottom(top !== undefined && top > innerHeight / 2 ? innerHeight - top + 10 : EDGE);
+    };
+    measure();
+    const id = window.setInterval(measure, 400);
+    return () => {
+      window.clearTimeout(hide);
+      window.clearInterval(id);
+    };
+  }, [chip]);
 
   // One-off tips: once per browser, never over the tour, and only once the
   // control is on screen (the action that shows it has only just run).
@@ -281,7 +335,44 @@ export function FirstVisitTour() {
     }
   };
 
-  if (!open || !step || typeof document === "undefined") return null;
+  if (typeof document === "undefined") return null;
+  if (!open || !step) {
+    if (!chip) return null;
+    return createPortal(
+      <div
+        dir={isRtl(lang) ? "rtl" : "ltr"}
+        className="huda-tour-chip pointer-events-none fixed inset-x-0 z-[260] flex justify-center px-4"
+        style={{ bottom: chipBottom }}
+      >
+        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-amber-200/35 bg-black/60 py-1 ps-2 pe-1 text-sand-50 shadow-lg backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => {
+              setChip(false);
+              start();
+            }}
+            className="flex items-center gap-2 rounded-full py-1 pe-2 text-xs font-medium hover:text-white sm:text-sm cursor-pointer"
+          >
+            <span className="huda-tour-chip-lantern block h-[26px] w-[14px] overflow-visible" aria-hidden="true">
+              <LanternArt glow />
+            </span>
+            <span>{tourT(lang, "Take a 30-second tour?")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setChip(false)}
+            aria-label={tourT(lang, "Not now")}
+            data-tip={tourT(lang, "Not now")}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-sand-50/70 hover:bg-white/10 hover:text-white cursor-pointer"
+          >
+            <CloseIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <style>{CHIP_CSS}</style>
+      </div>,
+      document.body
+    );
+  }
 
   // Where the light, the lantern and the card go: the lantern just under a
   // control in the top half of the screen (the card under it), just over one
@@ -486,4 +577,11 @@ const TOUR_CSS = `
   .huda-tour, .huda-tour-halo, .huda-tour-card, .huda-tour-bead { transition: none; }
   .huda-tour-halo { animation: none; }
 }
+`;
+
+const CHIP_CSS = `
+.huda-tour-chip { animation: huda-chip-in 0.45s cubic-bezier(0.32, 0.72, 0, 1) both; }
+.huda-tour-chip-lantern svg { width: 14px; height: 26px; }
+@keyframes huda-chip-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .huda-tour-chip { animation: none; } }
 `;
