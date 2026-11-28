@@ -54,6 +54,8 @@ const CHIP_KEY = "huda-tour-chip-offers";
 const CHIP_MAX_VISITS = 2;
 // An ignored chip goes by itself after this.
 const CHIP_SHOW_MS = 25000;
+// The crescent alone (no room for the card): its size, px.
+const MINI_MOON = 40;
 
 function chipOffers() {
   try {
@@ -246,22 +248,35 @@ export function FirstVisitTour({
   // down beside the player (right, left); on a phone, above the player or
   // under the header. The first free spot wins, measured while shown (the
   // ayah changes, the player grows, the window turns); it moves only when its
-  // spot is taken.
-  type ChipPos = { side: boolean; x: number; y: number; free: boolean };
+  // spot is taken. With no room for the card at all (a phone, the player
+  // open, most ayahs), the crescent alone glows in a small free spot — the
+  // gap in the header, the player's corner — and a tap on it opens the card
+  // (the visitor asked for it, so it may cover for that moment).
+  type ChipPos = { side: boolean; x: number; y: number; free: boolean; mini: { x: number; y: number } | null };
   const [chipPos, setChipPos] = useState<ChipPos | null>(null);
+  const [chipOpen, setChipOpen] = useState(false);
+  const chipOpenRef = useRef(false);
+  chipOpenRef.current = chipOpen;
   const chipRef = useRef<HTMLDivElement>(null);
   const spotRef = useRef<string | null>(null);
+  const miniSpotRef = useRef<string | null>(null);
+  const cardSizeRef = useRef<{ w: number; h: number } | null>(null);
   // Glides to a new spot only once it's shown at its first one.
   const [chipSettled, setChipSettled] = useState(false);
-  const placed = Boolean(chipPos?.free);
+  const placed = Boolean(chipPos?.free || chipOpen);
   useEffect(() => {
     if (!placed) return setChipSettled(false);
     const id = window.setTimeout(() => setChipSettled(true), 300);
     return () => window.clearTimeout(id);
   }, [placed]);
   useEffect(() => {
-    if (!chip) return setChipPos(null);
+    if (!chip) {
+      setChipOpen(false);
+      return setChipPos(null);
+    }
     spotRef.current = null;
+    miniSpotRef.current = null;
+    cardSizeRef.current = null;
     // The time it stays counts from when it's first seen.
     let hide = 0;
     const seen = () => {
@@ -299,8 +314,11 @@ export function FirstVisitTour({
       const el = chipRef.current;
       if (!el) return;
       const side = innerWidth >= 768;
-      const w = el.offsetWidth;
-      const h = el.offsetHeight;
+      // The card's size as laid out (kept from when it was, while only the
+      // crescent shows).
+      const size = el.classList.contains("huda-invite-wait") && cardSizeRef.current ? cardSizeRef.current : { w: el.offsetWidth, h: el.offsetHeight };
+      cardSizeRef.current = size;
+      const { w, h } = size;
       const vw = innerWidth;
       const vh = innerHeight;
       const header = box(document.querySelector("[data-scene-header]"));
@@ -345,12 +363,43 @@ export function FirstVisitTour({
       const pick =
         current && current.hit === 0 ? current : placed.find((p) => p.hit === 0) ?? placed.reduce((a, b) => (b.hit < a.hit ? b : a));
       spotRef.current = pick.name;
-      // No free spot (a long ayah fills a phone): it waits, out of sight,
-      // and fades back once the ayah leaves room.
       const free = pick.hit === 0;
-      if (free) seen();
+      // No room for the card: the crescent alone, in the first free small spot.
+      let mini: { x: number; y: number } | null = null;
+      if (!free && !chipOpenRef.current) {
+        const M = MINI_MOON;
+        const buttons = header
+          ? [...document.querySelectorAll("[data-scene-header] button, [data-scene-header] a")].map((b) => box(b, 4)).filter(Boolean) as Box[]
+          : [];
+        const minis: [string, number, number][] = [];
+        if (time) {
+          const nextL = Math.min(...buttons.filter((b) => b.l > time.r).map((b) => b.l), vw - EDGE);
+          if (nextL - time.r >= M + 16) minis.push(["header-gap", (time.r + nextL) / 2 - M / 2, (time.t + time.b) / 2 - M / 2]);
+        }
+        if (frame && playerBelow) {
+          minis.push(["player-end", frame.r - M - 12, frame.t - M - 10], ["player-start", frame.l + 12, frame.t - M - 10]);
+        }
+        minis.push(["under-header", right - M, below]);
+        const miniObstacles = [obstacles[0], obstacles[1], obstacles[3], time && { ...time, l: time.l - 4, r: time.r + 4 }, ...buttons].filter(
+          Boolean
+        ) as Box[];
+        const tried = minis.map(([name, x, y]) => {
+          const r = { l: x, t: y, r: x + M, b: y + M };
+          const inView = x >= 4 && y >= 4 && x + M <= vw - 4 && y + M <= vh - 4;
+          return { name, x, y, ok: inView && miniObstacles.every((o) => overlap(r, o) === 0) };
+        });
+        const keep = tried.find((t) => t.name === miniSpotRef.current && t.ok);
+        const m = keep ?? tried.find((t) => t.ok);
+        miniSpotRef.current = m?.name ?? null;
+        if (m) mini = { x: Math.round(m.x), y: Math.round(m.y) };
+      }
+      // Seen: the card or the crescent is on screen. Neither has room (a long
+      // ayah fills a phone): it waits, out of sight, and fades in once there is.
+      if (free || mini || chipOpenRef.current) seen();
       setChipPos((p) =>
-        p && p.side === side && p.x === pick.x && p.y === pick.y && p.free === free ? p : { side, x: pick.x, y: pick.y, free }
+        p && p.side === side && p.x === pick.x && p.y === pick.y && p.free === free && p.mini?.x === mini?.x && p.mini?.y === mini?.y
+          ? p
+          : { side, x: pick.x, y: pick.y, free, mini }
       );
     };
     measure();
@@ -365,6 +414,10 @@ export function FirstVisitTour({
       removeEventListener("resize", measure);
     };
   }, [chip, lang]);
+  // The card opened from the crescent: placed again at once (its best spot).
+  useEffect(() => {
+    if (chipOpen) spotRef.current = null;
+  }, [chipOpen]);
 
   // One-off tips: once per browser, never over the tour, and only once the
   // control is on screen (the action that shows it has only just run).
@@ -537,23 +590,42 @@ export function FirstVisitTour({
   if (!open || !step) {
     if (!chip || chipHidden) return null;
     const pos = chipPos;
+    const showCard = Boolean(pos && (pos.free || chipOpen));
+    const showMini = Boolean(pos?.mini && !showCard);
+    const moonArt = (
+      <>
+        <span className="huda-invite-ripple" />
+        <span className="huda-invite-halo" />
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <span key={i} className={`huda-invite-spark huda-invite-spark-${i}`} />
+        ))}
+        <CrescentArt />
+      </>
+    );
     return createPortal(
       <div className="pointer-events-none fixed inset-0 z-[260] overflow-hidden">
+        {showMini && (
+          <button
+            type="button"
+            onClick={() => setChipOpen(true)}
+            aria-label={tourT(lang, "Take a 30-second tour?")}
+            data-tip={tourT(lang, "Take a 30-second tour?")}
+            className="huda-invite-mini pointer-events-auto absolute cursor-pointer"
+            style={{ left: pos!.mini!.x, top: pos!.mini!.y }}
+          >
+            <span className="huda-invite-moon block">{moonArt}</span>
+          </button>
+        )}
         <div
           ref={chipRef}
           role="group"
           aria-label={tourT(lang, "Take a 30-second tour?")}
           dir={isRtl(lang) ? "rtl" : "ltr"}
-          className={`huda-invite absolute ${pos?.side ? "huda-invite-side" : "huda-invite-stacked"}${chipSettled ? " huda-invite-glide" : ""}${pos?.free ? "" : " huda-invite-wait"}`}
+          className={`huda-invite absolute ${pos?.side ? "huda-invite-side" : "huda-invite-stacked"}${chipSettled ? " huda-invite-glide" : ""}${showCard ? "" : " huda-invite-wait"}`}
           style={{ top: pos?.y ?? 0, left: pos?.x ?? 0 }}
         >
           <div className="huda-invite-moon" aria-hidden="true">
-            <span className="huda-invite-ripple" />
-            <span className="huda-invite-halo" />
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <span key={i} className={`huda-invite-spark huda-invite-spark-${i}`} />
-            ))}
-            <CrescentArt />
+            {moonArt}
           </div>
           <div className="huda-invite-card pointer-events-auto">
             <span className="huda-invite-accent" aria-hidden="true" />
@@ -868,6 +940,11 @@ function MosqueArt() {
 
 const CHIP_CSS = `
 .huda-invite { --moon: 56px; --card-w: 320px; display: flex; align-items: flex-start; gap: 14px; }
+/* The crescent alone, a tap target in a free corner of the sky. */
+.huda-invite-mini { width: ${MINI_MOON}px; height: ${MINI_MOON}px; border-radius: 9999px; padding: 0; background: none; border: 0;
+  animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1), top 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+.huda-invite-mini .huda-invite-moon { width: 100%; height: 100%; margin: 0; animation: none; }
+.huda-invite-mini:focus-visible { outline: 2px solid rgba(240, 207, 122, 0.8); outline-offset: 4px; }
 /* Waiting for room: out of sight, its animations held at their start. */
 .huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
 .huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -956,7 +1033,12 @@ const CHIP_CSS = `
 @keyframes huda-invite-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .huda-invite-moon, .huda-invite-crescent, .huda-invite-card, .huda-invite-accent::before, .huda-invite-halo { animation: none; }
-  /* Waiting for room: out of sight, its animations held at their start. */
+  /* The crescent alone, a tap target in a free corner of the sky. */
+.huda-invite-mini { width: ${MINI_MOON}px; height: ${MINI_MOON}px; border-radius: 9999px; padding: 0; background: none; border: 0;
+  animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1), top 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+.huda-invite-mini .huda-invite-moon { width: 100%; height: 100%; margin: 0; animation: none; }
+.huda-invite-mini:focus-visible { outline: 2px solid rgba(240, 207, 122, 0.8); outline-offset: 4px; }
+/* Waiting for room: out of sight, its animations held at their start. */
 .huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
 .huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
 .huda-invite-wait, .huda-invite-wait * { animation-play-state: paused !important; }
