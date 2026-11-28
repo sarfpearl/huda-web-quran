@@ -49,6 +49,7 @@ export function PrayerTimesSheet({
   onClose,
   coords,
   place,
+  placeBy,
   now,
   method,
   asr,
@@ -62,6 +63,8 @@ export function PrayerTimesSheet({
   onClose: () => void;
   coords: { lat: number; lon: number };
   place: string;
+  /** Who named the place: Google is credited under the times (its terms). */
+  placeBy?: "google" | "osm" | null;
   now: Date;
   method: MethodId;
   asr: AsrMadhab;
@@ -192,6 +195,7 @@ export function PrayerTimesSheet({
         </div>
         <p className="text-[11px] leading-relaxed text-sand-200/60">
           {t(lang, "Worked out on your device from your location.")}{" "}
+          {placeBy === "google" && <>{t(lang, "Place name: Google.")}{" "}</>}
           {regional ? (
             t(lang, "Method and Asr follow your region.")
           ) : (
