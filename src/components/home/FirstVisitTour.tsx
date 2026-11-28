@@ -807,10 +807,14 @@ const CHIP_CSS = `
 [dir=rtl] .huda-invite-card { padding: 18px 20px 18px 40px; transform-origin: 100% 20%; }
 .huda-invite-stacked .huda-invite-card { width: 100%; padding: 16px 38px 14px 16px; transform-origin: 20% 0; }
 [dir=rtl].huda-invite-stacked .huda-invite-card { padding: 16px 16px 14px 38px; }
-/* The animated accent: a 1.5px gold light along the top edge. */
-.huda-invite-accent { position: absolute; left: 0; right: 0; top: 0; height: 1.5px; pointer-events: none;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 228, 160, 0.9) 50%, transparent 100%);
-  background-size: 40% 100%; background-repeat: no-repeat; animation: huda-invite-sweep 6s ease-in-out 3s infinite; }
+/* The animated accent: a 1.5px gold light running round all four edges
+   (a turning conic light, masked to the border ring). */
+.huda-invite-accent { position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.huda-invite-accent::before { content: ""; position: absolute; left: 50%; top: 50%; width: 220%; aspect-ratio: 1; translate: -50% -50%;
+  background: conic-gradient(from 0deg, transparent 0deg 250deg, rgba(255, 228, 160, 0.15) 290deg, rgba(255, 236, 180, 0.95) 340deg, transparent 360deg);
+  animation: huda-invite-orbit 7s linear 2.6s infinite; }
 .huda-invite-mosque { width: 64px; height: 36px; opacity: 0.55; }
 .huda-invite-title { font-size: 16px; line-height: 1.3; }
 .huda-invite-text { margin-top: 6px; font-size: 13px; line-height: 1.45; position: relative; }
@@ -846,9 +850,9 @@ const CHIP_CSS = `
 @keyframes huda-invite-breathe { 0%, 100% { opacity: 0.65; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.08); } }
 @keyframes huda-invite-ripple { 0% { opacity: 0.85; transform: scale(0.7); } 45%, 100% { opacity: 0; transform: scale(2.6); } }
 @keyframes huda-invite-spark { 0% { opacity: 0; transform: translateY(6px) scale(0.4); } 30% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-18px) scale(0.6); } }
-@keyframes huda-invite-sweep { 0% { background-position: -60% 0; } 55%, 100% { background-position: 160% 0; } }
+@keyframes huda-invite-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .huda-invite-moon, .huda-invite-crescent, .huda-invite-card, .huda-invite-accent, .huda-invite-halo { animation: none; }
+  .huda-invite-moon, .huda-invite-crescent, .huda-invite-card, .huda-invite-accent::before, .huda-invite-halo { animation: none; }
   /* Waiting for room: out of sight, its animations held at their start. */
 .huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
 .huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
