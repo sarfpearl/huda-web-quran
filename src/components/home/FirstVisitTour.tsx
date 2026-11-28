@@ -47,7 +47,7 @@ const DROP_IN_PX = 28;
 const CHIP_KEY = "huda-tour-chip-offers";
 const CHIP_MAX_VISITS = 2;
 // An ignored chip goes by itself after this.
-const CHIP_SHOW_MS = 20000;
+const CHIP_SHOW_MS = 25000;
 
 function chipOffers() {
   try {
@@ -191,50 +191,124 @@ export function FirstVisitTour({
     if (!arrivedByLink || !offerChip || chipHidden || chipOfferedRef.current) return;
     chipOfferedRef.current = true;
     if (isDone() || chipOffers() >= CHIP_MAX_VISITS) return;
-    countChipOffer();
+    // Armed: shown (and counted) once there's a free spot for it, below.
     setChip(true);
   }, [arrivedByLink, offerChip, chipHidden]);
-  // Where the invite goes: by the reading / text-only buttons. On desktop
-  // and iPad they're in the header, so it sits in the upper right under the
-  // navigation, its right edge on the header's, the crescent beside it; on a
-  // phone they're inside the player, so it sits just above the player's frame
-  // with the crescent on its corner (owner, 2026-11-28). Measured while shown:
-  // the player grows, the window resizes and rotates.
-  type ChipPos = { top: boolean; side: boolean; y: number; x: number };
+  // Where the invite goes: never over the ayah, the player, the navigation
+  // or the edge lantern (owner, 2026-11-28). The crescent belongs in the sky,
+  // so up under the navigation first — the right, then by the time — else
+  // down beside the player (right, left); on a phone, above the player or
+  // under the header. The first free spot wins, measured while shown (the
+  // ayah changes, the player grows, the window turns); it moves only when its
+  // spot is taken.
+  type ChipPos = { side: boolean; x: number; y: number; free: boolean };
   const [chipPos, setChipPos] = useState<ChipPos | null>(null);
   const chipRef = useRef<HTMLDivElement>(null);
+  const spotRef = useRef<string | null>(null);
+  // Glides to a new spot only once it's shown at its first one.
+  const [chipSettled, setChipSettled] = useState(false);
+  const placed = Boolean(chipPos?.free);
   useEffect(() => {
-    if (!chip) return;
-    const hide = window.setTimeout(() => setChip(false), CHIP_SHOW_MS);
+    if (!placed) return setChipSettled(false);
+    const id = window.setTimeout(() => setChipSettled(true), 300);
+    return () => window.clearTimeout(id);
+  }, [placed]);
+  useEffect(() => {
+    if (!chip) return setChipPos(null);
+    spotRef.current = null;
+    // The time it stays counts from when it's first seen.
+    let hide = 0;
+    const seen = () => {
+      if (hide) return;
+      countChipOffer();
+      hide = window.setTimeout(() => setChip(false), CHIP_SHOW_MS);
+    };
+    const box = (el: Element | null | undefined, pad = 0) => {
+      const r = el?.getBoundingClientRect();
+      return r && r.width > 0 && r.height > 0
+        ? { l: r.left - pad, t: r.top - pad, r: r.right + pad, b: r.bottom + pad }
+        : null;
+    };
+    type Box = NonNullable<ReturnType<typeof box>>;
+    const overlap = (a: Box, o: Box) =>
+      Math.max(0, Math.min(a.r, o.r) - Math.max(a.l, o.l)) * Math.max(0, Math.min(a.b, o.b) - Math.max(a.t, o.t));
+    // The ayah (and its translation) as drawn: its box is the whole stage,
+    // so the drawn pieces — the leaves — are what counts.
+    const ayahBox = () => {
+      const body = document.querySelector("[data-verse-stage] > div");
+      if (!body) return null;
+      let u: Box | null = null;
+      for (const leaf of body.querySelectorAll("*")) {
+        if (leaf.childElementCount) continue;
+        const r = leaf.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) continue;
+        if (leaf instanceof HTMLElement && leaf.checkVisibility && !leaf.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+        u = u
+          ? { l: Math.min(u.l, r.left), t: Math.min(u.t, r.top), r: Math.max(u.r, r.right), b: Math.max(u.b, r.bottom) }
+          : { l: r.left, t: r.top, r: r.right, b: r.bottom };
+      }
+      return u && { l: u.l - 12, t: u.t - 12, r: u.r + 12, b: u.b + 12 };
+    };
     const measure = () => {
       const el = chipRef.current;
       if (!el) return;
-      const btn = findTarget("reading") || findTarget("text-only");
-      const r = btn?.getBoundingClientRect();
-      // Phone landscape: the ayah fills the middle, so the bottom end corner.
-      const short = innerHeight < 500;
-      const top = !short && Boolean(r && r.top < innerHeight / 2);
-      // The crescent beside the card only where there's room for both.
-      const side = (top || short) && innerWidth >= 768;
+      const side = innerWidth >= 768;
       const w = el.offsetWidth;
-      const clampX = (x: number) => Math.max(EDGE, Math.min(innerWidth - EDGE - w, x));
-      if (top) {
-        const header = document.querySelector<HTMLElement>("[data-scene-header]")?.getBoundingClientRect();
-        // Flush with the navigation's last button.
-        const last = findTarget("account")?.getBoundingClientRect();
-        const right = Math.min(innerWidth - EDGE, last ? last.right : innerWidth - EDGE);
-        const gap = innerWidth >= 1200 ? 24 : 16;
-        const y = Math.max(r!.bottom, header?.bottom ?? 0) + gap;
-        setChipPos((p) => (p && p.top && p.side === side && p.x === clampX(right - w) && p.y === y ? p : { top, side, y, x: clampX(right - w) }));
-        return;
-      }
-      const frameTop = document.querySelector<HTMLElement>("[data-player-frame]")?.getBoundingClientRect().top;
-      const y = !short && frameTop !== undefined && frameTop > innerHeight / 2 ? innerHeight - frameTop + 12 : EDGE;
-      const x = clampX(short ? (isRtl(lang) ? EDGE : innerWidth - EDGE - w) : (innerWidth - w) / 2);
-      setChipPos((p) => (p && !p.top && p.side === side && p.x === x && p.y === y ? p : { top, side, y, x }));
+      const h = el.offsetHeight;
+      const vw = innerWidth;
+      const vh = innerHeight;
+      const header = box(document.querySelector("[data-scene-header]"));
+      const frame = box(document.querySelector("[data-player-frame]"));
+      const lastBtn = box(findTarget("account"));
+      const time = box(document.querySelector('[data-tour="prayer"] > *'));
+      const right = Math.min(vw - EDGE, lastBtn?.r ?? vw - EDGE);
+      const left = Math.max(EDGE, time?.l ?? EDGE);
+      const gap = vw >= 1200 ? 24 : 16;
+      const below = (header?.b ?? EDGE) + gap;
+      const feedback = box(findTarget("feedback"), 8);
+      const obstacles = [
+        ayahBox(),
+        frame && { ...frame, t: frame.t - 8 },
+        header,
+        feedback && { ...feedback, r: vw },
+      ].filter(Boolean) as Box[];
+      const clampX = (x: number) => Math.max(EDGE, Math.min(vw - EDGE - w, x));
+      const clampY = (y: number) => Math.max(EDGE, Math.min(vh - EDGE - h, y));
+      const playerBelow = frame && frame.t > vh / 2;
+      const spots: [string, number, number][] = side
+        ? [
+            ["top-right", right - w, below],
+            ["top-left", left, below],
+            ...(playerBelow
+              ? ([
+                  ["player-right", right - w, frame!.b - h],
+                  ["player-left", left, frame!.b - h],
+                ] as [string, number, number][])
+              : []),
+            ["bottom-right", right - w, vh - EDGE - h],
+          ]
+        : [
+            ["above-player", (vw - w) / 2, (playerBelow ? frame!.t - 12 : vh - EDGE) - h],
+            ["under-header", (vw - w) / 2, below],
+          ];
+      const placed = spots.map(([name, x, y]) => {
+        const r = { l: clampX(x), t: clampY(y), r: clampX(x) + w, b: clampY(y) + h };
+        return { name, x: r.l, y: r.t, hit: obstacles.reduce((n, o) => n + overlap(r, o), 0) };
+      });
+      const current = placed.find((p) => p.name === spotRef.current);
+      const pick =
+        current && current.hit === 0 ? current : placed.find((p) => p.hit === 0) ?? placed.reduce((a, b) => (b.hit < a.hit ? b : a));
+      spotRef.current = pick.name;
+      // No free spot (a long ayah fills a phone): it waits, out of sight,
+      // and fades back once the ayah leaves room.
+      const free = pick.hit === 0;
+      if (free) seen();
+      setChipPos((p) =>
+        p && p.side === side && p.x === pick.x && p.y === pick.y && p.free === free ? p : { side, x: pick.x, y: pick.y, free }
+      );
     };
     measure();
-    // Again once the layout (side or stacked) has rendered at its own width.
+    // Again once the layout (side or stacked) has rendered at its own size.
     const raf = requestAnimationFrame(measure);
     const id = window.setInterval(measure, 400);
     addEventListener("resize", measure);
@@ -391,8 +465,8 @@ export function FirstVisitTour({
           role="group"
           aria-label={tourT(lang, "Take a 30-second tour?")}
           dir={isRtl(lang) ? "rtl" : "ltr"}
-          className={`huda-invite absolute ${pos?.side ? "huda-invite-side" : "huda-invite-stacked"}`}
-          style={pos ? (pos.top ? { top: pos.y, left: pos.x } : { bottom: pos.y, left: pos.x }) : { top: 0, left: 0, visibility: "hidden" }}
+          className={`huda-invite absolute ${pos?.side ? "huda-invite-side" : "huda-invite-stacked"}${chipSettled ? " huda-invite-glide" : ""}${pos?.free ? "" : " huda-invite-wait"}`}
+          style={{ top: pos?.y ?? 0, left: pos?.x ?? 0 }}
         >
           <div className="huda-invite-moon" aria-hidden="true">
             <span className="huda-invite-ripple" />
@@ -687,6 +761,13 @@ function MosqueArt() {
 
 const CHIP_CSS = `
 .huda-invite { --moon: 56px; --card-w: 320px; display: flex; align-items: flex-start; gap: 14px; }
+/* Waiting for room: out of sight, its animations held at their start. */
+.huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
+.huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
+.huda-invite-wait, .huda-invite-wait * { animation-play-state: paused !important; }
+.huda-invite-glide { transition: opacity 0.6s ease, visibility 0.6s, top 0.9s cubic-bezier(0.22, 1, 0.36, 1), left 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+/* First the crescent rises into the sky, then, 1.5 s on, the card. */
+.huda-invite-moon { animation: huda-invite-moon-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .huda-invite-side { flex-direction: row; }
 .huda-invite-stacked { --moon: 40px; display: block; width: min(var(--card-w), calc(100vw - 32px)); padding-top: calc(var(--moon) - 8px); }
 @media (min-width: 768px) and (max-width: 1199px) { .huda-invite { --moon: 44px; --card-w: 280px; gap: 10px; } }
@@ -694,14 +775,14 @@ const CHIP_CSS = `
 
 .huda-invite-moon { position: relative; flex: none; width: var(--moon); height: var(--moon); margin-top: 6px; }
 .huda-invite-stacked .huda-invite-moon { position: absolute; top: 0; inset-inline-start: 14px; margin: 0; z-index: 1; }
-.huda-invite-crescent { filter: drop-shadow(0 0 6px rgba(245, 190, 90, 0.55)); animation: huda-invite-float 4.2s ease-in-out infinite; }
+.huda-invite-crescent { filter: drop-shadow(0 0 6px rgba(245, 190, 90, 0.55)); animation: huda-invite-float 8s ease-in-out 1.2s infinite; }
 .huda-invite-halo { position: absolute; inset: -60%; border-radius: 9999px; pointer-events: none;
   background: radial-gradient(closest-side, rgba(245, 190, 90, 0.3), rgba(245, 190, 90, 0.1) 55%, transparent 100%);
-  animation: huda-invite-breathe 3s ease-in-out infinite; }
+  animation: huda-invite-breathe 6s ease-in-out infinite; }
 .huda-invite-ripple { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none;
-  border: 1.5px solid rgba(240, 207, 122, 0.7); opacity: 0; animation: huda-invite-ripple 3.2s ease-out 0.1s infinite; }
+  border: 1.5px solid rgba(240, 207, 122, 0.7); opacity: 0; animation: huda-invite-ripple 6s ease-out 0.3s infinite; }
 .huda-invite-spark { position: absolute; width: 4px; height: 4px; border-radius: 9999px; background: #ffe7a6;
-  box-shadow: 0 0 8px 1px rgba(246, 217, 138, 0.95); opacity: 0; animation: huda-invite-spark 2.8s ease-out infinite; }
+  box-shadow: 0 0 8px 1px rgba(246, 217, 138, 0.95); opacity: 0; animation: huda-invite-spark 5s ease-out 1s infinite; }
 .huda-invite-spark-0 { left: 6%; top: 72%; animation-delay: 0s; }
 .huda-invite-spark-1 { left: 86%; top: 14%; animation-delay: 0.7s; width: 3px; height: 3px; }
 .huda-invite-spark-2 { left: 64%; top: 96%; animation-delay: 1.4s; }
@@ -718,14 +799,14 @@ const CHIP_CSS = `
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   padding: 18px 40px 18px 20px;
   transform-origin: 0 20%;
-  animation: huda-invite-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both; }
+  animation: huda-invite-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1.5s both; }
 [dir=rtl] .huda-invite-card { padding: 18px 20px 18px 40px; transform-origin: 100% 20%; }
 .huda-invite-stacked .huda-invite-card { width: 100%; padding: 16px 38px 14px 16px; transform-origin: 20% 0; }
 [dir=rtl].huda-invite-stacked .huda-invite-card { padding: 16px 16px 14px 38px; }
 /* The animated accent: a 1.5px gold light along the top edge. */
 .huda-invite-accent { position: absolute; left: 0; right: 0; top: 0; height: 1.5px; pointer-events: none;
   background: linear-gradient(90deg, transparent 0%, rgba(255, 228, 160, 0.9) 50%, transparent 100%);
-  background-size: 40% 100%; background-repeat: no-repeat; animation: huda-invite-sweep 3s ease-in-out 0.6s infinite; }
+  background-size: 40% 100%; background-repeat: no-repeat; animation: huda-invite-sweep 6s ease-in-out 3s infinite; }
 .huda-invite-mosque { width: 64px; height: 36px; opacity: 0.55; }
 .huda-invite-title { font-size: 16px; line-height: 1.3; }
 .huda-invite-text { margin-top: 6px; font-size: 13px; line-height: 1.45; position: relative; }
@@ -756,13 +837,19 @@ const CHIP_CSS = `
   .huda-invite-go { margin-top: 8px; min-height: 36px; padding: 6px 14px; }
 }
 @keyframes huda-invite-in { from { opacity: 0; transform: translateY(8px) scale(0.88); } to { opacity: 1; transform: none; } }
-@keyframes huda-invite-float { 0%, 100% { transform: translateY(2px) rotate(-6deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
+@keyframes huda-invite-moon-in { from { opacity: 0; transform: translateY(14px) scale(0.7); } to { opacity: 1; transform: none; } }
+@keyframes huda-invite-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-6px) rotate(3deg); } }
 @keyframes huda-invite-breathe { 0%, 100% { opacity: 0.65; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.08); } }
-@keyframes huda-invite-ripple { 0% { opacity: 0.9; transform: scale(0.7); } 70%, 100% { opacity: 0; transform: scale(2.6); } }
-@keyframes huda-invite-spark { 0% { opacity: 0; transform: translateY(6px) scale(0.4); } 25% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-22px) scale(0.6); } }
+@keyframes huda-invite-ripple { 0% { opacity: 0.85; transform: scale(0.7); } 45%, 100% { opacity: 0; transform: scale(2.6); } }
+@keyframes huda-invite-spark { 0% { opacity: 0; transform: translateY(6px) scale(0.4); } 30% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-18px) scale(0.6); } }
 @keyframes huda-invite-sweep { 0% { background-position: -60% 0; } 55%, 100% { background-position: 160% 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .huda-invite-crescent, .huda-invite-card, .huda-invite-accent, .huda-invite-halo { animation: none; }
+  .huda-invite-moon, .huda-invite-crescent, .huda-invite-card, .huda-invite-accent, .huda-invite-halo { animation: none; }
+  /* Waiting for room: out of sight, its animations held at their start. */
+.huda-invite { transition: opacity 0.6s ease, visibility 0.6s; }
+.huda-invite-wait { opacity: 0; visibility: hidden; pointer-events: none; }
+.huda-invite-wait, .huda-invite-wait * { animation-play-state: paused !important; }
+  .huda-invite-glide { transition: opacity 0.6s ease, visibility 0.6s; }
   .huda-invite-ripple, .huda-invite-spark { display: none; }
 }
 `;
